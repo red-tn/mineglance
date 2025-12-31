@@ -71,7 +71,6 @@ const POOLS = {
       // 2Miners API returns 24hreward field directly (in smallest units)
       // 915750000 / 10^8 = 9.1575 RVN
       const earnings24h = (data['24hreward'] || 0) / divisor;
-      console.log('24hreward raw:', data['24hreward'], '-> earnings24h:', earnings24h, coin);
 
       // Parse workers - 2Miners returns object with worker names as keys
       const workers = [];
@@ -259,7 +258,6 @@ async function fetchPoolData(pool, coin, address) {
   const coinLower = coin.toLowerCase();
 
   const url = poolConfig.getStatsUrl(coinLower, address);
-  console.log(`Fetching from: ${url}`);
 
   try {
     const response = await fetch(url, {
@@ -273,7 +271,6 @@ async function fetchPoolData(pool, coin, address) {
     }
 
     const data = await response.json();
-    console.log('Pool response:', data);
 
     // Check for error responses
     if (data.error || data.status === 'error') {
@@ -312,9 +309,7 @@ async function fetchCoinPrice(coinSymbol) {
     }
 
     const data = await response.json();
-    const price = data[coinConfig.geckoId]?.usd || null;
-    console.log(`Price for ${coinSymbol}: $${price}`);
-    return price;
+    return data[coinConfig.geckoId]?.usd || null;
   } catch (error) {
     console.error('Error fetching coin price:', error);
     return null;
@@ -382,7 +377,6 @@ async function refreshAllData() {
 
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Background received message:', message);
 
   if (message.action === 'refresh') {
     refreshAllData().then(() => sendResponse({ success: true }));
@@ -392,7 +386,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'fetchPoolData') {
     fetchPoolData(message.pool, message.coin, message.address)
       .then(data => {
-        console.log('Sending pool data:', data);
         sendResponse({ success: true, data });
       })
       .catch(error => {

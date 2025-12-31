@@ -132,6 +132,21 @@ body {
   border-color: var(--primary);
 }
 
+.wallet-card.error {
+  border-color: var(--warning);
+  background: #fffbeb;
+}
+
+.wallet-error {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
 .wallet-card-header {
   display: flex;
   justify-content: space-between;

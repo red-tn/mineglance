@@ -99,7 +99,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Calculate earnings (24h estimate)
         const earnings24h = poolData.earnings24h || 0;
         const revenue = earnings24h * (price || 0);
-        console.log(`${wallet.coin}: earnings24h=${earnings24h}, price=${price}, revenue=${revenue}`);
 
         // Calculate electricity cost (24h)
         const powerWatts = wallet.power || 200;
@@ -127,10 +126,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
       } catch (error) {
-        console.error(`Error fetching ${wallet.name}:`, error);
+        // Make error messages more user-friendly
+        let errorMsg = error.message;
+        if (error.message.includes('404')) {
+          errorMsg = 'No mining data found. Start mining to see stats.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMsg = 'Unable to connect to pool. Check your internet.';
+        }
         walletResults.push({
           wallet,
-          error: error.message
+          error: errorMsg
         });
       }
     }
@@ -141,7 +146,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render dashboard
     showDashboard();
     renderWallets(walletResults);
-    console.log('SUMMARY: totalRevenue=', totalRevenue, 'totalElectricityCost=', totalElectricityCost);
     updateSummary(totalRevenue - totalElectricityCost, totalRevenue, totalElectricityCost);
     lastUpdated.textContent = `Last updated: just now`;
   }
@@ -154,13 +158,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       card.className = 'wallet-card';
 
       if (result.error) {
+        card.classList.add('error');
         card.innerHTML = `
           <div class="wallet-card-header">
             <div class="wallet-name">
               <span>${result.wallet.name || 'Wallet'}</span>
-              <span class="wallet-coin">${result.wallet.coin}</span>
+              <span class="wallet-coin">${result.wallet.coin.toUpperCase()}</span>
             </div>
-            <div class="wallet-profit" style="color: var(--danger)">Error</div>
+            <div class="wallet-profit" style="color: var(--warning)">--</div>
           </div>
           <div class="wallet-error">${result.error}</div>
         `;
