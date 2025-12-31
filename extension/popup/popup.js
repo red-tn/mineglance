@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render dashboard
     showDashboard();
     renderWallets(walletResults);
+    console.log('SUMMARY: totalRevenue=', totalRevenue, 'totalElectricityCost=', totalElectricityCost);
     updateSummary(totalRevenue - totalElectricityCost, totalRevenue, totalElectricityCost);
     lastUpdated.textContent = `Last updated: just now`;
   }
