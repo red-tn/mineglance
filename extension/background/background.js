@@ -1,5 +1,50 @@
 // MineGlance Background Service Worker
 
+const API_BASE = 'https://mineglance.com/api';
+
+// Generate unique install ID
+function generateInstallId() {
+  return 'mg_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+// Track extension install/usage
+async function trackInstall() {
+  const { installId } = await chrome.storage.local.get(['installId']);
+
+  let id = installId;
+  if (!id) {
+    id = generateInstallId();
+    await chrome.storage.local.set({ installId: id });
+  }
+
+  try {
+    await fetch(`${API_BASE}/track-install`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        installId: id,
+        browser: 'chrome',
+        version: chrome.runtime.getManifest().version
+      })
+    });
+  } catch (e) {
+    // Silent fail - tracking is non-critical
+  }
+}
+
+// Check Pro status from server
+async function checkProStatus(email) {
+  if (!email) return false;
+
+  try {
+    const response = await fetch(`${API_BASE}/check-pro?email=${encodeURIComponent(email)}`);
+    const data = await response.json();
+    return data.isPro === true;
+  } catch {
+    return false;
+  }
+}
+
 // Initialize default storage on install
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['wallets'], (result) => {
@@ -18,10 +63,19 @@ chrome.runtime.onInstalled.addListener(() => {
           },
           currency: 'USD'
         },
-        isPaid: false
+        isPaid: false,
+        proEmail: null
       });
     }
   });
+
+  // Track this install
+  trackInstall();
+});
+
+// Also track on startup (for returning users)
+chrome.runtime.onStartup.addListener(() => {
+  trackInstall();
 });
 
 // Coin configurations with CoinGecko IDs and decimal places
@@ -423,6 +477,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       ...config
     }));
     sendResponse({ success: true, coins });
+    return true;
+  }
+
+  if (message.action === 'checkProStatus') {
+    checkProStatus(message.email)
+      .then(isPro => {
+        // Cache the result
+        chrome.storage.local.set({ isPaid: isPro, proEmail: message.email });
+        sendResponse({ success: true, isPro });
+      })
+      .catch(() => sendResponse({ success: false, isPro: false }));
+    return true;
+  }
+
+  if (message.action === 'activatePro') {
+    // User entered email after purchase - verify and activate
+    checkProStatus(message.email)
+      .then(isPro => {
+        if (isPro) {
+          chrome.storage.local.set({ isPaid: true, proEmail: message.email });
+          sendResponse({ success: true, isPro: true });
+        } else {
+          sendResponse({ success: false, error: 'Email not found. Please use the email from your purchase.' });
+        }
+      })
+      .catch(() => sendResponse({ success: false, error: 'Could not verify. Check your connection.' }));
     return true;
   }
 });
