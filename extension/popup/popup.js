@@ -150,12 +150,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     lastUpdated.textContent = `Last updated: just now`;
   }
 
+  // Pool dashboard URLs
+  const POOL_URLS = {
+    '2miners': (coin, address) => `https://${coin}.2miners.com/account/${address}`,
+    'nanopool': (coin, address) => `https://${coin}.nanopool.org/account/${address}`,
+    'f2pool': (coin, address) => `https://www.f2pool.com/${coin}/${address}`,
+    'flexpool': (coin, address) => `https://www.flexpool.io/miner/${coin.toUpperCase()}/${address}`,
+    'ethermine': (coin, address) => `https://ethermine.org/miners/${address}/dashboard`,
+    'hiveon': (coin, address) => `https://hiveon.net/${coin}/miner/${address}`,
+    'herominers': (coin, address) => `https://${coin}.herominers.com/#/dashboard?addr=${address}`,
+    'woolypooly': (coin, address) => `https://woolypooly.com/${coin}/miner/${address}`
+  };
+
+  function getPoolUrl(pool, coin, address) {
+    const urlFn = POOL_URLS[pool];
+    if (urlFn) {
+      return urlFn(coin.toLowerCase(), address);
+    }
+    return null;
+  }
+
   function renderWallets(walletResults) {
     walletList.innerHTML = '';
 
     for (const result of walletResults) {
       const card = document.createElement('div');
       card.className = 'wallet-card';
+
+      const poolUrl = getPoolUrl(result.wallet.pool, result.wallet.coin, result.wallet.address);
+      if (poolUrl) {
+        card.style.cursor = 'pointer';
+        card.title = 'Click to view on pool dashboard';
+        card.addEventListener('click', () => {
+          chrome.tabs.create({ url: poolUrl });
+        });
+      }
 
       if (result.error) {
         card.classList.add('error');
@@ -180,6 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="wallet-name">
               <span>${wallet.name || 'Wallet'}</span>
               <span class="wallet-coin">${wallet.coin.toUpperCase()}</span>
+              ${poolUrl ? '<span class="external-link" title="Open in pool">↗</span>' : ''}
             </div>
             <div class="wallet-profit ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">
               ${netProfit >= 0 ? '+' : ''}$${netProfit.toFixed(2)}
