@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function saveWallet() {
+  async function saveWallet() {
     const name = document.getElementById('walletName').value.trim();
     const pool = document.getElementById('walletPool').value;
     const coin = document.getElementById('walletCoin').value;
@@ -563,15 +563,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
+    // Auto-save wallets immediately
+    await chrome.storage.local.set({ wallets });
     renderWallets();
     closeModal(walletModal);
+    showSaveStatus();
   }
 
   function deleteWallet(id) {
     if (confirm('Delete this wallet?')) {
       wallets = wallets.filter(w => w.id !== id);
+      chrome.storage.local.set({ wallets });
       renderWallets();
     }
+  }
+
+  function showSaveStatus() {
+    saveStatus.classList.remove('hidden');
+    setTimeout(() => saveStatus.classList.add('hidden'), 2000);
   }
 
   function openRigModal() {
