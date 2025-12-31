@@ -229,8 +229,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Pro activation elements
   const proActivationForm = document.getElementById('proActivationForm');
   const proActiveStatus = document.getElementById('proActiveStatus');
-  const proEmail = document.getElementById('proEmail');
-  const proEmailDisplay = document.getElementById('proEmailDisplay');
+  const licenseKeyInput = document.getElementById('licenseKey');
+  const licenseKeyDisplay = document.getElementById('licenseKeyDisplay');
+  const planBadge = document.getElementById('planBadge');
   const activateProBtn = document.getElementById('activateProBtn');
   const activationResult = document.getElementById('activationResult');
 
@@ -297,7 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Functions
   async function loadSettings() {
     const data = await chrome.storage.local.get([
-      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'proEmail'
+      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'licenseKey', 'plan'
     ]);
 
     wallets = data.wallets || [];
@@ -305,12 +306,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     isPaid = data.isPaid || false;
 
     // Update UI
-    if (isPaid) {
+    if (isPaid && data.licenseKey) {
       proStatus.classList.remove('hidden');
       proUpgradeNotice.classList.add('hidden');
       proActivationForm.classList.add('hidden');
       proActiveStatus.classList.remove('hidden');
-      proEmailDisplay.textContent = data.proEmail || 'Unknown';
+      // Show masked license key
+      const key = data.licenseKey;
+      licenseKeyDisplay.textContent = key.substring(0, 7) + '••••-••••';
+      planBadge.textContent = data.plan === 'bundle' ? 'PRO + MOBILE' : 'PRO';
       enableProFeatures();
     }
 
@@ -453,20 +457,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function activatePro() {
-    const email = proEmail.value.trim().toLowerCase();
+    const licenseKey = licenseKeyInput.value.trim().toUpperCase();
 
-    if (!email || !email.includes('@')) {
-      showActivationResult('Please enter a valid email address', 'error');
+    // Validate license key format: MG-XXXX-XXXX-XXXX
+    const keyPattern = /^MG-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+    if (!licenseKey || !keyPattern.test(licenseKey)) {
+      showActivationResult('Please enter a valid license key (MG-XXXX-XXXX-XXXX)', 'error');
       return;
     }
 
     activateProBtn.disabled = true;
-    activateProBtn.textContent = 'Checking...';
+    activateProBtn.textContent = 'Activating...';
 
     try {
       const response = await new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
-          { action: 'activatePro', email },
+          { action: 'activateLicense', licenseKey },
           (response) => {
             if (chrome.runtime.lastError) {
               reject(new Error(chrome.runtime.lastError.message));
@@ -478,16 +484,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (response.success && response.isPro) {
-        showActivationResult('Pro activated! Refreshing...', 'success');
-        setTimeout(() => location.reload(), 1000);
+        const msg = response.activations
+          ? `Activated! (${response.activations}/${response.maxActivations} devices)`
+          : 'License activated successfully!';
+        showActivationResult(msg, 'success');
+        setTimeout(() => location.reload(), 1500);
       } else {
-        showActivationResult(response.error || 'Email not found. Use the email from your purchase.', 'error');
+        showActivationResult(response.error || 'Invalid license key.', 'error');
       }
     } catch (error) {
       showActivationResult('Connection error. Please try again.', 'error');
     } finally {
       activateProBtn.disabled = false;
-      activateProBtn.textContent = 'Activate Pro';
+      activateProBtn.textContent = 'Activate';
     }
   }
 

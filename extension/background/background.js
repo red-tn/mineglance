@@ -32,16 +32,40 @@ async function trackInstall() {
   }
 }
 
-// Check Pro status from server
-async function checkProStatus(email) {
-  if (!email) return false;
+// Check Pro status from server using license key
+async function checkLicenseStatus(licenseKey, installId) {
+  if (!licenseKey || !installId) return { isPro: false };
 
   try {
-    const response = await fetch(`${API_BASE}/check-pro?email=${encodeURIComponent(email)}`);
+    const response = await fetch(
+      `${API_BASE}/activate-license?key=${encodeURIComponent(licenseKey)}&installId=${encodeURIComponent(installId)}`
+    );
     const data = await response.json();
-    return data.isPro === true;
+    return data;
   } catch {
-    return false;
+    return { isPro: false };
+  }
+}
+
+// Activate license on this device
+async function activateLicense(licenseKey, installId) {
+  if (!licenseKey || !installId) {
+    return { success: false, error: 'License key required' };
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/activate-license`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        licenseKey: licenseKey.toUpperCase().trim(),
+        installId,
+        deviceName: 'Chrome Extension'
+      })
+    });
+    return await response.json();
+  } catch {
+    return { success: false, error: 'Connection failed. Please try again.' };
   }
 }
 
@@ -480,29 +504,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message.action === 'checkProStatus') {
-    checkProStatus(message.email)
-      .then(isPro => {
-        // Cache the result
-        chrome.storage.local.set({ isPaid: isPro, proEmail: message.email });
-        sendResponse({ success: true, isPro });
-      })
-      .catch(() => sendResponse({ success: false, isPro: false }));
+  if (message.action === 'checkLicenseStatus') {
+    chrome.storage.local.get(['licenseKey', 'installId'], async (data) => {
+      if (!data.licenseKey || !data.installId) {
+        sendResponse({ success: false, isPro: false });
+        return;
+      }
+      const result = await checkLicenseStatus(data.licenseKey, data.installId);
+      if (result.isPro) {
+        chrome.storage.local.set({ isPaid: true, plan: result.plan });
+      }
+      sendResponse({ success: true, ...result });
+    });
     return true;
   }
 
+  if (message.action === 'activateLicense') {
+    chrome.storage.local.get(['installId'], async (data) => {
+      let installId = data.installId;
+      if (!installId) {
+        installId = generateInstallId();
+        await chrome.storage.local.set({ installId });
+      }
+
+      const result = await activateLicense(message.licenseKey, installId);
+
+      if (result.success && result.isPro) {
+        await chrome.storage.local.set({
+          isPaid: true,
+          licenseKey: message.licenseKey.toUpperCase().trim(),
+          plan: result.plan
+        });
+      }
+
+      sendResponse(result);
+    });
+    return true;
+  }
+
+  // Legacy support for email-based activation (will be removed)
   if (message.action === 'activatePro') {
-    // User entered email after purchase - verify and activate
-    checkProStatus(message.email)
-      .then(isPro => {
-        if (isPro) {
-          chrome.storage.local.set({ isPaid: true, proEmail: message.email });
-          sendResponse({ success: true, isPro: true });
-        } else {
-          sendResponse({ success: false, error: 'Email not found. Please use the email from your purchase.' });
-        }
-      })
-      .catch(() => sendResponse({ success: false, error: 'Could not verify. Check your connection.' }));
+    sendResponse({ success: false, error: 'Please use your license key to activate.' });
     return true;
   }
 });
