@@ -68,19 +68,12 @@ const POOLS = {
     parseResponse: (data, coin) => {
       const divisor = getCoinDivisor(coin);
 
-      // Debug logging
-      console.log('2Miners raw data:', JSON.stringify(data, null, 2));
-      console.log('Divisor for', coin, ':', divisor);
+      // 2Miners API returns 24hreward field directly (in smallest units)
+      // 915750000 / 10^8 = 9.1575 RVN
+      const earnings24h = (data['24hreward'] || 0) / divisor;
+      console.log('24hreward raw:', data['24hreward'], '-> earnings24h:', earnings24h, coin);
 
-      // Calculate 24h earnings from sumrewards array
-      let earnings24h = 0;
-      if (data.sumrewards && Array.isArray(data.sumrewards)) {
-        const rawSum = data.sumrewards.reduce((sum, r) => sum + (r.reward || 0), 0);
-        earnings24h = rawSum / divisor;
-        console.log('sumrewards raw sum:', rawSum, '-> earnings24h:', earnings24h);
-      }
-
-      // Parse workers - 2Miners returns object, not array
+      // Parse workers - 2Miners returns object with worker names as keys
       const workers = [];
       if (data.workers && typeof data.workers === 'object') {
         for (const [name, w] of Object.entries(data.workers)) {
@@ -93,19 +86,33 @@ const POOLS = {
           });
         }
       }
-      console.log('Parsed workers:', workers);
 
-      const result = {
+      // workersOffline and workersOnline give us counts even when workers object is empty
+      const workersOnline = data.workersOnline || 0;
+      const workersOffline = data.workersOffline || 0;
+      const totalWorkers = workersOnline + workersOffline;
+
+      // If no worker details but we have counts, create placeholder entries
+      if (workers.length === 0 && totalWorkers > 0) {
+        for (let i = 0; i < workersOffline; i++) {
+          workers.push({ name: `Worker ${i + 1}`, hashrate: 0, offline: true });
+        }
+        for (let i = 0; i < workersOnline; i++) {
+          workers.push({ name: `Worker ${workersOffline + i + 1}`, hashrate: 0, offline: false });
+        }
+      }
+
+      return {
         hashrate: data.currentHashrate || 0,
         hashrate24h: data.hashrate || 0,
         workers: workers,
+        workersOnline: workersOnline,
+        workersTotal: totalWorkers,
         balance: (data.stats?.balance || 0) / divisor,
         paid: (data.stats?.paid || 0) / divisor,
         earnings24h: earnings24h,
         lastShare: data.stats?.lastShare
       };
-      console.log('Final parsed result:', result);
-      return result;
     }
   },
   'nanopool': {

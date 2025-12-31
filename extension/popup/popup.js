@@ -164,8 +164,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
       } else {
         const { wallet, poolData, netProfit } = result;
-        const onlineWorkers = poolData.workers?.filter(w => !w.offline).length || 0;
-        const totalWorkers = poolData.workers?.length || 0;
+        // Use workersOnline/workersTotal if available, otherwise count from array
+        const onlineWorkers = poolData.workersOnline ?? poolData.workers?.filter(w => !w.offline).length ?? 0;
+        const totalWorkers = poolData.workersTotal ?? poolData.workers?.length ?? 0;
 
         card.innerHTML = `
           <div class="wallet-card-header">
