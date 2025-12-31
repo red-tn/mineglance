@@ -84,7 +84,7 @@ export default function PrivacyPolicy() {
               <ul className="list-disc pl-6 space-y-2">
                 <li><strong>Access your data:</strong> All your data is visible in the extension settings</li>
                 <li><strong>Delete your data:</strong> Uninstall the extension or clear extension data in Chrome settings</li>
-                <li><strong>Request Pro account deletion:</strong> Email support@mineglance.com</li>
+                <li><strong>Request Pro account deletion:</strong> Email control@mineglance.com</li>
               </ul>
             </section>
 
@@ -113,8 +113,8 @@ export default function PrivacyPolicy() {
               <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Contact Us</h2>
               <p>
                 Questions about this policy? Email us at{' '}
-                <a href="mailto:privacy@mineglance.com" className="text-accent hover:underline">
-                  privacy@mineglance.com
+                <a href="mailto:control@mineglance.com" className="text-accent hover:underline">
+                  control@mineglance.com
                 </a>
               </p>
             </section>

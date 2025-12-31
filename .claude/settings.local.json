@@ -16,7 +16,9 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(git remote set-url:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nMove files to repo root for Vercel deployment\n\n- Next.js 14 with App Router and TypeScript\n- Tailwind CSS with custom color scheme\n- Homepage with hero, problem/solution, features, pricing, FAQ\n- Privacy policy and Terms of Service pages\n- Support/FAQ page\n- Custom SVG logo \\(standard, icon, white variants\\)\n- Mobile-responsive design\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nMove files to repo root for Vercel deployment\n\n- Next.js 14 with App Router and TypeScript\n- Tailwind CSS with custom color scheme\n- Homepage with hero, problem/solution, features, pricing, FAQ\n- Privacy policy and Terms of Service pages\n- Support/FAQ page\n- Custom SVG logo \\(standard, icon, white variants\\)\n- Mobile-responsive design\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(cat:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

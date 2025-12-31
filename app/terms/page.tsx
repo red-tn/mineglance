@@ -57,7 +57,7 @@ export default function TermsOfService() {
               <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Refund Policy</h2>
               <p>
                 We offer a <strong>30-day money-back guarantee</strong> on all Pro purchases. If you&apos;re
-                not satisfied with MineGlance Pro, contact us at support@mineglance.com within 30 days
+                not satisfied with MineGlance Pro, contact us at control@mineglance.com within 30 days
                 of purchase for a full refund. No questions asked.
               </p>
             </section>
@@ -139,8 +139,8 @@ export default function TermsOfService() {
               <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Contact</h2>
               <p>
                 Questions about these terms? Email us at{' '}
-                <a href="mailto:legal@mineglance.com" className="text-accent hover:underline">
-                  legal@mineglance.com
+                <a href="mailto:control@mineglance.com" className="text-accent hover:underline">
+                  control@mineglance.com
                 </a>
               </p>
             </section>

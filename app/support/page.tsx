@@ -116,7 +116,7 @@ export default function Support() {
                 <li>Make sure you&apos;re using the same email you purchased with</li>
                 <li>Check your spam folder for the confirmation email</li>
                 <li>Try logging out and back in</li>
-                <li>Contact support@mineglance.com with your purchase email</li>
+                <li>Contact control@mineglance.com with your purchase email</li>
               </ul>
             </div>
           </div>
@@ -136,13 +136,13 @@ export default function Support() {
               Can&apos;t find what you&apos;re looking for? We typically respond within 24 hours.
             </p>
             <a
-              href="mailto:support@mineglance.com"
+              href="mailto:control@mineglance.com"
               className="inline-flex items-center justify-center px-6 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-green-600 transition-colors"
             >
               Email Support
             </a>
             <p className="mt-4 text-sm text-foreground/60">
-              support@mineglance.com
+              control@mineglance.com
             </p>
           </div>
         </div>
