@@ -67,31 +67,45 @@ const POOLS = {
     getStatsUrl: (coin, address) => `https://${coin}.2miners.com/api/accounts/${address}`,
     parseResponse: (data, coin) => {
       const divisor = getCoinDivisor(coin);
-      // Sum all 24h rewards from sumrewards array
+
+      // Debug logging
+      console.log('2Miners raw data:', JSON.stringify(data, null, 2));
+      console.log('Divisor for', coin, ':', divisor);
+
+      // Calculate 24h earnings from sumrewards array
       let earnings24h = 0;
       if (data.sumrewards && Array.isArray(data.sumrewards)) {
-        // sumrewards contains last 24h of rewards, sum them all
-        earnings24h = data.sumrewards.reduce((sum, r) => sum + (r.reward || 0), 0) / divisor;
+        const rawSum = data.sumrewards.reduce((sum, r) => sum + (r.reward || 0), 0);
+        earnings24h = rawSum / divisor;
+        console.log('sumrewards raw sum:', rawSum, '-> earnings24h:', earnings24h);
       }
-      // Also check 24hnumreward field
-      if (data['24hnumreward']) {
-        earnings24h = data['24hnumreward'] / divisor;
+
+      // Parse workers - 2Miners returns object, not array
+      const workers = [];
+      if (data.workers && typeof data.workers === 'object') {
+        for (const [name, w] of Object.entries(data.workers)) {
+          workers.push({
+            name: name,
+            hashrate: w.hr || 0,
+            hashrate24h: w.hr2 || 0,
+            lastSeen: w.lastBeat,
+            offline: (Date.now() / 1000 - (w.lastBeat || 0)) > 600
+          });
+        }
       }
-      return {
+      console.log('Parsed workers:', workers);
+
+      const result = {
         hashrate: data.currentHashrate || 0,
         hashrate24h: data.hashrate || 0,
-        workers: Object.entries(data.workers || {}).map(([name, w]) => ({
-          name: name,
-          hashrate: w.hr || 0,
-          hashrate24h: w.hr2 || 0,
-          lastSeen: w.lastBeat,
-          offline: (Date.now() / 1000 - (w.lastBeat || 0)) > 600
-        })),
+        workers: workers,
         balance: (data.stats?.balance || 0) / divisor,
         paid: (data.stats?.paid || 0) / divisor,
         earnings24h: earnings24h,
         lastShare: data.stats?.lastShare
       };
+      console.log('Final parsed result:', result);
+      return result;
     }
   },
   'nanopool': {
