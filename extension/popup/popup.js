@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Calculate earnings (24h estimate)
         const earnings24h = poolData.earnings24h || 0;
         const revenue = earnings24h * (price || 0);
+        console.log(`${wallet.coin}: earnings24h=${earnings24h}, price=${price}, revenue=${revenue}`);
 
         // Calculate electricity cost (24h)
         const powerWatts = wallet.power || 200;
