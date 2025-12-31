@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="options.css">
+  <title>MineGlance Settings</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="../icons/icon48.png" alt="MineGlance">
+        <h1>MineGlance Settings</h1>
+      </div>
+      <div id="proStatus" class="pro-badge hidden">PRO</div>
+    </header>
+
+    <main class="main">
+      <!-- Wallets Section -->
+      <section class="section">
+        <div class="section-header">
+          <h2>Wallets</h2>
+          <button id="addWalletBtn" class="btn btn-primary">+ Add Wallet</button>
+        </div>
+
+        <div id="walletsList" class="wallets-list">
+          <!-- Wallet items inserted here -->
+        </div>
+
+        <div id="noWallets" class="empty-state">
+          <p>No wallets configured yet.</p>
+          <p class="muted">Click "Add Wallet" to get started.</p>
+        </div>
+      </section>
+
+      <!-- Electricity Section -->
+      <section class="section">
+        <h2>Electricity Cost</h2>
+        <p class="section-desc">Enter your electricity rate for accurate profit calculations.</p>
+
+        <div class="form-group">
+          <label for="zipCode">ZIP Code (for rate lookup)</label>
+          <div class="input-with-button">
+            <input type="text" id="zipCode" placeholder="e.g., 90210" maxlength="5">
+            <button id="lookupRateBtn" class="btn btn-secondary">Lookup Rate</button>
+          </div>
+          <p id="lookupResult" class="lookup-result hidden"></p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="electricityRate">Rate ($/kWh)</label>
+            <input type="number" id="electricityRate" step="0.01" min="0" placeholder="0.12">
+          </div>
+          <div class="form-group">
+            <label for="currency">Currency</label>
+            <select id="currency">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="CAD">CAD ($)</option>
+              <option value="AUD">AUD ($)</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="help-text">
+          US average: $0.12/kWh. Check your utility bill for your exact rate.
+        </p>
+      </section>
+
+      <!-- Rigs Section -->
+      <section class="section">
+        <div class="section-header">
+          <h2>Mining Rigs</h2>
+          <button id="addRigBtn" class="btn btn-secondary">+ Add Rig</button>
+        </div>
+
+        <div id="rigsList" class="rigs-list">
+          <!-- Rig items inserted here -->
+        </div>
+
+        <div id="noRigs" class="empty-state">
+          <p>No rigs configured.</p>
+          <p class="muted">Add your GPUs to track power consumption.</p>
+        </div>
+      </section>
+
+      <!-- Notifications Section (Pro) -->
+      <section class="section" id="notificationsSection">
+        <h2>Notifications <span class="pro-feature">PRO</span></h2>
+        <p class="section-desc">Get alerts when something needs your attention.</p>
+
+        <div class="toggle-group">
+          <label class="toggle">
+            <input type="checkbox" id="notifyWorkerOffline" disabled>
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Worker goes offline</span>
+          </label>
+
+          <label class="toggle">
+            <input type="checkbox" id="notifyProfitDrop" disabled>
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Profit drops significantly</span>
+          </label>
+
+          <div class="sub-option hidden" id="profitDropThresholdGroup">
+            <label for="profitDropThreshold">Alert when profit drops by:</label>
+            <select id="profitDropThreshold" disabled>
+              <option value="10">10%</option>
+              <option value="20" selected>20%</option>
+              <option value="30">30%</option>
+              <option value="50">50%</option>
+            </select>
+          </div>
+
+          <label class="toggle">
+            <input type="checkbox" id="notifyBetterCoin" disabled>
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">More profitable coin available</span>
+          </label>
+        </div>
+
+        <div id="proUpgradeNotice" class="pro-notice">
+          <p>🔒 Notifications require MineGlance Pro</p>
+          <button id="upgradeBtn" class="btn btn-accent">Upgrade for $29</button>
+        </div>
+      </section>
+
+      <!-- Auto-Refresh Section (Pro) -->
+      <section class="section">
+        <h2>Auto-Refresh <span class="pro-feature">PRO</span></h2>
+
+        <div class="form-group">
+          <label for="refreshInterval">Refresh interval</label>
+          <select id="refreshInterval" disabled>
+            <option value="1">Every 1 minute</option>
+            <option value="5" selected>Every 5 minutes</option>
+            <option value="15">Every 15 minutes</option>
+            <option value="30">Every 30 minutes</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Save Button -->
+      <div class="actions">
+        <button id="saveBtn" class="btn btn-primary btn-large">Save Settings</button>
+        <span id="saveStatus" class="save-status hidden">✓ Saved</span>
+      </div>
+    </main>
+
+    <!-- Add Wallet Modal -->
+    <div id="walletModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="walletModalTitle">Add Wallet</h3>
+          <button class="modal-close" id="closeWalletModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="walletName">Wallet Name</label>
+            <input type="text" id="walletName" placeholder="e.g., Main Rig">
+          </div>
+          <div class="form-group">
+            <label for="walletPool">Mining Pool</label>
+            <select id="walletPool">
+              <option value="2miners">2Miners</option>
+              <option value="nanopool">Nanopool</option>
+              <option value="f2pool">F2Pool</option>
+              <option value="flexpool">Flexpool</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="walletCoin">Coin</label>
+            <select id="walletCoin">
+              <option value="rvn">Ravencoin (RVN)</option>
+              <option value="etc">Ethereum Classic (ETC)</option>
+              <option value="flux">Flux (FLUX)</option>
+              <option value="erg">Ergo (ERG)</option>
+              <option value="kas">Kaspa (KAS)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="walletAddress">Wallet Address</label>
+            <input type="text" id="walletAddress" placeholder="Your mining wallet address">
+          </div>
+          <div class="form-group">
+            <label for="walletPower">Total Power Consumption (Watts)</label>
+            <input type="number" id="walletPower" placeholder="e.g., 200" min="0">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelWalletBtn" class="btn btn-secondary">Cancel</button>
+          <button id="saveWalletBtn" class="btn btn-primary">Save Wallet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Rig Modal -->
+    <div id="rigModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Add Mining Rig</h3>
+          <button class="modal-close" id="closeRigModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="rigName">Rig Name</label>
+            <input type="text" id="rigName" placeholder="e.g., Gaming PC">
+          </div>
+          <div class="form-group">
+            <label for="rigGpu">GPU Model</label>
+            <select id="rigGpu">
+              <option value="">Select GPU...</option>
+              <optgroup label="NVIDIA RTX 50 Series">
+                <option value="rtx5090" data-power="575">RTX 5090 (575W)</option>
+                <option value="rtx5080" data-power="360">RTX 5080 (360W)</option>
+                <option value="rtx5070ti" data-power="300">RTX 5070 Ti (300W)</option>
+                <option value="rtx5070" data-power="250">RTX 5070 (250W)</option>
+                <option value="rtx5060" data-power="150">RTX 5060 (150W)</option>
+              </optgroup>
+              <optgroup label="NVIDIA RTX 40 Series">
+                <option value="rtx4090" data-power="450">RTX 4090 (450W)</option>
+                <option value="rtx4080" data-power="320">RTX 4080 (320W)</option>
+                <option value="rtx4070ti" data-power="285">RTX 4070 Ti (285W)</option>
+                <option value="rtx4070" data-power="200">RTX 4070 (200W)</option>
+                <option value="rtx4060ti" data-power="165">RTX 4060 Ti (165W)</option>
+                <option value="rtx4060" data-power="115">RTX 4060 (115W)</option>
+              </optgroup>
+              <optgroup label="NVIDIA RTX 30 Series">
+                <option value="rtx3090" data-power="350">RTX 3090 (350W)</option>
+                <option value="rtx3080" data-power="320">RTX 3080 (320W)</option>
+                <option value="rtx3070" data-power="220">RTX 3070 (220W)</option>
+                <option value="rtx3060ti" data-power="200">RTX 3060 Ti (200W)</option>
+                <option value="rtx3060" data-power="170">RTX 3060 (170W)</option>
+              </optgroup>
+              <optgroup label="NVIDIA RTX 20 Series">
+                <option value="rtx2080ti" data-power="250">RTX 2080 Ti (250W)</option>
+                <option value="rtx2080" data-power="215">RTX 2080 (215W)</option>
+                <option value="rtx2070" data-power="175">RTX 2070 (175W)</option>
+                <option value="rtx2060" data-power="160">RTX 2060 (160W)</option>
+              </optgroup>
+              <optgroup label="AMD RX 7000 Series">
+                <option value="rx7900xtx" data-power="355">RX 7900 XTX (355W)</option>
+                <option value="rx7900xt" data-power="315">RX 7900 XT (315W)</option>
+                <option value="rx7800xt" data-power="263">RX 7800 XT (263W)</option>
+                <option value="rx7700xt" data-power="245">RX 7700 XT (245W)</option>
+                <option value="rx7600" data-power="165">RX 7600 (165W)</option>
+              </optgroup>
+              <optgroup label="AMD RX 6000 Series">
+                <option value="rx6900xt" data-power="300">RX 6900 XT (300W)</option>
+                <option value="rx6800xt" data-power="300">RX 6800 XT (300W)</option>
+                <option value="rx6700xt" data-power="230">RX 6700 XT (230W)</option>
+                <option value="rx6600xt" data-power="160">RX 6600 XT (160W)</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="rigPower">Power Consumption (W)</label>
+            <input type="number" id="rigPower" placeholder="Auto-filled from GPU" min="0">
+            <p class="help-text">Actual power during mining. Check your mining software.</p>
+          </div>
+          <div class="form-group">
+            <label for="rigQuantity">Quantity</label>
+            <input type="number" id="rigQuantity" value="1" min="1" max="20">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelRigBtn" class="btn btn-secondary">Cancel</button>
+          <button id="saveRigBtn" class="btn btn-primary">Save Rig</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

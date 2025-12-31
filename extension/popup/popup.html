@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="popup.css">
+  <title>MineGlance</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <img src="../icons/icon48.png" alt="MineGlance">
+        <span>MineGlance</span>
+      </div>
+      <button id="settingsBtn" class="icon-btn" title="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <p>Fetching data...</p>
+    </div>
+
+    <!-- No Wallets State -->
+    <div id="noWallets" class="empty-state hidden">
+      <div class="empty-icon">💰</div>
+      <p>No wallets configured</p>
+      <button id="addWalletBtn" class="btn btn-primary">Add Wallet</button>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="dashboard hidden">
+      <!-- Summary Card -->
+      <div class="summary-card">
+        <div class="summary-label">Daily Net Profit</div>
+        <div id="totalProfit" class="summary-value profit-positive">+$0.00</div>
+        <div id="profitBreakdown" class="summary-breakdown">
+          <span class="revenue">↑ $0.00 revenue</span>
+          <span class="electricity">↓ $0.00 electricity</span>
+        </div>
+      </div>
+
+      <!-- Wallet List -->
+      <div id="walletList" class="wallet-list">
+        <!-- Wallet cards inserted here by JS -->
+      </div>
+
+      <!-- Should I Switch? (Paid Feature) -->
+      <div id="coinComparison" class="coin-comparison hidden">
+        <h3>💡 Better Options?</h3>
+        <div id="comparisonList"></div>
+      </div>
+
+      <!-- Last Updated -->
+      <div class="footer-info">
+        <span id="lastUpdated">Last updated: --</span>
+        <button id="refreshBtn" class="btn btn-small">Refresh</button>
+      </div>
+    </div>
+
+    <!-- Upgrade Banner (Free Users) -->
+    <div id="upgradeBanner" class="upgrade-banner hidden">
+      <p>Unlock auto-refresh, alerts & more</p>
+      <button id="upgradeBtn" class="btn btn-accent">Upgrade $29</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

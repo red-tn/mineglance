@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "MineGlance - Mining Profit Dashboard",
+  "version": "1.0.0",
+  "description": "Are you actually making money mining? Find out in 2 clicks. Net profit dashboard for hobbyist GPU miners.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://*.2miners.com/*",
+    "https://*.nanopool.org/*",
+    "https://*.f2pool.com/*",
+    "https://*.flexpool.io/*",
+    "https://api.coingecko.com/*",
+    "https://whattomine.com/*"
+  ],
+  "background": {
+    "service_worker": "background/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": "icons/logo-icon.svg",
+    "default_title": "MineGlance"
+  },
+  "options_page": "options/options.html",
+  "icons": {
+    "128": "icons/logo-icon.svg"
+  }
+}
