@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ received: true })
 }
 
-async function savePaidUser(supabase: ReturnType<typeof createClient>, data: {
+async function savePaidUser(supabase: any, data: {
   email: string
   customerId: string | null
   paymentId: string
