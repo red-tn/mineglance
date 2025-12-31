@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function updateSummary(netProfit, revenue, electricityCost) {
     const profitClass = netProfit >= 0 ? 'profit-positive' : 'profit-negative';
-    const sign = netProfit >= 0 ? '+' : '';
+    const sign = netProfit >= 0 ? '+' : '-';
 
     totalProfit.className = `summary-value ${profitClass}`;
     totalProfit.textContent = `${sign}$${Math.abs(netProfit).toFixed(2)}`;
