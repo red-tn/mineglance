@@ -39,7 +39,7 @@ export default function CheckoutSuccess() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">Something went wrong</h1>
-          <p className="text-foreground/70 mb-6">We couldn't confirm your purchase. Please contact support.</p>
+          <p className="text-foreground/70 mb-6">We could not confirm your purchase. Please contact support.</p>
           <Link
             href="/"
             className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors"
@@ -69,7 +69,7 @@ export default function CheckoutSuccess() {
             <li>Open the MineGlance extension</li>
             <li>Go to Settings</li>
             <li>Enter the email you used for purchase</li>
-            <li>Click "Activate Pro"</li>
+            <li>Click Activate Pro</li>
           </ol>
         </div>
         <Link
