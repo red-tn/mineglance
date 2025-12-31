@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <!-- Icon: Stylized pickaxe + rising chart -->
+  <g>
+    <!-- Base shape - rounded square -->
+    <rect x="2" y="6" width="36" height="36" rx="8" fill="white"/>
+
+    <!-- Mining pickaxe abstracted as chart bars rising -->
+    <rect x="8" y="28" width="6" height="10" rx="1" fill="#38a169"/>
+    <rect x="17" y="22" width="6" height="16" rx="1" fill="#38a169"/>
+    <rect x="26" y="14" width="6" height="24" rx="1" fill="#38a169"/>
+
+    <!-- Upward trend line -->
+    <path d="M8 30 L17 24 L26 16 L34 10" stroke="#1a365d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="34" cy="10" r="3" fill="#1a365d"/>
+  </g>
+
+  <!-- Text: MineGlance -->
+  <text x="46" y="33" font-family="system-ui, -apple-system, sans-serif" font-size="26" font-weight="700" fill="white">
+    Mine<tspan fill="#38a169">Glance</tspan>
+  </text>
+</svg>
