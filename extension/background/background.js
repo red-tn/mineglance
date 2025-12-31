@@ -24,161 +24,252 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Pool API configurations
-const POOL_APIS = {
+// Supported pools and their API configurations
+const POOLS = {
   '2miners': {
-    baseUrl: 'https://eth.2miners.com/api',
-    getStats: (coin, address) => `https://${coin}.2miners.com/api/accounts/${address}`,
+    name: '2Miners',
+    coins: ['eth', 'etc', 'rvn', 'ergo', 'flux', 'kas', 'btg', 'ckb', 'ctxc', 'beam', 'firo', 'mwc', 'nexa', 'xna', 'zil'],
+    getStatsUrl: (coin, address) => `https://${coin}.2miners.com/api/accounts/${address}`,
+    parseResponse: (data) => ({
+      hashrate: data.currentHashrate || 0,
+      hashrate24h: data.hashrate || 0,
+      workers: Object.entries(data.workers || {}).map(([name, w]) => ({
+        name: name,
+        hashrate: w.hr || 0,
+        hashrate24h: w.hr2 || 0,
+        lastSeen: w.lastBeat,
+        offline: (Date.now() / 1000 - (w.lastBeat || 0)) > 600
+      })),
+      balance: (data.stats?.balance || 0) / 1e9, // Convert from wei/satoshi
+      paid: (data.stats?.paid || 0) / 1e9,
+      earnings24h: data.sumrewards?.[0]?.reward ? data.sumrewards[0].reward / 1e9 : 0,
+      lastShare: data.stats?.lastShare
+    })
   },
   'nanopool': {
-    baseUrl: 'https://api.nanopool.org/v1',
-    getStats: (coin, address) => `https://api.nanopool.org/v1/${coin}/user/${address}`,
+    name: 'Nanopool',
+    coins: ['eth', 'etc', 'zec', 'xmr', 'ergo', 'rvn', 'cfx'],
+    getStatsUrl: (coin, address) => `https://api.nanopool.org/v1/${coin}/user/${address}`,
+    parseResponse: (data) => ({
+      hashrate: data.data?.hashrate || 0,
+      hashrate24h: data.data?.avgHashrate?.h24 || 0,
+      workers: (data.data?.workers || []).map(w => ({
+        name: w.id || 'Worker',
+        hashrate: w.hashrate || 0,
+        lastSeen: w.lastshare,
+        offline: (Date.now() / 1000 - (w.lastshare || 0)) > 600
+      })),
+      balance: data.data?.balance || 0,
+      paid: 0,
+      earnings24h: data.data?.avgHashrate?.h24 ? estimateEarnings(data.data.avgHashrate.h24) : 0,
+      lastShare: data.data?.workers?.[0]?.lastshare
+    })
   },
   'f2pool': {
-    baseUrl: 'https://api.f2pool.com',
-    getStats: (coin, address) => `https://api.f2pool.com/${coin}/${address}`,
+    name: 'F2Pool',
+    coins: ['btc', 'eth', 'etc', 'ltc', 'dash', 'zec', 'xmr', 'rvn', 'ckb'],
+    getStatsUrl: (coin, address) => `https://api.f2pool.com/${coin}/${address}`,
+    parseResponse: (data) => ({
+      hashrate: data.hashrate || 0,
+      hashrate24h: data.hashrate_24h || 0,
+      workers: (data.workers || []).map(w => ({
+        name: w.worker_name || 'Worker',
+        hashrate: w.hashrate || 0,
+        lastSeen: w.last_share_time,
+        offline: (Date.now() / 1000 - (w.last_share_time || 0)) > 600
+      })),
+      balance: data.balance || 0,
+      paid: data.paid || 0,
+      earnings24h: data.value_last_day || 0,
+      lastShare: data.last_share_time
+    })
   },
   'flexpool': {
-    baseUrl: 'https://api.flexpool.io/v2',
-    getStats: (coin, address) => `https://api.flexpool.io/v2/miner/stats?coin=${coin}&address=${address}`,
+    name: 'Flexpool',
+    coins: ['eth', 'etc'],
+    getStatsUrl: (coin, address) => `https://api.flexpool.io/v2/miner/stats?coin=${coin.toUpperCase()}&address=${address}`,
+    parseResponse: (data) => ({
+      hashrate: data.result?.currentEffectiveHashrate || 0,
+      hashrate24h: data.result?.averageEffectiveHashrate || 0,
+      workers: [],
+      balance: (data.result?.balance || 0) / 1e18,
+      paid: 0,
+      earnings24h: 0,
+      lastShare: data.result?.lastSeen
+    })
+  },
+  'ethermine': {
+    name: 'Ethermine',
+    coins: ['eth', 'etc'],
+    getStatsUrl: (coin, address) => `https://api.ethermine.org/miner/${address}/currentStats`,
+    parseResponse: (data) => ({
+      hashrate: data.data?.currentHashrate || 0,
+      hashrate24h: data.data?.averageHashrate || 0,
+      workers: [],
+      balance: (data.data?.unpaid || 0) / 1e18,
+      paid: 0,
+      earnings24h: (data.data?.coinsPerMin || 0) * 60 * 24,
+      lastShare: data.data?.lastSeen
+    })
+  },
+  'hiveon': {
+    name: 'Hiveon Pool',
+    coins: ['eth', 'etc', 'rvn'],
+    getStatsUrl: (coin, address) => `https://hiveon.net/api/v1/stats/miner/${address}/${coin.toUpperCase()}/billing-acc`,
+    parseResponse: (data) => ({
+      hashrate: data.hashrate || 0,
+      hashrate24h: data.hashrate24h || 0,
+      workers: [],
+      balance: data.balance || 0,
+      paid: data.paid || 0,
+      earnings24h: data.expectedReward24H || 0,
+      lastShare: null
+    })
+  },
+  'herominers': {
+    name: 'HeroMiners',
+    coins: ['rvn', 'ergo', 'flux', 'kas', 'nexa', 'alph', 'xmr', 'rtm'],
+    getStatsUrl: (coin, address) => `https://${coin}.herominers.com/api/stats_address?address=${address}`,
+    parseResponse: (data) => ({
+      hashrate: data.stats?.hashrate || 0,
+      hashrate24h: data.stats?.hashrate || 0,
+      workers: (data.workers || []).map(w => ({
+        name: w.name || 'Worker',
+        hashrate: w.hashrate || 0,
+        lastSeen: w.lastShare,
+        offline: (Date.now() / 1000 - (w.lastShare || 0)) > 600
+      })),
+      balance: data.stats?.balance || 0,
+      paid: data.stats?.paid || 0,
+      earnings24h: data.stats?.balance || 0,
+      lastShare: data.stats?.lastShare
+    })
+  },
+  'woolypooly': {
+    name: 'WoolyPooly',
+    coins: ['rvn', 'ergo', 'flux', 'kas', 'etc', 'cfx', 'nexa', 'alph'],
+    getStatsUrl: (coin, address) => `https://api.woolypooly.com/api/${coin}-1/accounts/${address}`,
+    parseResponse: (data) => ({
+      hashrate: data.perfomance?.currentHashrate || 0,
+      hashrate24h: data.perfomance?.averageHashrate || 0,
+      workers: (data.workers || []).map(w => ({
+        name: w.worker || 'Worker',
+        hashrate: w.hashrate || 0,
+        lastSeen: w.lastshare,
+        offline: (Date.now() / 1000 - (w.lastshare || 0)) > 600
+      })),
+      balance: data.stats?.balance || 0,
+      paid: data.stats?.paid || 0,
+      earnings24h: data.rewards?.day || 0,
+      lastShare: data.stats?.lastShare
+    })
   }
 };
 
-// Coin configurations
+// Coin configurations with CoinGecko IDs
 const COINS = {
-  'rvn': { name: 'Ravencoin', symbol: 'RVN', algorithm: 'kawpow' },
-  'etc': { name: 'Ethereum Classic', symbol: 'ETC', algorithm: 'etchash' },
-  'flux': { name: 'Flux', symbol: 'FLUX', algorithm: 'zelHash' },
-  'erg': { name: 'Ergo', symbol: 'ERG', algorithm: 'autolykos2' },
-  'kas': { name: 'Kaspa', symbol: 'KAS', algorithm: 'kheavyhash' }
+  'eth': { name: 'Ethereum', symbol: 'ETH', geckoId: 'ethereum' },
+  'etc': { name: 'Ethereum Classic', symbol: 'ETC', geckoId: 'ethereum-classic' },
+  'rvn': { name: 'Ravencoin', symbol: 'RVN', geckoId: 'ravencoin' },
+  'ergo': { name: 'Ergo', symbol: 'ERG', geckoId: 'ergo' },
+  'flux': { name: 'Flux', symbol: 'FLUX', geckoId: 'zelcash' },
+  'kas': { name: 'Kaspa', symbol: 'KAS', geckoId: 'kaspa' },
+  'nexa': { name: 'Nexa', symbol: 'NEXA', geckoId: 'nexa' },
+  'alph': { name: 'Alephium', symbol: 'ALPH', geckoId: 'alephium' },
+  'xmr': { name: 'Monero', symbol: 'XMR', geckoId: 'monero' },
+  'zec': { name: 'Zcash', symbol: 'ZEC', geckoId: 'zcash' },
+  'btc': { name: 'Bitcoin', symbol: 'BTC', geckoId: 'bitcoin' },
+  'ltc': { name: 'Litecoin', symbol: 'LTC', geckoId: 'litecoin' },
+  'dash': { name: 'Dash', symbol: 'DASH', geckoId: 'dash' },
+  'cfx': { name: 'Conflux', symbol: 'CFX', geckoId: 'conflux-token' },
+  'ckb': { name: 'Nervos', symbol: 'CKB', geckoId: 'nervos-network' },
+  'beam': { name: 'Beam', symbol: 'BEAM', geckoId: 'beam' },
+  'firo': { name: 'Firo', symbol: 'FIRO', geckoId: 'firo' },
+  'rtm': { name: 'Raptoreum', symbol: 'RTM', geckoId: 'raptoreum' },
+  'xna': { name: 'Neurai', symbol: 'XNA', geckoId: 'neurai' },
+  'btg': { name: 'Bitcoin Gold', symbol: 'BTG', geckoId: 'bitcoin-gold' },
+  'mwc': { name: 'MimbleWimbleCoin', symbol: 'MWC', geckoId: 'mimblewimblecoin' },
+  'zil': { name: 'Zilliqa', symbol: 'ZIL', geckoId: 'zilliqa' },
+  'ctxc': { name: 'Cortex', symbol: 'CTXC', geckoId: 'cortex' }
 };
 
 // Fetch pool data for a wallet
 async function fetchPoolData(pool, coin, address) {
-  const poolConfig = POOL_APIS[pool];
+  const poolConfig = POOLS[pool];
   if (!poolConfig) {
     throw new Error(`Unsupported pool: ${pool}`);
   }
 
-  const url = poolConfig.getStats(coin, address);
+  // Normalize coin name
+  const coinLower = coin.toLowerCase();
+
+  const url = poolConfig.getStatsUrl(coinLower, address);
+  console.log(`Fetching from: ${url}`);
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
+
     if (!response.ok) {
-      throw new Error(`Pool API error: ${response.status}`);
+      throw new Error(`Pool API returned ${response.status}`);
     }
 
     const data = await response.json();
-    return normalizePoolData(pool, coin, data);
+    console.log('Pool response:', data);
+
+    // Check for error responses
+    if (data.error || data.status === 'error') {
+      throw new Error(data.error || data.message || 'Pool returned error');
+    }
+
+    return poolConfig.parseResponse(data);
   } catch (error) {
     console.error(`Error fetching pool data:`, error);
     throw error;
   }
 }
 
-// Normalize pool data to common format
-function normalizePoolData(pool, coin, rawData) {
-  // Each pool has different response formats, normalize them
-  switch (pool) {
-    case '2miners':
-      return {
-        hashrate: rawData.currentHashrate || 0,
-        hashrate24h: rawData.hashrate || 0,
-        workers: (rawData.workers || []).map(w => ({
-          name: w.name || 'Worker',
-          hashrate: w.hr || 0,
-          lastSeen: w.lastBeat,
-          offline: (Date.now() / 1000 - w.lastBeat) > 600 // 10 min threshold
-        })),
-        balance: rawData.stats?.balance || 0,
-        paid: rawData.stats?.paid || 0,
-        earnings24h: rawData.sumrewards?.[0]?.reward || 0,
-        lastShare: rawData.stats?.lastShare
-      };
-
-    case 'nanopool':
-      return {
-        hashrate: rawData.data?.hashrate || 0,
-        hashrate24h: rawData.data?.avgHashrate?.h24 || 0,
-        workers: (rawData.data?.workers || []).map(w => ({
-          name: w.id || 'Worker',
-          hashrate: w.hashrate || 0,
-          lastSeen: w.lastshare,
-          offline: (Date.now() / 1000 - w.lastshare) > 600
-        })),
-        balance: rawData.data?.balance || 0,
-        paid: rawData.data?.paid || 0,
-        earnings24h: 0, // Calculate from other data
-        lastShare: rawData.data?.lastShare
-      };
-
-    case 'f2pool':
-      return {
-        hashrate: rawData.hashrate || 0,
-        hashrate24h: rawData.hashrate_24h || 0,
-        workers: (rawData.workers || []).map(w => ({
-          name: w.name || 'Worker',
-          hashrate: w.hashrate || 0,
-          lastSeen: w.last_share_time,
-          offline: (Date.now() / 1000 - w.last_share_time) > 600
-        })),
-        balance: rawData.balance || 0,
-        paid: rawData.paid || 0,
-        earnings24h: rawData.value_24h || 0,
-        lastShare: rawData.last_share_time
-      };
-
-    case 'flexpool':
-      return {
-        hashrate: rawData.result?.currentEffectiveHashrate || 0,
-        hashrate24h: rawData.result?.averageEffectiveHashrate || 0,
-        workers: [], // Flexpool needs separate worker endpoint
-        balance: rawData.result?.balance || 0,
-        paid: rawData.result?.paid || 0,
-        earnings24h: 0,
-        lastShare: rawData.result?.lastSeen
-      };
-
-    default:
-      return rawData;
-  }
-}
-
 // Fetch current coin price from CoinGecko
 async function fetchCoinPrice(coinSymbol) {
-  const coinIds = {
-    'RVN': 'ravencoin',
-    'ETC': 'ethereum-classic',
-    'FLUX': 'zelcash',
-    'ERG': 'ergo',
-    'KAS': 'kaspa'
-  };
+  const coinLower = coinSymbol.toLowerCase();
+  const coinConfig = COINS[coinLower];
 
-  const coinId = coinIds[coinSymbol.toUpperCase()];
-  if (!coinId) return null;
+  if (!coinConfig?.geckoId) {
+    console.warn(`No CoinGecko ID for coin: ${coinSymbol}`);
+    return null;
+  }
 
   try {
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinConfig.geckoId}&vs_currencies=usd`,
+      {
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
     );
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko API returned ${response.status}`);
+    }
+
     const data = await response.json();
-    return data[coinId]?.usd || null;
+    const price = data[coinConfig.geckoId]?.usd || null;
+    console.log(`Price for ${coinSymbol}: $${price}`);
+    return price;
   } catch (error) {
     console.error('Error fetching coin price:', error);
     return null;
   }
 }
 
-// Calculate electricity cost
-function calculateElectricityCost(powerWatts, hours, ratePerKwh) {
-  const kWh = (powerWatts / 1000) * hours;
-  return kWh * ratePerKwh;
-}
-
-// Calculate net profit
-function calculateNetProfit(earnings, coinPrice, electricityCost) {
-  const grossRevenue = earnings * coinPrice;
-  return grossRevenue - electricityCost;
+// Estimate earnings (placeholder for pools that don't provide this)
+function estimateEarnings(hashrate) {
+  // This is a very rough estimate, actual implementation would use network difficulty
+  return 0;
 }
 
 // Set up alarm for auto-refresh (paid users only)
@@ -199,7 +290,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-// Refresh data and check for alerts
+// Refresh all wallet data
 async function refreshAllData() {
   const { wallets, settings, isPaid } = await chrome.storage.local.get(['wallets', 'settings', 'isPaid']);
 
@@ -215,7 +306,7 @@ async function refreshAllData() {
         if (offlineWorkers.length > 0) {
           chrome.notifications.create({
             type: 'basic',
-            iconUrl: '../icons/icon128.png',
+            iconUrl: 'icons/logo-icon.svg',
             title: 'MineGlance Alert',
             message: `${offlineWorkers.length} worker(s) offline: ${offlineWorkers.map(w => w.name).join(', ')}`
           });
@@ -236,16 +327,24 @@ async function refreshAllData() {
 
 // Listen for messages from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('Background received message:', message);
+
   if (message.action === 'refresh') {
     refreshAllData().then(() => sendResponse({ success: true }));
-    return true; // Keep channel open for async response
+    return true;
   }
 
   if (message.action === 'fetchPoolData') {
     fetchPoolData(message.pool, message.coin, message.address)
-      .then(data => sendResponse({ success: true, data }))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    return true;
+      .then(data => {
+        console.log('Sending pool data:', data);
+        sendResponse({ success: true, data });
+      })
+      .catch(error => {
+        console.error('Pool fetch error:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Keep channel open for async response
   }
 
   if (message.action === 'fetchCoinPrice') {
@@ -259,14 +358,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     setupAutoRefresh().then(() => sendResponse({ success: true }));
     return true;
   }
-});
 
-// Export for testing
-if (typeof module !== 'undefined') {
-  module.exports = {
-    fetchPoolData,
-    fetchCoinPrice,
-    calculateElectricityCost,
-    calculateNetProfit
-  };
-}
+  if (message.action === 'getPools') {
+    const pools = Object.entries(POOLS).map(([id, config]) => ({
+      id,
+      name: config.name,
+      coins: config.coins
+    }));
+    sendResponse({ success: true, pools });
+    return true;
+  }
+
+  if (message.action === 'getCoins') {
+    const coins = Object.entries(COINS).map(([id, config]) => ({
+      id,
+      ...config
+    }));
+    sendResponse({ success: true, coins });
+    return true;
+  }
+});

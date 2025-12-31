@@ -13,6 +13,10 @@
     "https://*.nanopool.org/*",
     "https://*.f2pool.com/*",
     "https://*.flexpool.io/*",
+    "https://api.ethermine.org/*",
+    "https://hiveon.net/*",
+    "https://*.herominers.com/*",
+    "https://api.woolypooly.com/*",
     "https://api.coingecko.com/*",
     "https://whattomine.com/*"
   ],

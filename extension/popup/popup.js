@@ -30,13 +30,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   refreshBtn.addEventListener('click', async () => {
     refreshBtn.disabled = true;
     refreshBtn.textContent = '...';
-    await refreshData();
+    await fetchAllWalletData();
     refreshBtn.disabled = false;
     refreshBtn.textContent = 'Refresh';
   });
 
   upgradeBtn.addEventListener('click', () => {
-    // TODO: Integrate ExtensionPay
     chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
   });
 
@@ -47,10 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoading();
 
     try {
-      const { wallets, isPaid, lastRefresh, electricity } = await chrome.storage.local.get([
+      const { wallets, isPaid, electricity } = await chrome.storage.local.get([
         'wallets',
         'isPaid',
-        'lastRefresh',
         'electricity'
       ]);
 
@@ -67,14 +65,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Load and display data
-      await loadDashboard(wallets, electricity, isPaid);
-
-      // Update last refresh time
-      if (lastRefresh) {
-        const date = new Date(lastRefresh);
-        lastUpdated.textContent = `Last updated: ${formatTime(date)}`;
-      }
+      // Fetch fresh data for all wallets
+      await fetchAllWalletData();
 
     } catch (error) {
       console.error('Error initializing popup:', error);
@@ -82,121 +74,130 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  async function loadDashboard(wallets, electricity, isPaid) {
-    showDashboard();
+  async function fetchAllWalletData() {
+    showLoading();
+
+    const { wallets, electricity } = await chrome.storage.local.get(['wallets', 'electricity']);
+
+    if (!wallets || wallets.length === 0) {
+      showNoWallets();
+      return;
+    }
 
     let totalRevenue = 0;
     let totalElectricityCost = 0;
-
-    walletList.innerHTML = '';
+    const walletResults = [];
 
     for (const wallet of wallets.filter(w => w.enabled)) {
-      // Get cached pool data
-      const key = `poolData_${wallet.id}`;
-      const { [key]: poolData } = await chrome.storage.local.get([key]);
+      try {
+        // Fetch pool data via background script
+        const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address);
 
-      if (poolData) {
-        // Fetch current price
-        const price = await getCoinPrice(wallet.coin);
+        // Fetch coin price
+        const price = await fetchCoinPrice(wallet.coin);
 
-        // Calculate earnings
+        // Calculate earnings (24h estimate)
         const earnings24h = poolData.earnings24h || 0;
         const revenue = earnings24h * (price || 0);
 
         // Calculate electricity cost (24h)
-        const powerWatts = wallet.power || 200; // Default 200W
-        const electricityCost = calculateElectricityCost(
-          powerWatts,
-          24,
-          electricity?.rate || 0.12
-        );
+        const powerWatts = wallet.power || 200;
+        const rate = electricity?.rate || 0.12;
+        const electricityCost = (powerWatts / 1000) * 24 * rate;
 
         const netProfit = revenue - electricityCost;
 
         totalRevenue += revenue;
         totalElectricityCost += electricityCost;
 
-        // Create wallet card
-        const card = createWalletCard(wallet, poolData, netProfit, price);
-        walletList.appendChild(card);
-      } else {
-        // No data yet, show placeholder
-        const card = createWalletCardPlaceholder(wallet);
-        walletList.appendChild(card);
+        walletResults.push({
+          wallet,
+          poolData,
+          price,
+          revenue,
+          electricityCost,
+          netProfit
+        });
+
+        // Cache the data
+        await chrome.storage.local.set({
+          [`poolData_${wallet.id}`]: poolData,
+          [`price_${wallet.coin}`]: price
+        });
+
+      } catch (error) {
+        console.error(`Error fetching ${wallet.name}:`, error);
+        walletResults.push({
+          wallet,
+          error: error.message
+        });
       }
     }
 
-    // Update summary
-    const totalNetProfit = totalRevenue - totalElectricityCost;
-    updateSummary(totalNetProfit, totalRevenue, totalElectricityCost);
+    // Update last refresh time
+    await chrome.storage.local.set({ lastRefresh: new Date().toISOString() });
+
+    // Render dashboard
+    showDashboard();
+    renderWallets(walletResults);
+    updateSummary(totalRevenue - totalElectricityCost, totalRevenue, totalElectricityCost);
+    lastUpdated.textContent = `Last updated: just now`;
   }
 
-  function createWalletCard(wallet, poolData, netProfit, price) {
-    const card = document.createElement('div');
-    card.className = 'wallet-card';
+  function renderWallets(walletResults) {
+    walletList.innerHTML = '';
 
-    const onlineWorkers = poolData.workers.filter(w => !w.offline).length;
-    const totalWorkers = poolData.workers.length;
-    const workersOnline = totalWorkers > 0;
+    for (const result of walletResults) {
+      const card = document.createElement('div');
+      card.className = 'wallet-card';
 
-    card.innerHTML = `
-      <div class="wallet-card-header">
-        <div class="wallet-name">
-          <span>${wallet.name || 'Wallet'}</span>
-          <span class="wallet-coin">${wallet.coin}</span>
-        </div>
-        <div class="wallet-profit ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">
-          ${netProfit >= 0 ? '+' : ''}$${netProfit.toFixed(2)}
-        </div>
-      </div>
-      <div class="wallet-stats">
-        <div class="stat">
-          <div class="stat-label">Hashrate</div>
-          <div class="stat-value">${formatHashrate(poolData.hashrate)}</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Workers</div>
-          <div class="stat-value ${workersOnline ? 'online' : 'offline'}">
-            ${onlineWorkers}/${totalWorkers}
+      if (result.error) {
+        card.innerHTML = `
+          <div class="wallet-card-header">
+            <div class="wallet-name">
+              <span>${result.wallet.name || 'Wallet'}</span>
+              <span class="wallet-coin">${result.wallet.coin}</span>
+            </div>
+            <div class="wallet-profit" style="color: var(--danger)">Error</div>
           </div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Balance</div>
-          <div class="stat-value">${poolData.balance?.toFixed(4) || '0'}</div>
-        </div>
-      </div>
-    `;
+          <div class="wallet-error">${result.error}</div>
+        `;
+      } else {
+        const { wallet, poolData, netProfit } = result;
+        const onlineWorkers = poolData.workers?.filter(w => !w.offline).length || 0;
+        const totalWorkers = poolData.workers?.length || 0;
 
-    return card;
-  }
+        card.innerHTML = `
+          <div class="wallet-card-header">
+            <div class="wallet-name">
+              <span>${wallet.name || 'Wallet'}</span>
+              <span class="wallet-coin">${wallet.coin.toUpperCase()}</span>
+            </div>
+            <div class="wallet-profit ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">
+              ${netProfit >= 0 ? '+' : ''}$${netProfit.toFixed(2)}
+            </div>
+          </div>
+          <div class="wallet-stats">
+            <div class="stat">
+              <div class="stat-label">Hashrate</div>
+              <div class="stat-value">${formatHashrate(poolData.hashrate)}</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Workers</div>
+              <div class="stat-value ${totalWorkers > 0 && onlineWorkers === totalWorkers ? 'online' : onlineWorkers === 0 ? 'offline' : ''}">
+                ${totalWorkers > 0 ? `${onlineWorkers}/${totalWorkers}` : '--'}
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Balance</div>
+              <div class="stat-value">${poolData.balance ? poolData.balance.toFixed(6) : '0'}</div>
+            </div>
+          </div>
+        `;
+      }
 
-  function createWalletCardPlaceholder(wallet) {
-    const card = document.createElement('div');
-    card.className = 'wallet-card';
-    card.innerHTML = `
-      <div class="wallet-card-header">
-        <div class="wallet-name">
-          <span>${wallet.name || 'Wallet'}</span>
-          <span class="wallet-coin">${wallet.coin}</span>
-        </div>
-        <div class="wallet-profit" style="color: var(--text-muted)">--</div>
-      </div>
-      <div class="wallet-stats">
-        <div class="stat">
-          <div class="stat-label">Hashrate</div>
-          <div class="stat-value">--</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Workers</div>
-          <div class="stat-value">--</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Balance</div>
-          <div class="stat-value">--</div>
-        </div>
-      </div>
-    `;
-    return card;
+      walletList.appendChild(card);
+    }
   }
 
   function updateSummary(netProfit, revenue, electricityCost) {
@@ -212,16 +213,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
   }
 
-  async function refreshData() {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ action: 'refresh' }, async () => {
-        await initPopup();
-        resolve();
-      });
+  async function fetchPoolData(pool, coin, address) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(
+        { action: 'fetchPoolData', pool, coin, address },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (response?.success) {
+            resolve(response.data);
+          } else {
+            reject(new Error(response?.error || 'Failed to fetch pool data'));
+          }
+        }
+      );
     });
   }
 
-  async function getCoinPrice(coinSymbol) {
+  async function fetchCoinPrice(coinSymbol) {
     return new Promise((resolve) => {
       chrome.runtime.sendMessage(
         { action: 'fetchCoinPrice', coin: coinSymbol },
@@ -252,7 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function formatHashrate(hashrate) {
-    if (!hashrate) return '0 H/s';
+    if (!hashrate || hashrate === 0) return '0 H/s';
 
     const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s'];
     let unitIndex = 0;
@@ -264,20 +273,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     return `${value.toFixed(2)} ${units[unitIndex]}`;
-  }
-
-  function formatTime(date) {
-    const now = new Date();
-    const diff = Math.floor((now - date) / 1000);
-
-    if (diff < 60) return 'just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return date.toLocaleDateString();
-  }
-
-  function calculateElectricityCost(powerWatts, hours, ratePerKwh) {
-    const kWh = (powerWatts / 1000) * hours;
-    return kWh * ratePerKwh;
   }
 });
