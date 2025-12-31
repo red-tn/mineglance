@@ -88,6 +88,27 @@
         </div>
       </section>
 
+      <!-- Pro Activation Section -->
+      <section class="section" id="proActivationSection">
+        <h2>Pro License</h2>
+        <p class="section-desc">Already purchased? Enter your email to activate Pro features.</p>
+
+        <div id="proActivationForm">
+          <div class="form-group">
+            <label for="proEmail">Purchase Email</label>
+            <div class="input-with-button">
+              <input type="email" id="proEmail" placeholder="email@example.com">
+              <button id="activateProBtn" class="btn btn-accent">Activate Pro</button>
+            </div>
+            <p id="activationResult" class="lookup-result hidden"></p>
+          </div>
+        </div>
+
+        <div id="proActiveStatus" class="pro-active-status hidden">
+          <p>Pro license active for: <strong id="proEmailDisplay"></strong></p>
+        </div>
+      </section>
+
       <!-- Notifications Section (Pro) -->
       <section class="section" id="notificationsSection">
         <h2>Notifications <span class="pro-feature">PRO</span></h2>
@@ -124,7 +145,7 @@
         </div>
 
         <div id="proUpgradeNotice" class="pro-notice">
-          <p>🔒 Notifications require MineGlance Pro</p>
+          <p>Unlock auto-refresh, notifications, and more</p>
           <button id="upgradeBtn" class="btn btn-accent">Upgrade for $29</button>
         </div>
       </section>

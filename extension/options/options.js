@@ -226,6 +226,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const proUpgradeNotice = document.getElementById('proUpgradeNotice');
   const saveStatus = document.getElementById('saveStatus');
 
+  // Pro activation elements
+  const proActivationForm = document.getElementById('proActivationForm');
+  const proActiveStatus = document.getElementById('proActiveStatus');
+  const proEmail = document.getElementById('proEmail');
+  const proEmailDisplay = document.getElementById('proEmailDisplay');
+  const activateProBtn = document.getElementById('activateProBtn');
+  const activationResult = document.getElementById('activationResult');
+
   // Electricity
   const zipCode = document.getElementById('zipCode');
   const lookupRateBtn = document.getElementById('lookupRateBtn');
@@ -264,6 +272,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Electricity lookup
   lookupRateBtn.addEventListener('click', lookupElectricityRate);
 
+  // Pro activation
+  activateProBtn.addEventListener('click', activatePro);
+
   // Wallet modal
   document.getElementById('closeWalletModal').addEventListener('click', () => closeModal(walletModal));
   document.getElementById('cancelWalletBtn').addEventListener('click', () => closeModal(walletModal));
@@ -286,7 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Functions
   async function loadSettings() {
     const data = await chrome.storage.local.get([
-      'wallets', 'rigs', 'electricity', 'settings', 'isPaid'
+      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'proEmail'
     ]);
 
     wallets = data.wallets || [];
@@ -297,6 +308,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isPaid) {
       proStatus.classList.remove('hidden');
       proUpgradeNotice.classList.add('hidden');
+      proActivationForm.classList.add('hidden');
+      proActiveStatus.classList.remove('hidden');
+      proEmailDisplay.textContent = data.proEmail || 'Unknown';
       enableProFeatures();
     }
 
@@ -436,6 +450,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
       lookupResult.classList.add('hidden');
     }, 5000);
+  }
+
+  async function activatePro() {
+    const email = proEmail.value.trim().toLowerCase();
+
+    if (!email || !email.includes('@')) {
+      showActivationResult('Please enter a valid email address', 'error');
+      return;
+    }
+
+    activateProBtn.disabled = true;
+    activateProBtn.textContent = 'Checking...';
+
+    try {
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          { action: 'activatePro', email },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else {
+              resolve(response);
+            }
+          }
+        );
+      });
+
+      if (response.success && response.isPro) {
+        showActivationResult('Pro activated! Refreshing...', 'success');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        showActivationResult(response.error || 'Email not found. Use the email from your purchase.', 'error');
+      }
+    } catch (error) {
+      showActivationResult('Connection error. Please try again.', 'error');
+    } finally {
+      activateProBtn.disabled = false;
+      activateProBtn.textContent = 'Activate Pro';
+    }
+  }
+
+  function showActivationResult(message, type) {
+    activationResult.textContent = message;
+    activationResult.className = `lookup-result ${type}`;
+    activationResult.classList.remove('hidden');
+
+    if (type !== 'success') {
+      setTimeout(() => {
+        activationResult.classList.add('hidden');
+      }, 5000);
+    }
   }
 
   function openWalletModal(wallet = null) {

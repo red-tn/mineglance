@@ -370,6 +370,23 @@ select:disabled {
   margin-bottom: 12px;
 }
 
+/* Pro Active Status */
+.pro-active-status {
+  background: linear-gradient(135deg, var(--accent), #2f855a);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.pro-active-status p {
+  margin: 0;
+}
+
+.pro-active-status strong {
+  color: #f0fff4;
+}
+
 /* Actions */
 .actions {
   display: flex;
