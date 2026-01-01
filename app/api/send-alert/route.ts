@@ -47,14 +47,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Verify license is valid
+    // Verify license is valid (using paid_users table)
+    const normalizedKey = licenseKey.toUpperCase().trim()
     const { data: license, error } = await supabase
-      .from('licenses')
-      .select('email, status, plan')
-      .eq('key', licenseKey.toUpperCase().trim())
+      .from('paid_users')
+      .select('email, plan, is_revoked')
+      .eq('license_key', normalizedKey)
       .single()
 
-    if (error || !license || license.status !== 'active') {
+    if (error || !license || license.is_revoked) {
       return NextResponse.json({ error: 'Invalid or inactive license' }, { status: 403 })
     }
 
