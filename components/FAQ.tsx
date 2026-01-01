@@ -38,6 +38,14 @@ const faqs = [
   {
     question: 'Can I use MineGlance on multiple computers?',
     answer: 'Yes! Pro licenses can be activated on up to 3 devices, and Bundle licenses on up to 5 devices. You\'ll receive a license key via email after purchase—just enter it in the extension settings to activate.'
+  },
+  {
+    question: 'How do email alerts work?',
+    answer: 'Pro users can enable email alerts in Settings. When your rig goes offline, profit drops significantly, or a more profitable coin is available, we\'ll send you an email immediately. You can customize which alerts you receive and set your preferred email address.'
+  },
+  {
+    question: 'What alerts can I receive?',
+    answer: 'MineGlance Pro offers three alert types: (1) Worker Offline - when your mining workers stop responding, (2) Profit Drop - when your profit drops by a configurable percentage (10-50%), and (3) Better Coin - when a coin using the same algorithm becomes more profitable. All alerts are available as desktop notifications and optional emails.'
   }
 ]
 

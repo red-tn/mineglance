@@ -37,7 +37,7 @@ export default function Pricing() {
       features: [
         'Unlimited pools & coins',
         'Auto-refresh every 5 min',
-        'Desktop notifications',
+        'Desktop + Email alerts',
         'Real-time coin comparison',
         'WhatToMine integration',
         'Historical charts',

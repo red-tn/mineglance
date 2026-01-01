@@ -110,14 +110,28 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
                   Try Again
                 </button>
               </div>
+            ) : !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <p className="text-amber-600 mb-4">Payment system is being configured.</p>
+                <p className="text-gray-500 text-sm mb-4">Please contact control@mineglance.com to purchase.</p>
+              </div>
             ) : (
-              <EmbeddedCheckoutProvider
-                key={key}
-                stripe={stripePromise}
-                options={{ fetchClientSecret }}
-              >
-                <EmbeddedCheckout />
-              </EmbeddedCheckoutProvider>
+              <div className="relative">
+                {/* Loading placeholder */}
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg" style={{ minHeight: '350px' }}>
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
+                    <p className="text-gray-500 text-sm">Loading secure checkout...</p>
+                  </div>
+                </div>
+                <EmbeddedCheckoutProvider
+                  key={key}
+                  stripe={stripePromise}
+                  options={{ fetchClientSecret }}
+                >
+                  <EmbeddedCheckout />
+                </EmbeddedCheckoutProvider>
+              </div>
             )}
           </div>
         </div>

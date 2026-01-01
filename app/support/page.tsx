@@ -130,11 +130,62 @@ export default function Support() {
             <div className="bg-white rounded-xl p-6 border border-gray-200">
               <h3 className="font-semibold text-foreground mb-2">Pro license not activating</h3>
               <ul className="list-disc pl-6 space-y-2 text-foreground/70">
-                <li>Make sure you&apos;re using the same email you purchased with</li>
+                <li>Make sure you&apos;re using the license key from your purchase email</li>
                 <li>Check your spam folder for the confirmation email</li>
-                <li>Try logging out and back in</li>
+                <li>License format: MG-XXXX-XXXX-XXXX</li>
                 <li>Contact control@mineglance.com with your purchase email</li>
               </ul>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 border border-gray-200">
+              <h3 className="font-semibold text-foreground mb-2">Email alerts not working</h3>
+              <ul className="list-disc pl-6 space-y-2 text-foreground/70">
+                <li>Email alerts are a Pro feature — make sure your license is activated</li>
+                <li>Go to Settings &rarr; Notifications &rarr; Enable &quot;Send alerts to email&quot;</li>
+                <li>Enter a valid email address in the email field</li>
+                <li>Make sure at least one alert type is enabled (Worker Offline, Profit Drop, Better Coin)</li>
+                <li>Check your spam folder for emails from alerts@mineglance.com</li>
+                <li>Alert rate limit: max 10 emails per hour to prevent spam</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Email Alerts */}
+      <div className="py-12 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-primary mb-6">Email Alerts (Pro Feature)</h2>
+
+          <div className="space-y-6">
+            <div className="bg-background rounded-xl p-6 border border-gray-200">
+              <h3 className="font-semibold text-foreground mb-2">Setting Up Email Alerts</h3>
+              <ol className="list-decimal pl-6 space-y-2 text-foreground/70">
+                <li>Open the MineGlance extension and click the gear icon</li>
+                <li>Scroll to the &quot;Notifications&quot; section</li>
+                <li>Enable the alert types you want (Worker Offline, Profit Drop, Better Coin)</li>
+                <li>Toggle &quot;Send alerts to email&quot; to ON</li>
+                <li>Enter your email address</li>
+                <li>Click &quot;Save Settings&quot;</li>
+              </ol>
+            </div>
+
+            <div className="bg-background rounded-xl p-6 border border-gray-200">
+              <h3 className="font-semibold text-foreground mb-2">Alert Types</h3>
+              <div className="space-y-4 text-foreground/70">
+                <div>
+                  <p className="font-medium text-foreground">Worker Offline</p>
+                  <p>Sent when one or more of your mining workers stops responding to the pool. Helps you catch rig crashes, power outages, or network issues quickly.</p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Profit Drop</p>
+                  <p>Sent when your profit drops by more than your configured threshold (10%, 20%, 30%, or 50%). Alerts you to difficulty spikes, price crashes, or hashrate issues.</p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Better Coin Available</p>
+                  <p>Sent when a coin using the same algorithm becomes significantly more profitable (&gt;10% better). Only compares same-algorithm coins you can switch to without hardware changes.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
