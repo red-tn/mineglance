@@ -250,8 +250,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-2xl">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-3xl">
         {/* Photo Section */}
         <div className="px-6 py-8 bg-gradient-to-r from-primary to-primary/80 text-white">
           <div className="flex items-center gap-6">

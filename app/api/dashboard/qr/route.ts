@@ -23,8 +23,10 @@ export async function OPTIONS() {
 
 async function getAuthenticatedUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
+  console.log('QR Auth: Raw header:', authHeader ? authHeader.substring(0, 20) + '...' : 'NULL')
+
   if (!authHeader?.startsWith('Bearer ')) {
-    console.log('QR Auth: No bearer token')
+    console.log('QR Auth: No bearer token - header was:', typeof authHeader, authHeader?.length || 0)
     return null
   }
 

@@ -216,57 +216,57 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Pro Plus Upgrade Ad - Only shown for Pro (not Pro Plus) members */}
-      {user?.plan?.toLowerCase() === 'pro' && (
+      {/* Pro Plus Upgrade Ad - Show for Pro members who don't have Pro Plus */}
+      {user?.plan && !user.plan.toLowerCase().includes('plus') && (
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24" />
           <div className="relative z-10">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-yellow-400 text-yellow-900">
-                    LIMITED OFFER
+                    EXISTING MEMBER OFFER
                   </span>
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white/20 text-white">
                     10% OFF
                   </span>
                 </div>
-                <h3 className="text-xl font-bold mb-2">Upgrade to Pro Plus</h3>
+                <h3 className="text-xl font-bold mb-2">Add Mobile App Access</h3>
                 <p className="text-white/80 text-sm max-w-lg">
-                  As a valued Pro member, get exclusive access to Pro Plus features at 10% off:
+                  As a valued Pro member, get exclusive access to the mobile app at 10% off:
                 </p>
                 <ul className="mt-3 space-y-1.5 text-sm text-white/90">
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    Unlimited wallet tracking (no 1-wallet limit)
+                    iOS &amp; Android mobile app access
                   </li>
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    Priority email alerts with custom thresholds
+                    Push notifications for alerts
                   </li>
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    5 device activations (vs 3)
+                    Monitor rigs on the go
                   </li>
                   <li className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
-                    Early access to mobile app
+                    Sync settings via QR code
                   </li>
                 </ul>
               </div>
               <div className="flex-shrink-0 text-center">
-                <div className="text-3xl font-bold">$4.49</div>
-                <div className="text-sm text-white/60 line-through">$4.99</div>
-                <div className="text-xs text-white/70 mt-1">one-time</div>
+                <div className="text-3xl font-bold">$53.10</div>
+                <div className="text-sm text-white/60 line-through">$59.00</div>
+                <div className="text-xs text-white/70 mt-1">one-time upgrade</div>
               </div>
             </div>
             <div className="mt-4">
@@ -279,7 +279,7 @@ export default function DashboardOverview() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </a>
-              <p className="text-xs text-white/50 mt-2">Use code PROPLUS10 at checkout</p>
+              <p className="text-xs text-white/50 mt-2">Use code MOBILE10 at checkout</p>
             </div>
           </div>
         </div>

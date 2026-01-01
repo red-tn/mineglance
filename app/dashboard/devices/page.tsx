@@ -119,9 +119,9 @@ export default function DevicesPage() {
   }
 
   return (
-    <div className="max-w-3xl">
+    <div className="space-y-6">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-4xl">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Active Devices</h2>
@@ -157,7 +157,7 @@ export default function DevicesPage() {
       )}
 
       {/* Devices List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-4xl">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="font-semibold text-gray-900">All Devices</h3>
         </div>
@@ -244,7 +244,7 @@ export default function DevicesPage() {
       </div>
 
       {/* Help Text */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-4xl">
         <h4 className="font-medium text-blue-900 mb-1">Need more activations?</h4>
         <p className="text-sm text-blue-700">
           Your license allows up to {maxActivations} active devices. If you need more, contact support at{' '}
