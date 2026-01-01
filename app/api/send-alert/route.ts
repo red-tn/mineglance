@@ -117,8 +117,11 @@ export async function POST(request: NextRequest) {
 
     <!-- Action -->
     <div style="text-align: center; margin-bottom: 32px;">
-      <a href="https://mineglance.com" style="display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px;">
-        Open MineGlance
+      <a href="https://mineglance.com/dashboard" style="display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px; margin-right: 12px;">
+        View Dashboard
+      </a>
+      <a href="https://chrome.google.com/webstore/detail/mineglance" style="display: inline-block; background: #e2e8f0; color: #4a5568; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+        Open Extension
       </a>
     </div>
 
@@ -126,7 +129,8 @@ export async function POST(request: NextRequest) {
     <div style="text-align: center; padding-top: 24px; border-top: 1px solid #e2e8f0;">
       <p style="color: #a0aec0; font-size: 12px; margin: 0;">
         You received this alert because email notifications are enabled.<br>
-        <a href="https://mineglance.com/support" style="color: #a0aec0;">Manage notification settings</a>
+        <a href="https://mineglance.com/dashboard" style="color: #a0aec0;">Manage your account</a> |
+        <a href="https://mineglance.com/support" style="color: #a0aec0;">Get support</a>
       </p>
     </div>
 

@@ -4,6 +4,49 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../auth-context'
 import Image from 'next/image'
 
+// Format phone number as user types: (555) 123-4567 or +1 (555) 123-4567
+function formatPhoneNumber(value: string): string {
+  // Remove all non-digits except + at start
+  const hasPlus = value.startsWith('+')
+  const digits = value.replace(/\D/g, '')
+
+  if (digits.length === 0) return ''
+
+  // Handle US/Canada format
+  if (digits.length <= 10 || (hasPlus && digits.length <= 11)) {
+    const start = hasPlus && digits.length > 10 ? 1 : 0
+    const areaCode = digits.slice(start, start + 3)
+    const middle = digits.slice(start + 3, start + 6)
+    const last = digits.slice(start + 6, start + 10)
+
+    let formatted = ''
+    if (hasPlus && digits.length > 10) {
+      formatted = '+' + digits.slice(0, 1) + ' '
+    }
+
+    if (areaCode) {
+      formatted += '(' + areaCode
+      if (areaCode.length === 3) formatted += ') '
+    }
+    if (middle) {
+      formatted += middle
+      if (middle.length === 3) formatted += '-'
+    }
+    if (last) {
+      formatted += last
+    }
+
+    return formatted
+  }
+
+  // For international, just add spaces every 3-4 digits
+  if (hasPlus) {
+    return '+' + digits.slice(0, 1) + ' ' + digits.slice(1, 4) + ' ' + digits.slice(4, 7) + ' ' + digits.slice(7, 11) + (digits.length > 11 ? ' ' + digits.slice(11, 15) : '')
+  }
+
+  return digits
+}
+
 interface Profile {
   email: string
   fullName: string | null
@@ -58,7 +101,7 @@ export default function ProfilePage() {
         setProfile(data.profile)
         setFormData({
           fullName: data.profile.fullName || '',
-          phone: data.profile.phone || '',
+          phone: formatPhoneNumber(data.profile.phone || ''),
           addressLine1: data.profile.addressLine1 || '',
           addressLine2: data.profile.addressLine2 || '',
           city: data.profile.city || '',
@@ -310,7 +353,7 @@ export default function ProfilePage() {
                 <input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="+1 (555) 123-4567"
                 />
