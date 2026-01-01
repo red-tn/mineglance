@@ -65,9 +65,15 @@ async function getAuthenticatedUser(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null
+
     const user = await getAuthenticatedUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
+      return NextResponse.json({
+        error: 'Unauthorized',
+        debug: token ? `License ${token.substring(0, 8)}... not found` : 'No token provided'
+      }, { status: 401, headers: corsHeaders })
     }
 
     const { wallets, settings } = await request.json()

@@ -515,7 +515,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       if (!response.ok) {
-        throw new Error(data.error || `Server error: ${response.status}`);
+        const errMsg = data.debug ? `${data.error} (${data.debug})` : data.error;
+        throw new Error(errMsg || `Server error: ${response.status}`);
       }
 
       if (!data.qrData) {
