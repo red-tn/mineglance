@@ -170,13 +170,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recent error logs (if available)
-    const { data: recentErrors } = await supabase
-      .from('admin_audit_log')
-      .select('*')
-      .ilike('action', '%error%')
-      .order('created_at', { ascending: false })
-      .limit(10)
-      .catch(() => ({ data: null }))
+    let recentErrors = null
+    try {
+      const { data } = await supabase
+        .from('admin_audit_log')
+        .select('*')
+        .ilike('action', '%error%')
+        .order('created_at', { ascending: false })
+        .limit(10)
+      recentErrors = data
+    } catch {
+      // Table may not exist yet
+    }
 
     return NextResponse.json({
       overallStatus,
