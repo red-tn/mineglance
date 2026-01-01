@@ -44,6 +44,8 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [pricingInfo, setPricingInfo] = useState<PricingInfo | null>(null)
+  const [alreadyOwned, setAlreadyOwned] = useState<'pro' | 'bundle' | null>(null)
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const currentSessionRef = useRef<string | null>(null)
 
   // Reset when modal closes or plan changes
@@ -55,6 +57,8 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
       setClientSecret(null)
       setLoading(false)
       setPricingInfo(null)
+      setAlreadyOwned(null)
+      setResendStatus('idle')
       currentSessionRef.current = null
     }
   }, [isOpen])
@@ -86,14 +90,9 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
         // Existing Pro user upgrading to Bundle - charge difference
         amount = 3000 // $30 upgrade price
         isUpgrade = true
-      } else if (existingPlan === plan) {
-        // Already has this plan
-        setError(`You already have ${plan === 'pro' ? 'Pro' : 'the Bundle'}! Check your email for your license key.`)
-        setLoading(false)
-        return
-      } else if (existingPlan === 'bundle') {
-        // Already has bundle (highest tier)
-        setError('You already have the Bundle! Check your email for your license key.')
+      } else if (existingPlan === plan || existingPlan === 'bundle') {
+        // Already has this plan or higher
+        setAlreadyOwned(existingPlan === 'bundle' ? 'bundle' : plan)
         setLoading(false)
         return
       }
@@ -142,7 +141,28 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
     setStep('email')
     setClientSecret(null)
     setError(null)
+    setAlreadyOwned(null)
+    setResendStatus('idle')
     currentSessionRef.current = null
+  }
+
+  const handleResendLicense = async () => {
+    setResendStatus('sending')
+    try {
+      const response = await fetch('/api/resend-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to resend')
+      }
+
+      setResendStatus('sent')
+    } catch {
+      setResendStatus('error')
+    }
   }
 
   if (!isOpen || !plan) return null
@@ -186,7 +206,66 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
 
           {/* Content */}
           <div className="p-6" style={{ minHeight: step === 'checkout' ? '450px' : 'auto' }}>
-            {step === 'email' ? (
+            {alreadyOwned ? (
+              <div className="space-y-4">
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    You already have {alreadyOwned === 'bundle' ? 'the Bundle' : 'Pro'}!
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    A license key was sent to <strong>{email}</strong> when you purchased.
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-gray-600 mb-3">
+                    Can&apos;t find your license key?
+                  </p>
+                  {resendStatus === 'sent' ? (
+                    <div className="text-green-600 font-medium">
+                      License key sent! Check your email.
+                    </div>
+                  ) : resendStatus === 'error' ? (
+                    <div className="space-y-2">
+                      <p className="text-red-600 text-sm">Failed to send. Please try again.</p>
+                      <button
+                        onClick={handleResendLicense}
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+                      >
+                        Try Again
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleResendLicense}
+                      disabled={resendStatus === 'sending'}
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {resendStatus === 'sending' ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Sending...
+                        </span>
+                      ) : (
+                        'Resend License Key'
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleBack}
+                  className="w-full py-2 text-gray-500 hover:text-gray-700 text-sm"
+                >
+                  Use a different email
+                </button>
+              </div>
+            ) : step === 'email' ? (
               <form onSubmit={handleEmailSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
