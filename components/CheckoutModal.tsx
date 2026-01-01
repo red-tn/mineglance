@@ -44,20 +44,28 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
     if (!plan) throw new Error('No plan selected')
 
     try {
+      console.log('Fetching checkout session for plan:', plan)
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan }),
       })
 
+      const data = await response.json()
+      console.log('Checkout response:', response.status, data)
+
       if (!response.ok) {
-        throw new Error('Failed to create checkout session')
+        throw new Error(data.error || 'Failed to create checkout session')
       }
 
-      const data = await response.json()
+      if (!data.clientSecret) {
+        throw new Error('No client secret returned')
+      }
+
       return data.clientSecret
     } catch (err) {
-      setError('Failed to load checkout. Please try again.')
+      console.error('Checkout error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load checkout. Please try again.')
       throw err
     }
   }, [plan])
@@ -116,20 +124,20 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
                 <p className="text-gray-500 text-sm mb-4">Please contact control@mineglance.com to purchase.</p>
               </div>
             ) : (
-              <div className="relative">
-                {/* Loading placeholder */}
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-50 rounded-lg" style={{ minHeight: '350px' }}>
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
-                    <p className="text-gray-500 text-sm">Loading secure checkout...</p>
-                  </div>
-                </div>
+              <div className="relative" style={{ minHeight: '400px' }}>
                 <EmbeddedCheckoutProvider
                   key={key}
                   stripe={stripePromise}
-                  options={{ fetchClientSecret }}
+                  options={{
+                    fetchClientSecret,
+                    onComplete: () => {
+                      console.log('Checkout completed')
+                    }
+                  }}
                 >
-                  <EmbeddedCheckout />
+                  <div className="stripe-checkout-container">
+                    <EmbeddedCheckout />
+                  </div>
                 </EmbeddedCheckoutProvider>
               </div>
             )}

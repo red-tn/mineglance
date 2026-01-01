@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16'
-})
-
 const plans = {
   pro: {
     name: 'MineGlance Pro',
@@ -20,7 +16,23 @@ const plans = {
 
 export async function POST(request: NextRequest) {
   try {
-    const { plan, email } = await request.json()
+    // Check for Stripe configuration
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('STRIPE_SECRET_KEY is not configured')
+      return NextResponse.json(
+        { error: 'Payment system is not configured. Please contact support.' },
+        { status: 503 }
+      )
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-10-16'
+    })
+
+    const body = await request.json()
+    const { plan, email } = body
+
+    console.log('Creating checkout session for plan:', plan, 'email:', email)
 
     if (!plan || !plans[plan as keyof typeof plans]) {
       return NextResponse.json(
@@ -30,6 +42,9 @@ export async function POST(request: NextRequest) {
     }
 
     const selectedPlan = plans[plan as keyof typeof plans]
+    const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://mineglance.com'
+
+    console.log('Creating Stripe session with origin:', origin)
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
@@ -51,14 +66,40 @@ export async function POST(request: NextRequest) {
       metadata: {
         plan: plan
       },
-      return_url: `${request.headers.get('origin')}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      return_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     })
+
+    console.log('Checkout session created:', session.id)
+
+    if (!session.client_secret) {
+      console.error('No client secret returned from Stripe')
+      return NextResponse.json(
+        { error: 'Failed to initialize payment. Please try again.' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ clientSecret: session.client_secret })
   } catch (err) {
     console.error('Error creating checkout session:', err)
+
+    // Provide specific error messages for common issues
+    if (err instanceof Stripe.errors.StripeAuthenticationError) {
+      return NextResponse.json(
+        { error: 'Payment authentication failed. Please contact support.' },
+        { status: 503 }
+      )
+    }
+
+    if (err instanceof Stripe.errors.StripeInvalidRequestError) {
+      return NextResponse.json(
+        { error: 'Invalid payment request. Please try again.' },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: 'Failed to create checkout session. Please try again.' },
       { status: 500 }
     )
   }

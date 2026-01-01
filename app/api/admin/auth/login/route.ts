@@ -1,0 +1,132 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+// Whitelist of admin emails
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'ryan.ncc@gmail.com,control@mineglance.com').split(',').map(e => e.trim().toLowerCase())
+
+// Default password for first login (should be changed immediately)
+const DEFAULT_PASSWORD = process.env.ADMIN_DEFAULT_PASSWORD || 'MineGlance2024!'
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email, password } = await request.json()
+
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+    }
+
+    const normalizedEmail = email.toLowerCase().trim()
+
+    // Check if email is in admin whitelist
+    if (!ADMIN_EMAILS.includes(normalizedEmail)) {
+      // Log failed attempt
+      await logAudit(normalizedEmail, 'login_failed', 'unauthorized_email', request)
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    // Get or create admin user
+    let { data: admin } = await supabase
+      .from('admin_users')
+      .select('*')
+      .eq('email', normalizedEmail)
+      .single()
+
+    // If no admin user exists, create one with default password
+    if (!admin) {
+      const passwordHash = hashPassword(DEFAULT_PASSWORD)
+      const { data: newAdmin, error } = await supabase
+        .from('admin_users')
+        .insert({ email: normalizedEmail, password_hash: passwordHash })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Failed to create admin user:', error)
+        // If table doesn't exist, just check password directly
+        if (password !== DEFAULT_PASSWORD) {
+          return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+        }
+        admin = { email: normalizedEmail, password_hash: null }
+      } else {
+        admin = newAdmin
+      }
+    }
+
+    // Verify password
+    const validPassword = admin?.password_hash
+      ? verifyPassword(password, admin.password_hash)
+      : password === DEFAULT_PASSWORD
+
+    if (!validPassword) {
+      await logAudit(normalizedEmail, 'login_failed', 'invalid_password', request)
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+    }
+
+    // Generate session token
+    const token = crypto.randomBytes(32).toString('hex')
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    // Try to store session (may fail if table doesn't exist)
+    try {
+      await supabase
+        .from('admin_sessions')
+        .insert({
+          admin_id: admin?.id,
+          token,
+          expires_at: expiresAt.toISOString(),
+          ip_address: request.headers.get('x-forwarded-for') || 'unknown',
+          user_agent: request.headers.get('user-agent') || 'unknown'
+        })
+    } catch (e) {
+      // Session storage failed, but we'll continue with token-based auth
+      console.log('Session storage skipped:', e)
+    }
+
+    // Update last login
+    if (admin?.id) {
+      await supabase
+        .from('admin_users')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', admin.id)
+    }
+
+    await logAudit(normalizedEmail, 'login_success', null, request)
+
+    return NextResponse.json({
+      success: true,
+      token,
+      user: { email: normalizedEmail, isAdmin: true }
+    })
+
+  } catch (error) {
+    console.error('Login error:', error)
+    return NextResponse.json({ error: 'Login failed' }, { status: 500 })
+  }
+}
+
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password + process.env.ADMIN_SALT || 'mineglance-salt').digest('hex')
+}
+
+function verifyPassword(password: string, hash: string): boolean {
+  return hashPassword(password) === hash
+}
+
+async function logAudit(email: string, action: string, detail: string | null, request: NextRequest) {
+  try {
+    await supabase.from('admin_audit_log').insert({
+      admin_email: email,
+      action,
+      details: detail ? { detail } : null,
+      ip_address: request.headers.get('x-forwarded-for') || 'unknown'
+    })
+  } catch (e) {
+    console.log('Audit log skipped:', e)
+  }
+}
