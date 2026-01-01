@@ -65,12 +65,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="mailto:control@mineglance.com"
-                  className="text-white/70 hover:text-accent transition-colors"
-                >
+                <Link href="/contact" className="text-white/70 hover:text-accent transition-colors">
                   Contact Us
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

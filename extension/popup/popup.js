@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const upgradeBanner = document.getElementById('upgradeBanner');
   const coinComparison = document.getElementById('coinComparison');
   const comparisonList = document.getElementById('comparisonList');
+  const proBadge = document.getElementById('proBadge');
 
   // Buttons
   const settingsBtn = document.getElementById('settingsBtn');
@@ -73,9 +74,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         'electricity'
       ]);
 
-      // Show upgrade banner for free users
+      // Show upgrade banner for free users, or PRO badge for paid users
       if (!isPaid) {
         upgradeBanner.classList.remove('hidden');
+      } else {
+        proBadge.classList.remove('hidden');
       }
       // Note: coinComparison is shown/hidden by fetchAndRenderComparison based on data availability
 
