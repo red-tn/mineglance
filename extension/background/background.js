@@ -596,29 +596,30 @@ const POOLS = {
     coins: ['btc'],
     getStatsUrl: (coin, address) => `https://api.ocean.xyz/v1/statsnap/${address}`,
     parseResponse: (data, coin) => {
-      // OCEAN statsnap returns values as STRINGS - must parse to numbers
-      // Available fields: hashrate_60s, hashrate_300s, shares_60s, shares_300s, unpaid
-      const hashrate = parseFloat(data.hashrate_300s) || parseFloat(data.hashrate_60s) || 0;
+      // OCEAN wraps response in "result" object
+      const stats = data.result || data;
 
-      // OCEAN doesn't return worker list in statsnap, just totals
+      // All values are STRINGS - must parse to numbers
+      const hashrate = parseFloat(stats.hashrate_300s) || parseFloat(stats.hashrate_60s) || 0;
+
       // If hashrate > 0, assume 1 online worker
       const hasActivity = hashrate > 0;
 
       // unpaid is already in BTC as string like "0.00000000"
-      const unpaidBtc = parseFloat(data.unpaid) || 0;
+      const unpaidBtc = parseFloat(stats.unpaid) || 0;
 
       return {
         hashrate: hashrate,
-        hashrate5m: parseFloat(data.hashrate_300s) || hashrate,
-        hashrate24h: hashrate, // statsnap doesn't have 24hr, use current
+        hashrate5m: parseFloat(stats.hashrate_300s) || hashrate,
+        hashrate24h: hashrate,
         workers: [],
         workersOnline: hasActivity ? 1 : 0,
         workersTotal: 1,
         balance: unpaidBtc,
         paid: 0,
-        earnings24h: parseFloat(data.estimated_earn_next_block) || 0,
-        shares: parseInt(data.shares_300s) || 0,
-        lastShare: data.lastest_share_ts ? parseInt(data.lastest_share_ts) : null
+        earnings24h: parseFloat(stats.estimated_earn_next_block) || 0,
+        shares: parseInt(stats.shares_300s) || 0,
+        lastShare: stats.lastest_share_ts ? parseInt(stats.lastest_share_ts) : null
       };
     }
   }
