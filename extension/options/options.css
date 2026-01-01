@@ -347,6 +347,41 @@ select:disabled {
   gap: 8px;
 }
 
+/* Drag and Drop */
+.drag-handle {
+  cursor: grab;
+  padding: 8px;
+  margin-right: 8px;
+  color: var(--text-muted);
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.wallet-item[draggable="true"] {
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.wallet-item.dragging {
+  opacity: 0.5;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--card-bg);
+}
+
+.wallet-item.drag-over {
+  border-color: var(--accent);
+  background: rgba(56, 161, 105, 0.05);
+  transform: scale(1.01);
+}
+
 .empty-state {
   text-align: center;
   padding: 40px;

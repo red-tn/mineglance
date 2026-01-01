@@ -408,8 +408,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     walletsList.classList.remove('hidden');
     noWallets.classList.add('hidden');
 
-    walletsList.innerHTML = wallets.map(wallet => `
-      <div class="wallet-item" data-id="${wallet.id}">
+    walletsList.innerHTML = wallets.map((wallet, index) => `
+      <div class="wallet-item" data-id="${wallet.id}" data-index="${index}" draggable="true">
+        <div class="drag-handle" title="Drag to reorder">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
+            <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+            <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
+          </svg>
+        </div>
         <div class="wallet-info">
           <div class="wallet-name">
             ${wallet.name}
@@ -427,7 +434,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `).join('');
 
-    // Add event listeners
+    // Add event listeners for edit/delete
     walletsList.querySelectorAll('.edit-wallet-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = e.target.closest('.wallet-item').dataset.id;
@@ -441,6 +448,78 @@ document.addEventListener('DOMContentLoaded', async () => {
         deleteWallet(id);
       });
     });
+
+    // Add drag and drop event listeners
+    setupDragAndDrop();
+  }
+
+  // Drag and drop functionality for reordering wallets
+  let draggedItem = null;
+  let draggedIndex = null;
+
+  function setupDragAndDrop() {
+    const items = walletsList.querySelectorAll('.wallet-item');
+
+    items.forEach(item => {
+      item.addEventListener('dragstart', handleDragStart);
+      item.addEventListener('dragend', handleDragEnd);
+      item.addEventListener('dragover', handleDragOver);
+      item.addEventListener('dragenter', handleDragEnter);
+      item.addEventListener('dragleave', handleDragLeave);
+      item.addEventListener('drop', handleDrop);
+    });
+  }
+
+  function handleDragStart(e) {
+    draggedItem = this;
+    draggedIndex = parseInt(this.dataset.index);
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', this.dataset.id);
+  }
+
+  function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    walletsList.querySelectorAll('.wallet-item').forEach(item => {
+      item.classList.remove('drag-over');
+    });
+    draggedItem = null;
+    draggedIndex = null;
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function handleDragEnter(e) {
+    e.preventDefault();
+    if (this !== draggedItem) {
+      this.classList.add('drag-over');
+    }
+  }
+
+  function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+  }
+
+  async function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    if (this === draggedItem) return;
+
+    const dropIndex = parseInt(this.dataset.index);
+
+    // Reorder wallets array
+    const movedWallet = wallets.splice(draggedIndex, 1)[0];
+    wallets.splice(dropIndex, 0, movedWallet);
+
+    // Save new order
+    await chrome.storage.local.set({ wallets });
+
+    // Re-render
+    renderWallets();
   }
 
   function renderRigs() {
