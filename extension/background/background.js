@@ -180,7 +180,7 @@ async function verifyLicenseOnStartup() {
 // Coin configurations with CoinGecko IDs and decimal places
 // MUST be defined before POOLS since POOLS references getCoinDivisor
 const COINS = {
-  'eth': { name: 'Ethereum', symbol: 'ETH', geckoId: 'ethereum', decimals: 18 },
+  // 'eth': Removed - Ethereum moved to Proof of Stake in Sept 2022, no longer mineable
   'etc': { name: 'Ethereum Classic', symbol: 'ETC', geckoId: 'ethereum-classic', decimals: 18 },
   'rvn': { name: 'Ravencoin', symbol: 'RVN', geckoId: 'ravencoin', decimals: 8 },
   'ergo': { name: 'Ergo', symbol: 'ERG', geckoId: 'ergo', decimals: 9 },
@@ -196,7 +196,7 @@ const COINS = {
   'cfx': { name: 'Conflux', symbol: 'CFX', geckoId: 'conflux-token', decimals: 18 },
   'ckb': { name: 'Nervos', symbol: 'CKB', geckoId: 'nervos-network', decimals: 8 },
   'beam': { name: 'Beam', symbol: 'BEAM', geckoId: 'beam', decimals: 8 },
-  'firo': { name: 'Firo', symbol: 'FIRO', geckoId: 'firo', decimals: 8 },
+  'firo': { name: 'Firo', symbol: 'FIRO', geckoId: 'zcoin', decimals: 8 },
   'rtm': { name: 'Raptoreum', symbol: 'RTM', geckoId: 'raptoreum', decimals: 8 },
   'xna': { name: 'Neurai', symbol: 'XNA', geckoId: 'neurai', decimals: 8 },
   'btg': { name: 'Bitcoin Gold', symbol: 'BTG', geckoId: 'bitcoin-gold', decimals: 8 },
@@ -269,7 +269,7 @@ const POOLS = {
   },
   'nanopool': {
     name: 'Nanopool',
-    coins: ['eth', 'etc', 'zec', 'xmr', 'ergo', 'rvn', 'cfx'],
+    coins: ['etc', 'zec', 'xmr', 'ergo', 'rvn', 'cfx'],
     getStatsUrl: (coin, address) => `https://api.nanopool.org/v1/${coin}/user/${address}`,
     parseResponse: (data, coin) => ({
       // Nanopool returns balance already in coin units (not smallest unit)
@@ -289,7 +289,7 @@ const POOLS = {
   },
   'f2pool': {
     name: 'F2Pool',
-    coins: ['btc', 'eth', 'etc', 'ltc', 'dash', 'zec', 'xmr', 'rvn', 'ckb'],
+    coins: ['btc', 'etc', 'ltc', 'dash', 'zec', 'xmr', 'rvn', 'ckb'],
     getStatsUrl: (coin, address) => `https://api.f2pool.com/${coin}/${address}`,
     parseResponse: (data, coin) => ({
       // F2Pool returns values already in coin units
@@ -307,26 +307,10 @@ const POOLS = {
       lastShare: data.last_share_time
     })
   },
-  'flexpool': {
-    name: 'Flexpool',
-    coins: ['eth', 'etc'],
-    getStatsUrl: (coin, address) => `https://api.flexpool.io/v2/miner/stats?coin=${coin.toUpperCase()}&address=${address}`,
-    parseResponse: (data, coin) => {
-      const divisor = getCoinDivisor(coin);
-      return {
-        hashrate: data.result?.currentEffectiveHashrate || 0,
-        hashrate24h: data.result?.averageEffectiveHashrate || 0,
-        workers: [],
-        balance: (data.result?.balance || 0) / divisor,
-        paid: 0,
-        earnings24h: (data.result?.averageEarnings || 0) / divisor,
-        lastShare: data.result?.lastSeen
-      };
-    }
-  },
+  // Flexpool removed - shut down November 2023
   'ethermine': {
     name: 'Ethermine',
-    coins: ['eth', 'etc'],
+    coins: ['etc'],
     getStatsUrl: (coin, address) => `https://api.ethermine.org/miner/${address}/currentStats`,
     parseResponse: (data, coin) => {
       const divisor = getCoinDivisor(coin);
@@ -343,7 +327,7 @@ const POOLS = {
   },
   'hiveon': {
     name: 'Hiveon Pool',
-    coins: ['eth', 'etc', 'rvn'],
+    coins: ['etc', 'rvn'],
     getStatsUrl: (coin, address) => `https://hiveon.net/api/v1/stats/miner/${address}/${coin.toUpperCase()}/billing-acc`,
     parseResponse: (data, coin) => ({
       // Hiveon returns values in coin units
