@@ -24,34 +24,43 @@ export async function OPTIONS() {
 async function getAuthenticatedUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
+    console.log('QR Auth: No bearer token')
     return null
   }
 
   const token = authHeader.substring(7)
+  console.log('QR Auth: Token received:', token.substring(0, 8) + '...')
 
-  // First try session token
-  const { data: session } = await supabase
-    .from('user_sessions')
-    .select('*, user:paid_users(*)')
-    .eq('token', token)
-    .single()
-
-  if (session && new Date(session.expires_at) >= new Date()) {
-    return session.user
-  }
-
-  // Fall back to license key (for extension direct calls)
-  const { data: user, error } = await supabase
+  // First try as license key (most common for extension)
+  const { data: user, error: userError } = await supabase
     .from('paid_users')
     .select('*')
     .eq('license_key', token.toUpperCase())
     .single()
 
-  if (error || !user || user.is_revoked) {
-    return null
+  if (user && !user.is_revoked) {
+    console.log('QR Auth: Found user by license key')
+    return user
   }
 
-  return user
+  // Fall back to session token (for dashboard)
+  try {
+    const { data: session } = await supabase
+      .from('user_sessions')
+      .select('*, user:paid_users(*)')
+      .eq('token', token)
+      .single()
+
+    if (session && new Date(session.expires_at) >= new Date()) {
+      console.log('QR Auth: Found user by session')
+      return session.user
+    }
+  } catch (e) {
+    console.log('QR Auth: Session lookup failed (table may not exist)')
+  }
+
+  console.log('QR Auth: No user found, license error:', userError?.message)
+  return null
 }
 
 export async function POST(request: NextRequest) {
