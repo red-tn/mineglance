@@ -174,7 +174,7 @@ export default function AdminLayout({
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <main className="py-6 px-4 sm:px-6 lg:px-8">
+        <main className="pt-16 pb-6 px-4 sm:px-6 lg:pt-6 lg:px-8">
           {children}
         </main>
       </div>
