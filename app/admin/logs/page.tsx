@@ -42,7 +42,7 @@ export default function LogsPage() {
   const fetchLogs = useCallback(async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem('adminToken')
+      const token = localStorage.getItem('admin_token')
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '50',

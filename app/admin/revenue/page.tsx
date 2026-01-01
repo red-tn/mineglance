@@ -43,7 +43,7 @@ export default function RevenuePage() {
     async function fetchRevenue() {
       setLoading(true)
       try {
-        const token = localStorage.getItem('adminToken')
+        const token = localStorage.getItem('admin_token')
         const response = await fetch(`/api/admin/revenue?period=${period}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })

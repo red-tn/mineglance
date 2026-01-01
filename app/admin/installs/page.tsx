@@ -41,7 +41,7 @@ export default function InstallsPage() {
   const fetchInstalls = useCallback(async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem('adminToken')
+      const token = localStorage.getItem('admin_token')
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '50',

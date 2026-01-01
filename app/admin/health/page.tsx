@@ -39,7 +39,7 @@ export default function HealthPage() {
     else setLoading(true)
 
     try {
-      const token = localStorage.getItem('adminToken')
+      const token = localStorage.getItem('admin_token')
       const response = await fetch('/api/admin/health', {
         headers: { 'Authorization': `Bearer ${token}` }
       })

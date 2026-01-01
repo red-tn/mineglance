@@ -29,7 +29,7 @@ export default function UsersPage() {
   const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem('adminToken')
+      const token = localStorage.getItem('admin_token')
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '20',
@@ -62,7 +62,7 @@ export default function UsersPage() {
 
     setActionLoading(true)
     try {
-      const token = localStorage.getItem('adminToken')
+      const token = localStorage.getItem('admin_token')
       await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: {
