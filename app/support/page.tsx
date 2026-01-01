@@ -43,15 +43,32 @@ export default function Support() {
               <h3 className="font-semibold text-foreground mb-2">Finding Your Wallet Address</h3>
               <p className="text-foreground/70 mb-3">
                 Your wallet address is the same address you use when configuring your mining software.
-                It usually looks like:
+                Here are the formats for each supported coin:
               </p>
-              <ul className="list-disc pl-6 space-y-1 text-foreground/70 font-mono text-sm">
-                <li>RVN: R... (starts with R)</li>
-                <li>ETC: 0x... (starts with 0x)</li>
-                <li>FLUX: t1... (starts with t1)</li>
-              </ul>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-foreground/70 font-mono text-sm">
+                <div className="space-y-1">
+                  <p><strong className="text-foreground">ETC:</strong> 0x... (42 chars)</p>
+                  <p><strong className="text-foreground">RVN:</strong> R... (34 chars)</p>
+                  <p><strong className="text-foreground">ERG:</strong> 9... (51 chars)</p>
+                  <p><strong className="text-foreground">FLUX:</strong> t1... (35 chars)</p>
+                  <p><strong className="text-foreground">KAS:</strong> kaspa:...</p>
+                  <p><strong className="text-foreground">ALPH:</strong> 1... (46 chars)</p>
+                  <p><strong className="text-foreground">NEXA:</strong> nexa:...</p>
+                  <p><strong className="text-foreground">XNA:</strong> X... (34 chars)</p>
+                </div>
+                <div className="space-y-1">
+                  <p><strong className="text-foreground">XMR:</strong> 4... or 8... (95 chars)</p>
+                  <p><strong className="text-foreground">ZEC:</strong> t1... or t3...</p>
+                  <p><strong className="text-foreground">BTC:</strong> bc1... or 1... or 3...</p>
+                  <p><strong className="text-foreground">LTC:</strong> L... or ltc1...</p>
+                  <p><strong className="text-foreground">DASH:</strong> X... (34 chars)</p>
+                  <p><strong className="text-foreground">CFX:</strong> cfx:...</p>
+                  <p><strong className="text-foreground">FIRO:</strong> a... (34 chars)</p>
+                  <p><strong className="text-foreground">BEAM:</strong> starts with digits</p>
+                </div>
+              </div>
               <p className="text-foreground/70 mt-3">
-                You can also find it on your pool dashboard under &quot;Wallet&quot; or &quot;Miner Address&quot;.
+                You can also find your address on your pool dashboard under &quot;Wallet&quot; or &quot;Miner Address&quot;.
               </p>
             </div>
 

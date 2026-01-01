@@ -26,12 +26,12 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/#features" className="text-foreground hover:text-primary transition-colors">
               Features
-            </a>
-            <a href="#pricing" className="text-foreground hover:text-primary transition-colors">
+            </Link>
+            <Link href="/#pricing" className="text-foreground hover:text-primary transition-colors">
               Pricing
-            </a>
+            </Link>
             <Link href="/support" className="text-foreground hover:text-primary transition-colors">
               Support
             </Link>
@@ -60,20 +60,20 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100">
             <div className="flex flex-col space-y-4">
-              <a
-                href="#features"
+              <Link
+                href="/#features"
                 className="text-foreground hover:text-primary transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
-              </a>
-              <a
-                href="#pricing"
+              </Link>
+              <Link
+                href="/#pricing"
                 className="text-foreground hover:text-primary transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
-              </a>
+              </Link>
               <Link
                 href="/support"
                 className="text-foreground hover:text-primary transition-colors"

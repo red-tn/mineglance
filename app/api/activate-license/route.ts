@@ -4,6 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { licenseKey, installId, deviceName } = await request.json()
@@ -11,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!licenseKey || !installId) {
       return NextResponse.json(
         { error: 'License key and install ID are required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       )
     }
 
@@ -30,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (licenseError || !license) {
       return NextResponse.json(
         { success: false, error: 'Invalid license key. Please check and try again.' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       )
     }
 
@@ -38,7 +44,7 @@ export async function POST(request: NextRequest) {
     if (license.is_revoked) {
       return NextResponse.json(
         { success: false, error: 'This license has been revoked. Contact support.' },
-        { status: 403 }
+        { status: 403, headers: corsHeaders }
       )
     }
 
@@ -62,7 +68,7 @@ export async function POST(request: NextRequest) {
         isPro: true,
         plan: license.plan,
         message: 'License already activated on this device'
-      })
+      }, { headers: corsHeaders })
     }
 
     // Count active activations
@@ -81,7 +87,7 @@ export async function POST(request: NextRequest) {
         error: `Maximum ${maxActivations} devices reached. Deactivate a device in Settings to free up a slot.`,
         currentActivations,
         maxActivations
-      }, { status: 403 })
+      }, { status: 403, headers: corsHeaders })
     }
 
     // Create new activation
@@ -98,7 +104,7 @@ export async function POST(request: NextRequest) {
       console.error('Activation error:', activationError)
       return NextResponse.json(
         { success: false, error: 'Failed to activate. Please try again.' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       )
     }
 
@@ -109,13 +115,13 @@ export async function POST(request: NextRequest) {
       activations: currentActivations + 1,
       maxActivations,
       message: 'License activated successfully!'
-    })
+    }, { headers: corsHeaders })
 
   } catch (error) {
     console.error('License activation error:', error)
     return NextResponse.json(
       { success: false, error: 'Server error. Please try again.' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }
@@ -126,7 +132,7 @@ export async function GET(request: NextRequest) {
   const installId = request.nextUrl.searchParams.get('installId')
 
   if (!licenseKey || !installId) {
-    return NextResponse.json({ isPro: false })
+    return NextResponse.json({ isPro: false }, { headers: corsHeaders })
   }
 
   const normalizedKey = licenseKey.toUpperCase().trim()
@@ -144,7 +150,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (!activation) {
-      return NextResponse.json({ isPro: false })
+      return NextResponse.json({ isPro: false }, { headers: corsHeaders })
     }
 
     // Get license details
@@ -155,7 +161,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (!license || license.is_revoked) {
-      return NextResponse.json({ isPro: false })
+      return NextResponse.json({ isPro: false }, { headers: corsHeaders })
     }
 
     // Update last_seen
@@ -168,11 +174,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       isPro: true,
       plan: license.plan
-    })
+    }, { headers: corsHeaders })
 
   } catch (error) {
     console.error('License check error:', error)
-    return NextResponse.json({ isPro: false })
+    return NextResponse.json({ isPro: false }, { headers: corsHeaders })
   }
 }
 

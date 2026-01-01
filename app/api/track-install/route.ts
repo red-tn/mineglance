@@ -4,12 +4,18 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { installId, browser, version, email } = await request.json()
 
     if (!installId) {
-      return NextResponse.json({ error: 'installId required' }, { status: 400 })
+      return NextResponse.json({ error: 'installId required' }, { status: 400, headers: corsHeaders })
     }
 
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -29,12 +35,12 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Track install error:', error)
-      return NextResponse.json({ error: 'Failed to track' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to track' }, { status: 500, headers: corsHeaders })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: corsHeaders })
   } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400, headers: corsHeaders })
   }
 }
 

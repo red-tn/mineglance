@@ -1,5 +1,25 @@
 // MineGlance Popup Script
 
+// Pool dashboard URLs - defined at top level to avoid temporal dead zone
+const POOL_URLS = {
+  '2miners': (coin, address) => `https://${coin}.2miners.com/account/${address}`,
+  'nanopool': (coin, address) => `https://${coin}.nanopool.org/account/${address}`,
+  'f2pool': (coin, address) => `https://www.f2pool.com/${coin}/${address}`,
+  'flexpool': (coin, address) => `https://www.flexpool.io/miner/${coin.toUpperCase()}/${address}`,
+  'ethermine': (coin, address) => `https://ethermine.org/miners/${address}/dashboard`,
+  'hiveon': (coin, address) => `https://hiveon.net/${coin}/miner/${address}`,
+  'herominers': (coin, address) => `https://${coin}.herominers.com/#/dashboard?addr=${address}`,
+  'woolypooly': (coin, address) => `https://woolypooly.com/${coin}/miner/${address}`
+};
+
+function getPoolUrl(pool, coin, address) {
+  const urlFn = POOL_URLS[pool];
+  if (urlFn) {
+    return urlFn(coin.toLowerCase(), address);
+  }
+  return null;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // DOM Elements
   const loading = document.getElementById('loading');
@@ -11,6 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const lastUpdated = document.getElementById('lastUpdated');
   const upgradeBanner = document.getElementById('upgradeBanner');
   const coinComparison = document.getElementById('coinComparison');
+  const comparisonList = document.getElementById('comparisonList');
 
   // Buttons
   const settingsBtn = document.getElementById('settingsBtn');
@@ -55,9 +76,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Show upgrade banner for free users
       if (!isPaid) {
         upgradeBanner.classList.remove('hidden');
-      } else {
-        coinComparison.classList.remove('hidden');
       }
+      // Note: coinComparison is shown/hidden by fetchAndRenderComparison based on data availability
 
       // Check if we have wallets
       if (!wallets || wallets.length === 0) {
@@ -148,26 +168,93 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderWallets(walletResults);
     updateSummary(totalRevenue - totalElectricityCost, totalRevenue, totalElectricityCost);
     lastUpdated.textContent = `Last updated: just now`;
+
+    // Fetch and render coin comparisons (Pro feature, but show for all to encourage upgrade)
+    const { isPaid } = await chrome.storage.local.get(['isPaid']);
+    if (walletResults.length > 0) {
+      // Use the first wallet's coin for comparison
+      const primaryWallet = walletResults.find(r => !r.error) || walletResults[0];
+      if (primaryWallet && !primaryWallet.error) {
+        await fetchAndRenderComparison(
+          primaryWallet.wallet.coin,
+          primaryWallet.poolData?.hashrate || 0,
+          electricity?.rate || 0.12,
+          primaryWallet.wallet.power || 200,
+          isPaid
+        );
+      }
+    }
   }
 
-  // Pool dashboard URLs
-  const POOL_URLS = {
-    '2miners': (coin, address) => `https://${coin}.2miners.com/account/${address}`,
-    'nanopool': (coin, address) => `https://${coin}.nanopool.org/account/${address}`,
-    'f2pool': (coin, address) => `https://www.f2pool.com/${coin}/${address}`,
-    'flexpool': (coin, address) => `https://www.flexpool.io/miner/${coin.toUpperCase()}/${address}`,
-    'ethermine': (coin, address) => `https://ethermine.org/miners/${address}/dashboard`,
-    'hiveon': (coin, address) => `https://hiveon.net/${coin}/miner/${address}`,
-    'herominers': (coin, address) => `https://${coin}.herominers.com/#/dashboard?addr=${address}`,
-    'woolypooly': (coin, address) => `https://woolypooly.com/${coin}/miner/${address}`
-  };
+  // Fetch alternative coins from background
+  async function fetchAlternativeCoins(currentCoin, hashrate, electricityRate, powerWatts) {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage(
+        {
+          action: 'getAlternativeCoins',
+          currentCoin,
+          hashrate,
+          electricityRate,
+          powerWatts
+        },
+        (response) => {
+          resolve(response?.alternatives || []);
+        }
+      );
+    });
+  }
 
-  function getPoolUrl(pool, coin, address) {
-    const urlFn = POOL_URLS[pool];
-    if (urlFn) {
-      return urlFn(coin.toLowerCase(), address);
+  // Fetch and render coin comparison
+  async function fetchAndRenderComparison(currentCoin, hashrate, electricityRate, powerWatts, isPaid) {
+    try {
+      const alternatives = await fetchAlternativeCoins(currentCoin, hashrate, electricityRate, powerWatts);
+
+      if (alternatives.length === 0) {
+        coinComparison.classList.add('hidden');
+        return;
+      }
+
+      // Show comparison section
+      coinComparison.classList.remove('hidden');
+
+      // Render comparison items
+      comparisonList.innerHTML = alternatives.map((alt, index) => {
+        const isBetter = alt.profitDiff > 0;
+        const diffSign = isBetter ? '+' : '';
+        const diffClass = isBetter ? 'better' : 'worse';
+
+        // For free users, blur/lock items after the first one
+        const isLocked = !isPaid && index > 0;
+
+        if (isLocked) {
+          return `
+            <div class="comparison-item locked" title="Upgrade to Pro to see all alternatives">
+              <div class="coin-info">
+                <span class="coin-name">${alt.coin}</span>
+                <span class="coin-algo">${alt.isSameAlgo ? '(same algo)' : ''}</span>
+              </div>
+              <div class="profit-diff locked-value">🔒 Pro</div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="comparison-item">
+            <div class="coin-info">
+              <span class="coin-name">${alt.coin}</span>
+              <span class="coin-algo">${alt.isSameAlgo ? '✓ same algo' : alt.algorithm || ''}</span>
+            </div>
+            <div class="profit-diff ${diffClass}">
+              ${diffSign}$${alt.profitDiff.toFixed(2)}/day
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    } catch (error) {
+      console.error('Error fetching coin comparison:', error);
+      coinComparison.classList.add('hidden');
     }
-    return null;
   }
 
   function renderWallets(walletResults) {

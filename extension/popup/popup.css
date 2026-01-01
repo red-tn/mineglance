@@ -301,6 +301,27 @@ body {
 .comparison-item .profit-diff.better { color: var(--accent); }
 .comparison-item .profit-diff.worse { color: var(--danger); }
 
+.comparison-item .coin-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comparison-item .coin-algo {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.comparison-item.locked {
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.comparison-item .locked-value {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
 /* Buttons */
 .btn {
   padding: 12px 24px;

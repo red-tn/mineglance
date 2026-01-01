@@ -400,6 +400,201 @@ function estimateEarnings(hashrate) {
   return 0;
 }
 
+// Algorithm groups - coins that can be mined with same hardware
+const ALGORITHM_GROUPS = {
+  'kawpow': ['rvn', 'xna'],           // GPU - KAWPOW
+  'autolykos': ['ergo'],              // GPU - Autolykos2
+  'ethash': ['etc'],                  // GPU - Ethash (ETH moved to PoS)
+  'kheavyhash': ['kas'],              // GPU/ASIC - kHeavyHash
+  'zelhash': ['flux'],                // GPU - ZelHash
+  'equihash': ['zec', 'btg'],         // GPU - Equihash variants
+  'randomx': ['xmr'],                 // CPU - RandomX
+  'ghostrider': ['rtm'],              // CPU - GhostRider
+  'sha256': ['btc'],                  // ASIC - SHA256
+  'scrypt': ['ltc'],                  // ASIC - Scrypt
+  'beamhash': ['beam'],               // GPU - BeamHash
+  'firopow': ['firo'],                // GPU - FiroPow
+  'octopus': ['cfx'],                 // GPU - Octopus
+  'eaglesong': ['ckb'],               // ASIC - Eaglesong
+  'blake3': ['alph'],                 // GPU - Blake3
+  'nexapow': ['nexa']                 // GPU - NexaPow
+};
+
+// Get algorithm for a coin
+function getCoinAlgorithm(coin) {
+  const coinLower = coin.toLowerCase();
+  for (const [algo, coins] of Object.entries(ALGORITHM_GROUPS)) {
+    if (coins.includes(coinLower)) {
+      return algo;
+    }
+  }
+  return null;
+}
+
+// WhatToMine coin IDs (for API calls)
+const WHATTOMINE_IDS = {
+  'rvn': 234,
+  'etc': 162,
+  'ergo': 340,
+  'flux': 185,
+  'kas': 352,
+  'xna': 388,
+  'firo': 175,
+  'beam': 294,
+  'cfx': 351,
+  'alph': 398,
+  'nexa': 399,
+  'rtm': 361,
+  'zec': 166,
+  'btg': 181,
+  'xmr': 101
+};
+
+// Cache for profitability data (5 min TTL)
+let profitabilityCache = {
+  data: null,
+  timestamp: 0
+};
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Fetch coin profitability data from WhatToMine
+async function fetchCoinProfitability() {
+  // Check cache
+  if (profitabilityCache.data && (Date.now() - profitabilityCache.timestamp) < CACHE_TTL) {
+    return profitabilityCache.data;
+  }
+
+  try {
+    // WhatToMine API for GPU coins
+    const response = await fetch('https://whattomine.com/coins.json', {
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`WhatToMine API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Parse into our format
+    const profitability = {};
+
+    if (data.coins) {
+      for (const [name, coin] of Object.entries(data.coins)) {
+        const tag = coin.tag?.toLowerCase();
+        if (tag && COINS[tag]) {
+          profitability[tag] = {
+            name: coin.tag,
+            algorithm: coin.algorithm,
+            price: parseFloat(coin.exchange_rate) || 0,
+            btcRevenue: parseFloat(coin.btc_revenue) || 0,
+            revenue24h: parseFloat(coin.estimated_rewards) || 0,
+            profitability: parseFloat(coin.profitability) || 0,
+            profitability24: parseFloat(coin.profitability24) || 0,
+            difficulty: parseFloat(coin.difficulty) || 0,
+            networkHashrate: coin.nethash || 0,
+            blockReward: parseFloat(coin.block_reward) || 0,
+            blockTime: parseFloat(coin.block_time) || 0
+          };
+        }
+      }
+    }
+
+    // Cache the result
+    profitabilityCache = {
+      data: profitability,
+      timestamp: Date.now()
+    };
+
+    return profitability;
+  } catch (error) {
+    console.error('Error fetching profitability data:', error);
+    // Return cached data even if expired, or empty object
+    return profitabilityCache.data || {};
+  }
+}
+
+// Calculate comparison for alternative coins
+async function getAlternativeCoins(currentCoin, userHashrate, electricityRate, powerWatts) {
+  const profitability = await fetchCoinProfitability();
+  const currentAlgo = getCoinAlgorithm(currentCoin);
+
+  if (!currentAlgo) {
+    return [];
+  }
+
+  // Get coins with same algorithm (can mine with same hardware)
+  const sameAlgoCoins = ALGORITHM_GROUPS[currentAlgo] || [];
+
+  // Also include popular GPU coins for comparison even if different algo
+  const comparableCoins = [...new Set([
+    ...sameAlgoCoins,
+    'rvn', 'etc', 'ergo', 'flux', 'kas', 'alph', 'nexa', 'firo'
+  ])].filter(c => c !== currentCoin.toLowerCase());
+
+  const currentData = profitability[currentCoin.toLowerCase()];
+  if (!currentData) {
+    return [];
+  }
+
+  // Daily electricity cost
+  const dailyElectricity = (powerWatts / 1000) * 24 * electricityRate;
+
+  const alternatives = [];
+
+  for (const coinId of comparableCoins) {
+    const coinData = profitability[coinId];
+    if (!coinData) continue;
+
+    // For same algorithm, we can directly compare
+    // For different algorithms, we use WhatToMine's profitability metric
+    const isSameAlgo = sameAlgoCoins.includes(coinId);
+
+    let estimatedRevenue;
+    let estimatedProfit;
+
+    if (isSameAlgo && currentData.profitability > 0) {
+      // Same algorithm - scale by relative profitability
+      const profitRatio = coinData.profitability / currentData.profitability;
+      const currentRevenue24h = (userHashrate > 0 && currentData.revenue24h)
+        ? (currentData.revenue24h * currentData.price)
+        : 0;
+      estimatedRevenue = currentRevenue24h * profitRatio;
+    } else {
+      // Different algorithm - use WhatToMine's per-hashrate profitability
+      // This is less accurate but gives a ballpark
+      estimatedRevenue = coinData.profitability24 || coinData.profitability || 0;
+    }
+
+    estimatedProfit = estimatedRevenue - dailyElectricity;
+
+    // Calculate difference from current
+    const currentRevenue = currentData.profitability24 || currentData.profitability || 0;
+    const currentProfit = currentRevenue - dailyElectricity;
+    const profitDiff = estimatedProfit - currentProfit;
+    const percentDiff = currentProfit !== 0 ? (profitDiff / Math.abs(currentProfit)) * 100 : 0;
+
+    alternatives.push({
+      coin: coinId.toUpperCase(),
+      name: COINS[coinId]?.name || coinId,
+      algorithm: coinData.algorithm,
+      isSameAlgo,
+      estimatedRevenue,
+      estimatedProfit,
+      profitDiff,
+      percentDiff,
+      price: coinData.price,
+      difficulty: coinData.difficulty
+    });
+  }
+
+  // Sort by profit difference (best first)
+  alternatives.sort((a, b) => b.profitDiff - a.profitDiff);
+
+  // Return top 4 alternatives
+  return alternatives.slice(0, 4);
+}
+
 // Set up alarm for auto-refresh (paid users only)
 async function setupAutoRefresh() {
   const { isPaid, settings } = await chrome.storage.local.get(['isPaid', 'settings']);
@@ -545,6 +740,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Legacy support for email-based activation (will be removed)
   if (message.action === 'activatePro') {
     sendResponse({ success: false, error: 'Please use your license key to activate.' });
+    return true;
+  }
+
+  // Get alternative coins for comparison (Pro feature)
+  if (message.action === 'getAlternativeCoins') {
+    getAlternativeCoins(
+      message.currentCoin,
+      message.hashrate || 0,
+      message.electricityRate || 0.12,
+      message.powerWatts || 200
+    )
+      .then(alternatives => sendResponse({ success: true, alternatives }))
+      .catch(error => {
+        console.error('Error getting alternatives:', error);
+        sendResponse({ success: false, error: error.message, alternatives: [] });
+      });
+    return true;
+  }
+
+  // Get profitability data for all coins
+  if (message.action === 'getCoinProfitability') {
+    fetchCoinProfitability()
+      .then(data => sendResponse({ success: true, data }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
 });
