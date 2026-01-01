@@ -21,6 +21,37 @@
     </header>
 
     <main class="main">
+      <!-- Pro Activation Section -->
+      <section class="section" id="proActivationSection">
+        <h2>Pro License</h2>
+        <p class="section-desc">Enter your license key from your purchase confirmation email.</p>
+
+        <div id="proActivationForm">
+          <div class="form-group">
+            <label for="licenseKey">License Key</label>
+            <div class="input-with-button">
+              <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
+              <button id="activateProBtn" class="btn btn-accent">Activate</button>
+            </div>
+            <p id="activationResult" class="lookup-result hidden"></p>
+          </div>
+          <p class="help-text">License can be activated on up to 3 devices.</p>
+        </div>
+
+        <div id="proActiveStatus" class="pro-active-status hidden">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <p style="margin: 0;">Pro license active</p>
+              <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.8;" id="licenseKeyDisplay"></p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="planBadge" class="tag" style="background: rgba(255,255,255,0.2); color: white;">PRO</span>
+              <button id="deactivateBtn" class="btn btn-small" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);">Deactivate</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Wallets Section -->
       <section class="section">
         <div class="section-header">
@@ -88,37 +119,6 @@
         <div id="noRigs" class="empty-state">
           <p>No rigs configured.</p>
           <p class="muted">Add your GPUs to track power consumption.</p>
-        </div>
-      </section>
-
-      <!-- Pro Activation Section -->
-      <section class="section" id="proActivationSection">
-        <h2>Pro License</h2>
-        <p class="section-desc">Enter your license key from your purchase confirmation email.</p>
-
-        <div id="proActivationForm">
-          <div class="form-group">
-            <label for="licenseKey">License Key</label>
-            <div class="input-with-button">
-              <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
-              <button id="activateProBtn" class="btn btn-accent">Activate</button>
-            </div>
-            <p id="activationResult" class="lookup-result hidden"></p>
-          </div>
-          <p class="help-text">License can be activated on up to 3 devices.</p>
-        </div>
-
-        <div id="proActiveStatus" class="pro-active-status hidden">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <p style="margin: 0;">Pro license active</p>
-              <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.8;" id="licenseKeyDisplay"></p>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span id="planBadge" class="tag" style="background: rgba(255,255,255,0.2); color: white;">PRO</span>
-              <button id="deactivateBtn" class="btn btn-small" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);">Deactivate</button>
-            </div>
-          </div>
         </div>
       </section>
 
