@@ -161,12 +161,16 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
-    // Log the action
-    await supabase.from('admin_audit_log').insert({
-      admin_email: 'system',
-      action: `license_${action}`,
-      details: { licenseKey }
-    }).catch(() => {})
+    // Log the action (ignore errors)
+    try {
+      await supabase.from('admin_audit_log').insert({
+        admin_email: 'system',
+        action: `license_${action}`,
+        details: { licenseKey }
+      })
+    } catch {
+      // Audit log is optional
+    }
 
     return NextResponse.json({ success: true })
 
