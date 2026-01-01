@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
       .select('action')
       .limit(100)
 
-    const uniqueActions = [...new Set((actionsData || []).map(a => a.action))]
+    const uniqueActions = Array.from(new Set((actionsData || []).map(a => a.action)))
 
     // Get summary
     const now = new Date()
