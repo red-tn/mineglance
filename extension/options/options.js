@@ -312,12 +312,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Functions
   async function loadSettings() {
     const data = await chrome.storage.local.get([
-      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'licenseKey', 'plan'
+      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'licenseKey', 'plan', 'installId'
     ]);
 
     wallets = data.wallets || [];
     rigs = data.rigs || [];
     isPaid = data.isPaid || false;
+
+    // Display instance ID in header
+    const instanceIdEl = document.getElementById('instanceId');
+    let installId = data.installId;
+
+    // Generate install ID if it doesn't exist
+    if (!installId) {
+      installId = 'mg_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+      await chrome.storage.local.set({ installId });
+    }
+
+    if (instanceIdEl) {
+      // Show truncated ID but full ID on hover
+      const shortId = installId.length > 16 ? installId.substring(0, 16) + '...' : installId;
+      instanceIdEl.textContent = `ID: ${shortId}`;
+      instanceIdEl.title = `${installId}\n\nClick to copy`;
+      instanceIdEl.style.cursor = 'pointer';
+      instanceIdEl.addEventListener('click', () => {
+        navigator.clipboard.writeText(installId);
+        instanceIdEl.textContent = 'Copied!';
+        setTimeout(() => {
+          instanceIdEl.textContent = `ID: ${shortId}`;
+        }, 1500);
+      });
+    }
 
     // Update UI
     if (isPaid && data.licenseKey) {
@@ -363,7 +388,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     notifyProfitDrop.disabled = false;
     notifyBetterCoin.disabled = false;
     profitDropThreshold.disabled = false;
-    refreshInterval.disabled = false;
+    // Note: refreshInterval is NOT a Pro feature - it's always enabled
     emailAlertsEnabled.disabled = false;
     alertEmail.disabled = false;
   }
@@ -488,10 +513,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function activatePro() {
     const licenseKey = licenseKeyInput.value.trim().toUpperCase();
 
-    // Validate license key format: MG-XXXX-XXXX-XXXX
-    const keyPattern = /^MG-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-    if (!licenseKey || !keyPattern.test(licenseKey)) {
-      showActivationResult('Please enter a valid license key (MG-XXXX-XXXX-XXXX)', 'error');
+    // Validate license key format: XXXX-XXXX-XXXX-XXXX (alphanumeric)
+    // Also accept legacy MG-XXXX-XXXX-XXXX format for existing users
+    const newKeyPattern = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+    const legacyKeyPattern = /^MG-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+    if (!licenseKey || (!newKeyPattern.test(licenseKey) && !legacyKeyPattern.test(licenseKey))) {
+      showActivationResult('Please enter a valid license key (XXXX-XXXX-XXXX-XXXX)', 'error');
       return;
     }
 
@@ -556,12 +583,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     proActiveStatus.classList.add('hidden');
     licenseKeyInput.value = '';
 
-    // Disable pro features
+    // Disable pro features (but NOT refreshInterval - that's free)
     notifyWorkerOffline.disabled = true;
     notifyProfitDrop.disabled = true;
     notifyBetterCoin.disabled = true;
     profitDropThreshold.disabled = true;
-    refreshInterval.disabled = true;
     emailAlertsEnabled.disabled = true;
     alertEmail.disabled = true;
 

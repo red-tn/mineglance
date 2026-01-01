@@ -125,6 +125,9 @@ chrome.runtime.onInstalled.addListener(() => {
 
   // Track this install
   trackInstall();
+
+  // Set up auto-refresh for all users (after slight delay to ensure storage is ready)
+  setTimeout(() => setupAutoRefresh(), 1000);
 });
 
 // Also track on startup (for returning users)
@@ -132,6 +135,8 @@ chrome.runtime.onStartup.addListener(() => {
   trackInstall();
   // Verify license is still valid
   verifyLicenseOnStartup();
+  // Set up auto-refresh for all users
+  setupAutoRefresh();
 });
 
 // Verify license status with server (checks for revocation)
@@ -734,14 +739,15 @@ async function getAlternativeCoins(currentCoin, userHashrate, electricityRate, p
   return alternatives.slice(0, 4);
 }
 
-// Set up alarm for auto-refresh (paid users only)
+// Set up alarm for auto-refresh (available for all users)
 async function setupAutoRefresh() {
-  const { isPaid, settings } = await chrome.storage.local.get(['isPaid', 'settings']);
+  const { settings } = await chrome.storage.local.get(['settings']);
 
-  if (isPaid && settings?.refreshInterval) {
+  if (settings?.refreshInterval) {
     chrome.alarms.create('refresh', { periodInMinutes: settings.refreshInterval });
   } else {
-    chrome.alarms.clear('refresh');
+    // Default to 5 minutes if not set
+    chrome.alarms.create('refresh', { periodInMinutes: 5 });
   }
 }
 

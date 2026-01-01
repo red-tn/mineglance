@@ -45,50 +45,80 @@ export async function GET(request: NextRequest) {
     const periodDays = parseInt(period)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    // Get total count from license_activations
-    let countQuery = supabase
-      .from('license_activations')
-      .select('*', { count: 'exact', head: true })
-
-    if (isPro === 'true') {
-      countQuery = countQuery.eq('is_active', true)
-    } else if (isPro === 'false') {
-      countQuery = countQuery.eq('is_active', false)
-    }
-
-    const { count } = await countQuery
-
-    // Get paginated data
-    let dataQuery = supabase
-      .from('license_activations')
+    // Get ALL extension installs (includes free + pro that have tracked)
+    const { data: allExtInstalls } = await supabase
+      .from('extension_installs')
       .select('*')
       .order('last_seen', { ascending: false })
-      .range(offset, offset + limit - 1)
 
-    if (isPro === 'true') {
-      dataQuery = dataQuery.eq('is_active', true)
-    } else if (isPro === 'false') {
-      dataQuery = dataQuery.eq('is_active', false)
-    }
-
-    const { data: installations, error } = await dataQuery
-
-    if (error) {
-      console.error('Installations query error:', error)
-    }
-
-    // Get summary stats
-    const { data: allInstalls } = await supabase
+    // Get Pro activations
+    const { data: proActivations } = await supabase
       .from('license_activations')
-      .select('activated_at, last_seen, license_key, is_active')
+      .select('*')
 
-    const total = allInstalls?.length || 0
-    const proUsers = allInstalls?.filter(i => i.is_active).length || 0
+    // Create a map of extension installs by install_id
+    const extInstallMap = new Map()
+    ;(allExtInstalls || []).forEach(inst => {
+      extInstallMap.set(inst.install_id, inst)
+    })
+
+    // Create a map of pro users by install_id
+    const proMap = new Map()
+    ;(proActivations || []).forEach(p => {
+      proMap.set(p.install_id, p)
+    })
+
+    // Combine: Start with extension_installs, enrich with pro status
+    const combinedInstalls: any[] = []
+    const seenInstallIds = new Set()
+
+    // First, add all extension_installs entries
+    ;(allExtInstalls || []).forEach(inst => {
+      const proData = proMap.get(inst.install_id)
+      seenInstallIds.add(inst.install_id)
+      combinedInstalls.push({
+        ...inst,
+        isPro: proData?.is_active || false,
+        license_key: proData?.license_key || null
+      })
+    })
+
+    // Then, add any pro activations that don't have a matching extension_install
+    // (This shouldn't happen normally, but handles edge cases)
+    ;(proActivations || []).forEach(p => {
+      if (!seenInstallIds.has(p.install_id)) {
+        combinedInstalls.push({
+          id: p.id,
+          install_id: p.install_id,
+          browser: 'Chrome',
+          version: '-',
+          created_at: p.activated_at,
+          last_seen: p.last_seen,
+          isPro: p.is_active,
+          license_key: p.license_key
+        })
+      }
+    })
+
+    // Filter by pro status if requested
+    let filteredInstalls = combinedInstalls
+    if (isPro === 'true') {
+      filteredInstalls = combinedInstalls.filter(i => i.isPro)
+    } else if (isPro === 'false') {
+      filteredInstalls = combinedInstalls.filter(i => !i.isPro)
+    }
+
+    // Calculate totals
+    const total = combinedInstalls.length
+    const proUsers = combinedInstalls.filter(i => i.isPro).length
     const freeUsers = total - proUsers
-    const activeUsers = allInstalls?.filter(i => {
+    const activeUsers = combinedInstalls.filter(i => {
       const lastSeen = new Date(i.last_seen)
       return lastSeen >= sevenDaysAgo
-    }).length || 0
+    }).length
+
+    // Paginate
+    const paginatedInstalls = filteredInstalls.slice(offset, offset + limit)
 
     // Generate chart data (new installs per day)
     const chartData: Array<{ date: string; installs: number; active: number }> = []
@@ -96,12 +126,12 @@ export async function GET(request: NextRequest) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
       const dateStr = date.toISOString().split('T')[0]
 
-      const dayInstalls = (allInstalls || []).filter(inst => {
-        const instDate = new Date(inst.activated_at).toISOString().split('T')[0]
+      const dayInstalls = combinedInstalls.filter(inst => {
+        const instDate = new Date(inst.created_at || inst.last_seen).toISOString().split('T')[0]
         return instDate === dateStr
       }).length
 
-      const dayActive = (allInstalls || []).filter(inst => {
+      const dayActive = combinedInstalls.filter(inst => {
         const lastSeenDate = new Date(inst.last_seen).toISOString().split('T')[0]
         return lastSeenDate === dateStr
       }).length
@@ -117,22 +147,23 @@ export async function GET(request: NextRequest) {
     const conversionRate = total > 0 ? (proUsers / total * 100).toFixed(1) : '0'
 
     // Map installations to expected format
-    const mappedInstallations = (installations || []).map(i => ({
+    const mappedInstallations = paginatedInstalls.map(i => ({
       id: i.id,
       instance_id: i.install_id,
       license_key: i.license_key,
-      browser: 'Chrome',
-      extension_version: '-',
-      first_seen: i.activated_at,
-      last_seen: i.last_seen
+      browser: i.browser || 'Chrome',
+      extension_version: i.version || '-',
+      first_seen: i.created_at || i.last_seen,
+      last_seen: i.last_seen,
+      isPro: i.isPro
     }))
 
     return NextResponse.json({
       installations: mappedInstallations,
-      total: count || 0,
+      total: filteredInstalls.length,
       page,
       limit,
-      totalPages: Math.ceil((count || 0) / limit),
+      totalPages: Math.ceil(filteredInstalls.length / limit),
       summary: {
         total,
         proUsers,

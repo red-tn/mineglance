@@ -9,18 +9,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// Generate a unique license key: MG-XXXX-XXXX-XXXX
+// Generate a unique license key: XXXX-XXXX-XXXX-XXXX (alphanumeric)
 function generateLicenseKey(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // No I, O, 0, 1 to avoid confusion
   const segments = []
-  for (let s = 0; s < 3; s++) {
+  for (let s = 0; s < 4; s++) {
     let segment = ''
     for (let i = 0; i < 4; i++) {
       segment += chars.charAt(Math.floor(Math.random() * chars.length))
     }
     segments.push(segment)
   }
-  return `MG-${segments.join('-')}`
+  return segments.join('-')
 }
 
 export async function POST(request: NextRequest) {

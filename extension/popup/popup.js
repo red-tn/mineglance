@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function fetchAllWalletData() {
     showLoading();
 
-    const { wallets, electricity } = await chrome.storage.local.get(['wallets', 'electricity']);
+    const { wallets, electricity, isPaid } = await chrome.storage.local.get(['wallets', 'electricity', 'isPaid']);
 
     if (!wallets || wallets.length === 0) {
       showNoWallets();
@@ -165,7 +165,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     let totalElectricityCost = 0;
     const walletResults = [];
 
-    for (const wallet of wallets.filter(w => w.enabled)) {
+    const enabledWallets = wallets.filter(w => w.enabled);
+
+    for (let i = 0; i < enabledWallets.length; i++) {
+      const wallet = enabledWallets[i];
+
+      // Free users only get 1 wallet - others are locked
+      if (!isPaid && i > 0) {
+        walletResults.push({
+          wallet,
+          locked: true
+        });
+        continue;
+      }
+
       try {
         // Fetch pool data via background script
         const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address);
@@ -338,6 +351,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (const result of walletResults) {
       const card = document.createElement('div');
       card.className = 'wallet-card';
+
+      // Handle locked wallets (free users with 2+ wallets)
+      if (result.locked) {
+        card.classList.add('locked');
+        card.innerHTML = `
+          <div class="wallet-card-header">
+            <div class="wallet-name">
+              <span>${result.wallet.name || 'Wallet'}</span>
+              <span class="wallet-coin">${result.wallet.coin.toUpperCase()}</span>
+            </div>
+            <div class="wallet-profit" style="color: var(--text-muted)">---</div>
+          </div>
+          <div style="text-align: center; padding: 12px 0;">
+            <span style="font-size: 18px;">🔒</span>
+            <p style="margin: 6px 0 0; font-size: 11px; color: var(--text-muted);">Upgrade to Pro to track multiple wallets</p>
+          </div>
+        `;
+        walletList.appendChild(card);
+        continue;
+      }
 
       const poolUrl = getPoolUrl(result.wallet.pool, result.wallet.coin, result.wallet.address);
       if (poolUrl) {

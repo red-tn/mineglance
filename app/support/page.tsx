@@ -132,7 +132,7 @@ export default function Support() {
               <ul className="list-disc pl-6 space-y-2 text-foreground/70">
                 <li>Make sure you&apos;re using the license key from your purchase email</li>
                 <li>Check your spam folder for the confirmation email</li>
-                <li>License format: MG-XXXX-XXXX-XXXX</li>
+                <li>License format: XXXX-XXXX-XXXX-XXXX</li>
                 <li>Contact control@mineglance.com with your purchase email</li>
               </ul>
             </div>
