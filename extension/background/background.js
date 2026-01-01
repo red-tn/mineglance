@@ -1,6 +1,6 @@
 // MineGlance Background Service Worker
 
-const API_BASE = 'https://mineglance.com/api';
+const API_BASE = 'https://www.mineglance.com/api';
 
 // Send email alert for Pro users
 async function sendEmailAlert(alertType, walletName, message) {

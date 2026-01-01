@@ -498,8 +498,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
       console.log('Request headers:', JSON.stringify(headers));
 
-      // Get QR data from server
-      const response = await fetch('https://mineglance.com/api/dashboard/qr', {
+      // Get QR data from server (use www to avoid redirect stripping auth header)
+      const response = await fetch('https://www.mineglance.com/api/dashboard/qr', {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({
@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       const { licenseKey } = await chrome.storage.local.get(['licenseKey']);
-      const response = await fetch('https://mineglance.com/api/send-alert', {
+      const response = await fetch('https://www.mineglance.com/api/send-alert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
