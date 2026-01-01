@@ -130,7 +130,47 @@ chrome.runtime.onInstalled.addListener(() => {
 // Also track on startup (for returning users)
 chrome.runtime.onStartup.addListener(() => {
   trackInstall();
+  // Verify license is still valid
+  verifyLicenseOnStartup();
 });
+
+// Verify license status with server (checks for revocation)
+async function verifyLicenseOnStartup() {
+  const { licenseKey, installId, isPaid } = await chrome.storage.local.get([
+    'licenseKey', 'installId', 'isPaid'
+  ]);
+
+  // Only check if user has a license activated
+  if (!isPaid || !licenseKey || !installId) {
+    return;
+  }
+
+  try {
+    const result = await checkLicenseStatus(licenseKey, installId);
+
+    if (!result.isPro) {
+      // License was revoked or is no longer valid
+      console.log('License no longer valid, deactivating Pro features');
+      await chrome.storage.local.set({ isPaid: false });
+
+      // Notify user
+      chrome.notifications.create('license-revoked', {
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'MineGlance License',
+        message: 'Your Pro license is no longer active. Please re-activate or contact support.'
+      });
+    } else {
+      // License still valid - update plan if changed
+      if (result.plan) {
+        await chrome.storage.local.set({ plan: result.plan });
+      }
+    }
+  } catch (error) {
+    console.error('License verification failed:', error);
+    // Don't deactivate on network errors - be lenient
+  }
+}
 
 // Coin configurations with CoinGecko IDs and decimal places
 // MUST be defined before POOLS since POOLS references getCoinDivisor
@@ -893,6 +933,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const result = await checkLicenseStatus(data.licenseKey, data.installId);
       if (result.isPro) {
         chrome.storage.local.set({ isPaid: true, plan: result.plan });
+      } else {
+        // License revoked or invalid - deactivate locally
+        chrome.storage.local.set({ isPaid: false });
       }
       sendResponse({ success: true, ...result });
     });

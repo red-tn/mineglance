@@ -98,13 +98,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoading();
 
     try {
-      const { wallets, isPaid, electricity, settings, discoveryCollapsed } = await chrome.storage.local.get([
+      let { wallets, isPaid, electricity, settings, discoveryCollapsed } = await chrome.storage.local.get([
         'wallets',
         'isPaid',
         'electricity',
         'settings',
         'discoveryCollapsed'
       ]);
+
+      // Verify license with server (non-blocking, runs in background)
+      if (isPaid) {
+        chrome.runtime.sendMessage({ action: 'checkLicenseStatus' }, (response) => {
+          if (response && !response.isPro) {
+            // License revoked - update UI
+            proBadge.classList.add('hidden');
+            upgradeBanner.classList.remove('hidden');
+          }
+        });
+      }
 
       // Show upgrade banner for free users, or PRO badge for paid users
       if (!isPaid) {
