@@ -610,10 +610,11 @@ const POOLS = {
   'ocean': {
     name: 'OCEAN',
     coins: ['btc'],
-    getStatsUrl: (coin, address) => `https://api.ocean.xyz/v1/miner/${address}/summary`,
+    getStatsUrl: (coin, address) => `https://api.ocean.xyz/v1/statsnap/${address}`,
     parseResponse: (data, coin) => {
-      // OCEAN returns miner summary
-      const hashrate = data.hashrate || data.hashrate_3h || 0;
+      // OCEAN statsnap endpoint returns current stats
+      // hashrate fields: hashrate_60s, hashrate_300s, hashrate_3hr, hashrate_24hr
+      const hashrate = data.hashrate_300s || data.hashrate_3hr || data.hashrate_60s || 0;
 
       const workers = [];
       if (data.workers && Array.isArray(data.workers)) {
@@ -629,17 +630,21 @@ const POOLS = {
 
       const onlineWorkers = workers.filter(w => !w.offline).length;
 
+      // unpaid_earnings is in sats, convert to BTC
+      const unpaidSats = data.unpaid_earnings || 0;
+      const unpaidBtc = unpaidSats / 100000000;
+
       return {
         hashrate: hashrate,
-        hashrate5m: data.hashrate_60s || hashrate,
-        hashrate24h: data.hashrate_24h || hashrate,
+        hashrate5m: data.hashrate_300s || hashrate,
+        hashrate24h: data.hashrate_24hr || hashrate,
         workers: workers,
-        workersOnline: onlineWorkers || data.online_workers || 0,
-        workersTotal: data.total_workers || workers.length || 1,
-        balance: data.pending_balance || 0,
-        paid: data.total_paid || 0,
-        earnings24h: data.earnings_24h || 0,
-        shares: data.shares || 0,
+        workersOnline: onlineWorkers || data.workers_online || 0,
+        workersTotal: data.workers_total || workers.length || 1,
+        balance: unpaidBtc,
+        paid: (data.total_paid || 0) / 100000000,
+        earnings24h: (data.earnings_24hr || 0) / 100000000,
+        shares: data.shares_24hr || 0,
         lastShare: data.last_share
       };
     }
