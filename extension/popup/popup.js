@@ -1,6 +1,6 @@
 // MineGlance Popup Script
 
-// Pool dashboard URLs - defined at top level to avoid temporal dead zone
+// Pool dashboard URLs
 const POOL_URLS = {
   '2miners': (coin, address) => `https://${coin}.2miners.com/account/${address}`,
   'nanopool': (coin, address) => `https://${coin}.nanopool.org/account/${address}`,
@@ -33,12 +33,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const coinComparison = document.getElementById('coinComparison');
   const comparisonList = document.getElementById('comparisonList');
   const proBadge = document.getElementById('proBadge');
+  const coinDiscovery = document.getElementById('coinDiscovery');
+  const discoveryContent = document.getElementById('discoveryContent');
+  const discoveryList = document.getElementById('discoveryList');
+  const toggleDiscovery = document.getElementById('toggleDiscovery');
 
   // Buttons
   const settingsBtn = document.getElementById('settingsBtn');
   const addWalletBtn = document.getElementById('addWalletBtn');
   const refreshBtn = document.getElementById('refreshBtn');
   const upgradeBtn = document.getElementById('upgradeBtn');
+
+  // State
+  let currentTab = 'trending';
+  let discoveryData = { trending: [], top: [], new: [] };
 
   // Event Listeners
   settingsBtn.addEventListener('click', () => {
@@ -61,6 +69,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
   });
 
+  // Discovery toggle
+  toggleDiscovery.addEventListener('click', async () => {
+    const isCollapsed = discoveryContent.classList.toggle('collapsed');
+    toggleDiscovery.classList.toggle('collapsed', isCollapsed);
+    await chrome.storage.local.set({ discoveryCollapsed: isCollapsed });
+  });
+
+  // Tab buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTab = btn.dataset.tab;
+      renderDiscoveryList(discoveryData[currentTab] || []);
+    });
+  });
+
   // Initialize
   await initPopup();
 
@@ -68,10 +93,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoading();
 
     try {
-      const { wallets, isPaid, electricity } = await chrome.storage.local.get([
+      const { wallets, isPaid, electricity, settings, discoveryCollapsed } = await chrome.storage.local.get([
         'wallets',
         'isPaid',
-        'electricity'
+        'electricity',
+        'settings',
+        'discoveryCollapsed'
       ]);
 
       // Show upgrade banner for free users, or PRO badge for paid users
@@ -80,7 +107,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         proBadge.classList.remove('hidden');
       }
-      // Note: coinComparison is shown/hidden by fetchAndRenderComparison based on data availability
+
+      // Show/hide discovery section based on settings
+      const showDiscovery = settings?.showCoinDiscovery !== false; // Default to true
+      if (showDiscovery) {
+        coinDiscovery.classList.remove('hidden');
+        if (discoveryCollapsed) {
+          discoveryContent.classList.add('collapsed');
+          toggleDiscovery.classList.add('collapsed');
+        }
+        // Fetch discovery data
+        fetchDiscoveryData();
+      }
 
       // Check if we have wallets
       if (!wallets || wallets.length === 0) {
@@ -116,12 +154,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Fetch pool data via background script
         const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address);
 
-        // Fetch coin price
-        const price = await fetchCoinPrice(wallet.coin);
+        // Fetch coin price and 24h change
+        const priceData = await fetchCoinPriceWithChange(wallet.coin);
+        const price = priceData.price || 0;
+        const priceChange24h = priceData.change24h || 0;
 
         // Calculate earnings (24h estimate)
         const earnings24h = poolData.earnings24h || 0;
-        const revenue = earnings24h * (price || 0);
+        const revenue = earnings24h * price;
 
         // Calculate electricity cost (24h)
         const powerWatts = wallet.power || 200;
@@ -130,6 +170,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const netProfit = revenue - electricityCost;
 
+        // Calculate wallet balance in USD
+        const balanceUSD = (poolData.balance || 0) * price;
+
         totalRevenue += revenue;
         totalElectricityCost += electricityCost;
 
@@ -137,6 +180,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           wallet,
           poolData,
           price,
+          priceChange24h,
+          balanceUSD,
           revenue,
           electricityCost,
           netProfit
@@ -145,11 +190,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Cache the data
         await chrome.storage.local.set({
           [`poolData_${wallet.id}`]: poolData,
-          [`price_${wallet.coin}`]: price
+          [`price_${wallet.coin}`]: price,
+          [`priceChange_${wallet.coin}`]: priceChange24h
         });
 
       } catch (error) {
-        // Make error messages more user-friendly
         let errorMsg = error.message;
         if (error.message.includes('404')) {
           errorMsg = 'No mining data found. Start mining to see stats.';
@@ -172,10 +217,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateSummary(totalRevenue - totalElectricityCost, totalRevenue, totalElectricityCost);
     lastUpdated.textContent = `Last updated: just now`;
 
-    // Fetch and render coin comparisons (Pro feature, but show for all to encourage upgrade)
+    // Fetch and render coin comparisons
     const { isPaid } = await chrome.storage.local.get(['isPaid']);
     if (walletResults.length > 0) {
-      // Use the first wallet's coin for comparison
       const primaryWallet = walletResults.find(r => !r.error) || walletResults[0];
       if (primaryWallet && !primaryWallet.error) {
         await fetchAndRenderComparison(
@@ -184,10 +228,77 @@ document.addEventListener('DOMContentLoaded', async () => {
           electricity?.rate || 0.12,
           primaryWallet.wallet.power || 200,
           isPaid,
-          primaryWallet.revenue || 0  // User's actual 24h revenue in USD
+          primaryWallet.revenue || 0
         );
       }
     }
+  }
+
+  // Fetch coin price with 24h change
+  async function fetchCoinPriceWithChange(coinSymbol) {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage(
+        { action: 'fetchCoinPriceWithChange', coin: coinSymbol },
+        (response) => {
+          resolve({
+            price: response?.price || 0,
+            change24h: response?.change24h || 0
+          });
+        }
+      );
+    });
+  }
+
+  // Fetch discovery coins from background
+  async function fetchDiscoveryData() {
+    chrome.runtime.sendMessage(
+      { action: 'getDiscoveryCoins' },
+      (response) => {
+        if (response?.success) {
+          discoveryData = {
+            trending: response.trending || [],
+            top: response.top || [],
+            new: response.new || []
+          };
+          renderDiscoveryList(discoveryData[currentTab]);
+        }
+      }
+    );
+  }
+
+  function renderDiscoveryList(coins) {
+    if (!coins || coins.length === 0) {
+      discoveryList.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px;">
+          No coins available
+        </div>
+      `;
+      return;
+    }
+
+    discoveryList.innerHTML = coins.map(coin => {
+      const changeClass = coin.change24h >= 0 ? 'up' : 'down';
+      const changeSign = coin.change24h >= 0 ? '+' : '';
+      const badges = [];
+      if (coin.isNew) badges.push('<span class="new-badge">NEW</span>');
+      if (coin.isHot) badges.push('<span class="hot-badge">HOT</span>');
+
+      return `
+        <div class="discovery-item" title="Click to learn more about ${coin.symbol}">
+          <div class="discovery-coin">
+            <div class="coin-icon">${coin.symbol.substring(0, 2)}</div>
+            <div class="coin-details">
+              <span class="coin-symbol">${coin.symbol}${badges.join('')}</span>
+              <span class="coin-algo-tag">${coin.algorithm || 'Unknown'}</span>
+            </div>
+          </div>
+          <div class="discovery-stats">
+            <span class="discovery-profit">$${coin.profitPerDay?.toFixed(2) || '0.00'}/day</span>
+            <span class="discovery-change ${changeClass}">${changeSign}${coin.change24h?.toFixed(1) || 0}%</span>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
   // Fetch alternative coins from background
@@ -200,7 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           hashrate,
           electricityRate,
           powerWatts,
-          userRevenue  // User's actual 24h revenue in USD
+          userRevenue
         },
         (response) => {
           resolve(response?.alternatives || []);
@@ -219,16 +330,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Show comparison section
       coinComparison.classList.remove('hidden');
 
-      // Render comparison items
       comparisonList.innerHTML = alternatives.map((alt, index) => {
         const isBetter = alt.profitDiff > 0;
         const diffSign = isBetter ? '+' : '';
         const diffClass = isBetter ? 'better' : 'worse';
-
-        // For free users, blur/lock items after the first one
         const isLocked = !isPaid && index > 0;
 
         if (isLocked) {
@@ -291,10 +398,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="wallet-error">${result.error}</div>
         `;
       } else {
-        const { wallet, poolData, netProfit } = result;
-        // Use workersOnline/workersTotal if available, otherwise count from array
+        const { wallet, poolData, price, priceChange24h, balanceUSD, netProfit } = result;
         const onlineWorkers = poolData.workersOnline ?? poolData.workers?.filter(w => !w.offline).length ?? 0;
         const totalWorkers = poolData.workersTotal ?? poolData.workers?.length ?? 0;
+        const changeClass = priceChange24h >= 0 ? 'positive' : 'negative';
+        const changeSign = priceChange24h >= 0 ? '+' : '';
 
         card.innerHTML = `
           <div class="wallet-card-header">
@@ -321,6 +429,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="stat">
               <div class="stat-label">Balance</div>
               <div class="stat-value">${poolData.balance ? poolData.balance.toFixed(6) : '0'}</div>
+            </div>
+          </div>
+          <div class="wallet-ribbon">
+            <div class="ribbon-item">
+              <span class="ribbon-label"><span class="live-dot"></span>Price</span>
+              <span class="ribbon-value">$${price ? price.toFixed(4) : '0.00'}</span>
+            </div>
+            <div class="ribbon-divider"></div>
+            <div class="ribbon-item">
+              <span class="ribbon-label">24h</span>
+              <span class="ribbon-value ${changeClass}">${changeSign}${priceChange24h.toFixed(1)}%</span>
+            </div>
+            <div class="ribbon-divider"></div>
+            <div class="ribbon-item">
+              <span class="ribbon-label">Value</span>
+              <span class="ribbon-value">$${balanceUSD.toFixed(2)}</span>
             </div>
           </div>
         `;

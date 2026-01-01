@@ -59,6 +59,30 @@
         <div id="comparisonList"></div>
       </div>
 
+      <!-- Coin Discovery Section -->
+      <div id="coinDiscovery" class="coin-discovery hidden">
+        <div class="discovery-header">
+          <h3>🔥 Minable Coins</h3>
+          <button id="toggleDiscovery" class="toggle-btn" title="Collapse">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
+        <div id="discoveryContent" class="discovery-content">
+          <!-- Tabs -->
+          <div class="discovery-tabs">
+            <button class="tab-btn active" data-tab="trending">Trending</button>
+            <button class="tab-btn" data-tab="top">Top Profit</button>
+            <button class="tab-btn" data-tab="new">New</button>
+          </div>
+          <!-- Coin List -->
+          <div id="discoveryList" class="discovery-list">
+            <!-- Coins inserted by JS -->
+          </div>
+        </div>
+      </div>
+
       <!-- Last Updated -->
       <div class="footer-info">
         <span id="lastUpdated">Last updated: --</span>

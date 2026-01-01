@@ -884,4 +884,120 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true;
   }
+
+  // Fetch coin price with 24h change
+  if (message.action === 'fetchCoinPriceWithChange') {
+    fetchCoinPriceWithChange(message.coin)
+      .then(data => sendResponse(data))
+      .catch(error => sendResponse({ price: 0, change24h: 0 }));
+    return true;
+  }
+
+  // Get discovery coins (trending, top, new)
+  if (message.action === 'getDiscoveryCoins') {
+    getDiscoveryCoins()
+      .then(data => sendResponse({ success: true, ...data }))
+      .catch(error => sendResponse({ success: false, trending: [], top: [], new: [] }));
+    return true;
+  }
 });
+
+// Fetch coin price with 24h change from CoinGecko
+async function fetchCoinPriceWithChange(coinSymbol) {
+  const coinLower = coinSymbol.toLowerCase();
+  const coinConfig = COINS[coinLower];
+
+  if (!coinConfig?.geckoId) {
+    return { price: 0, change24h: 0 };
+  }
+
+  try {
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinConfig.geckoId}&vs_currencies=usd&include_24hr_change=true`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    const coinData = data[coinConfig.geckoId];
+
+    return {
+      price: coinData?.usd || 0,
+      change24h: coinData?.usd_24h_change || 0
+    };
+  } catch (error) {
+    console.error('Error fetching coin price with change:', error);
+    return { price: 0, change24h: 0 };
+  }
+}
+
+// Get discovery coins for the popup
+async function getDiscoveryCoins() {
+  const profitability = await fetchCoinProfitability();
+
+  // Convert to array and add metadata
+  const coins = [];
+  for (const [symbol, data] of Object.entries(profitability)) {
+    if (!data.profitability || data.profitability <= 0) continue;
+
+    const coinConfig = COINS[symbol];
+    if (!coinConfig) continue;
+
+    // Fetch 24h price change
+    let change24h = 0;
+    try {
+      const priceData = await fetchCoinPriceWithChange(symbol);
+      change24h = priceData.change24h || 0;
+    } catch (e) {
+      // Ignore price fetch errors
+    }
+
+    coins.push({
+      symbol: symbol.toUpperCase(),
+      name: coinConfig.name,
+      algorithm: data.algorithm,
+      profitPerDay: data.profitability / 100, // Normalize to approx daily profit
+      change24h: change24h,
+      difficulty: data.difficulty,
+      networkHashrate: data.networkHashrate,
+      price: data.price,
+      isNew: isNewCoin(symbol),
+      isHot: change24h > 10 || data.profitability > 150
+    });
+  }
+
+  // Sort by different criteria for each tab
+  const trending = [...coins]
+    .filter(c => c.change24h !== 0)
+    .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
+    .slice(0, 8);
+
+  const top = [...coins]
+    .sort((a, b) => b.profitPerDay - a.profitPerDay)
+    .slice(0, 8);
+
+  const newCoins = [...coins]
+    .filter(c => c.isNew)
+    .sort((a, b) => b.profitPerDay - a.profitPerDay)
+    .slice(0, 8);
+
+  // If no new coins, show some promising lower-difficulty coins
+  if (newCoins.length === 0) {
+    const promising = [...coins]
+      .filter(c => c.change24h > 5)
+      .sort((a, b) => b.change24h - a.change24h)
+      .slice(0, 8);
+    return { trending, top, new: promising };
+  }
+
+  return { trending, top, new: newCoins };
+}
+
+// Check if a coin is considered "new" (launched recently or emerging)
+function isNewCoin(symbol) {
+  const newCoins = ['xna', 'nexa', 'alph', 'kas']; // Recently popular coins
+  return newCoins.includes(symbol.toLowerCase());
+}
