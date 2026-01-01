@@ -45,30 +45,30 @@ export async function GET(request: NextRequest) {
     const periodDays = parseInt(period)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    // Get total count
+    // Get total count from license_activations
     let countQuery = supabase
-      .from('installations')
+      .from('license_activations')
       .select('*', { count: 'exact', head: true })
 
     if (isPro === 'true') {
-      countQuery = countQuery.not('license_key', 'is', null)
+      countQuery = countQuery.eq('is_active', true)
     } else if (isPro === 'false') {
-      countQuery = countQuery.is('license_key', null)
+      countQuery = countQuery.eq('is_active', false)
     }
 
     const { count } = await countQuery
 
     // Get paginated data
     let dataQuery = supabase
-      .from('installations')
+      .from('license_activations')
       .select('*')
       .order('last_seen', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (isPro === 'true') {
-      dataQuery = dataQuery.not('license_key', 'is', null)
+      dataQuery = dataQuery.eq('is_active', true)
     } else if (isPro === 'false') {
-      dataQuery = dataQuery.is('license_key', null)
+      dataQuery = dataQuery.eq('is_active', false)
     }
 
     const { data: installations, error } = await dataQuery
@@ -79,11 +79,11 @@ export async function GET(request: NextRequest) {
 
     // Get summary stats
     const { data: allInstalls } = await supabase
-      .from('installations')
-      .select('first_seen, last_seen, license_key')
+      .from('license_activations')
+      .select('created_at, last_seen, license_key, is_active')
 
     const total = allInstalls?.length || 0
-    const proUsers = allInstalls?.filter(i => i.license_key).length || 0
+    const proUsers = allInstalls?.filter(i => i.is_active).length || 0
     const freeUsers = total - proUsers
     const activeUsers = allInstalls?.filter(i => {
       const lastSeen = new Date(i.last_seen)
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       const dateStr = date.toISOString().split('T')[0]
 
       const dayInstalls = (allInstalls || []).filter(inst => {
-        const instDate = new Date(inst.first_seen).toISOString().split('T')[0]
+        const instDate = new Date(inst.created_at).toISOString().split('T')[0]
         return instDate === dateStr
       }).length
 
@@ -116,8 +116,19 @@ export async function GET(request: NextRequest) {
     // Calculate conversion rate
     const conversionRate = total > 0 ? (proUsers / total * 100).toFixed(1) : '0'
 
+    // Map installations to expected format
+    const mappedInstallations = (installations || []).map(i => ({
+      id: i.id,
+      instance_id: i.install_id,
+      license_key: i.license_key,
+      browser: 'Chrome',
+      extension_version: '-',
+      first_seen: i.created_at,
+      last_seen: i.last_seen
+    }))
+
     return NextResponse.json({
-      installations: installations || [],
+      installations: mappedInstallations,
       total: count || 0,
       page,
       limit,

@@ -35,20 +35,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const period = searchParams.get('period') || '30' // days
+    const period = searchParams.get('period') || '30'
 
     const now = new Date()
     const periodDays = parseInt(period)
     const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000)
 
-    // Get all licenses
+    // Get all licenses from paid_users
     const { data: allLicenses } = await supabase
-      .from('licenses')
+      .from('paid_users')
       .select('*')
       .order('created_at', { ascending: false })
 
     const { data: periodLicenses } = await supabase
-      .from('licenses')
+      .from('paid_users')
       .select('*')
       .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: false })

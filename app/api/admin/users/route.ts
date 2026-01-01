@@ -43,18 +43,20 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    // Build query
+    // Build query for paid_users table
     let query = supabase
-      .from('licenses')
+      .from('paid_users')
       .select('*', { count: 'exact' })
 
     // Apply filters
     if (search) {
-      query = query.or(`email.ilike.%${search}%,key.ilike.%${search}%`)
+      query = query.or(`email.ilike.%${search}%,license_key.ilike.%${search}%`)
     }
 
-    if (status !== 'all') {
-      query = query.eq('status', status)
+    if (status === 'active') {
+      query = query.eq('is_revoked', false)
+    } else if (status === 'revoked') {
+      query = query.eq('is_revoked', true)
     }
 
     if (plan !== 'all') {
@@ -66,17 +68,19 @@ export async function GET(request: NextRequest) {
 
     // Get paginated data
     let dataQuery = supabase
-      .from('licenses')
+      .from('paid_users')
       .select('*')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (search) {
-      dataQuery = dataQuery.or(`email.ilike.%${search}%,key.ilike.%${search}%`)
+      dataQuery = dataQuery.or(`email.ilike.%${search}%,license_key.ilike.%${search}%`)
     }
 
-    if (status !== 'all') {
-      dataQuery = dataQuery.eq('status', status)
+    if (status === 'active') {
+      dataQuery = dataQuery.eq('is_revoked', false)
+    } else if (status === 'revoked') {
+      dataQuery = dataQuery.eq('is_revoked', true)
     }
 
     if (plan !== 'all') {
@@ -90,16 +94,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [], total: 0, page, limit })
     }
 
-    // Get installation counts for each license
+    // Get installation counts for each license from license_activations
     const usersWithStats = await Promise.all(
       (licenses || []).map(async (license) => {
         const { count: installCount } = await supabase
-          .from('installations')
+          .from('license_activations')
           .select('*', { count: 'exact', head: true })
-          .eq('license_key', license.key)
+          .eq('license_key', license.license_key)
+          .eq('is_active', true)
 
         return {
           ...license,
+          key: license.license_key,
+          status: license.is_revoked ? 'revoked' : 'active',
           installCount: installCount || 0
         }
       })
@@ -127,7 +134,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { licenseKey, action, data } = await request.json()
+    const { licenseKey, action } = await request.json()
 
     if (!licenseKey || !action) {
       return NextResponse.json({ error: 'License key and action required' }, { status: 400 })
@@ -136,25 +143,16 @@ export async function PATCH(request: NextRequest) {
     switch (action) {
       case 'revoke':
         await supabase
-          .from('licenses')
-          .update({ status: 'revoked' })
-          .eq('key', licenseKey)
+          .from('paid_users')
+          .update({ is_revoked: true })
+          .eq('license_key', licenseKey)
         break
 
       case 'activate':
         await supabase
-          .from('licenses')
-          .update({ status: 'active' })
-          .eq('key', licenseKey)
-        break
-
-      case 'update':
-        if (data) {
-          await supabase
-            .from('licenses')
-            .update(data)
-            .eq('key', licenseKey)
-        }
+          .from('paid_users')
+          .update({ is_revoked: false })
+          .eq('license_key', licenseKey)
         break
 
       default:

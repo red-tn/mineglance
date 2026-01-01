@@ -42,25 +42,25 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-    // Get license stats
+    // Get license stats from paid_users table
     const { data: licenses } = await supabase
-      .from('licenses')
+      .from('paid_users')
       .select('*')
 
     const { data: recentLicenses } = await supabase
-      .from('licenses')
+      .from('paid_users')
       .select('*')
       .gte('created_at', thirtyDaysAgo.toISOString())
 
-    // Get installation stats
+    // Get installation stats from license_activations
     const { data: installations } = await supabase
-      .from('installations')
+      .from('license_activations')
       .select('*')
 
     const { data: recentInstalls } = await supabase
-      .from('installations')
+      .from('license_activations')
       .select('*')
-      .gte('first_seen', sevenDaysAgo.toISOString())
+      .gte('created_at', sevenDaysAgo.toISOString())
 
     // Get alert stats
     const { data: recentAlerts } = await supabase
@@ -82,8 +82,8 @@ export async function GET(request: NextRequest) {
 
     // Add recent licenses
     const { data: latestLicenses } = await supabase
-      .from('licenses')
-      .select('key, email, plan, created_at')
+      .from('paid_users')
+      .select('license_key, email, plan, created_at')
       .order('created_at', { ascending: false })
       .limit(5)
 
@@ -91,7 +91,7 @@ export async function GET(request: NextRequest) {
       latestLicenses.forEach(l => {
         recentActivity.push({
           type: 'license_activated',
-          identifier: l.key.substring(0, 7) + '...',
+          identifier: l.license_key?.substring(0, 7) + '...',
           detail: l.email,
           created_at: l.created_at
         })
@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
       const dateStr = date.toISOString().split('T')[0]
 
       const dayInstalls = (installations || []).filter(inst => {
-        const instDate = new Date(inst.first_seen).toISOString().split('T')[0]
+        const instDate = new Date(inst.created_at).toISOString().split('T')[0]
         return instDate === dateStr
       }).length
 
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
 
     const stats = {
       totalInstalls: (installations || []).length,
-      proUsers: (licenses || []).filter(l => l.status === 'active').length,
+      proUsers: (licenses || []).filter(l => !l.is_revoked).length,
       revenue30d,
       activeUsers: (installations || []).filter(i => {
         const lastSeen = new Date(i.last_seen)
