@@ -284,6 +284,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Pro activation
   activateProBtn.addEventListener('click', activatePro);
 
+  // Pro deactivation
+  const deactivateBtn = document.getElementById('deactivateBtn');
+  if (deactivateBtn) {
+    deactivateBtn.addEventListener('click', deactivatePro);
+  }
+
   // Wallet modal
   document.getElementById('closeWalletModal').addEventListener('click', () => closeModal(walletModal));
   document.getElementById('cancelWalletBtn').addEventListener('click', () => closeModal(walletModal));
@@ -533,6 +539,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         activationResult.classList.add('hidden');
       }, 5000);
     }
+  }
+
+  async function deactivatePro() {
+    if (!confirm('Are you sure you want to deactivate your Pro license on this device?')) {
+      return;
+    }
+
+    // Clear license data from storage
+    await chrome.storage.local.remove(['isPaid', 'licenseKey', 'plan']);
+
+    // Show activation form again
+    proStatus.classList.add('hidden');
+    proUpgradeNotice.classList.remove('hidden');
+    proActivationForm.classList.remove('hidden');
+    proActiveStatus.classList.add('hidden');
+    licenseKeyInput.value = '';
+
+    // Disable pro features
+    notifyWorkerOffline.disabled = true;
+    notifyProfitDrop.disabled = true;
+    notifyBetterCoin.disabled = true;
+    profitDropThreshold.disabled = true;
+    refreshInterval.disabled = true;
+    emailAlertsEnabled.disabled = true;
+    alertEmail.disabled = true;
+
+    alert('License deactivated. You can re-activate anytime with your license key.');
   }
 
   function openWalletModal(wallet = null) {
