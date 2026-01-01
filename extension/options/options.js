@@ -262,6 +262,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Display Settings
   const showDiscovery = document.getElementById('showDiscovery');
 
+  // QR Code elements
+  const qrCodeSection = document.getElementById('qrCodeSection');
+  const qrProNotice = document.getElementById('qrProNotice');
+  const generateQrBtn = document.getElementById('generateQrBtn');
+  const qrCodeCanvas = document.getElementById('qrCodeCanvas');
+  const qrExpiry = document.getElementById('qrExpiry');
+
   // Modals
   const walletModal = document.getElementById('walletModal');
   const rigModal = document.getElementById('rigModal');
@@ -427,6 +434,125 @@ document.addEventListener('DOMContentLoaded', async () => {
     alertEmail.disabled = false;
     emailFrequency.disabled = false;
     testEmailBtn.disabled = false;
+
+    // Show QR code section for Pro users
+    if (qrCodeSection && qrProNotice) {
+      qrCodeSection.classList.remove('hidden');
+      qrProNotice.classList.add('hidden');
+    }
+  }
+
+  // QR Code Generation
+  if (generateQrBtn) {
+    generateQrBtn.addEventListener('click', generateQrCode);
+  }
+
+  // Upgrade button for QR section
+  const upgradeQrBtn = document.getElementById('upgradeQrBtn');
+  if (upgradeQrBtn) {
+    upgradeQrBtn.addEventListener('click', () => {
+      chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
+    });
+  }
+
+  async function generateQrCode() {
+    if (wallets.length === 0) {
+      alert('Please add at least one wallet before generating a QR code.');
+      return;
+    }
+
+    generateQrBtn.disabled = true;
+    generateQrBtn.textContent = 'Generating...';
+    qrExpiry.textContent = '';
+
+    try {
+      const { licenseKey, settings, electricity } = await chrome.storage.local.get(['licenseKey', 'settings', 'electricity']);
+
+      if (!licenseKey) {
+        throw new Error('License key not found. Please activate your Pro license.');
+      }
+
+      // Prepare wallet data (sanitize for QR)
+      const walletData = wallets.map(w => ({
+        n: w.name,
+        p: w.pool,
+        c: w.coin,
+        a: w.address,
+        pw: w.power || 200
+      }));
+
+      // Prepare settings data
+      const settingsData = {
+        elec: electricity?.rate || 0.12,
+        curr: electricity?.currency || 'USD',
+        ref: settings?.refreshInterval || 5
+      };
+
+      console.log('Generating QR with license:', licenseKey.substring(0, 8) + '...');
+
+      // Get QR data from server
+      const response = await fetch('https://mineglance.com/api/dashboard/qr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${licenseKey}`
+        },
+        body: JSON.stringify({
+          wallets: walletData,
+          settings: settingsData
+        })
+      });
+
+      // Check if response is ok before parsing
+      const responseText = await response.text();
+      console.log('QR API response:', response.status, responseText.substring(0, 200));
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Server returned invalid response: ${responseText.substring(0, 100)}`);
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || `Server error: ${response.status}`);
+      }
+
+      if (!data.qrData) {
+        throw new Error('No QR data received from server');
+      }
+
+      // Generate QR code using QR Server API (free public API)
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qrData)}`;
+
+      // Load and draw on canvas
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const ctx = qrCodeCanvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 200, 200);
+        ctx.drawImage(img, 0, 0, 200, 200);
+
+        // Show expiry time
+        const expiresIn = Math.round((data.expiresAt - Date.now()) / 60000);
+        qrExpiry.textContent = `QR code expires in ${expiresIn} minutes. Generate a new one if expired.`;
+        qrExpiry.style.color = '#38a169';
+      };
+      img.onerror = () => {
+        qrExpiry.textContent = 'Failed to load QR image. Try again.';
+        qrExpiry.style.color = '#e53e3e';
+      };
+      img.src = qrApiUrl;
+
+    } catch (error) {
+      console.error('QR generation error:', error);
+      qrExpiry.textContent = error.message || 'Failed to generate QR code.';
+      qrExpiry.style.color = '#e53e3e';
+    } finally {
+      generateQrBtn.disabled = false;
+      generateQrBtn.textContent = 'Generate New QR Code';
+    }
   }
 
   // Toggle email input visibility

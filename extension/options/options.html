@@ -228,6 +228,32 @@
         </div>
       </section>
 
+      <!-- Mobile App Sync Section (Pro) -->
+      <section class="section" id="mobileSyncSection">
+        <h2>Mobile App Sync <span class="pro-feature">PRO</span></h2>
+        <p class="section-desc">Transfer your wallet settings to the MineGlance mobile app.</p>
+
+        <div id="qrCodeSection" class="hidden">
+          <p style="margin-bottom: 16px;">Scan this QR code with the MineGlance mobile app to import your wallet configurations.</p>
+
+          <div style="text-align: center; margin-bottom: 16px;">
+            <div id="qrCodeContainer" style="display: inline-block; padding: 16px; background: white; border-radius: 12px; border: 1px solid var(--border);">
+              <canvas id="qrCodeCanvas" width="200" height="200"></canvas>
+            </div>
+          </div>
+
+          <div style="text-align: center;">
+            <button id="generateQrBtn" class="btn btn-accent">Generate New QR Code</button>
+            <p id="qrExpiry" class="help-text" style="margin-top: 8px;"></p>
+          </div>
+        </div>
+
+        <div id="qrProNotice" class="pro-notice">
+          <p>Generate a QR code to sync your settings with the mobile app</p>
+          <button id="upgradeQrBtn" class="btn btn-accent">Upgrade to Pro</button>
+        </div>
+      </section>
+
       <!-- Auto-save Status -->
       <div class="actions" style="justify-content: center;">
         <span id="saveStatus" class="save-status hidden">✓ Settings auto-saved</span>

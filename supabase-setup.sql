@@ -62,3 +62,43 @@ CREATE POLICY "Allow service role full access to extension_installs" ON extensio
 -- ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS max_activations INTEGER DEFAULT 3;
 -- ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS is_revoked BOOLEAN DEFAULT FALSE;
 -- UPDATE paid_users SET license_key = 'MG-' || UPPER(SUBSTR(MD5(RANDOM()::TEXT), 1, 4)) || '-' || UPPER(SUBSTR(MD5(RANDOM()::TEXT), 1, 4)) || '-' || UPPER(SUBSTR(MD5(RANDOM()::TEXT), 1, 4)) WHERE license_key IS NULL;
+
+-- =====================================================
+-- User Dashboard Schema (Pro Subscriber Portal)
+-- =====================================================
+
+-- Add profile fields to paid_users
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS address_line1 TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS address_line2 TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS state TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS zip TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS profile_photo_url TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
+
+-- User sessions table (for dashboard login)
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES paid_users(id) ON DELETE CASCADE,
+  token TEXT UNIQUE NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for faster session lookups
+CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(token);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at);
+
+-- Enable RLS on user_sessions
+ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role full access to user_sessions" ON user_sessions FOR ALL USING (true);
+
+-- Clean up expired sessions (optional - run periodically)
+-- DELETE FROM user_sessions WHERE expires_at < NOW();

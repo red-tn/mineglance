@@ -24,7 +24,8 @@
     "https://eusolo.ckpool.org/*",
     "https://public-pool.io/*",
     "https://api.ocean.xyz/*",
-    "https://ocean.xyz/*"
+    "https://ocean.xyz/*",
+    "https://api.qrserver.com/*"
   ],
   "background": {
     "service_worker": "background/background.js",
