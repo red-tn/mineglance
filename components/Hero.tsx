@@ -75,17 +75,20 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* YouTube Video */}
+        {/* Demo Video */}
         <div className="mt-12 mb-[-40px] max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-primary text-center mb-4">See MineGlance in Action</h2>
-          <div className="relative pb-[56.25%] h-0 rounded-2xl overflow-hidden shadow-2xl">
-            <iframe
-              className="absolute top-0 left-0 w-full h-full"
-              src="https://www.youtube.com/embed/mhJatjg_RPM"
-              title="MineGlance Demo"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+          <div className="rounded-2xl overflow-hidden shadow-2xl">
+            <video
+              className="w-full"
+              controls
+              playsInline
+              preload="metadata"
+              poster="/demo-video-poster.jpg"
+            >
+              <source src="/demo-video.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
         </div>
       </div>
