@@ -20,8 +20,8 @@ export default function Pricing() {
         '1 pool connection',
         '1 coin tracking',
         'Manual refresh',
-        'Basic profit view',
-        'Net profit calculation'
+        'Net profit calculation',
+        'Coin comparison preview'
       ],
       cta: 'Install Free',
       href: 'https://chrome.google.com/webstore/detail/mineglance',
@@ -35,11 +35,11 @@ export default function Pricing() {
       period: 'lifetime',
       description: 'For serious hobbyist miners',
       features: [
-        'Unlimited pools',
-        'Unlimited coins',
+        'Unlimited pools & coins',
         'Auto-refresh every 5 min',
         'Desktop notifications',
-        'Coin comparison tool',
+        'Real-time coin comparison',
+        'WhatToMine integration',
         'Historical charts',
         'Priority support'
       ],
