@@ -1,15 +1,22 @@
 // MineGlance Popup Script
 
-// Pool dashboard URLs
+// Pool dashboard URLs - validated for each pool
 const POOL_URLS = {
-  '2miners': (coin, address) => `https://${coin}.2miners.com/account/${address}`,
+  '2miners': (coin, address) => {
+    // Special case for FIRO - use dedicated explorer
+    if (coin === 'firo') {
+      return `https://firo.cedric-crispin.com/wallet/${address}`;
+    }
+    return `https://${coin}.2miners.com/account/${address}`;
+  },
+  'cedriccrispin': (coin, address) => `https://firo.cedric-crispin.com/wallet/${address}`,
   'nanopool': (coin, address) => `https://${coin}.nanopool.org/account/${address}`,
   'f2pool': (coin, address) => `https://www.f2pool.com/${coin}/${address}`,
   'flexpool': (coin, address) => `https://www.flexpool.io/miner/${coin.toUpperCase()}/${address}`,
   'ethermine': (coin, address) => `https://ethermine.org/miners/${address}/dashboard`,
   'hiveon': (coin, address) => `https://hiveon.net/${coin}/miner/${address}`,
   'herominers': (coin, address) => `https://${coin}.herominers.com/#/dashboard?addr=${address}`,
-  'woolypooly': (coin, address) => `https://woolypooly.com/${coin}/miner/${address}`
+  'woolypooly': (coin, address) => `https://woolypooly.com/en/coin/${coin}/wallet/${address}`
 };
 
 function getPoolUrl(pool, coin, address) {
@@ -30,8 +37,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const profitBreakdown = document.getElementById('profitBreakdown');
   const lastUpdated = document.getElementById('lastUpdated');
   const upgradeBanner = document.getElementById('upgradeBanner');
-  const coinComparison = document.getElementById('coinComparison');
-  const comparisonList = document.getElementById('comparisonList');
   const proBadge = document.getElementById('proBadge');
   const coinDiscovery = document.getElementById('coinDiscovery');
   const discoveryContent = document.getElementById('discoveryContent');
@@ -217,21 +222,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateSummary(totalRevenue - totalElectricityCost, totalRevenue, totalElectricityCost);
     lastUpdated.textContent = `Last updated: just now`;
 
-    // Fetch and render coin comparisons
-    const { isPaid } = await chrome.storage.local.get(['isPaid']);
-    if (walletResults.length > 0) {
-      const primaryWallet = walletResults.find(r => !r.error) || walletResults[0];
-      if (primaryWallet && !primaryWallet.error) {
-        await fetchAndRenderComparison(
-          primaryWallet.wallet.coin,
-          primaryWallet.poolData?.hashrate || 0,
-          electricity?.rate || 0.12,
-          primaryWallet.wallet.power || 200,
-          isPaid,
-          primaryWallet.revenue || 0
-        );
-      }
-    }
   }
 
   // Fetch coin price with 24h change
@@ -299,74 +289,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
     }).join('');
-  }
-
-  // Fetch alternative coins from background
-  async function fetchAlternativeCoins(currentCoin, hashrate, electricityRate, powerWatts, userRevenue) {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage(
-        {
-          action: 'getAlternativeCoins',
-          currentCoin,
-          hashrate,
-          electricityRate,
-          powerWatts,
-          userRevenue
-        },
-        (response) => {
-          resolve(response?.alternatives || []);
-        }
-      );
-    });
-  }
-
-  // Fetch and render coin comparison
-  async function fetchAndRenderComparison(currentCoin, hashrate, electricityRate, powerWatts, isPaid, userRevenue) {
-    try {
-      const alternatives = await fetchAlternativeCoins(currentCoin, hashrate, electricityRate, powerWatts, userRevenue);
-
-      if (alternatives.length === 0) {
-        coinComparison.classList.add('hidden');
-        return;
-      }
-
-      coinComparison.classList.remove('hidden');
-
-      comparisonList.innerHTML = alternatives.map((alt, index) => {
-        const isBetter = alt.profitDiff > 0;
-        const diffSign = isBetter ? '+' : '';
-        const diffClass = isBetter ? 'better' : 'worse';
-        const isLocked = !isPaid && index > 0;
-
-        if (isLocked) {
-          return `
-            <div class="comparison-item locked" title="Upgrade to Pro to see all alternatives">
-              <div class="coin-info">
-                <span class="coin-name">${alt.coin}</span>
-                <span class="coin-algo">${alt.isSameAlgo ? '(same algo)' : ''}</span>
-              </div>
-              <div class="profit-diff locked-value">🔒 Pro</div>
-            </div>
-          `;
-        }
-
-        return `
-          <div class="comparison-item">
-            <div class="coin-info">
-              <span class="coin-name">${alt.coin}</span>
-              <span class="coin-algo">${alt.isSameAlgo ? '✓ same algo' : alt.algorithm || ''}</span>
-            </div>
-            <div class="profit-diff ${diffClass}">
-              ${diffSign}$${alt.profitDiff.toFixed(2)}/day
-            </div>
-          </div>
-        `;
-      }).join('');
-
-    } catch (error) {
-      console.error('Error fetching coin comparison:', error);
-      coinComparison.classList.add('hidden');
-    }
   }
 
   function renderWallets(walletResults) {

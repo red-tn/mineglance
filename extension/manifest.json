@@ -17,9 +17,11 @@
     "https://hiveon.net/*",
     "https://*.herominers.com/*",
     "https://api.woolypooly.com/*",
+    "https://woolypooly.com/*",
     "https://api.coingecko.com/*",
     "https://whattomine.com/*",
-    "https://mineglance.com/*"
+    "https://mineglance.com/*",
+    "https://firo.cedric-crispin.com/*"
   ],
   "background": {
     "service_worker": "background/background.js",

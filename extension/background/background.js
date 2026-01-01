@@ -352,6 +352,30 @@ const POOLS = {
       earnings24h: data.rewards?.day || 0,
       lastShare: data.stats?.lastShare
     })
+  },
+  'cedriccrispin': {
+    name: 'Cedric Crispin Pool',
+    coins: ['firo'],
+    getStatsUrl: (coin, address) => `https://firo.cedric-crispin.com/api/pool/miner/${address}/`,
+    parseResponse: (data, coin) => {
+      const divisor = getCoinDivisor(coin);
+      return {
+        hashrate: data.currentHashrate || 0,
+        hashrate24h: data.hashrate || 0,
+        workers: (data.workers || []).map(w => ({
+          name: w.name || 'Worker',
+          hashrate: w.hashrate || 0,
+          lastSeen: w.lastShare,
+          offline: (Date.now() / 1000 - (w.lastShare || 0)) > 600
+        })),
+        workersOnline: data.workersOnline || 0,
+        workersTotal: (data.workersOnline || 0) + (data.workersOffline || 0),
+        balance: (data.balance || 0) / divisor,
+        paid: (data.paid || 0) / divisor,
+        earnings24h: (data.earnings24h || 0) / divisor,
+        lastShare: data.lastShare
+      };
+    }
   }
 };
 
@@ -934,70 +958,158 @@ async function fetchCoinPriceWithChange(coinSymbol) {
   }
 }
 
-// Get discovery coins for the popup
-async function getDiscoveryCoins() {
-  const profitability = await fetchCoinProfitability();
+// Cache for price changes (to avoid rate limiting)
+let priceChangeCache = {
+  data: {},
+  timestamp: 0
+};
+const PRICE_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
-  // Convert to array and add metadata
-  const coins = [];
-  for (const [symbol, data] of Object.entries(profitability)) {
-    if (!data.profitability || data.profitability <= 0) continue;
+// Batch fetch price changes for multiple coins
+async function fetchBatchPriceChanges(symbols) {
+  // Check cache first
+  if (priceChangeCache.timestamp && (Date.now() - priceChangeCache.timestamp) < PRICE_CACHE_TTL) {
+    return priceChangeCache.data;
+  }
 
-    const coinConfig = COINS[symbol];
-    if (!coinConfig) continue;
+  const geckoIds = symbols
+    .map(s => COINS[s.toLowerCase()]?.geckoId)
+    .filter(Boolean);
 
-    // Fetch 24h price change
-    let change24h = 0;
-    try {
-      const priceData = await fetchCoinPriceWithChange(symbol);
-      change24h = priceData.change24h || 0;
-    } catch (e) {
-      // Ignore price fetch errors
+  if (geckoIds.length === 0) return {};
+
+  try {
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${geckoIds.join(',')}&vs_currencies=usd&include_24hr_change=true`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+
+    if (!response.ok) {
+      console.error('CoinGecko batch fetch failed:', response.status);
+      return priceChangeCache.data || {};
     }
 
-    coins.push({
-      symbol: symbol.toUpperCase(),
-      name: coinConfig.name,
-      algorithm: data.algorithm,
-      profitPerDay: data.profitability / 100, // Normalize to approx daily profit
-      change24h: change24h,
-      difficulty: data.difficulty,
-      networkHashrate: data.networkHashrate,
-      price: data.price,
-      isNew: isNewCoin(symbol),
-      isHot: change24h > 10 || data.profitability > 150
-    });
+    const data = await response.json();
+
+    // Map back to our symbols
+    const result = {};
+    for (const symbol of symbols) {
+      const geckoId = COINS[symbol.toLowerCase()]?.geckoId;
+      if (geckoId && data[geckoId]) {
+        result[symbol.toLowerCase()] = {
+          price: data[geckoId].usd || 0,
+          change24h: data[geckoId].usd_24h_change || 0
+        };
+      }
+    }
+
+    // Update cache
+    priceChangeCache = { data: result, timestamp: Date.now() };
+    return result;
+  } catch (error) {
+    console.error('Error batch fetching prices:', error);
+    return priceChangeCache.data || {};
   }
+}
 
-  // Sort by different criteria for each tab
-  const trending = [...coins]
-    .filter(c => c.change24h !== 0)
-    .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
-    .slice(0, 8);
+// Get discovery coins for the popup
+async function getDiscoveryCoins() {
+  try {
+    const profitability = await fetchCoinProfitability();
 
-  const top = [...coins]
-    .sort((a, b) => b.profitPerDay - a.profitPerDay)
-    .slice(0, 8);
+    if (!profitability || Object.keys(profitability).length === 0) {
+      console.error('No profitability data received');
+      return getFallbackDiscoveryCoins();
+    }
 
-  const newCoins = [...coins]
-    .filter(c => c.isNew)
-    .sort((a, b) => b.profitPerDay - a.profitPerDay)
-    .slice(0, 8);
+    // Get all symbols we need price data for
+    const symbols = Object.keys(profitability).filter(s => COINS[s]);
 
-  // If no new coins, show some promising lower-difficulty coins
-  if (newCoins.length === 0) {
-    const promising = [...coins]
-      .filter(c => c.change24h > 5)
-      .sort((a, b) => b.change24h - a.change24h)
+    // Batch fetch all price changes in one request
+    const priceChanges = await fetchBatchPriceChanges(symbols);
+
+    // Convert to array and add metadata
+    const coins = [];
+    for (const [symbol, data] of Object.entries(profitability)) {
+      if (!data.profitability || data.profitability <= 0) continue;
+
+      const coinConfig = COINS[symbol];
+      if (!coinConfig) continue;
+
+      const priceData = priceChanges[symbol] || { price: data.price, change24h: 0 };
+      const change24h = priceData.change24h || 0;
+
+      coins.push({
+        symbol: symbol.toUpperCase(),
+        name: coinConfig.name,
+        algorithm: data.algorithm,
+        profitPerDay: data.profitability / 100, // Normalize to approx daily profit
+        change24h: change24h,
+        difficulty: data.difficulty,
+        networkHashrate: data.networkHashrate,
+        price: priceData.price || data.price,
+        isNew: isNewCoin(symbol),
+        isHot: Math.abs(change24h) > 10 || data.profitability > 150
+      });
+    }
+
+    if (coins.length === 0) {
+      console.error('No coins after filtering');
+      return getFallbackDiscoveryCoins();
+    }
+
+    // Sort by different criteria for each tab
+    const trending = [...coins]
+      .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
       .slice(0, 8);
-    return { trending, top, new: promising };
-  }
 
-  return { trending, top, new: newCoins };
+    const top = [...coins]
+      .sort((a, b) => b.profitPerDay - a.profitPerDay)
+      .slice(0, 8);
+
+    const newCoins = [...coins]
+      .filter(c => c.isNew)
+      .sort((a, b) => b.profitPerDay - a.profitPerDay)
+      .slice(0, 8);
+
+    // If no new coins, show promising coins
+    if (newCoins.length === 0) {
+      const promising = [...coins]
+        .filter(c => c.change24h > 0)
+        .sort((a, b) => b.change24h - a.change24h)
+        .slice(0, 8);
+      return { trending, top, new: promising.length > 0 ? promising : top.slice(0, 4) };
+    }
+
+    return { trending, top, new: newCoins };
+  } catch (error) {
+    console.error('Error in getDiscoveryCoins:', error);
+    return getFallbackDiscoveryCoins();
+  }
+}
+
+// Fallback data when API fails
+function getFallbackDiscoveryCoins() {
+  const fallbackCoins = [
+    { symbol: 'KAS', name: 'Kaspa', algorithm: 'kHeavyHash', profitPerDay: 2.50, change24h: 5.2, isNew: true, isHot: true },
+    { symbol: 'RVN', name: 'Ravencoin', algorithm: 'KAWPOW', profitPerDay: 1.20, change24h: 2.1, isNew: false, isHot: false },
+    { symbol: 'ETC', name: 'Ethereum Classic', algorithm: 'Etchash', profitPerDay: 1.80, change24h: -1.5, isNew: false, isHot: false },
+    { symbol: 'FLUX', name: 'Flux', algorithm: 'ZelHash', profitPerDay: 1.10, change24h: 3.8, isNew: false, isHot: false },
+    { symbol: 'ERG', name: 'Ergo', algorithm: 'Autolykos2', profitPerDay: 0.95, change24h: 1.2, isNew: false, isHot: false },
+    { symbol: 'ALPH', name: 'Alephium', algorithm: 'Blake3', profitPerDay: 1.50, change24h: 8.5, isNew: true, isHot: true },
+    { symbol: 'NEXA', name: 'Nexa', algorithm: 'NexaPow', profitPerDay: 0.80, change24h: -2.3, isNew: true, isHot: false },
+    { symbol: 'FIRO', name: 'Firo', algorithm: 'FiroPow', profitPerDay: 0.70, change24h: 1.5, isNew: false, isHot: false }
+  ];
+
+  return {
+    trending: [...fallbackCoins].sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h)),
+    top: [...fallbackCoins].sort((a, b) => b.profitPerDay - a.profitPerDay),
+    new: fallbackCoins.filter(c => c.isNew)
+  };
 }
 
 // Check if a coin is considered "new" (launched recently or emerging)
 function isNewCoin(symbol) {
-  const newCoins = ['xna', 'nexa', 'alph', 'kas']; // Recently popular coins
+  const newCoins = ['xna', 'nexa', 'alph', 'kas', 'firo']; // Recently popular coins
   return newCoins.includes(symbol.toLowerCase());
 }
