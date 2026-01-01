@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useAuth } from '../layout'
+import { useAuth } from '../auth-context'
 import Image from 'next/image'
 
 interface Profile {

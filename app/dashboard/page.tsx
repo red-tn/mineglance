@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from './layout'
+import { useAuth } from './auth-context'
 import Link from 'next/link'
 import Image from 'next/image'
 

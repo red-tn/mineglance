@@ -9,6 +9,18 @@ const supabase = createClient(
 
 const QR_SECRET = process.env.QR_SECRET || 'mineglance-qr-secret'
 
+// CORS headers for extension requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle preflight requests
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders })
+}
+
 async function getAuthenticatedUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
@@ -46,13 +58,13 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request)
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders })
     }
 
     const { wallets, settings } = await request.json()
 
     if (!wallets || !Array.isArray(wallets)) {
-      return NextResponse.json({ error: 'Wallets data required' }, { status: 400 })
+      return NextResponse.json({ error: 'Wallets data required' }, { status: 400, headers: corsHeaders })
     }
 
     // Create QR payload
@@ -88,11 +100,11 @@ export async function POST(request: NextRequest) {
       success: true,
       qrData: qrString,
       expiresAt: timestamp + 5 * 60 * 1000 // 5 minutes validity
-    })
+    }, { headers: corsHeaders })
 
   } catch (error) {
     console.error('QR generation error:', error)
-    return NextResponse.json({ error: 'Failed to generate QR code' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to generate QR code' }, { status: 500, headers: corsHeaders })
   }
 }
 
