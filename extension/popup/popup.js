@@ -109,8 +109,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Show/hide discovery section based on settings
-      const showDiscovery = settings?.showCoinDiscovery !== false; // Default to true
-      if (showDiscovery) {
+      const showDiscoverySetting = settings?.showDiscovery !== false; // Default to true
+      if (showDiscoverySetting) {
         coinDiscovery.classList.remove('hidden');
         if (discoveryCollapsed) {
           discoveryContent.classList.add('collapsed');

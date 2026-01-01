@@ -254,6 +254,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emailInputGroup = document.getElementById('emailInputGroup');
   const alertEmail = document.getElementById('alertEmail');
 
+  // Display Settings
+  const showDiscovery = document.getElementById('showDiscovery');
+
   // Modals
   const walletModal = document.getElementById('walletModal');
   const rigModal = document.getElementById('rigModal');
@@ -341,6 +344,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     refreshInterval.value = data.settings?.refreshInterval || 5;
+
+    // Load display settings (default to true/enabled)
+    showDiscovery.checked = data.settings?.showDiscovery !== false;
 
     renderWallets();
     renderRigs();
@@ -653,6 +659,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       },
       settings: {
         refreshInterval: parseInt(refreshInterval.value) || 5,
+        showDiscovery: showDiscovery.checked,
         notifications: {
           workerOffline: notifyWorkerOffline.checked,
           profitDrop: notifyProfitDrop.checked,
