@@ -76,12 +76,12 @@ export default function Hero() {
         </div>
 
         {/* YouTube Video */}
-        <div className="mt-16 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-primary text-center mb-6">See MineGlance in Action</h2>
+        <div className="mt-12 mb-[-40px] max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-primary text-center mb-4">See MineGlance in Action</h2>
           <div className="relative pb-[56.25%] h-0 rounded-2xl overflow-hidden shadow-2xl">
             <iframe
               className="absolute top-0 left-0 w-full h-full"
-              src="https://www.youtube.com/embed/akGwJWhm1Zk"
+              src="https://www.youtube.com/embed/mhJatjg_RPM"
               title="MineGlance Demo"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
