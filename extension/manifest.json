@@ -10,21 +10,21 @@
   ],
   "host_permissions": [
     "https://*.2miners.com/*",
-    "https://*.nanopool.org/*",
-    "https://*.f2pool.com/*",
+    "https://api.nanopool.org/*",
+    "https://api.f2pool.com/*",
     "https://api.ethermine.org/*",
     "https://hiveon.net/*",
     "https://*.herominers.com/*",
     "https://api.woolypooly.com/*",
-    "https://woolypooly.com/*",
     "https://api.coingecko.com/*",
     "https://whattomine.com/*",
     "https://mineglance.com/*",
     "https://firo.cedric-crispin.com/*",
-    "https://*.ckpool.org/*",
+    "https://solo.ckpool.org/*",
+    "https://eusolo.ckpool.org/*",
     "https://public-pool.io/*",
-    "https://*.ocean.xyz/*",
-    "https://api.ocean.xyz/*"
+    "https://api.ocean.xyz/*",
+    "https://ocean.xyz/*"
   ],
   "background": {
     "service_worker": "background/background.js",
