@@ -358,22 +358,31 @@ const POOLS = {
     coins: ['firo'],
     getStatsUrl: (coin, address) => `https://firo.cedric-crispin.com/api/pool/miner/${address}/`,
     parseResponse: (data, coin) => {
-      const divisor = getCoinDivisor(coin);
+      // API returns { sStatus: "OK", mResponse: { ... } }
+      const miner = data.mResponse || data;
+
+      // Get hashrate from performance samples if available
+      let currentHashrate = 0;
+      if (miner.performanceSamples && miner.performanceSamples.length > 0) {
+        const latestSample = miner.performanceSamples[miner.performanceSamples.length - 1];
+        currentHashrate = latestSample.hashrate || latestSample.hr || 0;
+      }
+
+      // Calculate approximate 24h earnings from todayPaid
+      const earnings24h = miner.todayPaid || 0;
+
       return {
-        hashrate: data.currentHashrate || 0,
-        hashrate24h: data.hashrate || 0,
-        workers: (data.workers || []).map(w => ({
-          name: w.name || 'Worker',
-          hashrate: w.hashrate || 0,
-          lastSeen: w.lastShare,
-          offline: (Date.now() / 1000 - (w.lastShare || 0)) > 600
-        })),
-        workersOnline: data.workersOnline || 0,
-        workersTotal: (data.workersOnline || 0) + (data.workersOffline || 0),
-        balance: (data.balance || 0) / divisor,
-        paid: (data.paid || 0) / divisor,
-        earnings24h: (data.earnings24h || 0) / divisor,
-        lastShare: data.lastShare
+        hashrate: currentHashrate,
+        hashrate24h: currentHashrate,
+        workers: [],
+        workersOnline: currentHashrate > 0 ? 1 : 0,
+        workersTotal: 1,
+        balance: miner.pendingBalance || 0,
+        paid: miner.totalPaid || 0,
+        earnings24h: earnings24h,
+        pendingShares: miner.pendingShares || 0,
+        minerEffort: miner.minerEffort || 0,
+        lastShare: null
       };
     }
   }
@@ -389,7 +398,13 @@ async function fetchPoolData(pool, coin, address) {
   // Normalize coin name
   const coinLower = coin.toLowerCase();
 
+  // Verify coin is supported by this pool
+  if (!poolConfig.coins.includes(coinLower)) {
+    throw new Error(`${coin.toUpperCase()} is not supported by ${poolConfig.name}. Supported: ${poolConfig.coins.join(', ')}`);
+  }
+
   const url = poolConfig.getStatsUrl(coinLower, address);
+  console.log(`Fetching pool data: ${url}`);
 
   try {
     const response = await fetch(url, {
@@ -399,19 +414,31 @@ async function fetchPoolData(pool, coin, address) {
     });
 
     if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`Wallet not found on ${poolConfig.name}. Make sure this address is mining on this pool.`);
+      }
       throw new Error(`Pool API returned ${response.status}`);
     }
 
     const data = await response.json();
+    console.log(`Pool response for ${address}:`, JSON.stringify(data).substring(0, 500));
 
     // Check for error responses
     if (data.error || data.status === 'error') {
       throw new Error(data.error || data.message || 'Pool returned error');
     }
 
-    return poolConfig.parseResponse(data, coinLower);
+    // Check for Nanopool error format
+    if (data.status === false && data.error) {
+      throw new Error(data.error);
+    }
+
+    const parsed = poolConfig.parseResponse(data, coinLower);
+    console.log(`Parsed pool data:`, parsed);
+
+    return parsed;
   } catch (error) {
-    console.error(`Error fetching pool data:`, error);
+    console.error(`Error fetching pool data for ${pool}/${coin}/${address}:`, error);
     throw error;
   }
 }

@@ -200,15 +200,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
       } catch (error) {
+        console.error('Wallet fetch error:', wallet.name, error);
         let errorMsg = error.message;
-        if (error.message.includes('404')) {
-          errorMsg = 'No mining data found. Start mining to see stats.';
-        } else if (error.message.includes('Failed to fetch')) {
+        if (error.message.includes('404') || error.message.includes('not found')) {
+          errorMsg = 'Wallet not found on pool. Make sure you are mining to this address.';
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
           errorMsg = 'Unable to connect to pool. Check your internet.';
+        } else if (error.message.includes('error')) {
+          errorMsg = 'Pool returned an error. Verify wallet address is correct.';
         }
+
+        // Still try to get price data even if pool fails
+        let price = 0;
+        let priceChange24h = 0;
+        try {
+          const priceData = await fetchCoinPriceWithChange(wallet.coin);
+          price = priceData.price || 0;
+          priceChange24h = priceData.change24h || 0;
+        } catch (e) {
+          // Ignore price fetch errors
+        }
+
         walletResults.push({
           wallet,
-          error: errorMsg
+          error: errorMsg,
+          price,
+          priceChange24h
         });
       }
     }
@@ -224,16 +241,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   }
 
-  // Fetch coin price with 24h change
+  // Fetch coin price with 24h change (with fallback to cached data)
   async function fetchCoinPriceWithChange(coinSymbol) {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
+      // Try to get cached price first as fallback
+      const cacheKey = `price_${coinSymbol.toLowerCase()}`;
+      const cacheChangeKey = `priceChange_${coinSymbol.toLowerCase()}`;
+      const cached = await chrome.storage.local.get([cacheKey, cacheChangeKey]);
+
       chrome.runtime.sendMessage(
         { action: 'fetchCoinPriceWithChange', coin: coinSymbol },
         (response) => {
-          resolve({
-            price: response?.price || 0,
-            change24h: response?.change24h || 0
-          });
+          const price = response?.price || cached[cacheKey] || 0;
+          const change24h = response?.change24h || cached[cacheChangeKey] || 0;
+
+          // Cache the new values if we got them
+          if (response?.price > 0) {
+            chrome.storage.local.set({
+              [cacheKey]: response.price,
+              [cacheChangeKey]: response.change24h || 0
+            });
+          }
+
+          resolve({ price, change24h });
         }
       );
     });
