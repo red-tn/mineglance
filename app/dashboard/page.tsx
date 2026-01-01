@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from './auth-context'
 import Link from 'next/link'
 import Image from 'next/image'
+import CheckoutModal from '@/components/CheckoutModal'
 
 interface DashboardStats {
   activeDevices: number
@@ -17,6 +18,7 @@ export default function DashboardOverview() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [showLicenseKey, setShowLicenseKey] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   useEffect(() => {
     loadStats()
@@ -264,22 +266,22 @@ export default function DashboardOverview() {
                 </ul>
               </div>
               <div className="flex-shrink-0 text-center">
-                <div className="text-3xl font-bold">$53.10</div>
-                <div className="text-sm text-white/60 line-through">$59.00</div>
-                <div className="text-xs text-white/70 mt-1">one-time upgrade</div>
+                <div className="text-3xl font-bold">$27</div>
+                <div className="text-sm text-white/60 line-through">$30</div>
+                <div className="text-xs text-white/70 mt-1">upgrade price</div>
               </div>
             </div>
             <div className="mt-4">
-              <a
-                href="https://mineglance.com/#pricing"
+              <button
+                onClick={() => setShowUpgradeModal(true)}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-purple-700 rounded-lg font-semibold hover:bg-yellow-400 hover:text-yellow-900 transition-colors"
               >
                 Upgrade Now
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
-              </a>
-              <p className="text-xs text-white/50 mt-2">Use code MOBILE10 at checkout</p>
+              </button>
+              <p className="text-xs text-white/50 mt-2">10% off for existing members</p>
             </div>
           </div>
         </div>
@@ -353,6 +355,15 @@ export default function DashboardOverview() {
           </div>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <CheckoutModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        plan="bundle"
+        dashboardUpgrade={true}
+        userEmail={user?.email}
+      />
     </div>
   )
 }

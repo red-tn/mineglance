@@ -489,19 +489,26 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
       console.log('Generating QR with license:', licenseKey.substring(0, 8) + '...');
+      console.log('Full license key length:', licenseKey.length);
+
+      // Build headers
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${licenseKey}`
+      };
+      console.log('Request headers:', JSON.stringify(headers));
 
       // Get QR data from server
       const response = await fetch('https://mineglance.com/api/dashboard/qr', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${licenseKey}`
-        },
+        headers: headers,
         body: JSON.stringify({
           wallets: walletData,
           settings: settingsData
         })
       });
+
+      console.log('Response status:', response.status);
 
       // Check if response is ok before parsing
       const responseText = await response.text();

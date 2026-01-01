@@ -14,6 +14,8 @@ interface CheckoutModalProps {
   isOpen: boolean
   onClose: () => void
   plan: 'pro' | 'bundle' | null
+  dashboardUpgrade?: boolean  // 10% off upgrade price for existing Pro members
+  userEmail?: string          // Pre-fill email from dashboard
 }
 
 interface PricingInfo {
@@ -37,7 +39,7 @@ const planDetails = {
 
 type Step = 'email' | 'checkout'
 
-export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalProps) {
+export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade, userEmail }: CheckoutModalProps) {
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +54,7 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
   useEffect(() => {
     if (!isOpen) {
       setStep('email')
-      setEmail('')
+      setEmail(userEmail || '')
       setError(null)
       setClientSecret(null)
       setLoading(false)
@@ -60,8 +62,10 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
       setAlreadyOwned(null)
       setResendStatus('idle')
       currentSessionRef.current = null
+    } else if (userEmail && !email) {
+      setEmail(userEmail)
     }
-  }, [isOpen])
+  }, [isOpen, userEmail])
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,7 +92,8 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
 
       if (plan === 'bundle' && existingPlan === 'pro') {
         // Existing Pro user upgrading to Bundle - charge difference
-        amount = 3000 // $30 upgrade price
+        // Apply 10% discount if coming from dashboard
+        amount = dashboardUpgrade ? 2700 : 3000 // $27 or $30 upgrade price
         isUpgrade = true
       } else if (existingPlan === plan || existingPlan === 'bundle') {
         // Already has this plan or higher
@@ -331,10 +336,10 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
                 {pricingInfo?.isUpgrade && (
                   <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-green-800 text-sm font-medium">
-                      Pro user upgrade pricing applied!
+                      {dashboardUpgrade ? 'Dashboard member 10% discount applied!' : 'Pro user upgrade pricing applied!'}
                     </p>
                     <p className="text-green-600 text-xs mt-1">
-                      You&apos;re paying ${(displayAmount / 100).toFixed(0)} instead of $59
+                      You&apos;re paying ${(displayAmount / 100).toFixed(0)} instead of ${dashboardUpgrade ? '30' : '59'}
                     </p>
                   </div>
                 )}
