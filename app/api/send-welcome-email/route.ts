@@ -7,6 +7,7 @@ interface WelcomeEmailData {
   to: string
   licenseKey: string
   plan: 'pro' | 'bundle'
+  isUpgrade?: boolean
 }
 
 export async function POST(request: NextRequest) {
@@ -17,7 +18,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { to, licenseKey, plan }: WelcomeEmailData = await request.json()
+    const { to, licenseKey, plan, isUpgrade }: WelcomeEmailData = await request.json()
+
+    // Handle upgrade email differently
+    if (isUpgrade) {
+      return sendUpgradeEmail(to, licenseKey)
+    }
 
     const planName = plan === 'bundle' ? 'Pro + Mobile Bundle' : 'Pro'
     const planFeatures = plan === 'bundle'
@@ -139,4 +145,96 @@ export async function POST(request: NextRequest) {
     console.error('Error sending welcome email:', error)
     return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
   }
+}
+
+async function sendUpgradeEmail(to: string, licenseKey: string) {
+  const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upgrade Complete - MineGlance Bundle</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7fafc;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 32px;">
+      <h1 style="color: #1a365d; font-size: 28px; margin: 0;">Upgrade Complete!</h1>
+      <p style="color: #718096; font-size: 16px; margin-top: 8px;">You now have the Pro + Mobile Bundle.</p>
+    </div>
+
+    <!-- Success Box -->
+    <div style="background: linear-gradient(135deg, #276749 0%, #38a169 100%); border-radius: 12px; padding: 32px; text-align: center; margin-bottom: 32px;">
+      <p style="color: rgba(255,255,255,0.9); font-size: 18px; margin: 0 0 16px 0;">Your license has been upgraded!</p>
+      <div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 16px;">
+        <code style="color: #ffffff; font-size: 20px; font-weight: bold; letter-spacing: 2px; font-family: 'SF Mono', 'Fira Code', monospace;">${licenseKey}</code>
+      </div>
+      <p style="color: rgba(255,255,255,0.7); font-size: 13px; margin: 16px 0 0 0;">Same license key, more features!</p>
+    </div>
+
+    <!-- What's New -->
+    <div style="background: #f0fff4; border-radius: 12px; padding: 24px; margin-bottom: 32px; border: 1px solid #9ae6b4;">
+      <h2 style="color: #276749; font-size: 18px; margin: 0 0 16px 0;">What's New With Your Bundle</h2>
+      <ul style="color: #2f855a; font-size: 15px; line-height: 1.8; padding-left: 20px; margin: 0;">
+        <li>Everything you had with Pro</li>
+        <li><strong>Mobile app (iOS & Android)</strong> - Coming Soon!</li>
+        <li>Push notifications on mobile</li>
+        <li>Widget support</li>
+        <li>Sync across all devices</li>
+        <li>5 device activations (up from 3)</li>
+        <li>Founding member status</li>
+      </ul>
+    </div>
+
+    <!-- No Action Needed -->
+    <div style="background: #ebf8ff; border-radius: 12px; padding: 20px; margin-bottom: 32px; border: 1px solid #90cdf4;">
+      <p style="color: #2b6cb0; font-size: 14px; margin: 0;">
+        <strong>No action needed!</strong> Your existing license key now includes all Bundle features. Just keep using MineGlance as usual - we'll notify you when the mobile app is ready!
+      </p>
+    </div>
+
+    <!-- Support -->
+    <div style="text-align: center; padding: 24px 0; border-top: 1px solid #e2e8f0;">
+      <p style="color: #718096; font-size: 14px; margin: 0 0 8px 0;">Thank you for your continued support!</p>
+      <a href="https://mineglance.com/support" style="color: #38a169; text-decoration: none; font-weight: 500;">Visit Support</a>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding-top: 24px;">
+      <p style="color: #a0aec0; font-size: 12px; margin: 0;">
+        MineGlance - Mining Profitability Dashboard<br>
+        <a href="https://mineglance.com" style="color: #a0aec0;">mineglance.com</a>
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>
+  `
+
+  const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SENDGRID_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: FROM_EMAIL, name: 'MineGlance' },
+      subject: 'Upgrade Complete - Welcome to MineGlance Bundle!',
+      content: [
+        { type: 'text/html', value: emailHtml }
+      ],
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    console.error('SendGrid error:', error)
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
 }

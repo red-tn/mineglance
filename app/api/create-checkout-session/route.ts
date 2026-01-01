@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     })
 
     const body = await request.json()
-    const { plan, email } = body
+    const { plan, email, isUpgrade, amount: customAmount } = body
 
-    console.log('Creating checkout session for plan:', plan, 'email:', email)
+    console.log('Creating checkout session for plan:', plan, 'email:', email, 'isUpgrade:', isUpgrade)
 
     if (!plan || !plans[plan as keyof typeof plans]) {
       return NextResponse.json(
@@ -44,7 +44,16 @@ export async function POST(request: NextRequest) {
     const selectedPlan = plans[plan as keyof typeof plans]
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://mineglance.com'
 
-    console.log('Creating Stripe session with origin:', origin)
+    // Use custom amount for upgrades, otherwise use standard plan price
+    const chargeAmount = customAmount || selectedPlan.amount
+    const productName = isUpgrade
+      ? 'MineGlance Bundle Upgrade'
+      : selectedPlan.name
+    const productDescription = isUpgrade
+      ? 'Upgrade from Pro to Bundle - Add mobile app access'
+      : selectedPlan.description
+
+    console.log('Creating Stripe session with amount:', chargeAmount, 'origin:', origin)
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
@@ -53,10 +62,10 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: selectedPlan.name,
-              description: selectedPlan.description,
+              name: productName,
+              description: productDescription,
             },
-            unit_amount: selectedPlan.amount,
+            unit_amount: chargeAmount,
           },
           quantity: 1,
         },
@@ -64,7 +73,10 @@ export async function POST(request: NextRequest) {
       mode: 'payment',
       customer_email: email || undefined,
       metadata: {
-        plan: plan
+        plan: plan,
+        isUpgrade: isUpgrade ? 'true' : 'false',
+        originalAmount: selectedPlan.amount.toString(),
+        chargedAmount: chargeAmount.toString()
       },
       return_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     })

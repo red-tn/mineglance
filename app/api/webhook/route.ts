@@ -51,13 +51,22 @@ export async function POST(request: NextRequest) {
     const session = event.data.object as Stripe.Checkout.Session
 
     if (session.payment_status === 'paid' && session.customer_email) {
+      const isUpgrade = session.metadata?.isUpgrade === 'true'
+      console.log('Processing checkout:', {
+        email: session.customer_email,
+        plan: session.metadata?.plan,
+        isUpgrade,
+        amount: session.amount_total
+      })
+
       await handleNewPurchase(supabase, {
         email: session.customer_email,
         customerId: session.customer as string,
         paymentId: session.payment_intent as string,
         amount: session.amount_total || 2900,
         currency: session.currency || 'usd',
-        plan: (session.metadata?.plan as 'pro' | 'bundle') || 'pro'
+        plan: (session.metadata?.plan as 'pro' | 'bundle') || 'pro',
+        isUpgrade
       })
     }
   }
@@ -90,6 +99,7 @@ async function handleNewPurchase(supabase: any, data: {
   amount: number
   currency: string
   plan: 'pro' | 'bundle'
+  isUpgrade?: boolean
 }) {
   const emailLower = data.email.toLowerCase()
 
@@ -101,14 +111,20 @@ async function handleNewPurchase(supabase: any, data: {
     .single()
 
   if (existing) {
+    // Normalize existing plan name
+    const existingPlan = existing.plan === 'lifetime_pro' ? 'pro'
+      : existing.plan === 'lifetime_bundle' ? 'bundle'
+      : existing.plan
+
     // If upgrading from pro to bundle, update the record
-    if (existing.plan === 'pro' && data.plan === 'bundle') {
+    if ((existingPlan === 'pro') && data.plan === 'bundle') {
       const { error } = await supabase
         .from('paid_users')
         .update({
           plan: 'bundle',
-          amount_paid: data.amount,
+          amount_paid: (existing.amount_paid || 2900) + data.amount, // Track total paid
           stripe_payment_id: data.paymentId,
+          max_activations: 5, // Upgrade to 5 activations
           updated_at: new Date().toISOString()
         })
         .eq('email', emailLower)
@@ -116,12 +132,12 @@ async function handleNewPurchase(supabase: any, data: {
       if (error) {
         console.error('Error upgrading user:', error)
       } else {
-        console.log('User upgraded to bundle:', emailLower)
-        // Send upgrade email with existing license key
-        await sendWelcomeEmail(emailLower, existing.license_key, 'bundle')
+        console.log('User upgraded to bundle:', emailLower, '- Upgrade price:', data.amount)
+        // Send upgrade confirmation email with existing license key
+        await sendUpgradeEmail(emailLower, existing.license_key)
       }
     } else {
-      console.log('User already exists:', emailLower)
+      console.log('User already exists with plan:', existingPlan, 'email:', emailLower)
     }
     return
   }
@@ -171,5 +187,35 @@ async function sendWelcomeEmail(to: string, licenseKey: string, plan: 'pro' | 'b
     }
   } catch (error) {
     console.error('Error sending welcome email:', error)
+  }
+}
+
+async function sendUpgradeEmail(to: string, licenseKey: string) {
+  try {
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_SITE_URL || 'https://mineglance.com'
+
+    const response = await fetch(`${baseUrl}/api/send-welcome-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-auth': process.env.INTERNAL_API_SECRET || 'internal-secret'
+      },
+      body: JSON.stringify({
+        to,
+        licenseKey,
+        plan: 'bundle',
+        isUpgrade: true
+      })
+    })
+
+    if (!response.ok) {
+      console.error('Failed to send upgrade email:', await response.text())
+    } else {
+      console.log('Upgrade email sent to:', to)
+    }
+  } catch (error) {
+    console.error('Error sending upgrade email:', error)
   }
 }
