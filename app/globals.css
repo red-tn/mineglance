@@ -17,3 +17,15 @@ body {
 .font-mono {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
+
+/* Stripe Embedded Checkout container */
+#checkout-container {
+  width: 100%;
+  min-height: 450px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+#checkout-container iframe {
+  min-height: 400px !important;
+}

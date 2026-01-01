@@ -1,13 +1,17 @@
 'use client'
 
-import { useCallback, useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import {
   EmbeddedCheckoutProvider,
   EmbeddedCheckout
 } from '@stripe/react-stripe-js'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+// Debug: Log if key is present (not the actual key)
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+console.log('Stripe key configured:', stripeKey ? `Yes (starts with ${stripeKey.substring(0, 7)}...)` : 'No')
+
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null
 
 interface CheckoutModalProps {
   isOpen: boolean
@@ -30,49 +34,87 @@ const planDetails = {
 
 export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalProps) {
   const [error, setError] = useState<string | null>(null)
-  const [key, setKey] = useState(0)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const currentPlanRef = useRef<string | null>(null)
 
-  // Reset when plan changes
+  // Fetch client secret when modal opens
   useEffect(() => {
-    if (isOpen && plan) {
+    if (isOpen && plan && plan !== currentPlanRef.current) {
+      currentPlanRef.current = plan
       setError(null)
-      setKey(prev => prev + 1)
-    }
-  }, [isOpen, plan])
+      setClientSecret(null)
+      setLoading(true)
 
-  const fetchClientSecret = useCallback(async () => {
-    if (!plan) throw new Error('No plan selected')
-
-    try {
       console.log('Fetching checkout session for plan:', plan)
-      const response = await fetch('/api/create-checkout-session', {
+      fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan }),
       })
+        .then(async (response) => {
+          const data = await response.json()
+          console.log('Checkout response:', response.status, data)
 
-      const data = await response.json()
-      console.log('Checkout response:', response.status, data)
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session')
-      }
-
-      if (!data.clientSecret) {
-        throw new Error('No client secret returned')
-      }
-
-      return data.clientSecret
-    } catch (err) {
-      console.error('Checkout error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load checkout. Please try again.')
-      throw err
+          if (!response.ok) {
+            throw new Error(data.error || 'Failed to create checkout session')
+          }
+          if (!data.clientSecret) {
+            throw new Error('No client secret returned')
+          }
+          setClientSecret(data.clientSecret)
+        })
+        .catch((err) => {
+          console.error('Checkout error:', err)
+          setError(err instanceof Error ? err.message : 'Failed to load checkout. Please try again.')
+        })
+        .finally(() => {
+          setLoading(false)
+        })
     }
-  }, [plan])
+
+    // Reset when modal closes
+    if (!isOpen) {
+      currentPlanRef.current = null
+      setClientSecret(null)
+      setError(null)
+      setLoading(false)
+    }
+  }, [isOpen, plan])
 
   if (!isOpen || !plan) return null
 
   const details = planDetails[plan]
+
+  const handleRetry = () => {
+    currentPlanRef.current = null
+    setError(null)
+    setClientSecret(null)
+    setLoading(true)
+
+    fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan }),
+    })
+      .then(async (response) => {
+        const data = await response.json()
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create checkout session')
+        }
+        if (!data.clientSecret) {
+          throw new Error('No client secret returned')
+        }
+        currentPlanRef.current = plan
+        setClientSecret(data.clientSecret)
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Failed to load checkout. Please try again.')
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -109,36 +151,40 @@ export default function CheckoutModal({ isOpen, onClose, plan }: CheckoutModalPr
               <div className="flex flex-col items-center justify-center h-64">
                 <p className="text-red-600 mb-4">{error}</p>
                 <button
-                  onClick={() => {
-                    setError(null)
-                    setKey(prev => prev + 1)
-                  }}
+                  onClick={handleRetry}
                   className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
                 >
                   Try Again
                 </button>
               </div>
-            ) : !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? (
+            ) : !stripePromise ? (
               <div className="flex flex-col items-center justify-center h-64">
                 <p className="text-amber-600 mb-4">Payment system is being configured.</p>
                 <p className="text-gray-500 text-sm mb-4">Please contact control@mineglance.com to purchase.</p>
               </div>
-            ) : (
-              <div className="relative" style={{ minHeight: '400px' }}>
+            ) : loading ? (
+              <div className="flex flex-col items-center justify-center h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+                <p className="text-gray-500">Loading secure checkout...</p>
+              </div>
+            ) : clientSecret ? (
+              <div id="checkout-container" style={{ minHeight: '450px' }}>
                 <EmbeddedCheckoutProvider
-                  key={key}
                   stripe={stripePromise}
                   options={{
-                    fetchClientSecret,
+                    clientSecret,
                     onComplete: () => {
-                      console.log('Checkout completed')
+                      console.log('Checkout completed successfully')
+                      window.location.href = '/checkout/success'
                     }
                   }}
                 >
-                  <div className="stripe-checkout-container">
-                    <EmbeddedCheckout />
-                  </div>
+                  <EmbeddedCheckout />
                 </EmbeddedCheckoutProvider>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64">
+                <p className="text-gray-500">Initializing checkout...</p>
               </div>
             )}
           </div>
