@@ -361,22 +361,39 @@ const POOLS = {
       // API returns { sStatus: "OK", mResponse: { ... } }
       const miner = data.mResponse || data;
 
-      // Get hashrate from performance samples if available
+      // Get hashrate from the latest performance sample's workers
       let currentHashrate = 0;
+      const workers = [];
+
       if (miner.performanceSamples && miner.performanceSamples.length > 0) {
+        // Get the most recent sample
         const latestSample = miner.performanceSamples[miner.performanceSamples.length - 1];
-        currentHashrate = latestSample.hashrate || latestSample.hr || 0;
+
+        // Workers are in the sample as an object { workerName: { hashrate, sharesPerSecond } }
+        if (latestSample.workers && typeof latestSample.workers === 'object') {
+          for (const [name, workerData] of Object.entries(latestSample.workers)) {
+            const hr = workerData.hashrate || 0;
+            currentHashrate += hr;
+            workers.push({
+              name: name,
+              hashrate: hr,
+              sharesPerSecond: workerData.sharesPerSecond || 0,
+              offline: hr === 0
+            });
+          }
+        }
       }
 
       // Calculate approximate 24h earnings from todayPaid
       const earnings24h = miner.todayPaid || 0;
+      const onlineWorkers = workers.filter(w => !w.offline).length;
 
       return {
         hashrate: currentHashrate,
         hashrate24h: currentHashrate,
-        workers: [],
-        workersOnline: currentHashrate > 0 ? 1 : 0,
-        workersTotal: 1,
+        workers: workers,
+        workersOnline: onlineWorkers,
+        workersTotal: workers.length || 1,
         balance: miner.pendingBalance || 0,
         paid: miner.totalPaid || 0,
         earnings24h: earnings24h,
