@@ -56,18 +56,23 @@ export async function GET(request: NextRequest) {
     const licenses = allLicenses || []
     const recentLicenses = periodLicenses || []
 
-    // Calculate totals
-    const totalRevenue = licenses.reduce((sum, l) => {
-      return sum + (l.plan === 'pro' ? 2900 : l.plan === 'bundle' ? 5900 : 0)
-    }, 0)
+    // Revenue calculation (handle lifetime_pro, pro, bundle plans)
+    const getRevenue = (plan: string) => {
+      if (plan === 'pro' || plan === 'lifetime_pro') return 2900
+      if (plan === 'bundle' || plan === 'lifetime_bundle') return 5900
+      return 0
+    }
 
-    const periodRevenue = recentLicenses.reduce((sum, l) => {
-      return sum + (l.plan === 'pro' ? 2900 : l.plan === 'bundle' ? 5900 : 0)
-    }, 0)
+    const isPro = (plan: string) => plan === 'pro' || plan === 'lifetime_pro'
+    const isBundle = (plan: string) => plan === 'bundle' || plan === 'lifetime_bundle'
+
+    // Calculate totals
+    const totalRevenue = licenses.reduce((sum, l) => sum + getRevenue(l.plan), 0)
+    const periodRevenue = recentLicenses.reduce((sum, l) => sum + getRevenue(l.plan), 0)
 
     // Calculate by plan
-    const proCount = licenses.filter(l => l.plan === 'pro').length
-    const bundleCount = licenses.filter(l => l.plan === 'bundle').length
+    const proCount = licenses.filter(l => isPro(l.plan)).length
+    const bundleCount = licenses.filter(l => isBundle(l.plan)).length
     const proRevenue = proCount * 2900
     const bundleRevenue = bundleCount * 5900
 
@@ -82,9 +87,7 @@ export async function GET(request: NextRequest) {
         return licDate === dateStr
       })
 
-      const dayRevenue = dayLicenses.reduce((sum, l) => {
-        return sum + (l.plan === 'pro' ? 2900 : l.plan === 'bundle' ? 5900 : 0)
-      }, 0)
+      const dayRevenue = dayLicenses.reduce((sum, l) => sum + getRevenue(l.plan), 0)
 
       chartData.push({
         date: dateStr,
@@ -98,7 +101,7 @@ export async function GET(request: NextRequest) {
       id: l.id,
       email: l.email,
       plan: l.plan,
-      amount: l.plan === 'pro' ? 2900 : l.plan === 'bundle' ? 5900 : 0,
+      amount: getRevenue(l.plan),
       date: l.created_at,
       stripePaymentId: l.stripe_payment_id
     }))

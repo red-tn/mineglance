@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const { data: recentInstalls } = await supabase
       .from('license_activations')
       .select('*')
-      .gte('created_at', sevenDaysAgo.toISOString())
+      .gte('activated_at', sevenDaysAgo.toISOString())
 
     // Get alert stats
     const { data: recentAlerts } = await supabase
@@ -68,14 +68,15 @@ export async function GET(request: NextRequest) {
       .select('*')
       .gte('created_at', oneDayAgo.toISOString())
 
-    // Calculate revenue
-    const totalRevenue = (licenses || []).reduce((sum, l) => {
-      return sum + (l.plan === 'pro' ? 2900 : l.plan === 'bundle' ? 5900 : 0)
-    }, 0)
+    // Calculate revenue (handle lifetime_pro, pro, bundle plans)
+    const getRevenue = (plan: string) => {
+      if (plan === 'pro' || plan === 'lifetime_pro') return 2900
+      if (plan === 'bundle' || plan === 'lifetime_bundle') return 5900
+      return 0
+    }
 
-    const revenue30d = (recentLicenses || []).reduce((sum, l) => {
-      return sum + (l.plan === 'pro' ? 2900 : l.plan === 'bundle' ? 5900 : 0)
-    }, 0)
+    const totalRevenue = (licenses || []).reduce((sum, l) => sum + getRevenue(l.plan), 0)
+    const revenue30d = (recentLicenses || []).reduce((sum, l) => sum + getRevenue(l.plan), 0)
 
     // Get recent activity
     const recentActivity: Array<{ type: string; identifier: string; detail: string; created_at: string }> = []
@@ -126,14 +127,14 @@ export async function GET(request: NextRequest) {
       const dateStr = date.toISOString().split('T')[0]
 
       const dayInstalls = (installations || []).filter(inst => {
-        const instDate = new Date(inst.created_at).toISOString().split('T')[0]
+        const instDate = new Date(inst.activated_at).toISOString().split('T')[0]
         return instDate === dateStr
       }).length
 
       const dayRevenue = (licenses || []).filter(lic => {
         const licDate = new Date(lic.created_at).toISOString().split('T')[0]
         return licDate === dateStr
-      }).reduce((sum, l) => sum + (l.plan === 'pro' ? 2900 : l.plan === 'bundle' ? 5900 : 0), 0)
+      }).reduce((sum, l) => sum + getRevenue(l.plan), 0)
 
       chartData.push({
         date: dateStr,

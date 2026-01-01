@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     // Get summary stats
     const { data: allInstalls } = await supabase
       .from('license_activations')
-      .select('created_at, last_seen, license_key, is_active')
+      .select('activated_at, last_seen, license_key, is_active')
 
     const total = allInstalls?.length || 0
     const proUsers = allInstalls?.filter(i => i.is_active).length || 0
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       const dateStr = date.toISOString().split('T')[0]
 
       const dayInstalls = (allInstalls || []).filter(inst => {
-        const instDate = new Date(inst.created_at).toISOString().split('T')[0]
+        const instDate = new Date(inst.activated_at).toISOString().split('T')[0]
         return instDate === dateStr
       }).length
 
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       license_key: i.license_key,
       browser: 'Chrome',
       extension_version: '-',
-      first_seen: i.created_at,
+      first_seen: i.activated_at,
       last_seen: i.last_seen
     }))
 
