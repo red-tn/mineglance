@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Then, add any pro activations that don't have a matching extension_install
-    // (This shouldn't happen normally, but handles edge cases)
+    // These are "orphaned" - license activated but no extension tracking
     ;(proActivations || []).forEach(p => {
       if (!seenInstallIds.has(p.install_id)) {
         combinedInstalls.push({
@@ -95,10 +95,14 @@ export async function GET(request: NextRequest) {
           created_at: p.activated_at,
           last_seen: p.last_seen,
           isPro: p.is_active,
-          license_key: p.license_key
+          license_key: p.license_key,
+          isOrphan: true // Flag as orphan - no matching extension_install
         })
       }
     })
+
+    // Count orphans for summary
+    const orphanCount = combinedInstalls.filter(i => i.isOrphan).length
 
     // Filter by pro status if requested
     let filteredInstalls = combinedInstalls
@@ -155,7 +159,8 @@ export async function GET(request: NextRequest) {
       extension_version: i.version || '-',
       first_seen: i.created_at || i.last_seen,
       last_seen: i.last_seen,
-      isPro: i.isPro
+      isPro: i.isPro,
+      isOrphan: i.isOrphan || false // Orphan = in license_activations but not extension_installs
     }))
 
     return NextResponse.json({

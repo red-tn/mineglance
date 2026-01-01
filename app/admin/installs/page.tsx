@@ -11,6 +11,8 @@ interface Installation {
   extension_version?: string
   first_seen: string
   last_seen: string
+  isPro?: boolean
+  isOrphan?: boolean
 }
 
 interface InstallSummary {
@@ -246,11 +248,23 @@ export default function InstallsPage() {
             </thead>
             <tbody className="divide-y">
               {installations.map((install) => (
-                <tr key={install.id} className="hover:bg-gray-50">
+                <tr key={install.id} className={`hover:bg-gray-50 ${install.isOrphan ? 'bg-amber-50' : ''}`}>
                   <td className="px-4 py-3">
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    <code
+                      className="text-sm bg-gray-100 px-2 py-1 rounded cursor-pointer hover:bg-gray-200"
+                      title={install.instance_id}
+                      onClick={() => {
+                        navigator.clipboard.writeText(install.instance_id)
+                        alert('Copied: ' + install.instance_id)
+                      }}
+                    >
                       {install.instance_id.substring(0, 12)}...
                     </code>
+                    {install.isOrphan && (
+                      <span className="ml-2 px-1.5 py-0.5 text-xs font-medium rounded bg-amber-200 text-amber-800" title="Orphan: License activation without matching extension install">
+                        ⚠️
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {isActive(install.last_seen) ? (
