@@ -183,14 +183,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           primaryWallet.poolData?.hashrate || 0,
           electricity?.rate || 0.12,
           primaryWallet.wallet.power || 200,
-          isPaid
+          isPaid,
+          primaryWallet.revenue || 0  // User's actual 24h revenue in USD
         );
       }
     }
   }
 
   // Fetch alternative coins from background
-  async function fetchAlternativeCoins(currentCoin, hashrate, electricityRate, powerWatts) {
+  async function fetchAlternativeCoins(currentCoin, hashrate, electricityRate, powerWatts, userRevenue) {
     return new Promise((resolve) => {
       chrome.runtime.sendMessage(
         {
@@ -198,7 +199,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           currentCoin,
           hashrate,
           electricityRate,
-          powerWatts
+          powerWatts,
+          userRevenue  // User's actual 24h revenue in USD
         },
         (response) => {
           resolve(response?.alternatives || []);
@@ -208,9 +210,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Fetch and render coin comparison
-  async function fetchAndRenderComparison(currentCoin, hashrate, electricityRate, powerWatts, isPaid) {
+  async function fetchAndRenderComparison(currentCoin, hashrate, electricityRate, powerWatts, isPaid, userRevenue) {
     try {
-      const alternatives = await fetchAlternativeCoins(currentCoin, hashrate, electricityRate, powerWatts);
+      const alternatives = await fetchAlternativeCoins(currentCoin, hashrate, electricityRate, powerWatts, userRevenue);
 
       if (alternatives.length === 0) {
         coinComparison.classList.add('hidden');

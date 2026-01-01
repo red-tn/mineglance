@@ -2,6 +2,36 @@
 
 const API_BASE = 'https://mineglance.com/api';
 
+// Send email alert for Pro users
+async function sendEmailAlert(alertType, walletName, message) {
+  const { settings, licenseKey, isPaid } = await chrome.storage.local.get([
+    'settings', 'licenseKey', 'isPaid'
+  ]);
+
+  // Only send if email alerts are enabled and user is Pro
+  if (!isPaid || !settings?.notifications?.emailEnabled) {
+    return;
+  }
+
+  const email = settings.notifications.alertEmail;
+
+  try {
+    await fetch(`${API_BASE}/send-alert`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        licenseKey,
+        alertType,
+        walletName,
+        message,
+        email
+      })
+    });
+  } catch (e) {
+    console.error('Failed to send email alert:', e);
+  }
+}
+
 // Generate unique install ID
 function generateInstallId() {
   return 'mg_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
@@ -515,7 +545,8 @@ async function fetchCoinProfitability() {
 }
 
 // Calculate comparison for alternative coins
-async function getAlternativeCoins(currentCoin, userHashrate, electricityRate, powerWatts) {
+// userRevenue = user's actual 24h revenue in USD from their pool
+async function getAlternativeCoins(currentCoin, userHashrate, electricityRate, powerWatts, userRevenue = 0) {
   const profitability = await fetchCoinProfitability();
   const currentAlgo = getCoinAlgorithm(currentCoin);
 
@@ -526,11 +557,8 @@ async function getAlternativeCoins(currentCoin, userHashrate, electricityRate, p
   // Get coins with same algorithm (can mine with same hardware)
   const sameAlgoCoins = ALGORITHM_GROUPS[currentAlgo] || [];
 
-  // Also include popular GPU coins for comparison even if different algo
-  const comparableCoins = [...new Set([
-    ...sameAlgoCoins,
-    'rvn', 'etc', 'ergo', 'flux', 'kas', 'alph', 'nexa', 'firo'
-  ])].filter(c => c !== currentCoin.toLowerCase());
+  // Only compare same-algorithm coins for accurate results
+  const comparableCoins = sameAlgoCoins.filter(c => c !== currentCoin.toLowerCase());
 
   const currentData = profitability[currentCoin.toLowerCase()];
   if (!currentData) {
@@ -540,52 +568,55 @@ async function getAlternativeCoins(currentCoin, userHashrate, electricityRate, p
   // Daily electricity cost
   const dailyElectricity = (powerWatts / 1000) * 24 * electricityRate;
 
+  // User's actual profit
+  const userProfit = userRevenue - dailyElectricity;
+
   const alternatives = [];
 
   for (const coinId of comparableCoins) {
     const coinData = profitability[coinId];
     if (!coinData) continue;
 
-    // For same algorithm, we can directly compare
-    // For different algorithms, we use WhatToMine's profitability metric
-    const isSameAlgo = sameAlgoCoins.includes(coinId);
+    // Same algorithm - we can directly compare using profitability ratio
+    // WhatToMine profitability is normalized per unit hashrate
+    const isSameAlgo = true;
 
     let estimatedRevenue;
-    let estimatedProfit;
+    let profitDiff;
 
-    if (isSameAlgo && currentData.profitability > 0) {
-      // Same algorithm - scale by relative profitability
+    if (currentData.profitability > 0 && userRevenue > 0) {
+      // Scale user's actual revenue by the profitability ratio
       const profitRatio = coinData.profitability / currentData.profitability;
-      const currentRevenue24h = (userHashrate > 0 && currentData.revenue24h)
-        ? (currentData.revenue24h * currentData.price)
-        : 0;
-      estimatedRevenue = currentRevenue24h * profitRatio;
+      estimatedRevenue = userRevenue * profitRatio;
+    } else if (currentData.profitability > 0) {
+      // No user revenue data - use relative profitability difference
+      const profitRatio = coinData.profitability / currentData.profitability;
+      // Express as percentage difference
+      estimatedRevenue = 0;
     } else {
-      // Different algorithm - use WhatToMine's per-hashrate profitability
-      // This is less accurate but gives a ballpark
-      estimatedRevenue = coinData.profitability24 || coinData.profitability || 0;
+      estimatedRevenue = 0;
     }
 
-    estimatedProfit = estimatedRevenue - dailyElectricity;
+    const estimatedProfit = estimatedRevenue - dailyElectricity;
+    profitDiff = estimatedProfit - userProfit;
 
-    // Calculate difference from current
-    const currentRevenue = currentData.profitability24 || currentData.profitability || 0;
-    const currentProfit = currentRevenue - dailyElectricity;
-    const profitDiff = estimatedProfit - currentProfit;
-    const percentDiff = currentProfit !== 0 ? (profitDiff / Math.abs(currentProfit)) * 100 : 0;
+    // Only show if we have meaningful data
+    if (estimatedRevenue > 0 || userRevenue > 0) {
+      const percentDiff = userProfit !== 0 ? (profitDiff / Math.abs(userProfit)) * 100 : 0;
 
-    alternatives.push({
-      coin: coinId.toUpperCase(),
-      name: COINS[coinId]?.name || coinId,
-      algorithm: coinData.algorithm,
-      isSameAlgo,
-      estimatedRevenue,
-      estimatedProfit,
-      profitDiff,
-      percentDiff,
-      price: coinData.price,
-      difficulty: coinData.difficulty
-    });
+      alternatives.push({
+        coin: coinId.toUpperCase(),
+        name: COINS[coinId]?.name || coinId,
+        algorithm: coinData.algorithm,
+        isSameAlgo,
+        estimatedRevenue,
+        estimatedProfit,
+        profitDiff,
+        percentDiff,
+        price: coinData.price,
+        difficulty: coinData.difficulty
+      });
+    }
   }
 
   // Sort by profit difference (best first)
@@ -615,30 +646,116 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
 // Refresh all wallet data
 async function refreshAllData() {
-  const { wallets, settings, isPaid } = await chrome.storage.local.get(['wallets', 'settings', 'isPaid']);
+  const { wallets, settings, isPaid, electricity } = await chrome.storage.local.get([
+    'wallets', 'settings', 'isPaid', 'electricity'
+  ]);
 
   if (!wallets || wallets.length === 0) return;
 
   for (const wallet of wallets.filter(w => w.enabled)) {
     try {
       const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address);
+      const price = await fetchCoinPrice(wallet.coin);
+      const previousData = await chrome.storage.local.get([`poolData_${wallet.id}`, `profit_${wallet.id}`]);
+
+      // Calculate current profit
+      const earnings24h = poolData.earnings24h || 0;
+      const revenue = earnings24h * (price || 0);
+      const powerWatts = wallet.power || 200;
+      const rate = electricity?.rate || 0.12;
+      const electricityCost = (powerWatts / 1000) * 24 * rate;
+      const currentProfit = revenue - electricityCost;
 
       // Check for offline workers
       if (isPaid && settings?.notifications?.workerOffline) {
         const offlineWorkers = poolData.workers.filter(w => w.offline);
         if (offlineWorkers.length > 0) {
-          chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icons/logo-icon.svg',
-            title: 'MineGlance Alert',
-            message: `${offlineWorkers.length} worker(s) offline: ${offlineWorkers.map(w => w.name).join(', ')}`
-          });
+          // Only notify if this is a new offline event (wasn't offline before)
+          const prevPoolData = previousData[`poolData_${wallet.id}`];
+          const prevOfflineCount = prevPoolData?.workers?.filter(w => w.offline).length || 0;
+
+          if (offlineWorkers.length > prevOfflineCount) {
+            const alertMessage = `${offlineWorkers.length} worker(s) went offline`;
+            chrome.notifications.create(`worker-offline-${wallet.id}-${Date.now()}`, {
+              type: 'basic',
+              iconUrl: 'icons/icon128.png',
+              title: 'Worker Offline',
+              message: `${wallet.name}: ${alertMessage}`
+            });
+            // Send email alert
+            sendEmailAlert('worker_offline', wallet.name, alertMessage);
+          }
+        }
+      }
+
+      // Check for profit drop
+      if (isPaid && settings?.notifications?.profitDrop) {
+        const previousProfit = previousData[`profit_${wallet.id}`];
+        if (previousProfit && previousProfit > 0) {
+          const dropThreshold = settings.notifications.profitDropThreshold || 20;
+          const dropPercent = ((previousProfit - currentProfit) / previousProfit) * 100;
+
+          if (dropPercent >= dropThreshold) {
+            const alertMessage = `Profit dropped ${dropPercent.toFixed(0)}% (now $${currentProfit.toFixed(2)}/day)`;
+            chrome.notifications.create(`profit-drop-${wallet.id}-${Date.now()}`, {
+              type: 'basic',
+              iconUrl: 'icons/icon128.png',
+              title: 'Profit Drop Alert',
+              message: `${wallet.name}: ${alertMessage}`
+            });
+            // Send email alert
+            sendEmailAlert('profit_drop', wallet.name, alertMessage);
+          }
+        }
+      }
+
+      // Check for better coin
+      if (isPaid && settings?.notifications?.betterCoin) {
+        try {
+          const alternatives = await getAlternativeCoins(
+            wallet.coin,
+            poolData.hashrate || 0,
+            rate,
+            powerWatts
+          );
+
+          // Find coins that are significantly more profitable (>10% better)
+          const betterCoin = alternatives.find(alt =>
+            alt.isSameAlgo && alt.profitDiff > 0 && alt.percentDiff > 10
+          );
+
+          if (betterCoin) {
+            // Only notify once per coin switch opportunity (use a flag)
+            const notifiedKey = `notified_better_${wallet.id}_${betterCoin.coin}`;
+            const { [notifiedKey]: alreadyNotified } = await chrome.storage.local.get([notifiedKey]);
+
+            if (!alreadyNotified) {
+              const alertMessage = `Consider switching from ${wallet.coin.toUpperCase()} to ${betterCoin.coin} for +$${betterCoin.profitDiff.toFixed(2)}/day more profit`;
+              chrome.notifications.create(`better-coin-${wallet.id}-${Date.now()}`, {
+                type: 'basic',
+                iconUrl: 'icons/icon128.png',
+                title: 'Better Coin Available',
+                message: `Switch ${wallet.coin.toUpperCase()} → ${betterCoin.coin} for +$${betterCoin.profitDiff.toFixed(2)}/day`
+              });
+              // Send email alert
+              sendEmailAlert('better_coin', wallet.name, alertMessage);
+
+              // Mark as notified (expires in 6 hours)
+              await chrome.storage.local.set({ [notifiedKey]: Date.now() });
+              setTimeout(async () => {
+                await chrome.storage.local.remove([notifiedKey]);
+              }, 6 * 60 * 60 * 1000);
+            }
+          }
+        } catch (e) {
+          console.error('Error checking better coins:', e);
         }
       }
 
       // Store latest data
       await chrome.storage.local.set({
         [`poolData_${wallet.id}`]: poolData,
+        [`profit_${wallet.id}`]: currentProfit,
         lastRefresh: new Date().toISOString()
       });
 
@@ -749,7 +866,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       message.currentCoin,
       message.hashrate || 0,
       message.electricityRate || 0.12,
-      message.powerWatts || 200
+      message.powerWatts || 200,
+      message.userRevenue || 0  // User's actual 24h revenue in USD
     )
       .then(alternatives => sendResponse({ success: true, alternatives }))
       .catch(error => {

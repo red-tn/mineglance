@@ -249,6 +249,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const profitDropThreshold = document.getElementById('profitDropThreshold');
   const refreshInterval = document.getElementById('refreshInterval');
 
+  // Email Alerts
+  const emailAlertsEnabled = document.getElementById('emailAlertsEnabled');
+  const emailInputGroup = document.getElementById('emailInputGroup');
+  const alertEmail = document.getElementById('alertEmail');
+
   // Modals
   const walletModal = document.getElementById('walletModal');
   const rigModal = document.getElementById('rigModal');
@@ -328,6 +333,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       notifyProfitDrop.checked = data.settings.notifications.profitDrop;
       notifyBetterCoin.checked = data.settings.notifications.betterCoin;
       profitDropThreshold.value = data.settings.notifications.profitDropThreshold || 20;
+
+      // Email alerts
+      emailAlertsEnabled.checked = data.settings.notifications.emailEnabled || false;
+      alertEmail.value = data.settings.notifications.alertEmail || '';
+      emailInputGroup.style.display = emailAlertsEnabled.checked ? 'block' : 'none';
     }
 
     refreshInterval.value = data.settings?.refreshInterval || 5;
@@ -342,7 +352,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     notifyBetterCoin.disabled = false;
     profitDropThreshold.disabled = false;
     refreshInterval.disabled = false;
+    emailAlertsEnabled.disabled = false;
+    alertEmail.disabled = false;
   }
+
+  // Toggle email input visibility
+  emailAlertsEnabled.addEventListener('change', () => {
+    emailInputGroup.style.display = emailAlertsEnabled.checked ? 'block' : 'none';
+  });
 
   function renderWallets() {
     if (wallets.length === 0) {
@@ -640,7 +657,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           workerOffline: notifyWorkerOffline.checked,
           profitDrop: notifyProfitDrop.checked,
           profitDropThreshold: parseInt(profitDropThreshold.value) || 20,
-          betterCoin: notifyBetterCoin.checked
+          betterCoin: notifyBetterCoin.checked,
+          emailEnabled: emailAlertsEnabled.checked,
+          alertEmail: alertEmail.value.trim()
         }
       }
     });
