@@ -556,6 +556,93 @@ const POOLS = {
         lastShare: data.lastshare
       };
     }
+  },
+  'publicpool': {
+    name: 'Public Pool',
+    coins: ['btc'],
+    getStatsUrl: (coin, address) => `https://public-pool.io:40557/api/client/${address}`,
+    parseResponse: (data, coin) => {
+      // Public Pool returns client stats
+      const parseHashrate = (str) => {
+        if (!str || typeof str !== 'string') return 0;
+        const match = str.match(/^([\d.]+)\s*(\w+)/);
+        if (!match) return parseFloat(str) || 0;
+        const value = parseFloat(match[1]);
+        const unit = match[2].toUpperCase();
+        const multipliers = {
+          'H': 1, 'KH': 1e3, 'MH': 1e6, 'GH': 1e9, 'TH': 1e12, 'PH': 1e15
+        };
+        return value * (multipliers[unit] || 1);
+      };
+
+      // Handle both string and number hashrates
+      const hashrate = typeof data.hashRate === 'string' ? parseHashrate(data.hashRate) : (data.hashRate || 0);
+
+      // Parse workers if available
+      const workers = [];
+      if (data.workers && Array.isArray(data.workers)) {
+        for (const w of data.workers) {
+          workers.push({
+            name: w.name || w.sessionId || 'Worker',
+            hashrate: typeof w.hashRate === 'string' ? parseHashrate(w.hashRate) : (w.hashRate || 0),
+            lastSeen: w.lastShare,
+            offline: false
+          });
+        }
+      }
+
+      return {
+        hashrate: hashrate,
+        hashrate5m: hashrate,
+        hashrate24h: hashrate,
+        workers: workers,
+        workersOnline: workers.length,
+        workersTotal: data.workerCount || workers.length || 1,
+        balance: 0,
+        paid: 0,
+        earnings24h: 0,
+        bestShare: data.bestDifficulty || 0,
+        shares: data.shares || 0,
+        lastShare: data.lastShare
+      };
+    }
+  },
+  'ocean': {
+    name: 'OCEAN',
+    coins: ['btc'],
+    getStatsUrl: (coin, address) => `https://api.ocean.xyz/v1/miner/${address}/summary`,
+    parseResponse: (data, coin) => {
+      // OCEAN returns miner summary
+      const hashrate = data.hashrate || data.hashrate_3h || 0;
+
+      const workers = [];
+      if (data.workers && Array.isArray(data.workers)) {
+        for (const w of data.workers) {
+          workers.push({
+            name: w.name || 'Worker',
+            hashrate: w.hashrate || 0,
+            lastSeen: w.last_share,
+            offline: !w.is_online
+          });
+        }
+      }
+
+      const onlineWorkers = workers.filter(w => !w.offline).length;
+
+      return {
+        hashrate: hashrate,
+        hashrate5m: data.hashrate_60s || hashrate,
+        hashrate24h: data.hashrate_24h || hashrate,
+        workers: workers,
+        workersOnline: onlineWorkers || data.online_workers || 0,
+        workersTotal: data.total_workers || workers.length || 1,
+        balance: data.pending_balance || 0,
+        paid: data.total_paid || 0,
+        earnings24h: data.earnings_24h || 0,
+        shares: data.shares || 0,
+        lastShare: data.last_share
+      };
+    }
   }
 };
 

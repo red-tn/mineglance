@@ -22,7 +22,10 @@
     "https://whattomine.com/*",
     "https://mineglance.com/*",
     "https://firo.cedric-crispin.com/*",
-    "https://*.ckpool.org/*"
+    "https://*.ckpool.org/*",
+    "https://public-pool.io:*/*",
+    "https://*.ocean.xyz/*",
+    "https://api.ocean.xyz/*"
   ],
   "background": {
     "service_worker": "background/background.js",

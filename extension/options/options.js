@@ -273,9 +273,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Event Listeners
   document.getElementById('addWalletBtn').addEventListener('click', () => openWalletModal());
   document.getElementById('addRigBtn').addEventListener('click', () => openRigModal());
-  document.getElementById('saveBtn').addEventListener('click', saveSettings);
   document.getElementById('upgradeBtn').addEventListener('click', () => {
     chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
+  });
+
+  // Auto-save: Add listeners to all settings inputs
+  const autoSaveInputs = [
+    electricityRate, currency, refreshInterval, profitDropThreshold, alertEmail
+  ];
+  const autoSaveCheckboxes = [
+    notifyWorkerOffline, notifyProfitDrop, notifyBetterCoin, emailAlertsEnabled, showDiscovery
+  ];
+
+  // Debounce function for text inputs
+  let saveTimeout = null;
+  function debouncedSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => saveSettings(), 500);
+  }
+
+  // Add listeners for text/number inputs (debounced)
+  autoSaveInputs.forEach(input => {
+    input.addEventListener('input', debouncedSave);
+    input.addEventListener('change', debouncedSave);
+  });
+
+  // Add listeners for checkboxes/selects (immediate save)
+  autoSaveCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', saveSettings);
   });
 
   // Electricity lookup

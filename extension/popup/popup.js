@@ -18,7 +18,9 @@ const POOL_URLS = {
   'herominers': (coin, address) => `https://${coin}.herominers.com/#/dashboard?addr=${address}`,
   'woolypooly': (coin, address) => `https://woolypooly.com/en/coin/${coin}/wallet/${address}`,
   'ckpool': (coin, address) => `https://solostats.ckpool.org/users/${address}`,
-  'ckpool-eu': (coin, address) => `https://eusolostats.ckpool.org/users/${address}`
+  'ckpool-eu': (coin, address) => `https://eusolostats.ckpool.org/users/${address}`,
+  'publicpool': (coin, address) => `https://web.public-pool.io/#/app;address=${address}`,
+  'ocean': (coin, address) => `https://ocean.xyz/stats/${address}`
 };
 
 function getPoolUrl(pool, coin, address) {
