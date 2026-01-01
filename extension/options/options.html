@@ -173,7 +173,22 @@
           <div class="form-group" id="emailInputGroup" style="display: none;">
             <label for="alertEmail">Email Address</label>
             <input type="email" id="alertEmail" placeholder="your@email.com" disabled>
-            <p class="help-text">We'll send critical alerts (worker offline, major profit drops) to this email.</p>
+          </div>
+
+          <div class="form-group" id="emailFrequencyGroup" style="display: none;">
+            <label for="emailFrequency">Email Frequency</label>
+            <select id="emailFrequency" disabled>
+              <option value="immediate">Immediately</option>
+              <option value="hourly">Hourly digest</option>
+              <option value="daily" selected>Daily digest</option>
+              <option value="weekly">Weekly digest</option>
+            </select>
+            <p class="help-text">How often to receive email alerts. Digest mode batches alerts together.</p>
+          </div>
+
+          <div id="testEmailGroup" style="display: none; margin-top: 12px;">
+            <button id="testEmailBtn" class="btn btn-secondary btn-small" disabled>Send Test Email</button>
+            <span id="testEmailResult" style="margin-left: 8px; font-size: 12px;"></span>
           </div>
         </div>
 

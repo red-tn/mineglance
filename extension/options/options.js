@@ -253,6 +253,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emailAlertsEnabled = document.getElementById('emailAlertsEnabled');
   const emailInputGroup = document.getElementById('emailInputGroup');
   const alertEmail = document.getElementById('alertEmail');
+  const emailFrequency = document.getElementById('emailFrequency');
+  const emailFrequencyGroup = document.getElementById('emailFrequencyGroup');
+  const testEmailGroup = document.getElementById('testEmailGroup');
+  const testEmailBtn = document.getElementById('testEmailBtn');
+  const testEmailResult = document.getElementById('testEmailResult');
 
   // Display Settings
   const showDiscovery = document.getElementById('showDiscovery');
@@ -279,7 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Auto-save: Add listeners to all settings inputs
   const autoSaveInputs = [
-    electricityRate, currency, refreshInterval, profitDropThreshold, alertEmail
+    electricityRate, currency, refreshInterval, profitDropThreshold, alertEmail, emailFrequency
   ];
   const autoSaveCheckboxes = [
     notifyWorkerOffline, notifyProfitDrop, notifyBetterCoin, emailAlertsEnabled, showDiscovery
@@ -396,7 +401,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Email alerts
       emailAlertsEnabled.checked = data.settings.notifications.emailEnabled || false;
       alertEmail.value = data.settings.notifications.alertEmail || '';
-      emailInputGroup.style.display = emailAlertsEnabled.checked ? 'block' : 'none';
+      emailFrequency.value = data.settings.notifications.emailFrequency || 'daily';
+      const showEmailFields = emailAlertsEnabled.checked;
+      emailInputGroup.style.display = showEmailFields ? 'block' : 'none';
+      emailFrequencyGroup.style.display = showEmailFields ? 'block' : 'none';
+      testEmailGroup.style.display = showEmailFields ? 'block' : 'none';
     }
 
     refreshInterval.value = data.settings?.refreshInterval || 5;
@@ -416,11 +425,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Note: refreshInterval is NOT a Pro feature - it's always enabled
     emailAlertsEnabled.disabled = false;
     alertEmail.disabled = false;
+    emailFrequency.disabled = false;
+    testEmailBtn.disabled = false;
   }
 
   // Toggle email input visibility
   emailAlertsEnabled.addEventListener('change', () => {
-    emailInputGroup.style.display = emailAlertsEnabled.checked ? 'block' : 'none';
+    const show = emailAlertsEnabled.checked;
+    emailInputGroup.style.display = show ? 'block' : 'none';
+    emailFrequencyGroup.style.display = show ? 'block' : 'none';
+    testEmailGroup.style.display = show ? 'block' : 'none';
+  });
+
+  // Test email button
+  testEmailBtn.addEventListener('click', async () => {
+    const email = alertEmail.value.trim();
+    if (!email) {
+      testEmailResult.textContent = 'Please enter an email address';
+      testEmailResult.style.color = '#e53e3e';
+      return;
+    }
+
+    testEmailBtn.disabled = true;
+    testEmailResult.textContent = 'Sending...';
+    testEmailResult.style.color = '#718096';
+
+    try {
+      const { licenseKey } = await chrome.storage.local.get(['licenseKey']);
+      const response = await fetch('https://mineglance.com/api/send-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          licenseKey,
+          alertType: 'worker_offline',
+          walletName: 'Test Wallet',
+          message: 'This is a test email to verify your MineGlance email alerts are working correctly.',
+          email
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        testEmailResult.textContent = 'Test email sent! Check your inbox.';
+        testEmailResult.style.color = '#38a169';
+      } else {
+        testEmailResult.textContent = data.error || 'Failed to send test email';
+        testEmailResult.style.color = '#e53e3e';
+      }
+    } catch (e) {
+      testEmailResult.textContent = 'Error: ' + e.message;
+      testEmailResult.style.color = '#e53e3e';
+    }
+
+    testEmailBtn.disabled = false;
   });
 
   function renderWallets() {
@@ -694,6 +751,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     profitDropThreshold.disabled = true;
     emailAlertsEnabled.disabled = true;
     alertEmail.disabled = true;
+    emailFrequency.disabled = true;
+    testEmailBtn.disabled = true;
 
     alert('License deactivated. You can re-activate anytime with your license key.');
   }
@@ -829,7 +888,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           profitDropThreshold: parseInt(profitDropThreshold.value) || 20,
           betterCoin: notifyBetterCoin.checked,
           emailEnabled: emailAlertsEnabled.checked,
-          alertEmail: alertEmail.value.trim()
+          alertEmail: alertEmail.value.trim(),
+          emailFrequency: emailFrequency.value
         }
       }
     });
