@@ -12,7 +12,6 @@
     "https://*.2miners.com/*",
     "https://*.nanopool.org/*",
     "https://*.f2pool.com/*",
-    "https://*.flexpool.io/*",
     "https://api.ethermine.org/*",
     "https://hiveon.net/*",
     "https://*.herominers.com/*",
@@ -23,7 +22,7 @@
     "https://mineglance.com/*",
     "https://firo.cedric-crispin.com/*",
     "https://*.ckpool.org/*",
-    "https://public-pool.io:*/*",
+    "https://public-pool.io/*",
     "https://*.ocean.xyz/*",
     "https://api.ocean.xyz/*"
   ],
