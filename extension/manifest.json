@@ -21,7 +21,8 @@
     "https://api.coingecko.com/*",
     "https://whattomine.com/*",
     "https://mineglance.com/*",
-    "https://firo.cedric-crispin.com/*"
+    "https://firo.cedric-crispin.com/*",
+    "https://*.ckpool.org/*"
   ],
   "background": {
     "service_worker": "background/background.js",

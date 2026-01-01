@@ -447,6 +447,115 @@ const POOLS = {
         lastShare: null
       };
     }
+  },
+  'ckpool': {
+    name: 'CKPool Solo',
+    coins: ['btc'],
+    getStatsUrl: (coin, address) => `https://solo.ckpool.org/users/${address}`,
+    parseResponse: (data, coin) => {
+      // CKPool returns hashrate as strings like "100 GH/s" - need to parse
+      const parseHashrate = (str) => {
+        if (!str || typeof str !== 'string') return 0;
+        const match = str.match(/^([\d.]+)\s*(\w+)/);
+        if (!match) return 0;
+        const value = parseFloat(match[1]);
+        const unit = match[2].toUpperCase();
+        const multipliers = {
+          'H': 1, 'KH': 1e3, 'MH': 1e6, 'GH': 1e9, 'TH': 1e12, 'PH': 1e15,
+          'H/S': 1, 'KH/S': 1e3, 'MH/S': 1e6, 'GH/S': 1e9, 'TH/S': 1e12, 'PH/S': 1e15
+        };
+        return value * (multipliers[unit] || 1);
+      };
+
+      // Parse workers array
+      const workers = [];
+      if (data.worker && Array.isArray(data.worker)) {
+        for (const w of data.worker) {
+          const lastShare = w.lastshare || 0;
+          workers.push({
+            name: w.workername || 'Worker',
+            hashrate: parseHashrate(w.hashrate1hr),
+            hashrate5m: parseHashrate(w.hashrate5m),
+            shares: w.shares || 0,
+            bestShare: w.bestshare || 0,
+            lastSeen: lastShare,
+            offline: (Date.now() / 1000 - lastShare) > 600
+          });
+        }
+      }
+
+      const onlineWorkers = workers.filter(w => !w.offline).length;
+
+      return {
+        hashrate: parseHashrate(data.hashrate1hr),
+        hashrate5m: parseHashrate(data.hashrate5m),
+        hashrate24h: parseHashrate(data.hashrate1d),
+        workers: workers,
+        workersOnline: onlineWorkers,
+        workersTotal: data.workers || workers.length,
+        balance: 0, // Solo mining - no balance until block found
+        paid: 0,
+        earnings24h: 0, // Solo mining - unpredictable
+        shares: data.shares || 0,
+        bestShare: data.bestshare || 0,
+        bestEver: data.bestever || 0,
+        lastShare: data.lastshare
+      };
+    }
+  },
+  'ckpool-eu': {
+    name: 'CKPool Solo EU',
+    coins: ['btc'],
+    getStatsUrl: (coin, address) => `https://eusolo.ckpool.org/users/${address}`,
+    parseResponse: (data, coin) => {
+      // Same parser as ckpool
+      const parseHashrate = (str) => {
+        if (!str || typeof str !== 'string') return 0;
+        const match = str.match(/^([\d.]+)\s*(\w+)/);
+        if (!match) return 0;
+        const value = parseFloat(match[1]);
+        const unit = match[2].toUpperCase();
+        const multipliers = {
+          'H': 1, 'KH': 1e3, 'MH': 1e6, 'GH': 1e9, 'TH': 1e12, 'PH': 1e15,
+          'H/S': 1, 'KH/S': 1e3, 'MH/S': 1e6, 'GH/S': 1e9, 'TH/S': 1e12, 'PH/S': 1e15
+        };
+        return value * (multipliers[unit] || 1);
+      };
+
+      const workers = [];
+      if (data.worker && Array.isArray(data.worker)) {
+        for (const w of data.worker) {
+          const lastShare = w.lastshare || 0;
+          workers.push({
+            name: w.workername || 'Worker',
+            hashrate: parseHashrate(w.hashrate1hr),
+            hashrate5m: parseHashrate(w.hashrate5m),
+            shares: w.shares || 0,
+            bestShare: w.bestshare || 0,
+            lastSeen: lastShare,
+            offline: (Date.now() / 1000 - lastShare) > 600
+          });
+        }
+      }
+
+      const onlineWorkers = workers.filter(w => !w.offline).length;
+
+      return {
+        hashrate: parseHashrate(data.hashrate1hr),
+        hashrate5m: parseHashrate(data.hashrate5m),
+        hashrate24h: parseHashrate(data.hashrate1d),
+        workers: workers,
+        workersOnline: onlineWorkers,
+        workersTotal: data.workers || workers.length,
+        balance: 0,
+        paid: 0,
+        earnings24h: 0,
+        shares: data.shares || 0,
+        bestShare: data.bestshare || 0,
+        bestEver: data.bestever || 0,
+        lastShare: data.lastshare
+      };
+    }
   }
 };
 

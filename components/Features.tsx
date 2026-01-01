@@ -11,7 +11,7 @@ export default function Features() {
     },
     {
       title: 'Multi-Pool Support',
-      description: '2Miners, Nanopool, F2Pool, and more. Connect all your pools in one dashboard.',
+      description: '2Miners, Nanopool, F2Pool, CKPool Solo (BTC), and more. Connect all your pools in one dashboard.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
