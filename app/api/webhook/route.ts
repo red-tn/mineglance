@@ -50,22 +50,52 @@ export async function POST(request: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 
-    if (session.payment_status === 'paid' && session.customer_email) {
-      const isUpgrade = session.metadata?.isUpgrade === 'true'
+    // Get email from customer_email OR customer_details.email (Payment Links use the latter)
+    const customerEmail = session.customer_email || session.customer_details?.email
+
+    if (session.payment_status === 'paid' && customerEmail) {
+      // Determine plan from metadata or infer from amount
+      let plan: 'pro' | 'bundle' = (session.metadata?.plan as 'pro' | 'bundle') || 'pro'
+      const amount = session.amount_total || 0
+
+      // Infer plan from amount if no metadata (Payment Links)
+      if (!session.metadata?.plan) {
+        if (amount >= 5500) {
+          plan = 'bundle' // $55+ is bundle
+        } else if (amount >= 2500 && amount <= 3100) {
+          // $25-$31 could be Pro ($29) or upgrade ($27-$30)
+          // Check if user exists with pro plan - if so, this is an upgrade
+          const emailLower = customerEmail.toLowerCase()
+          const { data: existing } = await supabase
+            .from('paid_users')
+            .select('plan')
+            .eq('email', emailLower)
+            .single()
+
+          if (existing?.plan === 'pro' || existing?.plan === 'lifetime_pro') {
+            plan = 'bundle' // Existing Pro user paying again = upgrade
+          }
+        }
+      }
+
+      const isUpgrade = session.metadata?.isUpgrade === 'true' ||
+        (plan === 'bundle' && amount < 5500) // Upgrade if bundle but paid less than full price
+
       console.log('Processing checkout:', {
-        email: session.customer_email,
-        plan: session.metadata?.plan,
+        email: customerEmail,
+        plan,
         isUpgrade,
-        amount: session.amount_total
+        amount,
+        metadataPlan: session.metadata?.plan
       })
 
       await handleNewPurchase(supabase, {
-        email: session.customer_email,
+        email: customerEmail,
         customerId: session.customer as string,
         paymentId: session.payment_intent as string,
-        amount: session.amount_total || 2900,
+        amount: amount || 2900,
         currency: session.currency || 'usd',
-        plan: (session.metadata?.plan as 'pro' | 'bundle') || 'pro',
+        plan,
         isUpgrade
       })
     }
@@ -117,7 +147,8 @@ async function handleNewPurchase(supabase: any, data: {
       : existing.plan
 
     // If upgrading from pro to bundle, update the record
-    if ((existingPlan === 'pro') && data.plan === 'bundle') {
+    // Also handle case where plan is already 'lifetime_pro' (not normalized in DB)
+    if ((existingPlan === 'pro' || existing.plan === 'lifetime_pro') && data.plan === 'bundle') {
       const { error } = await supabase
         .from('paid_users')
         .update({
