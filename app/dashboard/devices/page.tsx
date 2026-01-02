@@ -1,7 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../auth-context'
+import { loadStripe } from '@stripe/stripe-js'
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 interface Device {
   id: string
@@ -22,10 +26,60 @@ export default function DevicesPage() {
   const [loading, setLoading] = useState(true)
   const [deactivating, setDeactivating] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
+  const [licenseQuantity, setLicenseQuantity] = useState(1)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [purchasing, setPurchasing] = useState(false)
+  const [purchaseSuccess, setPurchaseSuccess] = useState(false)
 
   useEffect(() => {
     loadDevices()
+    // Check for success param in URL (returned from Stripe checkout)
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('success') === 'true') {
+      setPurchaseSuccess(true)
+      // Remove the query param from URL
+      window.history.replaceState({}, '', '/dashboard/devices')
+      // Reload devices to get updated max_activations
+      setTimeout(() => loadDevices(), 1000)
+    }
   }, [])
+
+  const fetchClientSecret = useCallback(async () => {
+    if (!user?.email) return ''
+    const res = await fetch('/api/create-license-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: user.email, quantity: licenseQuantity })
+    })
+    const data = await res.json()
+    if (data.error) {
+      setError(data.error)
+      return ''
+    }
+    return data.clientSecret
+  }, [user?.email, licenseQuantity])
+
+  async function startPurchase() {
+    setPurchasing(true)
+    setError('')
+    try {
+      const secret = await fetchClientSecret()
+      if (secret) {
+        setClientSecret(secret)
+      }
+    } catch (e) {
+      setError('Failed to start checkout. Please try again.')
+    } finally {
+      setPurchasing(false)
+    }
+  }
+
+  function closePurchaseModal() {
+    setShowPurchaseModal(false)
+    setClientSecret(null)
+    setLicenseQuantity(1)
+  }
 
   async function loadDevices() {
     const token = localStorage.getItem('user_token')
@@ -243,14 +297,141 @@ export default function DevicesPage() {
         )}
       </div>
 
-      {/* Help Text */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-1">Need more activations?</h4>
-        <p className="text-sm text-blue-700">
-          Your license allows up to {maxActivations} active devices. If you need more, contact support at{' '}
-          <a href="mailto:control@mineglance.com" className="underline">control@mineglance.com</a>.
-        </p>
+      {/* Purchase Success Banner */}
+      {purchaseSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+          <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h4 className="font-medium text-green-900">Additional licenses purchased!</h4>
+            <p className="text-sm text-green-700">Your new activation limit has been updated.</p>
+          </div>
+          <button
+            onClick={() => setPurchaseSuccess(false)}
+            className="ml-auto text-green-600 hover:text-green-800"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Buy More Licenses */}
+      <div className="bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/20 rounded-lg p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h4 className="font-semibold text-gray-900 mb-1">Need more activations?</h4>
+            <p className="text-sm text-gray-600 mb-4">
+              Purchase additional licenses to use MineGlance Pro on more devices.
+              Each license pack includes <strong>5 additional activations</strong> for only <strong>$5</strong>.
+            </p>
+            <button
+              onClick={() => setShowPurchaseModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Buy More Licenses
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Purchase Modal */}
+      {showPurchaseModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Buy Additional Licenses</h3>
+              <button
+                onClick={closePurchaseModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {clientSecret ? (
+                <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
+                  <EmbeddedCheckout />
+                </EmbeddedCheckoutProvider>
+              ) : (
+                <>
+                  <div className="mb-6">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Each license pack adds <strong>5 activations</strong> to your account for <strong>$5</strong>.
+                    </p>
+
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of license packs
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => setLicenseQuantity(Math.max(1, licenseQuantity - 1))}
+                        disabled={licenseQuantity <= 1}
+                        className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        -
+                      </button>
+                      <span className="text-2xl font-bold text-gray-900 w-12 text-center">{licenseQuantity}</span>
+                      <button
+                        onClick={() => setLicenseQuantity(licenseQuantity + 1)}
+                        className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                      <span>License packs ({licenseQuantity}x)</span>
+                      <span>${licenseQuantity * 5}.00</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                      <span>Activations added</span>
+                      <span className="font-medium text-accent">+{licenseQuantity * 5}</span>
+                    </div>
+                    <div className="border-t border-gray-200 my-2 pt-2">
+                      <div className="flex justify-between text-base font-semibold text-gray-900">
+                        <span>Total</span>
+                        <span>${licenseQuantity * 5}.00</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={startPurchase}
+                    disabled={purchasing}
+                    className="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    {purchasing ? 'Loading...' : `Pay $${licenseQuantity * 5}.00`}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

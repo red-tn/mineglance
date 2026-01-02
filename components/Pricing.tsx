@@ -192,6 +192,27 @@ export default function Pricing() {
               Secure payment powered by Stripe
             </p>
           </div>
+
+          {/* Additional Licenses Note */}
+          <div className="mt-10 sm:mt-12 max-w-2xl mx-auto">
+            <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl p-6 border border-primary/10">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-primary mb-1">Need more device activations?</h4>
+                  <p className="text-sm text-foreground/70">
+                    Pro licenses include 3 device activations. Need more? Purchase additional license packs
+                    from your <a href="/dashboard/devices" className="text-accent hover:underline font-medium">dashboard</a> for
+                    just <strong>$5 per 5 activations</strong>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

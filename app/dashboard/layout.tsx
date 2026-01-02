@@ -115,7 +115,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex flex-col h-full">
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
-              <Image src="/logo-icon-white.svg" alt="MineGlance" width={32} height={32} />
+              <Image src="/logo-icon.png" alt="MineGlance" width={32} height={32} className="rounded" />
               <span className="text-lg font-bold text-white">MineGlance</span>
               <span className="ml-auto bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded">PRO</span>
             </div>

@@ -2,11 +2,13 @@
 
 ## Workflow Rules
 
-1. **Always commit and push after updates and task completions** - After making code changes, immediately stage, commit, and push to the repository. Do not wait for the user to ask.
+1. **Always commit and push after ANY code changes** - After making code changes, IMMEDIATELY stage, commit, and push to the repository. Do NOT wait for the user to ask. This is automatic behavior - every completed change gets pushed.
 
 2. **Run SQL migrations in Supabase** - When database schema changes are made to `supabase-setup.sql`, remind user to run the new migrations in Supabase SQL Editor.
 
 3. **Use www subdomain for all API calls** - Always use `https://www.mineglance.com` NOT `https://mineglance.com` to avoid redirect issues that strip headers.
+
+4. **Git commit format** - Use descriptive commit messages with HEREDOC format. Include the robot emoji footer.
 
 ## Project Structure
 
@@ -53,8 +55,9 @@
 ## Key API Routes
 
 ### Payment & License
-- `/api/create-checkout-session` - Stripe embedded checkout
-- `/api/webhook` - Stripe webhook handler (handles both Checkout Sessions and Payment Links)
+- `/api/create-checkout-session` - Stripe embedded checkout for Pro/Bundle
+- `/api/create-license-checkout` - Stripe checkout for additional license packs ($5 per 5 activations)
+- `/api/webhook` - Stripe webhook handler (handles Checkout Sessions, Payment Links, and license purchases)
 - `/api/activate-license` - License activation for extension (POST) and status check (GET)
 - `/api/check-pro` - Verify Pro status
 - `/api/send-alert` - Send email alerts via SendGrid
@@ -162,11 +165,20 @@ npx eas submit --platform ios
 - Pro-only users see an upgrade prompt when scanning QR code
 - Upgrade price for existing Pro users: **$27** (10% loyalty discount)
 
+## Additional License Purchases
+
+Users can buy additional device activations from `/dashboard/devices`:
+- **Price:** $5 per license pack (5 activations each)
+- **Stripe Product ID:** `prod_Tib34OtCif3xEs`
+- **Flow:** Dashboard modal → Stripe Embedded Checkout → Webhook updates `max_activations`
+- **Webhook type:** `license_purchase` (detected via `session.metadata.type`)
+
 ## Webhook Handling (Stripe)
 
-The webhook at `/api/webhook` handles both:
+The webhook at `/api/webhook` handles:
 1. **Embedded Checkout Sessions** - Has metadata with plan info
 2. **Payment Links** - No metadata, must infer plan from amount
+3. **License Purchases** - Has `type: 'license_purchase'` in metadata
 
 ### Key Logic
 ```typescript

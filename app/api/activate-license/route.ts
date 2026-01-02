@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     if (currentActivations >= maxActivations) {
       return NextResponse.json({
         success: false,
-        error: `Maximum ${maxActivations} devices reached. Deactivate a device in Settings to free up a slot.`,
+        error: `Maximum ${maxActivations} devices reached. Deactivate a device or buy more licenses at mineglance.com/dashboard/devices`,
         currentActivations,
         maxActivations
       }, { status: 403, headers: corsHeaders })

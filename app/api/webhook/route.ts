@@ -54,6 +54,50 @@ export async function POST(request: NextRequest) {
     const customerEmail = session.customer_email || session.customer_details?.email
 
     if (session.payment_status === 'paid' && customerEmail) {
+      // Check if this is a license purchase (additional activations)
+      if (session.metadata?.type === 'license_purchase') {
+        const totalLicenses = parseInt(session.metadata.total_licenses || '5')
+        const emailLower = customerEmail.toLowerCase()
+
+        console.log('Processing license purchase:', {
+          email: emailLower,
+          totalLicenses,
+          amount: session.amount_total
+        })
+
+        // Update max_activations for existing user
+        const { data: user, error: fetchError } = await supabase
+          .from('paid_users')
+          .select('id, max_activations')
+          .eq('email', emailLower)
+          .single()
+
+        if (fetchError || !user) {
+          console.error('User not found for license purchase:', emailLower)
+          return NextResponse.json({ received: true })
+        }
+
+        const newMaxActivations = (user.max_activations || 3) + totalLicenses
+
+        const { error: updateError } = await supabase
+          .from('paid_users')
+          .update({
+            max_activations: newMaxActivations,
+            updated_at: new Date().toISOString()
+          })
+          .eq('email', emailLower)
+
+        if (updateError) {
+          console.error('Error updating max_activations:', updateError)
+        } else {
+          console.log('License purchase complete:', emailLower, '- New max:', newMaxActivations)
+          // Send confirmation email
+          await sendLicensePurchaseEmail(emailLower, totalLicenses, newMaxActivations)
+        }
+
+        return NextResponse.json({ received: true })
+      }
+
       // Determine plan from metadata or infer from amount
       let plan: 'pro' | 'bundle' = (session.metadata?.plan as 'pro' | 'bundle') || 'pro'
       const amount = session.amount_total || 0
@@ -248,5 +292,35 @@ async function sendUpgradeEmail(to: string, licenseKey: string) {
     }
   } catch (error) {
     console.error('Error sending upgrade email:', error)
+  }
+}
+
+async function sendLicensePurchaseEmail(to: string, licensesAdded: number, newMax: number) {
+  try {
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_SITE_URL || 'https://mineglance.com'
+
+    const response = await fetch(`${baseUrl}/api/send-welcome-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-auth': process.env.INTERNAL_API_SECRET || 'internal-secret'
+      },
+      body: JSON.stringify({
+        to,
+        licensesAdded,
+        newMax,
+        isLicensePurchase: true
+      })
+    })
+
+    if (!response.ok) {
+      console.error('Failed to send license purchase email:', await response.text())
+    } else {
+      console.log('License purchase email sent to:', to)
+    }
+  } catch (error) {
+    console.error('Error sending license purchase email:', error)
   }
 }
