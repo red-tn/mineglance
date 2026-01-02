@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             upgradeBanner.classList.remove('hidden');
           } else if (response && response.plan) {
             // Update badge text based on plan
-            proBadge.textContent = response.plan === 'bundle' ? 'PRO PLUS' : 'PRO';
+            proBadge.textContent = response.plan === 'bundle' ? 'PRO+' : 'PRO';
             chrome.storage.local.set({ plan: response.plan });
           }
         });
@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         proBadge.classList.remove('hidden');
         // Set badge text based on plan
-        proBadge.textContent = plan === 'bundle' ? 'PRO PLUS' : 'PRO';
+        proBadge.textContent = plan === 'bundle' ? 'PRO+' : 'PRO';
       }
 
       // Show/hide discovery section based on settings
