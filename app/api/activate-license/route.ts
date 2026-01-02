@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
   const licenseKey = request.nextUrl.searchParams.get('key')
   const installId = request.nextUrl.searchParams.get('installId')
 
-  if (!licenseKey || !installId) {
+  if (!licenseKey) {
     return NextResponse.json({ isPro: false }, { headers: corsHeaders })
   }
 
@@ -139,6 +139,25 @@ export async function GET(request: NextRequest) {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Get license details first
+    const { data: license } = await supabase
+      .from('paid_users')
+      .select('plan, is_revoked')
+      .eq('license_key', normalizedKey)
+      .single()
+
+    if (!license || license.is_revoked) {
+      return NextResponse.json({ isPro: false }, { headers: corsHeaders })
+    }
+
+    // If no installId provided (mobile app checking plan only), just return plan
+    if (!installId) {
+      return NextResponse.json({
+        isPro: true,
+        plan: license.plan
+      }, { headers: corsHeaders })
+    }
 
     // Check if this device has an active activation
     const { data: activation } = await supabase
@@ -150,18 +169,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (!activation) {
-      return NextResponse.json({ isPro: false }, { headers: corsHeaders })
-    }
-
-    // Get license details
-    const { data: license } = await supabase
-      .from('paid_users')
-      .select('plan, is_revoked')
-      .eq('license_key', normalizedKey)
-      .single()
-
-    if (!license || license.is_revoked) {
-      return NextResponse.json({ isPro: false }, { headers: corsHeaders })
+      return NextResponse.json({ isPro: false, plan: license.plan }, { headers: corsHeaders })
     }
 
     // Update last_seen

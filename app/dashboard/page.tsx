@@ -116,7 +116,7 @@ export default function DashboardOverview() {
           </div>
           <div className="ml-auto">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-400 text-yellow-900">
-              {user?.plan?.toUpperCase() || 'PRO'}
+              {user?.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
             </span>
           </div>
         </div>
@@ -219,7 +219,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Pro Plus Upgrade Ad - Show for Pro members who don't have Pro Plus */}
-      {user?.plan && !user.plan.toLowerCase().includes('plus') && (
+      {user?.plan && user.plan !== 'bundle' && (
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl p-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24" />

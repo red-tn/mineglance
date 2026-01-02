@@ -232,7 +232,7 @@ export default function ScanScreen() {
         facing="back"
         onCameraReady={() => console.log('=== CAMERA READY ===')}
         barcodeScannerSettings={{
-          barcodeTypes: ['qr', 'aztec', 'ean13', 'ean8', 'pdf417', 'upc_e', 'datamatrix', 'code39', 'code93', 'itf14', 'codabar', 'code128', 'upc_a'],
+          barcodeTypes: ['qr'],
         }}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
       />
@@ -275,7 +275,7 @@ export default function ScanScreen() {
   );
 }
 
-const SCANNER_SIZE = 250;
+const SCANNER_SIZE = 300;
 
 const styles = StyleSheet.create({
   container: {
