@@ -693,6 +693,62 @@ async function fetchPoolData(pool, coin, address) {
     const parsed = poolConfig.parseResponse(data, coinLower);
     console.log(`Parsed pool data:`, parsed);
 
+    // Apply stale data detection for ALL pools
+    // If lastShare is more than 2 hours old, the data is stale
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+    const TWO_HOURS_SEC = 2 * 60 * 60;
+    let isStale = false;
+
+    if (parsed.lastShare) {
+      // lastShare can be in seconds (Unix timestamp) or milliseconds or ISO string
+      let lastShareTime;
+      if (typeof parsed.lastShare === 'string') {
+        // ISO string like "2024-01-15T10:30:00Z"
+        lastShareTime = new Date(parsed.lastShare).getTime();
+      } else if (parsed.lastShare > 1e12) {
+        // Already in milliseconds
+        lastShareTime = parsed.lastShare;
+      } else {
+        // Unix timestamp in seconds
+        lastShareTime = parsed.lastShare * 1000;
+      }
+
+      const timeSinceLastShare = Date.now() - lastShareTime;
+      isStale = timeSinceLastShare > TWO_HOURS_MS;
+
+      if (isStale) {
+        console.log(`Data is STALE for ${pool}/${coin}. Last share: ${new Date(lastShareTime).toISOString()}, ${Math.round(timeSinceLastShare / 60000)} minutes ago`);
+
+        // Mark all workers as offline and zero out hashrate
+        parsed.hashrate = 0;
+        parsed.hashrate5m = 0;
+        parsed.workersOnline = 0;
+        parsed.isStale = true;
+
+        // Mark all workers as offline
+        if (parsed.workers && parsed.workers.length > 0) {
+          parsed.workers = parsed.workers.map(w => ({
+            ...w,
+            hashrate: 0,
+            offline: true
+          }));
+        }
+      }
+    }
+
+    // Also check worker-level staleness - if all workers have 0 hashrate but pool shows hashrate,
+    // something is wrong - trust worker data
+    if (!isStale && parsed.workers && parsed.workers.length > 0) {
+      const allWorkersOffline = parsed.workers.every(w => w.offline || w.hashrate === 0);
+      if (allWorkersOffline && parsed.hashrate > 0) {
+        console.log(`All workers offline but pool shows hashrate - marking as stale for ${pool}/${coin}`);
+        parsed.hashrate = 0;
+        parsed.hashrate5m = 0;
+        parsed.workersOnline = 0;
+        parsed.isStale = true;
+      }
+    }
+
     return parsed;
   } catch (error) {
     console.error(`Error fetching pool data for ${pool}/${coin}/${address}:`, error);
