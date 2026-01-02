@@ -91,9 +91,8 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
       const existingPlan = customerData.plan || null
 
       if (plan === 'bundle' && existingPlan === 'pro') {
-        // Existing Pro user upgrading to Bundle - charge difference
-        // Apply 10% discount if coming from dashboard
-        amount = dashboardUpgrade ? 2700 : 3000 // $27 or $30 upgrade price
+        // Existing Pro user upgrading to Bundle - always apply 10% loyalty discount
+        amount = 2700 // $27 upgrade price (10% off $30 difference)
         isUpgrade = true
       } else if (existingPlan === plan || existingPlan === 'bundle') {
         // Already has this plan or higher
@@ -336,10 +335,10 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
                 {pricingInfo?.isUpgrade && (
                   <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-green-800 text-sm font-medium">
-                      {dashboardUpgrade ? 'Dashboard member 10% discount applied!' : 'Pro user upgrade pricing applied!'}
+                      Pro member 10% loyalty discount applied!
                     </p>
                     <p className="text-green-600 text-xs mt-1">
-                      You&apos;re paying ${(displayAmount / 100).toFixed(0)} instead of ${dashboardUpgrade ? '30' : '59'}
+                      You&apos;re paying ${(displayAmount / 100).toFixed(0)} instead of $30
                     </p>
                   </div>
                 )}

@@ -393,13 +393,22 @@ const POOLS = {
       // Get hashrate from the latest performance sample's workers
       let currentHashrate = 0;
       const workers = [];
+      let isStale = true; // Assume stale until proven otherwise
+      let latestSample = null;
 
       if (miner.performanceSamples && miner.performanceSamples.length > 0) {
         // Get the most recent sample
-        const latestSample = miner.performanceSamples[miner.performanceSamples.length - 1];
+        latestSample = miner.performanceSamples[miner.performanceSamples.length - 1];
 
-        // Workers are in the sample as an object { workerName: { hashrate, sharesPerSecond } }
-        if (latestSample.workers && typeof latestSample.workers === 'object') {
+        // Check if sample is recent (within last 2 hours)
+        if (latestSample.created) {
+          const sampleTime = new Date(latestSample.created).getTime();
+          const twoHoursAgo = Date.now() - (2 * 60 * 60 * 1000);
+          isStale = sampleTime < twoHoursAgo;
+        }
+
+        // Only use hashrate if sample is recent
+        if (!isStale && latestSample.workers && typeof latestSample.workers === 'object') {
           for (const [name, workerData] of Object.entries(latestSample.workers)) {
             const hr = workerData.hashrate || 0;
             currentHashrate += hr;
@@ -408,6 +417,16 @@ const POOLS = {
               hashrate: hr,
               sharesPerSecond: workerData.sharesPerSecond || 0,
               offline: hr === 0
+            });
+          }
+        } else if (isStale && latestSample.workers) {
+          // Sample is stale - show workers as offline
+          for (const [name] of Object.entries(latestSample.workers)) {
+            workers.push({
+              name: name,
+              hashrate: 0,
+              sharesPerSecond: 0,
+              offline: true
             });
           }
         }
@@ -428,7 +447,8 @@ const POOLS = {
         earnings24h: earnings24h,
         pendingShares: miner.pendingShares || 0,
         minerEffort: miner.minerEffort || 0,
-        lastShare: null
+        lastShare: latestSample?.created || null,
+        isStale: isStale
       };
     }
   },
