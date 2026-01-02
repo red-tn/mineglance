@@ -415,7 +415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       testEmailGroup.style.display = showEmailFields ? 'block' : 'none';
     }
 
-    refreshInterval.value = data.settings?.refreshInterval || 5;
+    refreshInterval.value = data.settings?.refreshInterval || 30;
 
     // Load display settings (default to true/enabled)
     showDiscovery.checked = data.settings?.showDiscovery !== false;
@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const settingsData = {
         elec: electricity?.rate || 0.12,
         curr: electricity?.currency || 'USD',
-        ref: settings?.refreshInterval || 5
+        ref: settings?.refreshInterval || 30
       };
 
       console.log('Generating QR with license:', licenseKey.substring(0, 8) + '...');
@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Generate QR code using QR Server API (free public API)
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qrData)}`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(data.qrData)}`;
 
       // Load and draw on canvas
       const img = new Image();
@@ -539,8 +539,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       img.onload = () => {
         const ctx = qrCodeCanvas.getContext('2d');
         ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, 200, 200);
-        ctx.drawImage(img, 0, 0, 200, 200);
+        ctx.fillRect(0, 0, 400, 400);
+        ctx.drawImage(img, 0, 0, 400, 400);
 
         // Show expiry time
         const expiresIn = Math.round((data.expiresAt - Date.now()) / 60000);

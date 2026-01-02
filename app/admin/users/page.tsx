@@ -149,7 +149,7 @@ export default function UsersPage() {
             >
               <option value="all">All Plans</option>
               <option value="pro">Pro ($29)</option>
-              <option value="bundle">Bundle ($59)</option>
+              <option value="bundle">Pro Plus ($59)</option>
             </select>
           </div>
           <div className="flex items-end">
@@ -205,7 +205,7 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(user.plan)}`}>
-                      {user.plan === 'bundle' ? 'Pro+Bundle' : 'Pro'}
+                      {user.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -291,7 +291,7 @@ export default function UsersPage() {
                   <label className="text-sm font-medium text-gray-500">Plan</label>
                   <p>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(selectedUser.plan)}`}>
-                      {selectedUser.plan === 'bundle' ? 'Pro + Bundle ($59)' : 'Pro ($29)'}
+                      {selectedUser.plan === 'bundle' ? 'PRO PLUS ($59)' : 'PRO ($29)'}
                     </span>
                   </p>
                 </div>

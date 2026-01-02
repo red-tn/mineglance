@@ -170,7 +170,7 @@ export default function RevenuePage() {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-purple-700">Bundle ($59)</span>
+                <span className="text-sm font-medium text-purple-700">Pro Plus ($59)</span>
                 <span className="text-sm text-gray-600">{byPlan?.bundle.count || 0} sales</span>
               </div>
               <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -259,7 +259,7 @@ export default function RevenuePage() {
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       tx.plan === 'bundle' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {tx.plan === 'bundle' ? 'Bundle' : 'Pro'}
+                      {tx.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-medium text-green-600">{formatCurrency(tx.amount)}</td>

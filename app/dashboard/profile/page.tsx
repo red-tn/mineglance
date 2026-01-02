@@ -251,7 +251,7 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden max-w-3xl">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Photo Section */}
         <div className="px-6 py-8 bg-gradient-to-r from-primary to-primary/80 text-white">
           <div className="flex items-center gap-6">
@@ -432,8 +432,8 @@ export default function ProfilePage() {
           <div className="pt-4 border-t border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Subscription</h3>
             <div className="flex items-center gap-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                {profile?.plan?.toUpperCase() || 'PRO'}
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                {profile?.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
               </span>
               <span className="text-sm text-gray-500">
                 Member since {new Date(profile?.createdAt || '').toLocaleDateString()}

@@ -115,7 +115,7 @@ export default function DashboardOverview() {
             </p>
           </div>
           <div className="ml-auto">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-400 text-yellow-900">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-400 text-green-900">
               {user?.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
             </span>
           </div>
