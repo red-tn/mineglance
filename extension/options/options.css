@@ -61,8 +61,8 @@ body {
 }
 
 .pro-badge {
-  background: linear-gradient(135deg, #f6e05e 0%, #ecc94b 100%);
-  color: #744210;
+  background: #4ade80;
+  color: #14532d;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;

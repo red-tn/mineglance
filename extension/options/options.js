@@ -384,6 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Update UI
     if (isPaid && data.licenseKey) {
       proStatus.classList.remove('hidden');
+      proStatus.textContent = data.plan === 'bundle' ? 'PRO+' : 'PRO';
       proUpgradeNotice.classList.add('hidden');
       proActivationForm.classList.add('hidden');
       proActiveStatus.classList.remove('hidden');
