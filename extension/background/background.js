@@ -566,48 +566,47 @@ const POOLS = {
     coins: ['btc'],
     getStatsUrl: (coin, address) => `https://public-pool.io:40557/api/client/${address}`,
     parseResponse: (data, coin) => {
-      // Public Pool returns client stats
-      const parseHashrate = (str) => {
-        if (!str || typeof str !== 'string') return 0;
-        const match = str.match(/^([\d.]+)\s*(\w+)/);
-        if (!match) return parseFloat(str) || 0;
-        const value = parseFloat(match[1]);
-        const unit = match[2].toUpperCase();
-        const multipliers = {
-          'H': 1, 'KH': 1e3, 'MH': 1e6, 'GH': 1e9, 'TH': 1e12, 'PH': 1e15
-        };
-        return value * (multipliers[unit] || 1);
-      };
+      // Public Pool returns client stats with workers array
+      // hashRate is raw number in H/s (as string), e.g., "1067801012935.1993"
 
-      // Handle both string and number hashrates
-      const hashrate = typeof data.hashRate === 'string' ? parseHashrate(data.hashRate) : (data.hashRate || 0);
-
-      // Parse workers if available
+      // Parse workers and sum hashrates
       const workers = [];
+      let totalHashrate = 0;
+      let lastShareTime = null;
+
       if (data.workers && Array.isArray(data.workers)) {
         for (const w of data.workers) {
+          // hashRate is a numeric string in H/s
+          const workerHashrate = parseFloat(w.hashRate) || 0;
+          totalHashrate += workerHashrate;
+
+          // Track most recent lastSeen
+          if (w.lastSeen && (!lastShareTime || new Date(w.lastSeen) > new Date(lastShareTime))) {
+            lastShareTime = w.lastSeen;
+          }
+
           workers.push({
             name: w.name || w.sessionId || 'Worker',
-            hashrate: typeof w.hashRate === 'string' ? parseHashrate(w.hashRate) : (w.hashRate || 0),
-            lastSeen: w.lastShare,
+            hashrate: workerHashrate,
+            lastSeen: w.lastSeen,
             offline: false
           });
         }
       }
 
       return {
-        hashrate: hashrate,
-        hashrate5m: hashrate,
-        hashrate24h: hashrate,
+        hashrate: totalHashrate,
+        hashrate5m: totalHashrate,
+        hashrate24h: totalHashrate,
         workers: workers,
-        workersOnline: workers.length,
-        workersTotal: data.workerCount || workers.length || 1,
+        workersOnline: data.workersCount || workers.length,
+        workersTotal: data.workersCount || workers.length || 1,
         balance: 0,
         paid: 0,
         earnings24h: 0,
-        bestShare: data.bestDifficulty || 0,
+        bestShare: parseFloat(data.bestDifficulty) || 0,
         shares: data.shares || 0,
-        lastShare: data.lastShare
+        lastShare: lastShareTime
       };
     }
   },
