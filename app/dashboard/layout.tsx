@@ -115,9 +115,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex flex-col h-full">
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
-              <Image src="/logo-icon.png" alt="MineGlance" width={32} height={32} className="rounded" />
+              <div className="w-8 h-8 bg-accent rounded flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+              </div>
               <span className="text-lg font-bold text-white">MineGlance</span>
-              <span className="ml-auto bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded">PRO</span>
+              <span className="ml-auto bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+                {user?.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
+              </span>
             </div>
 
             {/* Navigation */}
