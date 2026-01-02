@@ -122,7 +122,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
               <span className="text-lg font-bold text-white">MineGlance</span>
               <span className="ml-auto bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded">
-                {user?.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
+                {user?.plan === 'bundle' ? 'PRO+' : 'PRO'}
               </span>
             </div>
 
