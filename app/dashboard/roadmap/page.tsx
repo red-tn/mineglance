@@ -1,0 +1,375 @@
+'use client'
+
+import { useState, useContext, useEffect } from 'react'
+import { AuthContext } from '../auth-context'
+
+interface RoadmapItem {
+  id: string
+  category: string
+  priority: string
+  platforms: string[]
+  title: string
+  description: string
+  status: string
+  progress: number
+  admin_response: string | null
+  target_version: string | null
+  created_at: string
+}
+
+const CATEGORIES = {
+  new_pool: 'New Pool Support',
+  new_coin: 'New Coin Support',
+  feature: 'New Feature',
+  ui_ux: 'UI/UX Improvement',
+  integration: 'Integration',
+  bug_report: 'Bug Report',
+  other: 'Other'
+}
+
+const PRIORITIES = {
+  nice_to_have: 'Nice to Have',
+  would_help: 'Would Help',
+  really_need: 'Really Need This'
+}
+
+const PLATFORMS_LIST = [
+  { value: 'extension', label: 'Chrome Extension' },
+  { value: 'mobile_ios', label: 'iOS App' },
+  { value: 'mobile_android', label: 'Android App' },
+  { value: 'website', label: 'Website/Dashboard' }
+]
+
+const STATUS_INFO: Record<string, { label: string; color: string }> = {
+  submitted: { label: 'Submitted', color: 'bg-gray-100 text-gray-800' },
+  reviewing: { label: 'Under Review', color: 'bg-blue-100 text-blue-800' },
+  planned: { label: 'Planned', color: 'bg-purple-100 text-purple-800' },
+  in_progress: { label: 'In Progress', color: 'bg-yellow-100 text-yellow-800' },
+  completed: { label: 'Completed', color: 'bg-green-100 text-green-800' },
+  declined: { label: 'Declined', color: 'bg-red-100 text-red-800' }
+}
+
+export default function RoadmapPage() {
+  const { user } = useContext(AuthContext)
+  const [activeTab, setActiveTab] = useState<'submit' | 'view'>('submit')
+  const [items, setItems] = useState<RoadmapItem[]>([])
+  const [loadingItems, setLoadingItems] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  // Form state
+  const [form, setForm] = useState({
+    category: 'feature',
+    priority: 'would_help',
+    platforms: [] as string[],
+    title: '',
+    description: ''
+  })
+
+  useEffect(() => {
+    if (activeTab === 'view') {
+      fetchRoadmapItems()
+    }
+  }, [activeTab])
+
+  async function fetchRoadmapItems() {
+    setLoadingItems(true)
+    try {
+      const res = await fetch('/api/roadmap/public')
+      if (res.ok) {
+        const data = await res.json()
+        setItems(data.items || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch roadmap items:', error)
+    } finally {
+      setLoadingItems(false)
+    }
+  }
+
+  function togglePlatform(platform: string) {
+    setForm(prev => ({
+      ...prev,
+      platforms: prev.platforms.includes(platform)
+        ? prev.platforms.filter(p => p !== platform)
+        : [...prev.platforms, platform]
+    }))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.title.trim()) return
+
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/roadmap/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          email: user?.email,
+          licenseKey: user?.licenseKey
+        })
+      })
+
+      if (res.ok) {
+        setSubmitted(true)
+        setForm({
+          category: 'feature',
+          priority: 'would_help',
+          platforms: [],
+          title: '',
+          description: ''
+        })
+        // Auto switch to view tab after 2 seconds
+        setTimeout(() => {
+          setActiveTab('view')
+          setSubmitted(false)
+        }, 2000)
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to submit')
+      }
+    } catch (error) {
+      console.error('Submit error:', error)
+      alert('Failed to submit request')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Roadmap & Feature Requests</h1>
+        <p className="text-gray-500 mt-1">Submit ideas or see what&apos;s coming next</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b">
+        <button
+          onClick={() => setActiveTab('submit')}
+          className={`px-6 py-3 font-medium border-b-2 transition ${
+            activeTab === 'submit'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Submit Request
+        </button>
+        <button
+          onClick={() => setActiveTab('view')}
+          className={`px-6 py-3 font-medium border-b-2 transition ${
+            activeTab === 'view'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          View Roadmap
+        </button>
+      </div>
+
+      {/* Submit Tab */}
+      {activeTab === 'submit' && (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          {submitted ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Request Submitted!</h3>
+              <p className="text-gray-500">Thank you for your feedback. We&apos;ll review it soon.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Category & Priority */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category *
+                  </label>
+                  <select
+                    value={form.category}
+                    onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  >
+                    {Object.entries(CATEGORIES).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Priority *
+                  </label>
+                  <select
+                    value={form.priority}
+                    onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  >
+                    {Object.entries(PRIORITIES).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Platforms */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Platforms (select all that apply)
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  {PLATFORMS_LIST.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => togglePlatform(value)}
+                      className={`px-4 py-2 rounded-lg border transition ${
+                        form.platforms.includes(value)
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Title / Summary *
+                </label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="Briefly describe your request..."
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description / Details
+                </label>
+                <textarea
+                  value={form.description}
+                  onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+                  rows={5}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                  placeholder="Provide any additional details, use cases, or examples..."
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submitting || !form.title.trim()}
+                  className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {submitting ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Submitting...
+                    </span>
+                  ) : (
+                    'Submit Request'
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* View Tab */}
+      {activeTab === 'view' && (
+        <div className="space-y-4">
+          {loadingItems ? (
+            <div className="flex items-center justify-center py-12">
+              <svg className="animate-spin h-8 w-8 text-primary" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No roadmap items yet</h3>
+              <p className="text-gray-500">Be the first to submit a feature request!</p>
+            </div>
+          ) : (
+            items.map(item => (
+              <div key={item.id} className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${STATUS_INFO[item.status]?.color || 'bg-gray-100'}`}>
+                        {STATUS_INFO[item.status]?.label || item.status}
+                      </span>
+                      <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                        {CATEGORIES[item.category as keyof typeof CATEGORIES] || item.category}
+                      </span>
+                      {item.target_version && (
+                        <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                          v{item.target_version}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                    {item.description && (
+                      <p className="text-gray-600 mt-1">{item.description}</p>
+                    )}
+                    {item.platforms?.length > 0 && (
+                      <div className="flex gap-2 mt-3">
+                        {item.platforms.map(p => (
+                          <span key={p} className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                            {PLATFORMS_LIST.find(pl => pl.value === p)?.label || p}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {item.admin_response && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <p className="text-sm font-medium text-blue-800 mb-1">Team Response:</p>
+                        <p className="text-sm text-blue-700">{item.admin_response}</p>
+                      </div>
+                    )}
+                  </div>
+                  {item.progress > 0 && item.status === 'in_progress' && (
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-primary">{item.progress}%</div>
+                      <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
+                        <div
+                          className="h-full bg-primary rounded-full"
+                          style={{ width: `${item.progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

@@ -217,6 +217,13 @@ const ZIP_TO_STATE = {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Load version from manifest
+  const manifest = chrome.runtime.getManifest();
+  const versionDisplay = document.getElementById('versionDisplay');
+  if (versionDisplay) {
+    versionDisplay.textContent = `v${manifest.version}`;
+  }
+
   // DOM Elements
   const proStatus = document.getElementById('proStatus');
   const walletsList = document.getElementById('walletsList');

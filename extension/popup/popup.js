@@ -101,6 +101,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function initPopup() {
     showLoading();
 
+    // Load version from manifest
+    const manifest = chrome.runtime.getManifest();
+    const versionNumber = document.getElementById('versionNumber');
+    if (versionNumber) {
+      versionNumber.textContent = `v${manifest.version}`;
+    }
+
     try {
       let { wallets, isPaid, electricity, settings, discoveryCollapsed, plan } = await chrome.storage.local.get([
         'wallets',

@@ -12,13 +12,17 @@ import { useRouter } from 'expo-router';
 import { colors, spacing, borderRadius, fontSize } from '@/constants/theme';
 import { useWalletStore } from '@/stores/walletStore';
 import { useAuthStore } from '@/stores/authStore';
+import { usePoolData } from '@/hooks/usePoolData';
+import { usePrices } from '@/hooks/usePrices';
 
 const WEBSITE_URL = 'https://www.mineglance.com';
 
 export default function WalletsScreen() {
   const router = useRouter();
-  const { wallets, walletData, isLoading, setLoading, reorderWallets } = useWalletStore();
+  const { wallets, walletData, isLoading, reorderWallets } = useWalletStore();
   const { isPro } = useAuthStore();
+  const { fetchAllWallets } = usePoolData();
+  const { fetchPrices } = usePrices();
   const [isReordering, setIsReordering] = useState(false);
 
   const sortedWallets = [...wallets].sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -33,10 +37,8 @@ export default function WalletsScreen() {
   };
 
   const onRefresh = useCallback(async () => {
-    setLoading(true);
-    // TODO: Implement pool data fetching
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
+    await Promise.all([fetchAllWallets(), fetchPrices()]);
+  }, [fetchAllWallets, fetchPrices]);
 
   const formatHashrate = (hashrate: number): string => {
     if (hashrate >= 1e12) return `${(hashrate / 1e12).toFixed(2)} TH/s`;

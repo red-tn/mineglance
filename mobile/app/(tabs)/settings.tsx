@@ -11,8 +11,11 @@ import {
   Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 
 const WEBSITE_URL = 'https://www.mineglance.com';
+const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
+const BUILD_NUMBER = Constants.expoConfig?.ios?.buildNumber || '1';
 import { colors, spacing, borderRadius, fontSize } from '@/constants/theme';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -127,7 +130,11 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.label}>Refresh Interval</Text>
-            <Text style={styles.value}>{settings.refreshInterval} min</Text>
+            <Text style={styles.value}>
+              {settings.refreshInterval >= 60
+                ? `${settings.refreshInterval / 60}h`
+                : `${settings.refreshInterval}m`}
+            </Text>
           </View>
 
           <View style={styles.intervalButtons}>
@@ -263,7 +270,7 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.label}>Version</Text>
-            <Text style={styles.value}>1.0.0</Text>
+            <Text style={styles.value}>v{APP_VERSION} ({BUILD_NUMBER})</Text>
           </View>
           <TouchableOpacity
             style={styles.linkRow}

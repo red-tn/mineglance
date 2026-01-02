@@ -6,6 +6,7 @@ import { colors, spacing, borderRadius, fontSize } from '@/constants/theme';
 import { useWalletStore } from '@/stores/walletStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useAuthStore } from '@/stores/authStore';
+import { resetPoolDataState } from '@/hooks/usePoolData';
 import { QRPayload } from '@/types';
 
 const API_BASE = 'https://www.mineglance.com/api';
@@ -92,16 +93,21 @@ export default function ScanScreen() {
 
       if (wallets.length > 0) {
         setWallets(wallets);
+        // Reset pool data state so new wallets get fetched fresh
+        resetPoolDataState();
       }
 
+      // Calculate total power consumption from all wallets
+      const totalPower = wallets.reduce((sum: number, w: any) => sum + (w.power || 200), 0);
+
       // Convert short settings format to full format
-      if (result.settings) {
-        importSettings({
-          electricityRate: result.settings.elec || 0.12,
-          currency: result.settings.curr || 'USD',
-          refreshInterval: result.settings.ref || 30,
-        });
-      }
+      // Include power consumption calculated from wallet powers
+      importSettings({
+        electricityRate: result.settings?.elec || 0.12,
+        currency: result.settings?.curr || 'USD',
+        refreshInterval: result.settings?.ref || 30,
+        powerConsumption: totalPower,
+      });
 
       // Save license key and plan
       await setLicenseKey(result.licenseKey);

@@ -135,3 +135,83 @@ ALTER TABLE email_alerts_log ADD COLUMN IF NOT EXISTS subject TEXT;
 ALTER TABLE email_alerts_log ADD COLUMN IF NOT EXISTS sendgrid_message_id TEXT;
 ALTER TABLE email_alerts_log ADD COLUMN IF NOT EXISTS sendgrid_status TEXT DEFAULT 'accepted';
 ALTER TABLE email_alerts_log ADD COLUMN IF NOT EXISTS sendgrid_response TEXT;
+
+-- =====================================================
+-- Roadmap Items (user feature requests and internal roadmap)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS roadmap_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  -- Submission info
+  category TEXT NOT NULL CHECK (category IN ('new_pool', 'new_coin', 'feature', 'ui_ux', 'integration', 'bug_report', 'other')),
+  priority TEXT NOT NULL CHECK (priority IN ('nice_to_have', 'would_help', 'really_need')),
+  platforms TEXT[] DEFAULT '{}',
+  title TEXT NOT NULL,
+  description TEXT,
+  submitter_email TEXT,
+  submitter_license TEXT,
+  -- Admin management
+  status TEXT DEFAULT 'submitted' CHECK (status IN ('submitted', 'reviewing', 'planned', 'in_progress', 'completed', 'declined')),
+  progress INTEGER DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+  admin_response TEXT,
+  target_version TEXT,
+  is_public BOOLEAN DEFAULT TRUE,
+  -- Internal flag (admin-created vs user-submitted)
+  is_internal BOOLEAN DEFAULT FALSE,
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_roadmap_items_status ON roadmap_items(status);
+CREATE INDEX IF NOT EXISTS idx_roadmap_items_category ON roadmap_items(category);
+CREATE INDEX IF NOT EXISTS idx_roadmap_items_created ON roadmap_items(created_at DESC);
+
+ALTER TABLE roadmap_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role full access to roadmap_items" ON roadmap_items FOR ALL USING (true);
+
+-- =====================================================
+-- Software Releases (version tracking)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS software_releases (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  version TEXT NOT NULL,
+  platform TEXT NOT NULL CHECK (platform IN ('extension', 'mobile_ios', 'mobile_android', 'website')),
+  release_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  download_url TEXT,
+  changelog TEXT[] DEFAULT '{}',
+  is_latest BOOLEAN DEFAULT FALSE,
+  build_number INTEGER,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_software_releases_version ON software_releases(version);
+CREATE INDEX IF NOT EXISTS idx_software_releases_platform ON software_releases(platform);
+CREATE INDEX IF NOT EXISTS idx_software_releases_latest ON software_releases(is_latest) WHERE is_latest = TRUE;
+
+ALTER TABLE software_releases ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role full access to software_releases" ON software_releases FOR ALL USING (true);
+
+-- =====================================================
+-- Bug Fixes Log (track all bugs and fixes per version)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS bug_fixes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  version TEXT NOT NULL,
+  platform TEXT NOT NULL CHECK (platform IN ('extension', 'mobile_ios', 'mobile_android', 'website', 'api')),
+  type TEXT NOT NULL CHECK (type IN ('bug', 'enhancement', 'feature', 'security', 'performance')),
+  title TEXT NOT NULL,
+  description TEXT,
+  fixed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  related_roadmap_id UUID REFERENCES roadmap_items(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_bug_fixes_version ON bug_fixes(version);
+CREATE INDEX IF NOT EXISTS idx_bug_fixes_platform ON bug_fixes(platform);
+CREATE INDEX IF NOT EXISTS idx_bug_fixes_fixed_at ON bug_fixes(fixed_at DESC);
+
+ALTER TABLE bug_fixes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role full access to bug_fixes" ON bug_fixes FOR ALL USING (true);

@@ -760,6 +760,17 @@ body {
   border-color: var(--primary);
 }
 
+/* Version Info */
+.version-info {
+  text-align: center;
+  padding: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.7;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+}
+
 /* Scrollbar */
 .wallet-list::-webkit-scrollbar {
   width: 6px;
