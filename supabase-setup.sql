@@ -53,6 +53,11 @@ ALTER TABLE license_activations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE extension_installs ENABLE ROW LEVEL SECURITY;
 
 -- Policies for API access (service role bypasses RLS)
+-- Drop existing policies first to avoid conflicts
+DROP POLICY IF EXISTS "Allow service role full access to paid_users" ON paid_users;
+DROP POLICY IF EXISTS "Allow service role full access to license_activations" ON license_activations;
+DROP POLICY IF EXISTS "Allow service role full access to extension_installs" ON extension_installs;
+
 CREATE POLICY "Allow service role full access to paid_users" ON paid_users FOR ALL USING (true);
 CREATE POLICY "Allow service role full access to license_activations" ON license_activations FOR ALL USING (true);
 CREATE POLICY "Allow service role full access to extension_installs" ON extension_installs FOR ALL USING (true);
@@ -80,6 +85,14 @@ ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS country TEXT;
 ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS profile_photo_url TEXT;
 ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
 
+-- Add notification preferences to paid_users
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS notify_worker_offline BOOLEAN DEFAULT TRUE;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS notify_profit_drop BOOLEAN DEFAULT TRUE;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS profit_drop_threshold INTEGER DEFAULT 20;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS email_alerts_enabled BOOLEAN DEFAULT FALSE;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS email_alerts_address TEXT;
+ALTER TABLE paid_users ADD COLUMN IF NOT EXISTS email_frequency TEXT DEFAULT 'immediate' CHECK (email_frequency IN ('immediate', 'hourly', 'daily', 'weekly'));
+
 -- User sessions table (for dashboard login)
 CREATE TABLE IF NOT EXISTS user_sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -98,6 +111,7 @@ CREATE INDEX IF NOT EXISTS idx_user_sessions_expires ON user_sessions(expires_at
 
 -- Enable RLS on user_sessions
 ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to user_sessions" ON user_sessions;
 CREATE POLICY "Allow service role full access to user_sessions" ON user_sessions FOR ALL USING (true);
 
 -- Clean up expired sessions (optional - run periodically)
@@ -128,6 +142,7 @@ CREATE INDEX IF NOT EXISTS idx_email_alerts_log_message_id ON email_alerts_log(s
 
 -- Enable RLS
 ALTER TABLE email_alerts_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to email_alerts_log" ON email_alerts_log;
 CREATE POLICY "Allow service role full access to email_alerts_log" ON email_alerts_log FOR ALL USING (true);
 
 -- Migration: Add new columns if table exists
@@ -168,6 +183,7 @@ CREATE INDEX IF NOT EXISTS idx_roadmap_items_category ON roadmap_items(category)
 CREATE INDEX IF NOT EXISTS idx_roadmap_items_created ON roadmap_items(created_at DESC);
 
 ALTER TABLE roadmap_items ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to roadmap_items" ON roadmap_items;
 CREATE POLICY "Allow service role full access to roadmap_items" ON roadmap_items FOR ALL USING (true);
 
 -- =====================================================
@@ -178,11 +194,10 @@ CREATE TABLE IF NOT EXISTS software_releases (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   version TEXT NOT NULL,
   platform TEXT NOT NULL CHECK (platform IN ('extension', 'mobile_ios', 'mobile_android', 'website')),
-  release_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  released_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   download_url TEXT,
-  changelog TEXT[] DEFAULT '{}',
+  release_notes TEXT,
   is_latest BOOLEAN DEFAULT FALSE,
-  build_number INTEGER,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -191,6 +206,7 @@ CREATE INDEX IF NOT EXISTS idx_software_releases_platform ON software_releases(p
 CREATE INDEX IF NOT EXISTS idx_software_releases_latest ON software_releases(is_latest) WHERE is_latest = TRUE;
 
 ALTER TABLE software_releases ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to software_releases" ON software_releases;
 CREATE POLICY "Allow service role full access to software_releases" ON software_releases FOR ALL USING (true);
 
 -- =====================================================
@@ -199,19 +215,20 @@ CREATE POLICY "Allow service role full access to software_releases" ON software_
 
 CREATE TABLE IF NOT EXISTS bug_fixes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  version TEXT NOT NULL,
-  platform TEXT NOT NULL CHECK (platform IN ('extension', 'mobile_ios', 'mobile_android', 'website', 'api')),
-  type TEXT NOT NULL CHECK (type IN ('bug', 'enhancement', 'feature', 'security', 'performance')),
   title TEXT NOT NULL,
   description TEXT,
+  platform TEXT NOT NULL CHECK (platform IN ('extension', 'mobile_ios', 'mobile_android', 'website', 'api')),
+  severity TEXT NOT NULL DEFAULT 'medium' CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  fixed_in_version TEXT,
+  reported_by TEXT,
   fixed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  related_roadmap_id UUID REFERENCES roadmap_items(id) ON DELETE SET NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_bug_fixes_version ON bug_fixes(version);
+CREATE INDEX IF NOT EXISTS idx_bug_fixes_version ON bug_fixes(fixed_in_version);
 CREATE INDEX IF NOT EXISTS idx_bug_fixes_platform ON bug_fixes(platform);
 CREATE INDEX IF NOT EXISTS idx_bug_fixes_fixed_at ON bug_fixes(fixed_at DESC);
 
 ALTER TABLE bug_fixes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to bug_fixes" ON bug_fixes;
 CREATE POLICY "Allow service role full access to bug_fixes" ON bug_fixes FOR ALL USING (true);

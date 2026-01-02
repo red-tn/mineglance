@@ -694,9 +694,10 @@ async function fetchPoolData(pool, coin, address) {
     console.log(`Parsed pool data:`, parsed);
 
     // Apply stale data detection for ALL pools
-    // If lastShare is more than 2 hours old, the data is stale
-    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
-    const TWO_HOURS_SEC = 2 * 60 * 60;
+    // Use 4 hours for solo mining pools (infrequent shares), 2 hours for regular pools
+    const soloMiningPools = ['ckpool', 'ckpool-eu', 'publicpool', 'ocean'];
+    const isSoloPool = soloMiningPools.includes(poolLower);
+    const STALE_THRESHOLD_MS = isSoloPool ? (4 * 60 * 60 * 1000) : (2 * 60 * 60 * 1000);
     let isStale = false;
 
     if (parsed.lastShare) {
@@ -714,7 +715,7 @@ async function fetchPoolData(pool, coin, address) {
       }
 
       const timeSinceLastShare = Date.now() - lastShareTime;
-      isStale = timeSinceLastShare > TWO_HOURS_MS;
+      isStale = timeSinceLastShare > STALE_THRESHOLD_MS;
 
       if (isStale) {
         console.log(`Data is STALE for ${pool}/${coin}. Last share: ${new Date(lastShareTime).toISOString()}, ${Math.round(timeSinceLastShare / 60000)} minutes ago`);
@@ -1047,17 +1048,27 @@ async function refreshAllData() {
         const prevTotalWorkers = prevPoolData?.workers?.length || 0;
 
         // Grace period: track consecutive offline checks to reduce false alerts
-        // Only alert after 2 consecutive offline detections
+        // Solo mining pools need more grace period due to infrequent shares and API variability
+        const soloMiningPools = ['ckpool', 'ckpool-eu', 'publicpool', 'ocean'];
+        const isSoloPool = soloMiningPools.includes(wallet.pool?.toLowerCase());
+        const REQUIRED_OFFLINE_CHECKS = isSoloPool ? 3 : 2; // 3 checks for solo, 2 for regular
+
         const offlineCounterKey = `offlineCounter_${wallet.id}`;
         let consecutiveOfflineChecks = previousData[offlineCounterKey] || 0;
 
-        // Determine if currently offline
-        const isCurrentlyOffline = currentHashrate === 0 || offlineWorkers.length > 0 || totalWorkers === 0;
+        // Determine if currently offline - but don't count API errors as offline
+        // Only count as offline if we got valid data showing 0 hashrate
+        const gotValidData = poolData && !poolData.error;
+        const isCurrentlyOffline = gotValidData && (currentHashrate === 0 || offlineWorkers.length > 0 || totalWorkers === 0);
 
         if (isCurrentlyOffline) {
           consecutiveOfflineChecks++;
+          console.log(`${wallet.name}: Offline check #${consecutiveOfflineChecks} (need ${REQUIRED_OFFLINE_CHECKS} to alert)`);
         } else {
           // Reset counter when back online
+          if (consecutiveOfflineChecks > 0) {
+            console.log(`${wallet.name}: Back online, resetting offline counter`);
+          }
           consecutiveOfflineChecks = 0;
         }
 
@@ -1069,8 +1080,8 @@ async function refreshAllData() {
         const oneHour = 60 * 60 * 1000;
         const canAlert = (Date.now() - lastAlertTime) > oneHour;
 
-        // Only alert after 2+ consecutive offline checks (grace period)
-        const passedGracePeriod = consecutiveOfflineChecks >= 2;
+        // Only alert after required consecutive offline checks (grace period)
+        const passedGracePeriod = consecutiveOfflineChecks >= REQUIRED_OFFLINE_CHECKS;
 
         let shouldAlert = false;
         let alertMessage = '';
