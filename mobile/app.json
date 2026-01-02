@@ -30,7 +30,7 @@
       "entitlements": {
         "aps-environment": "production"
       },
-      "buildNumber": "7"
+      "buildNumber": "9"
     },
     "android": {
       "adaptiveIcon": {
