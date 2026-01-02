@@ -102,12 +102,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoading();
 
     try {
-      let { wallets, isPaid, electricity, settings, discoveryCollapsed } = await chrome.storage.local.get([
+      let { wallets, isPaid, electricity, settings, discoveryCollapsed, plan } = await chrome.storage.local.get([
         'wallets',
         'isPaid',
         'electricity',
         'settings',
-        'discoveryCollapsed'
+        'discoveryCollapsed',
+        'plan'
       ]);
 
       // Verify license with server (non-blocking, runs in background)
@@ -117,6 +118,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             // License revoked - update UI
             proBadge.classList.add('hidden');
             upgradeBanner.classList.remove('hidden');
+          } else if (response && response.plan) {
+            // Update badge text based on plan
+            proBadge.textContent = response.plan === 'bundle' ? 'PRO PLUS' : 'PRO';
+            chrome.storage.local.set({ plan: response.plan });
           }
         });
       }
@@ -126,6 +131,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         upgradeBanner.classList.remove('hidden');
       } else {
         proBadge.classList.remove('hidden');
+        // Set badge text based on plan
+        proBadge.textContent = plan === 'bundle' ? 'PRO PLUS' : 'PRO';
       }
 
       // Show/hide discovery section based on settings
