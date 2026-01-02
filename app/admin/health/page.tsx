@@ -21,10 +21,18 @@ interface Environment {
   hasAdminEmails: boolean
 }
 
+interface SendGridStats {
+  dailyLimit: number
+  usedToday: number
+  remainingToday: number
+  planName: string
+}
+
 interface HealthData {
   overallStatus: 'healthy' | 'degraded' | 'down' | 'unknown'
   services: ServiceStatus[]
   environment: Environment
+  sendgridStats?: SendGridStats
   recentErrors: Array<{ action: string; details: Record<string, unknown>; created_at: string }>
   checkedAt: string
 }
@@ -143,6 +151,53 @@ export default function HealthPage() {
           </span>
         </div>
       </div>
+
+      {/* SendGrid Stats Card */}
+      {health?.sendgridStats && (
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">SendGrid Email Stats</h3>
+            <span className="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800">
+              {health.sendgridStats.planName} Plan
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <p className="text-3xl font-bold text-gray-900">{health.sendgridStats.usedToday}</p>
+              <p className="text-sm text-gray-500 mt-1">Sent Today</p>
+            </div>
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <p className="text-3xl font-bold text-gray-900">{health.sendgridStats.dailyLimit}</p>
+              <p className="text-sm text-gray-500 mt-1">Daily Limit</p>
+            </div>
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <p className={`text-3xl font-bold ${health.sendgridStats.remainingToday < 20 ? 'text-amber-600' : 'text-green-600'}`}>
+                {health.sendgridStats.remainingToday}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Remaining Today</p>
+            </div>
+          </div>
+          {/* Usage Bar */}
+          <div className="mt-4">
+            <div className="flex justify-between text-sm text-gray-500 mb-1">
+              <span>Usage</span>
+              <span>{Math.round((health.sendgridStats.usedToday / health.sendgridStats.dailyLimit) * 100)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className={`h-2 rounded-full ${
+                  health.sendgridStats.usedToday / health.sendgridStats.dailyLimit > 0.9
+                    ? 'bg-red-500'
+                    : health.sendgridStats.usedToday / health.sendgridStats.dailyLimit > 0.7
+                    ? 'bg-amber-500'
+                    : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(100, (health.sendgridStats.usedToday / health.sendgridStats.dailyLimit) * 100)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

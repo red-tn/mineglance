@@ -7,8 +7,12 @@ interface Alert {
   email: string
   alert_type: string
   subject: string
+  wallet_name?: string
   worker_id?: string
   coin?: string
+  sendgrid_message_id?: string
+  sendgrid_status?: string
+  sendgrid_response?: string
   created_at: string
   metadata?: Record<string, unknown>
 }
@@ -246,29 +250,43 @@ export default function AlertsPage() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recipient</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sent</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sent At</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recipient</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Response</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {alerts.map((alert) => (
                 <tr key={alert.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${alertTypeColors[alert.alert_type] || 'bg-gray-100 text-gray-800'}`}>
-                      {alertTypeLabels[alert.alert_type] || alert.alert_type}
+                  <td className="px-4 py-4 text-gray-500 whitespace-nowrap text-sm">
+                    {formatDate(alert.created_at)}
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="font-mono text-xs text-gray-600 truncate max-w-[150px] inline-block" title={alert.sendgrid_message_id || 'N/A'}>
+                      {alert.sendgrid_message_id ? alert.sendgrid_message_id.substring(0, 20) + '...' : '-'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{alert.email}</td>
-                  <td className="px-6 py-4 text-gray-600 max-w-xs truncate">{alert.subject}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {alert.worker_id && <span className="mr-2">Worker: {alert.worker_id}</span>}
-                    {alert.coin && <span>Coin: {alert.coin}</span>}
-                    {!alert.worker_id && !alert.coin && '-'}
+                  <td className="px-4 py-4 text-gray-900 text-sm">{alert.email}</td>
+                  <td className="px-4 py-4 text-gray-600 text-sm max-w-xs truncate" title={alert.subject || ''}>
+                    {alert.subject || alert.wallet_name || '-'}
                   </td>
-                  <td className="px-6 py-4 text-gray-500 whitespace-nowrap">{formatDate(alert.created_at)}</td>
+                  <td className="px-4 py-4">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      alert.sendgrid_status === 'accepted' || alert.sendgrid_status === 'delivered'
+                        ? 'bg-green-100 text-green-800'
+                        : alert.sendgrid_status === 'failed'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {alert.sendgrid_status || 'unknown'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 text-xs text-gray-500 max-w-[200px] truncate" title={alert.sendgrid_response || ''}>
+                    {alert.sendgrid_response || '-'}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -153,12 +153,39 @@
 - `mobile/app/onboarding.tsx` - First-time setup
 - `mobile/stores/*` - Zustand stores for wallets, settings, auth
 
-### Build & Deploy
-```bash
-cd mobile
-npx eas build --platform ios --profile production
-npx eas submit --platform ios
+### Build & Deploy (Automated)
+
+**To build and submit to TestFlight**, create and run PowerShell scripts:
+
+1. **Build iOS** - Create `mobile/build-ios.ps1`:
+```powershell
+$env:PATH = "C:\Program Files\nodejs;" + $env:PATH
+Set-Location "F:\MINEGLANCE\mobile"
+npx eas build --platform ios --profile production --non-interactive
 ```
+
+2. **Submit to TestFlight** - Create `mobile/submit-ios.ps1`:
+```powershell
+$env:PATH = "C:\Program Files\nodejs;" + $env:PATH
+Set-Location "F:\MINEGLANCE\mobile"
+npx eas submit --platform ios --latest --non-interactive
+```
+
+3. **Run the scripts**:
+```bash
+# Build (runs in background, ~5-10 min)
+powershell -NoProfile -ExecutionPolicy Bypass -File "F:\MINEGLANCE\mobile\build-ios.ps1"
+
+# After build completes, submit to TestFlight (~1 min)
+powershell -NoProfile -ExecutionPolicy Bypass -File "F:\MINEGLANCE\mobile\submit-ios.ps1"
+```
+
+4. **After build completes**:
+   - Commit the bumped build number in `mobile/app.json`
+   - Push to git
+   - Delete the temp .ps1 files
+
+**Important**: The Node.js path must be added to `$env:PATH` because the CLI environment doesn't have it by default.
 
 ### Mobile App Access
 - Only **Pro Plus (bundle)** users can use the mobile app

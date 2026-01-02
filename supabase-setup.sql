@@ -113,14 +113,25 @@ CREATE TABLE IF NOT EXISTS email_alerts_log (
   email TEXT NOT NULL,
   alert_type TEXT NOT NULL,
   wallet_name TEXT,
+  subject TEXT,
   message TEXT,
+  sendgrid_message_id TEXT,
+  sendgrid_status TEXT DEFAULT 'accepted',
+  sendgrid_response TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Index for faster lookups
 CREATE INDEX IF NOT EXISTS idx_email_alerts_log_created ON email_alerts_log(created_at);
 CREATE INDEX IF NOT EXISTS idx_email_alerts_log_license ON email_alerts_log(license_key);
+CREATE INDEX IF NOT EXISTS idx_email_alerts_log_message_id ON email_alerts_log(sendgrid_message_id);
 
 -- Enable RLS
 ALTER TABLE email_alerts_log ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow service role full access to email_alerts_log" ON email_alerts_log FOR ALL USING (true);
+
+-- Migration: Add new columns if table exists
+ALTER TABLE email_alerts_log ADD COLUMN IF NOT EXISTS subject TEXT;
+ALTER TABLE email_alerts_log ADD COLUMN IF NOT EXISTS sendgrid_message_id TEXT;
+ALTER TABLE email_alerts_log ADD COLUMN IF NOT EXISTS sendgrid_status TEXT DEFAULT 'accepted';
+ALTER TABLE email_alerts_log ADD COLUMN IF NOT EXISTS sendgrid_response TEXT;

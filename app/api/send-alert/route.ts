@@ -156,20 +156,46 @@ export async function POST(request: NextRequest) {
       }),
     })
 
+    // Get SendGrid message ID from response header
+    const messageId = response.headers.get('X-Message-Id') || null
+    const sendgridStatus = response.ok ? 'accepted' : 'failed'
+    const sendgridResponse = response.ok ? `${response.status} Accepted` : await response.text()
+
     if (!response.ok) {
-      const error = await response.text()
-      console.error('SendGrid error:', error)
+      console.error('SendGrid error:', sendgridResponse)
+
+      // Still log the failed attempt
+      try {
+        await supabase.from('email_alerts_log').insert({
+          license_key: normalizedKey,
+          email: toEmail,
+          alert_type: alertType,
+          wallet_name: walletName,
+          subject: `${alertEmoji} MineGlance: ${alertTypeDisplay} - ${walletName}`,
+          message: message,
+          sendgrid_message_id: null,
+          sendgrid_status: 'failed',
+          sendgrid_response: sendgridResponse.substring(0, 500)
+        })
+      } catch (logError) {
+        console.error('Failed to log alert:', logError)
+      }
+
       return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
     }
 
-    // Log the alert to database for admin stats
+    // Log the successful alert to database for admin stats
     try {
       await supabase.from('email_alerts_log').insert({
         license_key: normalizedKey,
         email: toEmail,
         alert_type: alertType,
         wallet_name: walletName,
-        message: message
+        subject: `${alertEmoji} MineGlance: ${alertTypeDisplay} - ${walletName}`,
+        message: message,
+        sendgrid_message_id: messageId,
+        sendgrid_status: sendgridStatus,
+        sendgrid_response: sendgridResponse
       })
     } catch (logError) {
       console.error('Failed to log alert:', logError)

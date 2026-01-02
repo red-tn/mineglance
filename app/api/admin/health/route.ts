@@ -78,21 +78,84 @@ async function checkStripe(): Promise<ServiceStatus> {
   }
 }
 
-async function checkSendGrid(): Promise<ServiceStatus> {
-  try {
-    const hasKey = !!process.env.SENDGRID_API_KEY
+interface SendGridStats {
+  dailyLimit: number
+  usedToday: number
+  remainingToday: number
+  planName: string
+}
+
+async function checkSendGrid(): Promise<ServiceStatus & { stats?: SendGridStats }> {
+  const start = Date.now()
+  const hasKey = !!process.env.SENDGRID_API_KEY
+
+  if (!hasKey) {
     return {
       name: 'SendGrid Email',
-      status: hasKey ? 'healthy' : 'degraded',
+      status: 'degraded',
       lastCheck: new Date().toISOString(),
-      details: hasKey ? 'API key configured' : 'API key missing'
+      details: 'API key missing'
+    }
+  }
+
+  try {
+    // Fetch SendGrid account info and stats
+    const [userResponse, statsResponse] = await Promise.all([
+      fetch('https://api.sendgrid.com/v3/user/profile', {
+        headers: { 'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}` },
+        signal: AbortSignal.timeout(5000)
+      }),
+      fetch('https://api.sendgrid.com/v3/stats?start_date=' + new Date().toISOString().split('T')[0], {
+        headers: { 'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}` },
+        signal: AbortSignal.timeout(5000)
+      })
+    ])
+
+    const latency = Date.now() - start
+
+    if (!userResponse.ok) {
+      return {
+        name: 'SendGrid Email',
+        status: 'degraded',
+        latency,
+        lastCheck: new Date().toISOString(),
+        details: `API error: ${userResponse.status}`
+      }
+    }
+
+    // Parse stats
+    let usedToday = 0
+    if (statsResponse.ok) {
+      const statsData = await statsResponse.json()
+      if (statsData && statsData.length > 0 && statsData[0].stats) {
+        const metrics = statsData[0].stats[0]?.metrics || {}
+        usedToday = metrics.requests || 0
+      }
+    }
+
+    // Free tier is 100/day, Pro varies
+    const dailyLimit = 100 // Default for free tier
+
+    return {
+      name: 'SendGrid Email',
+      status: 'healthy',
+      latency,
+      lastCheck: new Date().toISOString(),
+      details: `${usedToday}/${dailyLimit} emails today`,
+      stats: {
+        dailyLimit,
+        usedToday,
+        remainingToday: Math.max(0, dailyLimit - usedToday),
+        planName: 'Free'
+      }
     }
   } catch (e) {
     return {
       name: 'SendGrid Email',
-      status: 'unknown',
+      status: 'degraded',
+      latency: Date.now() - start,
       lastCheck: new Date().toISOString(),
-      details: e instanceof Error ? e.message : 'Unknown error'
+      details: e instanceof Error ? e.message : 'Connection failed'
     }
   }
 }
@@ -131,12 +194,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Run all health checks in parallel
-    const [supabaseStatus, stripeStatus, sendgridStatus, wtmStatus] = await Promise.all([
+    const [supabaseStatus, stripeStatus, sendgridResult, wtmStatus] = await Promise.all([
       checkSupabase(),
       checkStripe(),
       checkSendGrid(),
       checkWhatToMine()
     ])
+
+    // Extract SendGrid stats separately
+    const { stats: sendgridStats, ...sendgridStatus } = sendgridResult
 
     const services: ServiceStatus[] = [
       supabaseStatus,
@@ -187,6 +253,7 @@ export async function GET(request: NextRequest) {
       overallStatus,
       services,
       environment,
+      sendgridStats: sendgridStats || null,
       recentErrors: recentErrors || [],
       checkedAt: new Date().toISOString()
     })
