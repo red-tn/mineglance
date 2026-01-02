@@ -207,7 +207,7 @@ export default function Pricing() {
                   <p className="text-sm text-foreground/70">
                     Pro licenses include 3 device activations. Need more? Purchase additional license packs
                     from your <a href="/dashboard/devices" className="text-accent hover:underline font-medium">dashboard</a> for
-                    just <strong>$5 per 5 activations</strong>.
+                    just <strong>$5 per 5 lifetime activations</strong> (one-time, no subscription).
                   </p>
                 </div>
               </div>

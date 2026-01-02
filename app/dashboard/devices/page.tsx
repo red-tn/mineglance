@@ -330,7 +330,7 @@ export default function DevicesPage() {
             <h4 className="font-semibold text-gray-900 mb-1">Need more activations?</h4>
             <p className="text-sm text-gray-600 mb-4">
               Purchase additional licenses to use MineGlance Pro on more devices.
-              Each license pack includes <strong>5 additional activations</strong> for only <strong>$5</strong>.
+              Each license pack includes <strong>5 lifetime activations</strong> for only <strong>$5</strong> (one-time).
             </p>
             <button
               onClick={() => setShowPurchaseModal(true)}
@@ -372,7 +372,7 @@ export default function DevicesPage() {
                 <>
                   <div className="mb-6">
                     <p className="text-sm text-gray-600 mb-4">
-                      Each license pack adds <strong>5 activations</strong> to your account for <strong>$5</strong>.
+                      Each license pack adds <strong>5 lifetime activations</strong> to your account for <strong>$5</strong>. One-time purchase, no subscription.
                     </p>
 
                     <label className="block text-sm font-medium text-gray-700 mb-2">
