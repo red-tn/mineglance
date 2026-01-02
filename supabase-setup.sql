@@ -102,3 +102,25 @@ CREATE POLICY "Allow service role full access to user_sessions" ON user_sessions
 
 -- Clean up expired sessions (optional - run periodically)
 -- DELETE FROM user_sessions WHERE expires_at < NOW();
+
+-- =====================================================
+-- Email Alerts Log (for admin dashboard stats)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS email_alerts_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  license_key TEXT NOT NULL,
+  email TEXT NOT NULL,
+  alert_type TEXT NOT NULL,
+  wallet_name TEXT,
+  message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for faster lookups
+CREATE INDEX IF NOT EXISTS idx_email_alerts_log_created ON email_alerts_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_email_alerts_log_license ON email_alerts_log(license_key);
+
+-- Enable RLS
+ALTER TABLE email_alerts_log ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow service role full access to email_alerts_log" ON email_alerts_log FOR ALL USING (true);

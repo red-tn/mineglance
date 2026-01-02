@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 interface DashboardStats {
   totalInstalls: number
   proUsers: number
+  proPlusUsers: number
   revenue30d: number
   activeUsers: number
   alertsSent24h: number
@@ -73,9 +74,10 @@ export default function AdminDashboard() {
 
   const statCards = [
     { name: 'Total Installs', value: stats?.totalInstalls || 0, icon: '📥', color: 'bg-blue-500' },
-    { name: 'Pro Users', value: stats?.proUsers || 0, icon: '⭐', color: 'bg-amber-500' },
+    { name: 'PRO Users', value: stats?.proUsers || 0, icon: '⭐', color: 'bg-amber-500' },
+    { name: 'PRO PLUS Users', value: stats?.proPlusUsers || 0, icon: '🚀', color: 'bg-purple-500' },
     { name: 'Revenue (30d)', value: `$${((stats?.revenue30d || 0) / 100).toFixed(0)}`, icon: '💰', color: 'bg-green-500' },
-    { name: 'Active Users (7d)', value: stats?.activeUsers || 0, icon: '👥', color: 'bg-purple-500' },
+    { name: 'Active Users (7d)', value: stats?.activeUsers || 0, icon: '👥', color: 'bg-indigo-500' },
     { name: 'Alerts Sent (24h)', value: stats?.alertsSent24h || 0, icon: '🔔', color: 'bg-orange-500' },
     { name: 'New Installs (7d)', value: stats?.newInstalls7d || 0, icon: '📈', color: 'bg-teal-500' },
   ]

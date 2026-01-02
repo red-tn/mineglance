@@ -143,9 +143,14 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    const activeLicenses = (licenses || []).filter(l => !l.is_revoked)
+    const proOnlyUsers = activeLicenses.filter(l => l.plan === 'pro' || l.plan === 'lifetime_pro').length
+    const proPlusUsers = activeLicenses.filter(l => l.plan === 'bundle' || l.plan === 'lifetime_bundle').length
+
     const stats = {
       totalInstalls: (installations || []).length,
-      proUsers: (licenses || []).filter(l => !l.is_revoked).length,
+      proUsers: proOnlyUsers,
+      proPlusUsers: proPlusUsers,
       revenue30d,
       activeUsers: (installations || []).filter(i => {
         const lastSeen = new Date(i.last_seen)
@@ -169,6 +174,7 @@ export async function GET(request: NextRequest) {
       stats: {
         totalInstalls: 0,
         proUsers: 0,
+        proPlusUsers: 0,
         revenue30d: 0,
         activeUsers: 0,
         alertsSent24h: 0,

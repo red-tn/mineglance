@@ -162,6 +162,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
     }
 
+    // Log the alert to database for admin stats
+    try {
+      await supabase.from('email_alerts_log').insert({
+        license_key: normalizedKey,
+        email: toEmail,
+        alert_type: alertType,
+        wallet_name: walletName,
+        message: message
+      })
+    } catch (logError) {
+      console.error('Failed to log alert:', logError)
+      // Don't fail the request if logging fails
+    }
+
     return NextResponse.json({ success: true, email: toEmail })
   } catch (error) {
     console.error('Error sending alert email:', error)

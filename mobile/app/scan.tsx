@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -17,6 +17,7 @@ export default function ScanScreen() {
   const [processing, setProcessing] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [userPlan, setUserPlan] = useState<string | null>(null);
+  const alertShownRef = useRef(false); // Prevent multiple alerts
 
   const { setWallets } = useWalletStore();
   const { importSettings } = useSettingsStore();
@@ -33,8 +34,9 @@ export default function ScanScreen() {
     console.log('Type:', type);
     console.log('Data:', data.substring(0, 100) + '...');
 
-    if (scanned || processing) {
-      console.log('Skipping - already scanned or processing');
+    // Prevent multiple scans and alerts
+    if (scanned || processing || alertShownRef.current) {
+      console.log('Skipping - already scanned, processing, or alert shown');
       return;
     }
     setScanned(true);
@@ -104,6 +106,9 @@ export default function ScanScreen() {
       await setLicenseKey(result.licenseKey);
       setPlan(userPlanType);
 
+      // Mark alert as shown to prevent duplicates
+      alertShownRef.current = true;
+
       Alert.alert(
         'Success!',
         `Synced ${wallets.length} wallet(s) from your extension.`,
@@ -112,27 +117,33 @@ export default function ScanScreen() {
             text: 'OK',
             onPress: () => router.replace('/(tabs)'),
           },
-        ]
+        ],
+        { cancelable: false }
       );
     } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to process QR code',
-        [
-          {
-            text: 'Try Again',
-            onPress: () => {
-              setScanned(false);
-              setProcessing(false);
+      // Only show error alert if we haven't shown success alert
+      if (!alertShownRef.current) {
+        Alert.alert(
+          'Error',
+          error instanceof Error ? error.message : 'Failed to process QR code',
+          [
+            {
+              text: 'Try Again',
+              onPress: () => {
+                setScanned(false);
+                setProcessing(false);
+                alertShownRef.current = false;
+              },
             },
-          },
-          {
-            text: 'Cancel',
-            style: 'cancel',
-            onPress: () => router.back(),
-          },
-        ]
-      );
+            {
+              text: 'Cancel',
+              style: 'cancel',
+              onPress: () => router.back(),
+            },
+          ],
+          { cancelable: false }
+        );
+      }
     } finally {
       setProcessing(false);
     }
