@@ -328,17 +328,28 @@ const POOLS = {
   'hiveon': {
     name: 'Hiveon Pool',
     coins: ['etc', 'rvn'],
-    getStatsUrl: (coin, address) => `https://hiveon.net/api/v1/stats/miner/${address}/${coin.toUpperCase()}/billing-acc`,
-    parseResponse: (data, coin) => ({
-      // Hiveon returns values in coin units
-      hashrate: data.hashrate || 0,
-      hashrate24h: data.hashrate24h || 0,
-      workers: [],
-      balance: data.balance || 0,
-      paid: data.paid || 0,
-      earnings24h: data.expectedReward24H || 0,
-      lastShare: null
-    })
+    // Stats endpoint returns hashrate; billing-acc endpoint returns balance but no hashrate
+    getStatsUrl: (coin, address) => `https://hiveon.net/api/v1/stats/miner/${address}/${coin.toUpperCase()}`,
+    parseResponse: (data, coin) => {
+      // Hiveon returns hashrates as strings, need to parse
+      const hashrate = parseFloat(data.hashrate) || 0;
+      const hashrate24h = parseFloat(data.hashrate24h) || 0;
+
+      // Worker count from sharesStatusStats if available
+      const workersOnline = data.onlineWorkerCount || 0;
+
+      return {
+        hashrate: hashrate,
+        hashrate24h: hashrate24h,
+        workers: [],
+        workersOnline: workersOnline,
+        workersTotal: workersOnline,
+        balance: 0, // Not available from stats endpoint
+        paid: 0,
+        earnings24h: 0,
+        lastShare: data.sharesStatusStats?.lastShareDt || null
+      };
+    }
   },
   'herominers': {
     name: 'HeroMiners',
@@ -366,21 +377,41 @@ const POOLS = {
     name: 'WoolyPooly',
     coins: ['rvn', 'ergo', 'flux', 'kas', 'etc', 'cfx', 'nexa', 'alph'],
     getStatsUrl: (coin, address) => `https://api.woolypooly.com/api/${coin}-1/accounts/${address}`,
-    parseResponse: (data, coin) => ({
-      // WoolyPooly returns values in coin units
-      hashrate: data.perfomance?.currentHashrate || 0,
-      hashrate24h: data.perfomance?.averageHashrate || 0,
-      workers: (data.workers || []).map(w => ({
+    parseResponse: (data, coin) => {
+      // WoolyPooly returns perfomance as arrays for pplns/solo modes
+      // Get latest hashrate from perfomance.pplns array (most recent entry)
+      let hashrate = 0;
+      if (data.perfomance?.pplns && data.perfomance.pplns.length > 0) {
+        // Get most recent entry (last in array)
+        const latest = data.perfomance.pplns[data.perfomance.pplns.length - 1];
+        hashrate = latest.hashrate || 0;
+      }
+
+      // Parse workers
+      const workers = (data.workers || []).map(w => ({
         name: w.worker || 'Worker',
         hashrate: w.hashrate || 0,
         lastSeen: w.lastshare,
         offline: (Date.now() / 1000 - (w.lastshare || 0)) > 600
-      })),
-      balance: data.stats?.balance || 0,
-      paid: data.stats?.paid || 0,
-      earnings24h: data.rewards?.day || 0,
-      lastShare: data.stats?.lastShare
-    })
+      }));
+
+      // If no hashrate from perfomance, sum from workers
+      if (hashrate === 0 && workers.length > 0) {
+        hashrate = workers.reduce((sum, w) => sum + (w.hashrate || 0), 0);
+      }
+
+      return {
+        hashrate: hashrate,
+        hashrate24h: hashrate,
+        workers: workers,
+        workersOnline: data.workersOnline || 0,
+        workersTotal: data.workersTotal || workers.length,
+        balance: data.stats?.balance || 0,
+        paid: data.stats?.paid || 0,
+        earnings24h: data.stats?.income?.income_Day || 0,
+        lastShare: null
+      };
+    }
   },
   'cedriccrispin': {
     name: 'Cedric Crispin Pool',
