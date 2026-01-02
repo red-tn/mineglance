@@ -17,7 +17,7 @@ export default function ScanScreen() {
   const [processing, setProcessing] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [userPlan, setUserPlan] = useState<string | null>(null);
-  const alertShownRef = useRef(false); // Prevent multiple alerts
+  const scanLockRef = useRef(false); // Immediate lock to prevent multiple scans
 
   const { setWallets } = useWalletStore();
   const { importSettings } = useSettingsStore();
@@ -30,15 +30,16 @@ export default function ScanScreen() {
   }, []);
 
   const handleBarCodeScanned = async ({ data, type }: { data: string; type: string }) => {
+    // Immediate synchronous lock - prevents race conditions from multiple barcode events
+    if (scanLockRef.current) {
+      return;
+    }
+    scanLockRef.current = true;
+
     console.log('=== BARCODE SCANNED ===');
     console.log('Type:', type);
     console.log('Data:', data.substring(0, 100) + '...');
 
-    // Prevent multiple scans and alerts
-    if (scanned || processing || alertShownRef.current) {
-      console.log('Skipping - already scanned, processing, or alert shown');
-      return;
-    }
     setScanned(true);
     setProcessing(true);
 
@@ -106,9 +107,6 @@ export default function ScanScreen() {
       await setLicenseKey(result.licenseKey);
       setPlan(userPlanType);
 
-      // Mark alert as shown to prevent duplicates
-      alertShownRef.current = true;
-
       Alert.alert(
         'Success!',
         `Synced ${wallets.length} wallet(s) from your extension.`,
@@ -121,29 +119,26 @@ export default function ScanScreen() {
         { cancelable: false }
       );
     } catch (error) {
-      // Only show error alert if we haven't shown success alert
-      if (!alertShownRef.current) {
-        Alert.alert(
-          'Error',
-          error instanceof Error ? error.message : 'Failed to process QR code',
-          [
-            {
-              text: 'Try Again',
-              onPress: () => {
-                setScanned(false);
-                setProcessing(false);
-                alertShownRef.current = false;
-              },
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Failed to process QR code',
+        [
+          {
+            text: 'Try Again',
+            onPress: () => {
+              setScanned(false);
+              setProcessing(false);
+              scanLockRef.current = false; // Reset lock to allow retry
             },
-            {
-              text: 'Cancel',
-              style: 'cancel',
-              onPress: () => router.back(),
-            },
-          ],
-          { cancelable: false }
-        );
-      }
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => router.back(),
+          },
+        ],
+        { cancelable: false }
+      );
     } finally {
       setProcessing(false);
     }
