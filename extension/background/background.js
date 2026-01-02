@@ -652,8 +652,9 @@ async function fetchPoolData(pool, coin, address) {
     throw new Error(`Unsupported pool: ${pool}`);
   }
 
-  // Normalize coin name
+  // Normalize coin and pool names
   const coinLower = coin.toLowerCase();
+  const poolLower = pool.toLowerCase();
 
   // Verify coin is supported by this pool
   if (!poolConfig.coins.includes(coinLower)) {
