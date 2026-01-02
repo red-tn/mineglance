@@ -108,7 +108,7 @@ chrome.runtime.onInstalled.addListener(() => {
         electricity: { rate: 0.12, currency: 'USD' },
         rigs: [],
         settings: {
-          refreshInterval: 5,
+          refreshInterval: 30,
           notifications: {
             workerOffline: true,
             profitDrop: true,
@@ -945,7 +945,11 @@ async function refreshAllData() {
     try {
       const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address);
       const price = await fetchCoinPrice(wallet.coin);
-      const previousData = await chrome.storage.local.get([`poolData_${wallet.id}`, `profit_${wallet.id}`]);
+      const previousData = await chrome.storage.local.get([
+        `poolData_${wallet.id}`,
+        `profit_${wallet.id}`,
+        `lastOfflineAlert_${wallet.id}`
+      ]);
 
       // Calculate current profit
       const earnings24h = poolData.earnings24h || 0;
@@ -955,25 +959,59 @@ async function refreshAllData() {
       const electricityCost = (powerWatts / 1000) * 24 * rate;
       const currentProfit = revenue - electricityCost;
 
-      // Check for offline workers
+      // Check for offline workers or zero hashrate (miner fully offline)
       if (isPaid && settings?.notifications?.workerOffline) {
-        const offlineWorkers = poolData.workers.filter(w => w.offline);
-        if (offlineWorkers.length > 0) {
-          // Only notify if this is a new offline event (wasn't offline before)
-          const prevPoolData = previousData[`poolData_${wallet.id}`];
-          const prevOfflineCount = prevPoolData?.workers?.filter(w => w.offline).length || 0;
+        const offlineWorkers = poolData.workers?.filter(w => w.offline) || [];
+        const totalWorkers = poolData.workers?.length || 0;
+        const currentHashrate = poolData.hashrate || 0;
 
-          if (offlineWorkers.length > prevOfflineCount) {
-            const alertMessage = `${offlineWorkers.length} worker(s) went offline`;
-            chrome.notifications.create(`worker-offline-${wallet.id}-${Date.now()}`, {
-              type: 'basic',
-              iconUrl: 'icons/icon128.png',
-              title: 'Worker Offline',
-              message: `${wallet.name}: ${alertMessage}`
-            });
-            // Send email alert
-            sendEmailAlert('worker_offline', wallet.name, alertMessage);
-          }
+        const prevPoolData = previousData[`poolData_${wallet.id}`];
+        const prevOfflineCount = prevPoolData?.workers?.filter(w => w.offline).length || 0;
+        const prevHashrate = prevPoolData?.hashrate || 0;
+        const prevTotalWorkers = prevPoolData?.workers?.length || 0;
+
+        // Get last alert time to prevent spam (alert once per hour max)
+        const lastAlertTime = previousData[`lastOfflineAlert_${wallet.id}`] || 0;
+        const oneHour = 60 * 60 * 1000;
+        const canAlert = (Date.now() - lastAlertTime) > oneHour;
+
+        let shouldAlert = false;
+        let alertMessage = '';
+
+        // Case 1: Workers went offline (more offline than before)
+        if (offlineWorkers.length > prevOfflineCount) {
+          shouldAlert = true;
+          alertMessage = `${offlineWorkers.length} worker(s) went offline`;
+        }
+        // Case 2: Hashrate dropped to zero (miner fully offline)
+        else if (currentHashrate === 0 && prevHashrate > 0) {
+          shouldAlert = true;
+          alertMessage = 'Miner is offline (0 hashrate)';
+        }
+        // Case 3: All workers disappeared from pool (no data)
+        else if (totalWorkers === 0 && prevTotalWorkers > 0) {
+          shouldAlert = true;
+          alertMessage = 'All workers disappeared from pool';
+        }
+        // Case 4: Still offline after an hour (reminder)
+        else if (canAlert && (offlineWorkers.length > 0 || currentHashrate === 0)) {
+          shouldAlert = true;
+          alertMessage = offlineWorkers.length > 0
+            ? `${offlineWorkers.length} worker(s) still offline`
+            : 'Miner still offline (0 hashrate)';
+        }
+
+        if (shouldAlert) {
+          chrome.notifications.create(`worker-offline-${wallet.id}-${Date.now()}`, {
+            type: 'basic',
+            iconUrl: 'icons/icon128.png',
+            title: 'Worker Offline',
+            message: `${wallet.name}: ${alertMessage}`
+          });
+          // Send email alert
+          sendEmailAlert('worker_offline', wallet.name, alertMessage);
+          // Update last alert time in storage
+          await chrome.storage.local.set({ [`lastOfflineAlert_${wallet.id}`]: Date.now() });
         }
       }
 
