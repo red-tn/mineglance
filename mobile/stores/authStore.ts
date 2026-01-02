@@ -6,7 +6,7 @@ interface AuthStore extends AuthState {
   onboardingCompleted: boolean;
   isLoading: boolean;
   setLicenseKey: (key: string) => Promise<void>;
-  setPlan: (plan: 'free' | 'pro' | 'bundle') => void;
+  setPlan: (plan: 'free' | 'pro' | 'bundle') => Promise<void>;
   setInstanceId: (id: string) => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => Promise<void>;
   loadFromStorage: () => Promise<void>;
@@ -28,7 +28,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ licenseKey: key, isActivated: true, onboardingCompleted: true });
   },
 
-  setPlan: (plan: 'free' | 'pro' | 'bundle') => {
+  setPlan: async (plan: 'free' | 'pro' | 'bundle') => {
+    await SecureStore.setItemAsync('plan', plan);
     set({ plan });
   },
 
@@ -47,10 +48,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const licenseKey = await SecureStore.getItemAsync('licenseKey');
       const instanceId = await SecureStore.getItemAsync('instanceId');
       const onboardingCompleted = await SecureStore.getItemAsync('onboardingCompleted');
+      const plan = await SecureStore.getItemAsync('plan') as 'free' | 'pro' | 'bundle' | null;
 
       set({
         licenseKey,
         instanceId,
+        plan,
         isActivated: !!licenseKey,
         onboardingCompleted: onboardingCompleted === 'true',
         isLoading: false,
@@ -65,6 +68,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     await SecureStore.deleteItemAsync('licenseKey');
     await SecureStore.deleteItemAsync('instanceId');
     await SecureStore.deleteItemAsync('onboardingCompleted');
+    await SecureStore.deleteItemAsync('plan');
     set({
       licenseKey: null,
       plan: null,

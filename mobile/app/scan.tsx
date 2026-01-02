@@ -103,9 +103,9 @@ export default function ScanScreen() {
         });
       }
 
-      // Save license key
+      // Save license key and plan
       await setLicenseKey(result.licenseKey);
-      setPlan(userPlanType);
+      await setPlan(userPlanType);
 
       Alert.alert(
         'Success!',
