@@ -1046,31 +1046,52 @@ async function refreshAllData() {
         const prevHashrate = prevPoolData?.hashrate || 0;
         const prevTotalWorkers = prevPoolData?.workers?.length || 0;
 
+        // Grace period: track consecutive offline checks to reduce false alerts
+        // Only alert after 2 consecutive offline detections
+        const offlineCounterKey = `offlineCounter_${wallet.id}`;
+        let consecutiveOfflineChecks = previousData[offlineCounterKey] || 0;
+
+        // Determine if currently offline
+        const isCurrentlyOffline = currentHashrate === 0 || offlineWorkers.length > 0 || totalWorkers === 0;
+
+        if (isCurrentlyOffline) {
+          consecutiveOfflineChecks++;
+        } else {
+          // Reset counter when back online
+          consecutiveOfflineChecks = 0;
+        }
+
+        // Save the counter
+        await chrome.storage.local.set({ [offlineCounterKey]: consecutiveOfflineChecks });
+
         // Get last alert time to prevent spam (alert once per hour max)
         const lastAlertTime = previousData[`lastOfflineAlert_${wallet.id}`] || 0;
         const oneHour = 60 * 60 * 1000;
         const canAlert = (Date.now() - lastAlertTime) > oneHour;
 
+        // Only alert after 2+ consecutive offline checks (grace period)
+        const passedGracePeriod = consecutiveOfflineChecks >= 2;
+
         let shouldAlert = false;
         let alertMessage = '';
 
-        // Case 1: Workers went offline (more offline than before)
-        if (offlineWorkers.length > prevOfflineCount) {
+        // Case 1: Workers went offline (more offline than before) - after grace period
+        if (passedGracePeriod && offlineWorkers.length > prevOfflineCount) {
           shouldAlert = true;
           alertMessage = `${offlineWorkers.length} worker(s) went offline`;
         }
-        // Case 2: Hashrate dropped to zero (miner fully offline)
-        else if (currentHashrate === 0 && prevHashrate > 0) {
+        // Case 2: Hashrate dropped to zero (miner fully offline) - after grace period
+        else if (passedGracePeriod && currentHashrate === 0 && prevHashrate > 0) {
           shouldAlert = true;
           alertMessage = 'Miner is offline (0 hashrate)';
         }
-        // Case 3: All workers disappeared from pool (no data)
-        else if (totalWorkers === 0 && prevTotalWorkers > 0) {
+        // Case 3: All workers disappeared from pool (no data) - after grace period
+        else if (passedGracePeriod && totalWorkers === 0 && prevTotalWorkers > 0) {
           shouldAlert = true;
           alertMessage = 'All workers disappeared from pool';
         }
-        // Case 4: Still offline after an hour (reminder)
-        else if (canAlert && (offlineWorkers.length > 0 || currentHashrate === 0)) {
+        // Case 4: Still offline after an hour (reminder) - grace period already passed
+        else if (passedGracePeriod && canAlert && (offlineWorkers.length > 0 || currentHashrate === 0)) {
           shouldAlert = true;
           alertMessage = offlineWorkers.length > 0
             ? `${offlineWorkers.length} worker(s) still offline`

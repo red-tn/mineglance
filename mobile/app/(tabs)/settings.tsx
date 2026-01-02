@@ -131,7 +131,7 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.intervalButtons}>
-            {[5, 10, 15, 30].map((interval) => (
+            {[15, 30, 60, 180].map((interval) => (
               <TouchableOpacity
                 key={interval}
                 style={[
@@ -146,7 +146,7 @@ export default function SettingsScreen() {
                     settings.refreshInterval === interval && styles.intervalButtonTextActive,
                   ]}
                 >
-                  {interval}m
+                  {interval >= 60 ? `${interval / 60}h` : `${interval}m`}
                 </Text>
               </TouchableOpacity>
             ))}
