@@ -47,12 +47,12 @@ const STATUSES = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: 'bg-gray-100 text-gray-800',
-  reviewing: 'bg-yellow-100 text-yellow-800',
-  planned: 'bg-blue-100 text-blue-800',
-  in_progress: 'bg-purple-100 text-purple-800',
-  completed: 'bg-green-100 text-green-800',
-  declined: 'bg-red-100 text-red-800'
+  submitted: 'bg-amber-500/20 text-amber-400',
+  reviewing: 'bg-yellow-500/20 text-yellow-400',
+  planned: 'bg-blue-500/20 text-blue-400',
+  in_progress: 'bg-purple-500/20 text-purple-400',
+  completed: 'bg-primary/20 text-primary',
+  declined: 'bg-red-500/20 text-red-400'
 }
 
 export default function AdminRoadmapPage() {
@@ -210,23 +210,48 @@ export default function AdminRoadmapPage() {
     )
   }
 
+  const pendingSubmissions = items.filter(i => i.status === 'submitted' && !i.is_internal)
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Roadmap Management</h1>
+        <h1 className="text-2xl font-bold text-dark-text">Roadmap Management</h1>
         <button
           onClick={openAddModal}
-          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition"
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition shadow-glow"
         >
           + Add Item
         </button>
       </div>
 
+      {/* Pending Submissions Alert */}
+      {pendingSubmissions.length > 0 && (
+        <div className="glass-card rounded-xl border border-amber-500/30 p-4 bg-amber-500/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📬</span>
+              <div>
+                <h3 className="font-semibold text-dark-text">New Submissions</h3>
+                <p className="text-sm text-dark-text-muted">
+                  {pendingSubmissions.length} user submission{pendingSubmissions.length !== 1 ? 's' : ''} awaiting review
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setFilter('submitted')}
+              className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition"
+            >
+              Review Now
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setFilter('all')}
-          className={`px-3 py-1 rounded-full text-sm ${filter === 'all' ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700'}`}
+          className={`px-3 py-1 rounded-full text-sm transition ${filter === 'all' ? 'bg-primary text-white' : 'bg-dark-card border border-dark-border text-dark-text-muted hover:bg-dark-card-hover'}`}
         >
           All ({items.length})
         </button>
@@ -236,7 +261,7 @@ export default function AdminRoadmapPage() {
             <button
               key={key}
               onClick={() => setFilter(key)}
-              className={`px-3 py-1 rounded-full text-sm ${filter === key ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700'}`}
+              className={`px-3 py-1 rounded-full text-sm transition ${filter === key ? 'bg-primary text-white' : 'bg-dark-card border border-dark-border text-dark-text-muted hover:bg-dark-card-hover'}`}
             >
               {label} ({count})
             </button>
@@ -245,72 +270,72 @@ export default function AdminRoadmapPage() {
       </div>
 
       {/* Items List */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
+        <table className="min-w-full divide-y divide-dark-border">
+          <thead className="bg-dark-card-hover">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Progress</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Title</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Category</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Priority</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Progress</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Source</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-dark-border">
             {filteredItems.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-dark-text-muted">
                   No roadmap items found
                 </td>
               </tr>
             ) : (
               filteredItems.map(item => (
-                <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item.id} className="hover:bg-dark-card-hover">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{item.title}</div>
+                    <div className="font-medium text-dark-text">{item.title}</div>
                     {item.description && (
-                      <div className="text-sm text-gray-500 truncate max-w-xs">{item.description}</div>
+                      <div className="text-sm text-dark-text-muted truncate max-w-xs">{item.description}</div>
                     )}
                     {item.target_version && (
                       <div className="text-xs text-primary">Target: v{item.target_version}</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-dark-text-muted">
                     {CATEGORIES[item.category as keyof typeof CATEGORIES] || item.category}
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs ${
-                      item.priority === 'really_need' ? 'bg-red-100 text-red-800' :
-                      item.priority === 'would_help' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
+                      item.priority === 'really_need' ? 'bg-red-500/20 text-red-400' :
+                      item.priority === 'would_help' ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-dark-card-hover text-dark-text-muted'
                     }`}>
                       {PRIORITIES[item.priority as keyof typeof PRIORITIES] || item.priority}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs ${STATUS_COLORS[item.status] || 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs ${STATUS_COLORS[item.status] || 'bg-dark-card-hover text-dark-text-muted'}`}>
                       {STATUSES[item.status as keyof typeof STATUSES] || item.status}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
+                    <div className="w-20 bg-dark-border rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all"
                         style={{ width: `${item.progress}%` }}
                       />
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">{item.progress}%</div>
+                    <div className="text-xs text-dark-text-dim mt-1">{item.progress}%</div>
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {item.is_internal ? (
                       <span className="text-primary font-medium">Internal</span>
                     ) : (
-                      <span className="text-gray-500">User</span>
+                      <span className="text-dark-text-muted">User</span>
                     )}
                     {!item.is_public && (
-                      <span className="ml-1 text-xs text-red-500">(Hidden)</span>
+                      <span className="ml-1 text-xs text-red-400">(Hidden)</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm">
@@ -322,7 +347,7 @@ export default function AdminRoadmapPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="text-red-600 hover:underline"
+                      className="text-red-400 hover:underline"
                     >
                       Delete
                     </button>
@@ -336,33 +361,33 @@ export default function AdminRoadmapPage() {
 
       {/* Add/Edit Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold">
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+          <div className="glass-card border border-dark-border rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-dark-border">
+              <h2 className="text-xl font-bold text-dark-text">
                 {editingItem ? 'Edit Roadmap Item' : 'Add Roadmap Item'}
               </h2>
             </div>
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Title *</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                   placeholder="Feature title..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <label className="block text-sm font-medium text-dark-text mb-1">Category</label>
                   <select
                     value={formData.category}
                     onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
                   >
                     {Object.entries(CATEGORIES).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
@@ -371,11 +396,11 @@ export default function AdminRoadmapPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                  <label className="block text-sm font-medium text-dark-text mb-1">Priority</label>
                   <select
                     value={formData.priority}
                     onChange={e => setFormData(prev => ({ ...prev, priority: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
                   >
                     {Object.entries(PRIORITIES).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
@@ -385,17 +410,17 @@ export default function AdminRoadmapPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Platforms</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Platforms</label>
                 <div className="flex gap-2 flex-wrap">
                   {['Extension', 'Mobile App', 'Website', 'Dashboard'].map(platform => (
                     <button
                       key={platform}
                       type="button"
                       onClick={() => togglePlatform(platform)}
-                      className={`px-3 py-1 rounded-full text-sm border ${
+                      className={`px-3 py-1 rounded-full text-sm border transition ${
                         formData.platforms.includes(platform)
                           ? 'bg-primary text-white border-primary'
-                          : 'bg-white text-gray-700 border-gray-300'
+                          : 'bg-dark-bg text-dark-text-muted border-dark-border hover:bg-dark-card-hover'
                       }`}
                     >
                       {platform}
@@ -405,23 +430,23 @@ export default function AdminRoadmapPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
                   placeholder="Describe the feature or request..."
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-dark-text mb-1">Status</label>
                   <select
                     value={formData.status}
                     onChange={e => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                    className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
                   >
                     {Object.entries(STATUSES).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
@@ -430,7 +455,7 @@ export default function AdminRoadmapPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Progress ({formData.progress}%)</label>
+                  <label className="block text-sm font-medium text-dark-text mb-1">Progress ({formData.progress}%)</label>
                   <input
                     type="range"
                     min="0"
@@ -438,29 +463,29 @@ export default function AdminRoadmapPage() {
                     step="5"
                     value={formData.progress}
                     onChange={e => setFormData(prev => ({ ...prev, progress: parseInt(e.target.value) }))}
-                    className="w-full"
+                    className="w-full accent-primary"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Target Version</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Target Version</label>
                 <input
                   type="text"
                   value={formData.target_version}
                   onChange={e => setFormData(prev => ({ ...prev, target_version: e.target.value }))}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
                   placeholder="e.g., 1.0.5"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Admin Response</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Admin Response</label>
                 <textarea
                   value={formData.admin_response}
                   onChange={e => setFormData(prev => ({ ...prev, admin_response: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
                   placeholder="Response to user (shown on public roadmap)..."
                 />
               </div>
@@ -471,9 +496,9 @@ export default function AdminRoadmapPage() {
                     type="checkbox"
                     checked={formData.is_public}
                     onChange={e => setFormData(prev => ({ ...prev, is_public: e.target.checked }))}
-                    className="rounded text-primary"
+                    className="rounded text-primary bg-dark-bg border-dark-border"
                   />
-                  <span className="text-sm text-gray-700">Show on public roadmap</span>
+                  <span className="text-sm text-dark-text-muted">Show on public roadmap</span>
                 </label>
 
                 <label className="flex items-center gap-2">
@@ -481,24 +506,24 @@ export default function AdminRoadmapPage() {
                     type="checkbox"
                     checked={formData.is_internal}
                     onChange={e => setFormData(prev => ({ ...prev, is_internal: e.target.checked }))}
-                    className="rounded text-primary"
+                    className="rounded text-primary bg-dark-bg border-dark-border"
                   />
-                  <span className="text-sm text-gray-700">Internal (admin-created)</span>
+                  <span className="text-sm text-dark-text-muted">Internal (admin-created)</span>
                 </label>
               </div>
             </div>
 
-            <div className="p-6 border-t flex justify-end gap-3">
+            <div className="p-6 border-t border-dark-border flex justify-end gap-3">
               <button
                 onClick={closeModal}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                className="px-4 py-2 text-dark-text-muted hover:bg-dark-card-hover rounded-lg transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving || !formData.title}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 shadow-glow transition"
               >
                 {saving ? 'Saving...' : editingItem ? 'Update' : 'Create'}
               </button>
