@@ -40,25 +40,21 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Verify config files
+      - name: Generate native project
         run: |
-          echo "=== app.json ==="
-          cat app.json
-          echo ""
-          echo "=== eas.json ==="
-          cat eas.json
+          echo "Running expo prebuild for iOS..."
+          npx expo prebuild --platform ios --clean
 
-      - name: Link EAS project
-        run: |
-          # Link project WITHOUT --force to preserve existing config
-          eas init --id 806d6110-a544-4eb1-bb6e-d3436e4d594c --non-interactive
           echo ""
-          echo "=== app.json after init ==="
-          cat app.json
+          echo "=== Checking generated ios folder ==="
+          ls -la ios/
 
       - name: Build iOS app
         run: |
           echo "Building iOS app v${{ inputs.version }}..."
+          cd ios
+          pod install
+          cd ..
           eas build --platform ios --profile production --local --non-interactive --output ./build.ipa
 
       - name: Submit to TestFlight
