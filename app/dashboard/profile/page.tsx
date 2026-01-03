@@ -251,12 +251,12 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
         {/* Photo Section */}
-        <div className="px-6 py-8 bg-gradient-to-r from-primary to-primary/80 text-white">
+        <div className="px-6 py-8 bg-gradient-to-r from-primary/20 to-primary/10 border-b border-dark-border">
           <div className="flex items-center gap-6">
             <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-4 border-white/30">
+              <div className="w-24 h-24 rounded-full bg-dark-card-hover flex items-center justify-center overflow-hidden border-4 border-primary/30">
                 {profile?.profilePhoto ? (
                   <Image
                     src={profile.profilePhoto}
@@ -266,7 +266,7 @@ export default function ProfilePage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-3xl font-bold">
+                  <span className="text-3xl font-bold text-primary">
                     {user?.email?.[0]?.toUpperCase() || '?'}
                   </span>
                 )}
@@ -281,8 +281,8 @@ export default function ProfilePage() {
               )}
             </div>
             <div>
-              <h2 className="text-xl font-semibold">{profile?.fullName || user?.email}</h2>
-              <p className="text-white/70">{profile?.email}</p>
+              <h2 className="text-xl font-semibold text-dark-text">{profile?.fullName || user?.email}</h2>
+              <p className="text-dark-text-muted">{profile?.email}</p>
               <div className="flex gap-2 mt-3">
                 <input
                   ref={fileInputRef}
@@ -294,7 +294,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingPhoto}
-                  className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  className="px-3 py-1.5 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   Change Photo
                 </button>
@@ -302,7 +302,7 @@ export default function ProfilePage() {
                   <button
                     onClick={handleRemovePhoto}
                     disabled={uploadingPhoto}
-                    className="px-3 py-1.5 bg-white/10 hover:bg-red-500/50 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="px-3 py-1.5 bg-dark-card-hover hover:bg-red-500/20 hover:text-red-400 text-dark-text-muted rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                   >
                     Remove
                   </button>
@@ -315,46 +315,46 @@ export default function ProfilePage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-primary/10 border border-primary/30 text-primary px-4 py-3 rounded-lg text-sm">
               {success}
             </div>
           )}
 
           {/* Personal Info */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+            <h3 className="text-lg font-semibold text-dark-text mb-4">Personal Information</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Full Name</label>
                 <input
                   type="text"
                   value={formData.fullName}
                   onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="John Doe"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Email</label>
                 <input
                   type="email"
                   value={profile?.email || ''}
                   disabled
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+                  className="w-full px-4 py-2.5 bg-dark-border border border-dark-border rounded-lg text-dark-text-muted"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Phone</label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
@@ -363,65 +363,65 @@ export default function ProfilePage() {
 
           {/* Address */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Address</h3>
+            <h3 className="text-lg font-semibold text-dark-text mb-4">Address</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Address Line 1</label>
                 <input
                   type="text"
                   value={formData.addressLine1}
                   onChange={(e) => setFormData(prev => ({ ...prev, addressLine1: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="123 Main St"
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Address Line 2</label>
                 <input
                   type="text"
                   value={formData.addressLine2}
                   onChange={(e) => setFormData(prev => ({ ...prev, addressLine2: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Apt 4B"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">City</label>
                 <input
                   type="text"
                   value={formData.city}
                   onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="New York"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">State / Province</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">State / Province</label>
                 <input
                   type="text"
                   value={formData.state}
                   onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="NY"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">ZIP / Postal Code</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">ZIP / Postal Code</label>
                 <input
                   type="text"
                   value={formData.zip}
                   onChange={(e) => setFormData(prev => ({ ...prev, zip: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="10001"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                <label className="block text-sm font-medium text-dark-text mb-1">Country</label>
                 <input
                   type="text"
                   value={formData.country}
                   onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="United States"
                 />
               </div>
@@ -429,13 +429,13 @@ export default function ProfilePage() {
           </div>
 
           {/* Subscription Info */}
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Subscription</h3>
+          <div className="pt-4 border-t border-dark-border">
+            <h3 className="text-lg font-semibold text-dark-text mb-4">Subscription</h3>
             <div className="flex items-center gap-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary text-white">
                 {profile?.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
               </span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-dark-text-muted">
                 Member since {new Date(profile?.createdAt || '').toLocaleDateString()}
               </span>
             </div>
@@ -446,7 +446,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>

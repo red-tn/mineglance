@@ -66,20 +66,20 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+      <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg">
         {error}
       </div>
     )
   }
 
   const statCards = [
-    { name: 'Total Installs', value: stats?.totalInstalls || 0, icon: '📥', color: 'bg-blue-500' },
-    { name: 'PRO Users', value: stats?.proUsers || 0, icon: '⭐', color: 'bg-amber-500' },
-    { name: 'PRO PLUS Users', value: stats?.proPlusUsers || 0, icon: '🚀', color: 'bg-purple-500' },
-    { name: 'Revenue (30d)', value: `$${((stats?.revenue30d || 0) / 100).toFixed(0)}`, icon: '💰', color: 'bg-green-500' },
-    { name: 'Active Users (7d)', value: stats?.activeUsers || 0, icon: '👥', color: 'bg-indigo-500' },
-    { name: 'Alerts Sent (24h)', value: stats?.alertsSent24h || 0, icon: '🔔', color: 'bg-orange-500' },
-    { name: 'New Installs (7d)', value: stats?.newInstalls7d || 0, icon: '📈', color: 'bg-teal-500' },
+    { name: 'Total Installs', value: stats?.totalInstalls || 0, icon: '📥', color: 'bg-blue-500/20' },
+    { name: 'PRO Users', value: stats?.proUsers || 0, icon: '⭐', color: 'bg-amber-500/20' },
+    { name: 'PRO PLUS Users', value: stats?.proPlusUsers || 0, icon: '🚀', color: 'bg-purple-500/20' },
+    { name: 'Revenue (30d)', value: `$${((stats?.revenue30d || 0) / 100).toFixed(0)}`, icon: '💰', color: 'bg-green-500/20' },
+    { name: 'Active Users (7d)', value: stats?.activeUsers || 0, icon: '👥', color: 'bg-indigo-500/20' },
+    { name: 'Alerts Sent (24h)', value: stats?.alertsSent24h || 0, icon: '🔔', color: 'bg-orange-500/20' },
+    { name: 'New Installs (7d)', value: stats?.newInstalls7d || 0, icon: '📈', color: 'bg-teal-500/20' },
   ]
 
   return (
@@ -87,12 +87,12 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500">Welcome back! Here&apos;s what&apos;s happening.</p>
+          <h1 className="text-2xl font-bold text-dark-text">Dashboard</h1>
+          <p className="text-dark-text-muted">Welcome back! Here&apos;s what&apos;s happening.</p>
         </div>
         <button
           onClick={fetchDashboardData}
-          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition-colors flex items-center gap-2 shadow-glow"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -106,12 +106,12 @@ export default function AdminDashboard() {
         {statCards.map((stat) => (
           <div
             key={stat.name}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+            className="glass-card rounded-xl p-6 border border-dark-border hover:border-dark-text-dim transition-colors"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">{stat.name}</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                <p className="text-sm text-dark-text-muted">{stat.name}</p>
+                <p className="text-3xl font-bold text-dark-text mt-1">{stat.value}</p>
               </div>
               <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center text-2xl`}>
                 {stat.icon}
@@ -124,8 +124,8 @@ export default function AdminDashboard() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Installs Chart */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Installs (Last 30 Days)</h3>
+        <div className="glass-card rounded-xl p-6 border border-dark-border">
+          <h3 className="text-lg font-semibold text-dark-text mb-4">Daily Installs (Last 30 Days)</h3>
           <div className="h-48 flex items-end gap-1">
             {chartData.length > 0 ? (
               chartData.slice(-30).map((day, i) => {
@@ -134,18 +134,18 @@ export default function AdminDashboard() {
                 return (
                   <div
                     key={i}
-                    className="flex-1 bg-primary/20 hover:bg-primary/40 rounded-t transition-colors group relative"
+                    className="flex-1 bg-primary/30 hover:bg-primary/50 rounded-t transition-colors group relative"
                     style={{ height: `${Math.max(height, 2)}%` }}
                     title={`${day.date}: ${day.installs} installs`}
                   >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-dark-card text-dark-text text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none border border-dark-border">
                       {day.installs}
                     </div>
                   </div>
                 )
               })
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-400">
+              <div className="flex-1 flex items-center justify-center text-dark-text-dim">
                 No data yet
               </div>
             )}
@@ -153,8 +153,8 @@ export default function AdminDashboard() {
         </div>
 
         {/* Revenue Chart */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Revenue (Last 30 Days)</h3>
+        <div className="glass-card rounded-xl p-6 border border-dark-border">
+          <h3 className="text-lg font-semibold text-dark-text mb-4">Daily Revenue (Last 30 Days)</h3>
           <div className="h-48 flex items-end gap-1">
             {chartData.length > 0 ? (
               chartData.slice(-30).map((day, i) => {
@@ -163,18 +163,18 @@ export default function AdminDashboard() {
                 return (
                   <div
                     key={i}
-                    className="flex-1 bg-green-500/20 hover:bg-green-500/40 rounded-t transition-colors group relative"
+                    className="flex-1 bg-green-500/30 hover:bg-green-500/50 rounded-t transition-colors group relative"
                     style={{ height: `${Math.max(height, 2)}%` }}
                     title={`${day.date}: $${(day.revenue / 100).toFixed(0)}`}
                   >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none">
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-dark-card text-dark-text text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none border border-dark-border">
                       ${(day.revenue / 100).toFixed(0)}
                     </div>
                   </div>
                 )
               })
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-400">
+              <div className="flex-1 flex items-center justify-center text-dark-text-dim">
                 No data yet
               </div>
             )}
@@ -183,37 +183,37 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+      <div className="glass-card rounded-xl p-6 border border-dark-border">
+        <h3 className="text-lg font-semibold text-dark-text mb-4">Recent Activity</h3>
         <div className="space-y-3">
           {recentActivity.length > 0 ? (
             recentActivity.map((activity, i) => (
-              <div key={i} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+              <div key={i} className="flex items-center gap-4 p-3 bg-dark-card-hover rounded-lg">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
-                  activity.type === 'license_activated' ? 'bg-green-100' :
-                  activity.type === 'alert_sent' ? 'bg-orange-100' :
-                  'bg-blue-100'
+                  activity.type === 'license_activated' ? 'bg-green-500/20' :
+                  activity.type === 'alert_sent' ? 'bg-orange-500/20' :
+                  'bg-blue-500/20'
                 }`}>
                   {activity.type === 'license_activated' ? '🔑' :
                    activity.type === 'alert_sent' ? '🔔' :
                    activity.type === 'purchase' ? '💰' : '📋'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-dark-text">
                     {activity.type === 'license_activated' ? 'License Activated' :
                      activity.type === 'alert_sent' ? `Alert Sent: ${activity.identifier}` :
                      activity.type === 'purchase' ? 'New Purchase' :
                      activity.type}
                   </p>
-                  <p className="text-sm text-gray-500 truncate">{activity.detail}</p>
+                  <p className="text-sm text-dark-text-muted truncate">{activity.detail}</p>
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-dark-text-dim">
                   {formatTimeAgo(activity.created_at)}
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-gray-400 text-center py-8">No recent activity</p>
+            <p className="text-dark-text-dim text-center py-8">No recent activity</p>
           )}
         </div>
       </div>

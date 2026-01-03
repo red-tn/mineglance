@@ -142,11 +142,11 @@ export default function AlertsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Alert Settings</h1>
-          <p className="text-gray-500 mt-1">Configure notifications for your mining operations</p>
+          <h1 className="text-2xl font-bold text-dark-text">Alert Settings</h1>
+          <p className="text-dark-text-muted mt-1">Configure notifications for your mining operations</p>
         </div>
         {saveStatus === 'saved' && (
-          <span className="text-green-600 text-sm flex items-center gap-1">
+          <span className="text-primary text-sm flex items-center gap-1">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
@@ -156,18 +156,18 @@ export default function AlertsPage() {
       </div>
 
       {/* Browser/Extension Alerts */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Browser Notifications</h2>
-        <p className="text-sm text-gray-500 mb-6">
+      <div className="glass-card rounded-xl p-6 border border-dark-border">
+        <h2 className="text-lg font-semibold text-dark-text mb-4">Browser Notifications</h2>
+        <p className="text-sm text-dark-text-muted mb-6">
           These alerts appear in your browser when the extension detects issues.
         </p>
 
         <div className="space-y-4">
           {/* Worker Offline */}
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between py-3 border-b border-dark-border">
             <div>
-              <p className="font-medium text-gray-900">Worker Offline Alert</p>
-              <p className="text-sm text-gray-500">Get notified when a miner goes offline</p>
+              <p className="font-medium text-dark-text">Worker Offline Alert</p>
+              <p className="text-sm text-dark-text-muted">Get notified when a miner goes offline</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -176,24 +176,24 @@ export default function AlertsPage() {
                 onChange={(e) => saveSettings({ notifyWorkerOffline: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+              <div className="w-11 h-6 bg-dark-border peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-dark-text-muted after:border-dark-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-white"></div>
             </label>
           </div>
 
           {/* Profit Drop */}
           <div className="flex items-center justify-between py-3">
             <div>
-              <p className="font-medium text-gray-900">Profit Drop Alert</p>
-              <p className="text-sm text-gray-500">Alert when profit drops significantly</p>
+              <p className="font-medium text-dark-text">Profit Drop Alert</p>
+              <p className="text-sm text-dark-text-muted">Alert when profit drops significantly</p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Threshold:</span>
+                <span className="text-sm text-dark-text-muted">Threshold:</span>
                 <select
                   value={settings.profitDropThreshold}
                   onChange={(e) => saveSettings({ profitDropThreshold: parseInt(e.target.value) })}
                   disabled={!settings.notifyProfitDrop}
-                  className="px-3 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary disabled:opacity-50"
+                  className="px-3 py-1 bg-dark-card-hover border border-dark-border rounded-lg text-sm text-dark-text focus:ring-2 focus:ring-primary disabled:opacity-50"
                 >
                   <option value={10}>10%</option>
                   <option value={20}>20%</option>
@@ -208,7 +208,7 @@ export default function AlertsPage() {
                   onChange={(e) => saveSettings({ notifyProfitDrop: e.target.checked })}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                <div className="w-11 h-6 bg-dark-border peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-dark-text-muted after:border-dark-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-white"></div>
               </label>
             </div>
           </div>
@@ -216,11 +216,11 @@ export default function AlertsPage() {
       </div>
 
       {/* Email Alerts */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="glass-card rounded-xl p-6 border border-dark-border">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Email Alerts</h2>
-            <p className="text-sm text-gray-500">Receive alerts via email even when your browser is closed</p>
+            <h2 className="text-lg font-semibold text-dark-text">Email Alerts</h2>
+            <p className="text-sm text-dark-text-muted">Receive alerts via email even when your browser is closed</p>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -229,15 +229,15 @@ export default function AlertsPage() {
               onChange={(e) => saveSettings({ emailAlertsEnabled: e.target.checked })}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            <div className="w-11 h-6 bg-dark-border peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-dark-text-muted after:border-dark-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-white"></div>
           </label>
         </div>
 
         {settings.emailAlertsEnabled && (
-          <div className="space-y-4 pt-4 border-t border-gray-100">
+          <div className="space-y-4 pt-4 border-t border-dark-border">
             {/* Email Address */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-dark-text mb-2">
                 Email Address
               </label>
               <div className="flex gap-3">
@@ -247,12 +247,12 @@ export default function AlertsPage() {
                   onChange={(e) => setSettings({ ...settings, emailAlertsAddress: e.target.value })}
                   onBlur={() => saveSettings({ emailAlertsAddress: settings.emailAlertsAddress })}
                   placeholder="your@email.com"
-                  className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="flex-1 px-4 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
                 <button
                   onClick={sendTestEmail}
                   disabled={testingEmail || !settings.emailAlertsAddress}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap"
+                  className="px-4 py-2 bg-dark-card-hover text-dark-text rounded-lg hover:bg-dark-border disabled:opacity-50 disabled:cursor-not-allowed transition whitespace-nowrap"
                 >
                   {testingEmail ? 'Sending...' : 'Send Test'}
                 </button>
@@ -261,7 +261,7 @@ export default function AlertsPage() {
 
             {/* Frequency */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-dark-text mb-2">
                 Email Frequency
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -271,12 +271,12 @@ export default function AlertsPage() {
                     onClick={() => saveSettings({ emailFrequency: freq.value })}
                     className={`p-3 rounded-lg border-2 transition text-left ${
                       settings.emailFrequency === freq.value
-                        ? 'border-primary bg-primary/5'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-dark-border hover:border-dark-text-dim'
                     }`}
                   >
-                    <p className="font-medium text-gray-900">{freq.label}</p>
-                    <p className="text-xs text-gray-500 mt-1">{freq.description}</p>
+                    <p className="font-medium text-dark-text">{freq.label}</p>
+                    <p className="text-xs text-dark-text-muted mt-1">{freq.description}</p>
                   </button>
                 ))}
               </div>
@@ -286,16 +286,16 @@ export default function AlertsPage() {
       </div>
 
       {/* Info Box */}
-      <div className="bg-blue-50 rounded-xl p-6">
+      <div className="glass-card rounded-xl p-6 border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-indigo-500/10">
         <div className="flex gap-4">
           <div className="flex-shrink-0">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <h3 className="font-medium text-blue-900">How Alerts Work</h3>
-            <ul className="mt-2 text-sm text-blue-800 space-y-1">
+            <h3 className="font-medium text-blue-400">How Alerts Work</h3>
+            <ul className="mt-2 text-sm text-dark-text-muted space-y-1">
               <li>- Browser notifications require the extension to be running</li>
               <li>- Email alerts are sent when issues are detected, even if browser is closed</li>
               <li>- Solo mining pools (CKPool, Public Pool, OCEAN) have a longer grace period to reduce false alerts</li>

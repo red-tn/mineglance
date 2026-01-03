@@ -5,11 +5,11 @@ import { useState } from 'react'
 const faqs = [
   {
     question: 'What pools are supported?',
-    answer: 'We support 8 major pools: 2Miners, Nanopool, F2Pool, Flexpool, Ethermine, Hiveon, HeroMiners, and WoolyPooly. Just need your wallet address to connect—no API keys required.'
+    answer: 'We support 11+ major pools: 2Miners, Nanopool, F2Pool, Ethermine, Hiveon, HeroMiners, WoolyPooly, CKPool Solo, Public Pool, OCEAN, and Cedric Crispin. Just need your wallet address to connect—no API keys required.'
   },
   {
     question: 'What coins are supported?',
-    answer: 'We support 16+ coins including ETC, RVN, ERG, FLUX, KAS, ALPH, NEXA, XMR, ZEC, BTC, LTC, FIRO, CFX, BEAM, and more. The coin comparison feature uses WhatToMine data to show real-time profitability.'
+    answer: 'We support 16+ coins including BTC, ETC, RVN, ERG, FLUX, KAS, ALPH, NEXA, XMR, ZEC, LTC, FIRO, CFX, BEAM, and more. The coin comparison feature uses WhatToMine data to show real-time profitability.'
   },
   {
     question: 'How does the free version work?',
@@ -53,13 +53,13 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <section id="faq" className="py-20 bg-background">
+    <section id="faq" className="py-20">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-primary">
-            Frequently Asked Questions
+          <h2 className="text-3xl sm:text-4xl font-bold">
+            <span className="text-gradient">Frequently Asked Questions</span>
           </h2>
-          <p className="mt-4 text-lg text-foreground/70">
+          <p className="mt-4 text-lg text-dark-text-muted">
             Got questions? We&apos;ve got answers.
           </p>
         </div>
@@ -68,15 +68,15 @@ export default function FAQ() {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl border border-gray-200 overflow-hidden"
+              className="glass-card rounded-xl overflow-hidden"
             >
               <button
-                className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-dark-card-hover transition-colors"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
-                <span className="font-semibold text-foreground pr-4">{faq.question}</span>
+                <span className="font-semibold text-dark-text pr-4">{faq.question}</span>
                 <svg
-                  className={`w-5 h-5 flex-shrink-0 text-foreground/50 transition-transform ${
+                  className={`w-5 h-5 flex-shrink-0 text-dark-text-muted transition-transform ${
                     openIndex === index ? 'rotate-180' : ''
                   }`}
                   fill="none"
@@ -87,7 +87,7 @@ export default function FAQ() {
                 </svg>
               </button>
               {openIndex === index && (
-                <div className="px-6 pb-4 text-foreground/70">
+                <div className="px-6 pb-4 text-dark-text-muted">
                   {faq.answer}
                 </div>
               )}

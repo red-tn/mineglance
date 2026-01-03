@@ -3,7 +3,7 @@ import Image from 'next/image'
 
 export default function Footer() {
   return (
-    <footer className="bg-primary text-white">
+    <footer className="bg-dark-card border-t border-dark-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
@@ -18,32 +18,32 @@ export default function Footer() {
                 className="h-7 w-auto"
               />
             </Link>
-            <p className="text-white/70 text-sm">
+            <p className="text-dark-text-muted text-sm">
               Real-time mining profitability tracking. Know your true earnings after electricity costs.
             </p>
           </div>
 
           {/* Product Column */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Product</h3>
+            <h3 className="font-semibold text-dark-text mb-4">Product</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/#features" className="text-white/70 hover:text-accent transition-colors">
+                <Link href="/#features" className="text-dark-text-muted hover:text-primary transition-colors">
                   Features
                 </Link>
               </li>
               <li>
-                <Link href="/#pricing" className="text-white/70 hover:text-accent transition-colors">
+                <Link href="/#pricing" className="text-dark-text-muted hover:text-primary transition-colors">
                   Pricing
                 </Link>
               </li>
               <li>
-                <Link href="/#" className="text-white/70 hover:text-accent transition-colors">
+                <Link href="/#" className="text-dark-text-muted hover:text-primary transition-colors">
                   Chrome Extension
                 </Link>
               </li>
               <li>
-                <Link href="/#faq" className="text-white/70 hover:text-accent transition-colors">
+                <Link href="/#faq" className="text-dark-text-muted hover:text-primary transition-colors">
                   FAQ
                 </Link>
               </li>
@@ -52,21 +52,21 @@ export default function Footer() {
 
           {/* Resources Column */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Resources</h3>
+            <h3 className="font-semibold text-dark-text mb-4">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/support" className="text-white/70 hover:text-accent transition-colors">
+                <Link href="/support" className="text-dark-text-muted hover:text-primary transition-colors">
                   Support & Help
                 </Link>
               </li>
               <li>
-                <Link href="/support#troubleshooting" className="text-white/70 hover:text-accent transition-colors">
+                <Link href="/support#troubleshooting" className="text-dark-text-muted hover:text-primary transition-colors">
                   Troubleshooting
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-white/70 hover:text-accent transition-colors">
-                  Contact Us
+                <Link href="/dashboard" className="text-dark-text-muted hover:text-primary transition-colors">
+                  User Dashboard
                 </Link>
               </li>
             </ul>
@@ -74,15 +74,15 @@ export default function Footer() {
 
           {/* Legal Column */}
           <div>
-            <h3 className="font-semibold text-white mb-4">Legal</h3>
+            <h3 className="font-semibold text-dark-text mb-4">Legal</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/privacy" className="text-white/70 hover:text-accent transition-colors">
+                <Link href="/privacy" className="text-dark-text-muted hover:text-primary transition-colors">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-white/70 hover:text-accent transition-colors">
+                <Link href="/terms" className="text-dark-text-muted hover:text-primary transition-colors">
                   Terms of Service
                 </Link>
               </li>
@@ -91,33 +91,37 @@ export default function Footer() {
         </div>
 
         {/* Supported Pools */}
-        <div className="border-t border-white/20 pt-8 mb-8">
-          <h3 className="font-semibold text-white mb-3 text-sm">Supported Pools</h3>
-          <div className="flex flex-wrap gap-3 text-xs text-white/60">
+        <div className="border-t border-dark-border pt-8 mb-8">
+          <h3 className="font-semibold text-dark-text mb-3 text-sm">Supported Pools</h3>
+          <div className="flex flex-wrap gap-3 text-xs text-dark-text-dim">
             <span>2Miners</span>
-            <span>•</span>
+            <span className="text-dark-border">•</span>
             <span>Nanopool</span>
-            <span>•</span>
+            <span className="text-dark-border">•</span>
             <span>F2Pool</span>
-            <span>•</span>
-            <span>Flexpool</span>
-            <span>•</span>
+            <span className="text-dark-border">•</span>
+            <span>OCEAN</span>
+            <span className="text-dark-border">•</span>
+            <span>CKPool Solo</span>
+            <span className="text-dark-border">•</span>
+            <span>Public Pool</span>
+            <span className="text-dark-border">•</span>
             <span>Ethermine</span>
-            <span>•</span>
+            <span className="text-dark-border">•</span>
             <span>Hiveon</span>
-            <span>•</span>
+            <span className="text-dark-border">•</span>
             <span>HeroMiners</span>
-            <span>•</span>
+            <span className="text-dark-border">•</span>
             <span>WoolyPooly</span>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-white/70">
+        <div className="border-t border-dark-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-dark-text-muted">
             &copy; {new Date().getFullYear()} MineGlance. All rights reserved.
           </p>
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-dark-text-dim">
             Built by miners, for miners.
           </p>
         </div>

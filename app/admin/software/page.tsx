@@ -41,10 +41,10 @@ const SEVERITY_LEVELS = {
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
-  low: 'bg-gray-100 text-gray-800',
-  medium: 'bg-yellow-100 text-yellow-800',
-  high: 'bg-orange-100 text-orange-800',
-  critical: 'bg-red-100 text-red-800'
+  low: 'bg-gray-500/20 text-gray-300',
+  medium: 'bg-yellow-500/20 text-yellow-400',
+  high: 'bg-orange-500/20 text-orange-400',
+  critical: 'bg-red-500/20 text-red-400'
 }
 
 export default function AdminSoftwarePage() {
@@ -222,17 +222,17 @@ export default function AdminSoftwarePage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Software Management</h1>
+        <h1 className="text-2xl font-bold text-dark-text">Software Management</h1>
         <div className="flex gap-2">
           <button
             onClick={() => openAddModal('bug')}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+            className="px-4 py-2 bg-dark-card-hover text-dark-text rounded-lg hover:bg-dark-border transition border border-dark-border"
           >
             + Log Bug/Fix
           </button>
           <button
             onClick={() => openAddModal('release')}
-            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition shadow-glow"
           >
             + New Release
           </button>
@@ -242,8 +242,8 @@ export default function AdminSoftwarePage() {
       {/* Latest Versions Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Object.entries(PLATFORMS).filter(([k]) => k !== 'api').map(([key, label]) => (
-          <div key={key} className="bg-white rounded-xl p-4 shadow-sm">
-            <div className="text-sm text-gray-500">{label}</div>
+          <div key={key} className="glass-card rounded-xl p-4 border border-dark-border">
+            <div className="text-sm text-dark-text-muted">{label}</div>
             <div className="text-2xl font-bold text-primary">
               v{latestVersions[key] || '—'}
             </div>
@@ -252,13 +252,13 @@ export default function AdminSoftwarePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b">
+      <div className="flex border-b border-dark-border">
         <button
           onClick={() => setActiveTab('releases')}
           className={`px-4 py-2 font-medium border-b-2 transition ${
             activeTab === 'releases'
               ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-dark-text-muted hover:text-dark-text'
           }`}
         >
           Releases ({releases.length})
@@ -268,7 +268,7 @@ export default function AdminSoftwarePage() {
           className={`px-4 py-2 font-medium border-b-2 transition ${
             activeTab === 'bugs'
               ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-dark-text-muted hover:text-dark-text'
           }`}
         >
           Bug Fixes ({bugFixes.length})
@@ -277,43 +277,43 @@ export default function AdminSoftwarePage() {
 
       {/* Releases Tab */}
       {activeTab === 'releases' && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
+          <table className="min-w-full divide-y divide-dark-border">
+            <thead className="bg-dark-card-hover">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Version</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platform</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Release Notes</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Download</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Version</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Platform</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Release Notes</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Download</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-dark-border">
               {releases.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-dark-text-muted">
                     No releases found
                   </td>
                 </tr>
               ) : (
                 releases.map(release => (
-                  <tr key={release.id} className="hover:bg-gray-50">
+                  <tr key={release.id} className="hover:bg-dark-card-hover">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">v{release.version}</span>
+                        <span className="font-medium text-dark-text">v{release.version}</span>
                         {release.is_latest && (
-                          <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Latest</span>
+                          <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full">Latest</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-dark-text-muted">
                       {PLATFORMS[release.platform as keyof typeof PLATFORMS] || release.platform}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
+                    <td className="px-4 py-3 text-sm text-dark-text-muted max-w-xs truncate">
                       {release.release_notes || '—'}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-dark-text-muted">
                       {new Date(release.released_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-sm">
@@ -322,13 +322,13 @@ export default function AdminSoftwarePage() {
                           Download
                         </a>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-dark-text-dim">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <button
                         onClick={() => handleDelete('release', release.id)}
-                        className="text-red-600 hover:underline"
+                        className="text-red-400 hover:underline"
                       >
                         Delete
                       </button>
@@ -343,52 +343,52 @@ export default function AdminSoftwarePage() {
 
       {/* Bug Fixes Tab */}
       {activeTab === 'bugs' && (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
+          <table className="min-w-full divide-y divide-dark-border">
+            <thead className="bg-dark-card-hover">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Severity</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Platform</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fixed In</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Title</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Severity</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Platform</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Fixed In</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-dark-border">
               {bugFixes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-dark-text-muted">
                     No bug fixes logged
                   </td>
                 </tr>
               ) : (
                 bugFixes.map(bug => (
-                  <tr key={bug.id} className="hover:bg-gray-50">
+                  <tr key={bug.id} className="hover:bg-dark-card-hover">
                     <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">{bug.title}</div>
+                      <div className="font-medium text-dark-text">{bug.title}</div>
                       {bug.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">{bug.description}</div>
+                        <div className="text-sm text-dark-text-muted truncate max-w-xs">{bug.description}</div>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded-full text-xs ${SEVERITY_COLORS[bug.severity] || 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs ${SEVERITY_COLORS[bug.severity] || 'bg-gray-500/20 text-gray-300'}`}>
                         {SEVERITY_LEVELS[bug.severity as keyof typeof SEVERITY_LEVELS] || bug.severity}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-dark-text-muted">
                       {PLATFORMS[bug.platform as keyof typeof PLATFORMS] || bug.platform}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-dark-text-muted">
                       v{bug.fixed_in_version}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-dark-text-muted">
                       {new Date(bug.fixed_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <button
                         onClick={() => handleDelete('bug', bug.id)}
-                        className="text-red-600 hover:underline"
+                        className="text-red-400 hover:underline"
                       >
                         Delete
                       </button>
@@ -403,10 +403,10 @@ export default function AdminSoftwarePage() {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="glass-card rounded-xl max-w-lg w-full border border-dark-border">
+            <div className="p-6 border-b border-dark-border">
+              <h2 className="text-xl font-bold text-dark-text">
                 {modalType === 'release' ? 'Add New Release' : 'Log Bug Fix'}
               </h2>
             </div>
@@ -416,21 +416,21 @@ export default function AdminSoftwarePage() {
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Version *</label>
+                      <label className="block text-sm font-medium text-dark-text mb-1">Version *</label>
                       <input
                         type="text"
                         value={releaseForm.version}
                         onChange={e => setReleaseForm(p => ({ ...p, version: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                         placeholder="1.0.4"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                      <label className="block text-sm font-medium text-dark-text mb-1">Platform</label>
                       <select
                         value={releaseForm.platform}
                         onChange={e => setReleaseForm(p => ({ ...p, platform: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
                         {Object.entries(PLATFORMS).filter(([k]) => k !== 'api').map(([key, label]) => (
                           <option key={key} value={key}>{label}</option>
@@ -440,23 +440,23 @@ export default function AdminSoftwarePage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Download URL</label>
+                    <label className="block text-sm font-medium text-dark-text mb-1">Download URL</label>
                     <input
                       type="url"
                       value={releaseForm.download_url}
                       onChange={e => setReleaseForm(p => ({ ...p, download_url: e.target.value }))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                      className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="https://..."
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Release Notes</label>
+                    <label className="block text-sm font-medium text-dark-text mb-1">Release Notes</label>
                     <textarea
                       value={releaseForm.release_notes}
                       onChange={e => setReleaseForm(p => ({ ...p, release_notes: e.target.value }))}
                       rows={4}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                      className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="Fixed offline alert false positives, updated refresh intervals..."
                     />
                   </div>
@@ -466,31 +466,31 @@ export default function AdminSoftwarePage() {
                       type="checkbox"
                       checked={releaseForm.is_latest}
                       onChange={e => setReleaseForm(p => ({ ...p, is_latest: e.target.checked }))}
-                      className="rounded text-primary"
+                      className="rounded text-primary bg-dark-card-hover border-dark-border"
                     />
-                    <span className="text-sm text-gray-700">Mark as latest version</span>
+                    <span className="text-sm text-dark-text-muted">Mark as latest version</span>
                   </label>
                 </>
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                    <label className="block text-sm font-medium text-dark-text mb-1">Title *</label>
                     <input
                       type="text"
                       value={bugForm.title}
                       onChange={e => setBugForm(p => ({ ...p, title: e.target.value }))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                      className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="Fix offline alert false positives"
                     />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                      <label className="block text-sm font-medium text-dark-text mb-1">Severity</label>
                       <select
                         value={bugForm.severity}
                         onChange={e => setBugForm(p => ({ ...p, severity: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
                         {Object.entries(SEVERITY_LEVELS).map(([key, label]) => (
                           <option key={key} value={key}>{label}</option>
@@ -498,11 +498,11 @@ export default function AdminSoftwarePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                      <label className="block text-sm font-medium text-dark-text mb-1">Platform</label>
                       <select
                         value={bugForm.platform}
                         onChange={e => setBugForm(p => ({ ...p, platform: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
                         {Object.entries(PLATFORMS).map(([key, label]) => (
                           <option key={key} value={key}>{label}</option>
@@ -510,24 +510,24 @@ export default function AdminSoftwarePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Fixed In</label>
+                      <label className="block text-sm font-medium text-dark-text mb-1">Fixed In</label>
                       <input
                         type="text"
                         value={bugForm.fixed_in_version}
                         onChange={e => setBugForm(p => ({ ...p, fixed_in_version: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                        className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                         placeholder="1.0.4"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-dark-text mb-1">Description</label>
                     <textarea
                       value={bugForm.description}
                       onChange={e => setBugForm(p => ({ ...p, description: e.target.value }))}
                       rows={3}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary"
+                      className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
                       placeholder="Details about the fix..."
                     />
                   </div>
@@ -535,17 +535,17 @@ export default function AdminSoftwarePage() {
               )}
             </div>
 
-            <div className="p-6 border-t flex justify-end gap-3">
+            <div className="p-6 border-t border-dark-border flex justify-end gap-3">
               <button
                 onClick={closeModal}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                className="px-4 py-2 text-dark-text-muted hover:bg-dark-card-hover rounded-lg transition"
               >
                 Cancel
               </button>
               <button
                 onClick={modalType === 'release' ? handleSaveRelease : handleSaveBug}
                 disabled={saving || (modalType === 'release' ? !releaseForm.version : !bugForm.title)}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 transition shadow-glow"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>

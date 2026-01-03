@@ -39,27 +39,27 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-primary-light flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+    <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
+      <div className="glass-card rounded-2xl w-full max-w-md p-8 border border-dark-border">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
-          <p className="text-gray-500 mt-2">MineGlance Dashboard</p>
+          <h1 className="text-2xl font-bold text-dark-text">Admin Login</h1>
+          <p className="text-dark-text-muted mt-2">MineGlance Dashboard</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-dark-text mb-1">
               Email
             </label>
             <input
@@ -67,14 +67,14 @@ export default function AdminLogin() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-lg bg-dark-card-hover border border-dark-border text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               placeholder="admin@mineglance.com"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-dark-text mb-1">
               Password
             </label>
             <input
@@ -82,7 +82,7 @@ export default function AdminLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-lg bg-dark-card-hover border border-dark-border text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               placeholder="••••••••"
               required
             />
@@ -91,7 +91,7 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow"
           >
             {loading ? (
               <span className="flex items-center justify-center">
@@ -107,7 +107,7 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-500">
+        <p className="mt-6 text-center text-sm text-dark-text-dim">
           Contact control@mineglance.com for access
         </p>
       </div>

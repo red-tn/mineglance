@@ -175,57 +175,57 @@ export default function DevicesPage() {
   return (
     <div className="space-y-6">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="glass-card rounded-xl p-6 border border-dark-border">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Active Devices</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-lg font-semibold text-dark-text">Active Devices</h2>
+            <p className="text-sm text-dark-text-muted mt-1">
               Manage devices using your MineGlance Pro license
             </p>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-primary">{activeCount}/{maxActivations}</p>
-            <p className="text-xs text-gray-500">activations used</p>
+            <p className="text-xs text-dark-text-muted">activations used</p>
           </div>
         </div>
 
         {/* Progress bar */}
-        <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="mt-4 h-2 bg-dark-card-hover rounded-full overflow-hidden">
           <div
-            className={`h-full transition-all ${activeCount >= maxActivations ? 'bg-amber-500' : 'bg-accent'}`}
+            className={`h-full transition-all ${activeCount >= maxActivations ? 'bg-amber-500' : 'bg-primary'}`}
             style={{ width: `${(activeCount / maxActivations) * 100}%` }}
           />
         </div>
 
         {activeCount >= maxActivations && (
-          <p className="mt-3 text-sm text-amber-600">
+          <p className="mt-3 text-sm text-amber-400">
             You&apos;ve reached your activation limit. Deactivate a device to activate a new one.
           </p>
         )}
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-6">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-6">
           {error}
         </div>
       )}
 
       {/* Devices List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">All Devices</h3>
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
+        <div className="px-6 py-4 border-b border-dark-border">
+          <h3 className="font-semibold text-dark-text">All Devices</h3>
         </div>
 
         {devices.length === 0 ? (
-          <div className="px-6 py-12 text-center text-gray-500">
-            <svg className="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="px-6 py-12 text-center text-dark-text-muted">
+            <svg className="w-12 h-12 mx-auto text-dark-text-dim mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            <p className="font-medium">No devices found</p>
+            <p className="font-medium text-dark-text">No devices found</p>
             <p className="text-sm mt-1">Activate MineGlance Pro in your browser extension to see devices here.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-dark-border">
             {devices.map((device) => {
               const recentActivity = getTimeSince(device.lastSeen)
               const isOnline = recentActivity === 'Active now'
@@ -234,7 +234,7 @@ export default function DevicesPage() {
                 <li key={device.id} className="px-6 py-4">
                   <div className="flex items-start gap-4">
                     {/* Device Icon */}
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${device.isActive ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'}`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${device.isActive ? 'bg-primary/20 text-primary' : 'bg-dark-card-hover text-dark-text-dim'}`}>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
@@ -243,40 +243,40 @@ export default function DevicesPage() {
                     {/* Device Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className={`font-medium ${device.isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                        <h4 className={`font-medium ${device.isActive ? 'text-dark-text' : 'text-dark-text-dim'}`}>
                           {device.deviceName}
                         </h4>
                         {device.isActive ? (
                           isOnline ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
-                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1 animate-pulse" />
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1 animate-pulse" />
                               Online
                             </span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-dark-card-hover text-dark-text-muted">
                               Active
                             </span>
                           )
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-600">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400">
                             Deactivated
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-500">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-dark-text-muted">
                         {device.browser && (
                           <span>{device.browser}</span>
                         )}
                         {device.version && (
                           <span>v{device.version}</span>
                         )}
-                        <span className="text-gray-300">|</span>
+                        <span className="text-dark-border">|</span>
                         <span>Activated {formatDate(device.activatedAt)}</span>
                       </div>
                       {recentActivity && device.isActive && (
-                        <p className="text-xs text-gray-400 mt-1">Last seen: {recentActivity}</p>
+                        <p className="text-xs text-dark-text-dim mt-1">Last seen: {recentActivity}</p>
                       )}
-                      <p className="text-xs text-gray-400 mt-1 font-mono">ID: {device.installId.substring(0, 16)}...</p>
+                      <p className="text-xs text-dark-text-dim mt-1 font-mono">ID: {device.installId.substring(0, 16)}...</p>
                     </div>
 
                     {/* Actions */}
@@ -284,7 +284,7 @@ export default function DevicesPage() {
                       <button
                         onClick={() => handleDeactivate(device.installId)}
                         disabled={deactivating === device.installId}
-                        className="px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        className="px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                       >
                         {deactivating === device.installId ? 'Deactivating...' : 'Deactivate'}
                       </button>
@@ -299,17 +299,17 @@ export default function DevicesPage() {
 
       {/* Purchase Success Banner */}
       {purchaseSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-          <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center gap-3">
+          <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <h4 className="font-medium text-green-900">Additional licenses purchased!</h4>
-            <p className="text-sm text-green-700">Your new activation limit has been updated.</p>
+            <h4 className="font-medium text-dark-text">Additional licenses purchased!</h4>
+            <p className="text-sm text-dark-text-muted">Your new activation limit has been updated.</p>
           </div>
           <button
             onClick={() => setPurchaseSuccess(false)}
-            className="ml-auto text-green-600 hover:text-green-800"
+            className="ml-auto text-dark-text-muted hover:text-dark-text"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -319,22 +319,22 @@ export default function DevicesPage() {
       )}
 
       {/* Buy More Licenses */}
-      <div className="bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/20 rounded-lg p-6">
+      <div className="glass-card rounded-xl p-6 border border-primary/30 bg-gradient-to-r from-primary/10 to-blue-500/10">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
             <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
           </div>
           <div className="flex-1">
-            <h4 className="font-semibold text-gray-900 mb-1">Need more activations?</h4>
-            <p className="text-sm text-gray-600 mb-4">
+            <h4 className="font-semibold text-dark-text mb-1">Need more activations?</h4>
+            <p className="text-sm text-dark-text-muted mb-4">
               Purchase additional licenses to use MineGlance Pro on more devices.
-              Each license pack includes <strong>5 lifetime activations</strong> for only <strong>$5</strong> (one-time).
+              Each license pack includes <strong className="text-dark-text">5 lifetime activations</strong> for only <strong className="text-dark-text">$5</strong> (one-time).
             </p>
             <button
               onClick={() => setShowPurchaseModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-light transition-colors shadow-glow hover:shadow-glow-lg"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -347,14 +347,14 @@ export default function DevicesPage() {
 
       {/* Purchase Modal */}
       {showPurchaseModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-dark-border">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Buy Additional Licenses</h3>
+            <div className="flex items-center justify-between p-6 border-b border-dark-border">
+              <h3 className="text-lg font-semibold text-dark-text">Buy Additional Licenses</h3>
               <button
                 onClick={closePurchaseModal}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-dark-text-muted hover:text-dark-text transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -371,42 +371,42 @@ export default function DevicesPage() {
               ) : (
                 <>
                   <div className="mb-6">
-                    <p className="text-sm text-gray-600 mb-4">
-                      Each license pack adds <strong>5 lifetime activations</strong> to your account for <strong>$5</strong>. One-time purchase, no subscription.
+                    <p className="text-sm text-dark-text-muted mb-4">
+                      Each license pack adds <strong className="text-dark-text">5 lifetime activations</strong> to your account for <strong className="text-dark-text">$5</strong>. One-time purchase, no subscription.
                     </p>
 
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-dark-text mb-2">
                       Number of license packs
                     </label>
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => setLicenseQuantity(Math.max(1, licenseQuantity - 1))}
                         disabled={licenseQuantity <= 1}
-                        className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        className="w-10 h-10 rounded-lg border border-dark-border flex items-center justify-center text-dark-text hover:bg-dark-card-hover disabled:opacity-50"
                       >
                         -
                       </button>
-                      <span className="text-2xl font-bold text-gray-900 w-12 text-center">{licenseQuantity}</span>
+                      <span className="text-2xl font-bold text-dark-text w-12 text-center">{licenseQuantity}</span>
                       <button
                         onClick={() => setLicenseQuantity(licenseQuantity + 1)}
-                        className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center text-gray-600 hover:bg-gray-50"
+                        className="w-10 h-10 rounded-lg border border-dark-border flex items-center justify-center text-dark-text hover:bg-dark-card-hover"
                       >
                         +
                       </button>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <div className="bg-dark-card-hover rounded-lg p-4 mb-6">
+                    <div className="flex justify-between text-sm text-dark-text-muted mb-2">
                       <span>License packs ({licenseQuantity}x)</span>
                       <span>${licenseQuantity * 5}.00</span>
                     </div>
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <div className="flex justify-between text-sm text-dark-text-muted mb-2">
                       <span>Activations added</span>
-                      <span className="font-medium text-accent">+{licenseQuantity * 5}</span>
+                      <span className="font-medium text-primary">+{licenseQuantity * 5}</span>
                     </div>
-                    <div className="border-t border-gray-200 my-2 pt-2">
-                      <div className="flex justify-between text-base font-semibold text-gray-900">
+                    <div className="border-t border-dark-border my-2 pt-2">
+                      <div className="flex justify-between text-base font-semibold text-dark-text">
                         <span>Total</span>
                         <span>${licenseQuantity * 5}.00</span>
                       </div>
@@ -414,7 +414,7 @@ export default function DevicesPage() {
                   </div>
 
                   {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                    <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
                       {error}
                     </div>
                   )}
@@ -422,7 +422,7 @@ export default function DevicesPage() {
                   <button
                     onClick={startPurchase}
                     disabled={purchasing}
-                    className="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    className="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-light transition-colors disabled:opacity-50 shadow-glow hover:shadow-glow-lg"
                   >
                     {purchasing ? 'Loading...' : `Pay $${licenseQuantity * 5}.00`}
                   </button>

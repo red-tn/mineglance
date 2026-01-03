@@ -9,13 +9,13 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+    <header className="sticky top-0 z-50 bg-dark-bg/80 backdrop-blur-md border-b border-dark-border">
       <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src="/logo.svg"
+              src="/logo-white.svg"
               alt="MineGlance"
               width={160}
               height={40}
@@ -26,16 +26,16 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/" className="text-dark-text-muted hover:text-primary transition-colors">
               Home
             </Link>
-            <Link href="/#features" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/#features" className="text-dark-text-muted hover:text-primary transition-colors">
               Features
             </Link>
-            <Link href="/#pricing" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/#pricing" className="text-dark-text-muted hover:text-primary transition-colors">
               Pricing
             </Link>
-            <Link href="/support" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/support" className="text-dark-text-muted hover:text-primary transition-colors">
               Support
             </Link>
             <CTAButton href="#" variant="primary">
@@ -45,7 +45,7 @@ export default function Header() {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            className="md:hidden p-2 rounded-lg hover:bg-dark-card text-dark-text"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -61,32 +61,32 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-100">
+          <div className="md:hidden py-4 border-t border-dark-border">
             <div className="flex flex-col space-y-4">
               <Link
                 href="/"
-                className="text-foreground hover:text-primary transition-colors"
+                className="text-dark-text-muted hover:text-primary transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Home
               </Link>
               <Link
                 href="/#features"
-                className="text-foreground hover:text-primary transition-colors"
+                className="text-dark-text-muted hover:text-primary transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Features
               </Link>
               <Link
                 href="/#pricing"
-                className="text-foreground hover:text-primary transition-colors"
+                className="text-dark-text-muted hover:text-primary transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
               </Link>
               <Link
                 href="/support"
-                className="text-foreground hover:text-primary transition-colors"
+                className="text-dark-text-muted hover:text-primary transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Support

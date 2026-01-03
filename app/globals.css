@@ -4,28 +4,188 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+:root {
+  --color-primary: #38a169;
+  --color-primary-light: #48bb78;
+  --color-primary-dark: #2f855a;
+  --color-bg: #0a0f1a;
+  --color-card: #111827;
+  --color-card-hover: #1a2332;
+  --color-border: #1f2937;
+  --color-text: #f3f4f6;
+  --color-text-muted: #9ca3af;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: #f7fafc;
-  color: #2d3748;
+  background: linear-gradient(135deg, #0a0f1a 0%, #111827 50%, #0d1520 100%);
+  color: #f3f4f6;
+  min-height: 100vh;
 }
 
 .font-mono {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
+/* Glass morphism cards */
+.glass-card {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(55, 65, 81, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card:hover {
+  background: rgba(26, 35, 50, 0.9);
+  border-color: rgba(56, 161, 105, 0.3);
+}
+
+/* Glow button */
+.btn-primary {
+  @apply bg-primary text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200;
+  box-shadow: 0 0 20px rgba(56, 161, 105, 0.3);
+}
+
+.btn-primary:hover {
+  @apply bg-primary-light;
+  box-shadow: 0 0 30px rgba(56, 161, 105, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Section styling */
+.section-dark {
+  @apply py-20 relative;
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #38a169 0%, #48bb78 50%, #68d391 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card hover effect */
+.card-hover {
+  @apply transition-all duration-300;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 40px rgba(56, 161, 105, 0.2);
+}
+
+/* Stats card */
+.stat-card {
+  @apply glass-card rounded-xl p-6;
+  border: 1px solid rgba(56, 161, 105, 0.2);
+}
+
+/* Input styling */
+input, select, textarea {
+  @apply bg-dark-card border border-dark-border rounded-lg px-4 py-2 text-dark-text;
+  @apply focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary;
+}
+
+input::placeholder, textarea::placeholder {
+  @apply text-dark-text-dim;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111827;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
 /* Stripe Embedded Checkout container */
 #checkout-container {
   width: 100%;
   min-height: 450px;
-  background: #f9fafb;
+  background: #111827;
   border-radius: 8px;
+  border: 1px solid #1f2937;
 }
 
 #checkout-container iframe {
   min-height: 400px !important;
+}
+
+/* Table styling for dark mode */
+table {
+  @apply w-full;
+}
+
+th {
+  @apply text-left text-dark-text-muted font-medium py-3 px-4 border-b border-dark-border;
+}
+
+td {
+  @apply py-3 px-4 border-b border-dark-border text-dark-text;
+}
+
+tr:hover td {
+  @apply bg-dark-card-hover;
+}
+
+/* Badge styling */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-green {
+  @apply bg-green-900/50 text-green-400 border border-green-800;
+}
+
+.badge-yellow {
+  @apply bg-yellow-900/50 text-yellow-400 border border-yellow-800;
+}
+
+.badge-red {
+  @apply bg-red-900/50 text-red-400 border border-red-800;
+}
+
+.badge-blue {
+  @apply bg-blue-900/50 text-blue-400 border border-blue-800;
+}
+
+/* Pro badge */
+.pro-badge {
+  background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+  @apply text-white text-xs font-bold px-2 py-0.5 rounded;
+}
+
+/* Toggle switch */
+.toggle {
+  @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors;
+  @apply bg-dark-border;
+}
+
+.toggle.active {
+  @apply bg-primary;
+}
+
+.toggle-dot {
+  @apply inline-block h-4 w-4 transform rounded-full bg-white transition-transform;
+  @apply translate-x-1;
+}
+
+.toggle.active .toggle-dot {
+  @apply translate-x-6;
 }

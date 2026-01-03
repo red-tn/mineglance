@@ -10,6 +10,12 @@
 
 4. **Git commit format** - Use descriptive commit messages with HEREDOC format. Include the robot emoji footer.
 
+5. **Update admin software panel after EVERY release** - After bumping version numbers, fixing bugs, or making significant updates:
+   - Add a new release entry in the admin Software page database with version, platform, release notes, and download URL
+   - Log all bug fixes with severity (low/medium/high/critical) and fixed version
+   - For Chrome Extension releases, provide a ZIP file download link (upload to `/public/downloads/` or external hosting)
+   - This is AUTOMATIC behavior after any version bump or bug fix commit
+
 ## Project Structure
 
 - **Next.js 14 App Router** with TypeScript

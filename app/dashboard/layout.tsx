@@ -89,13 +89,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <svg className="animate-spin h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <p className="text-gray-500">Loading dashboard...</p>
+          <p className="text-dark-text-muted">Loading dashboard...</p>
         </div>
       </div>
     )
@@ -103,23 +103,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, refreshUser }}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-dark-bg">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
         {/* Sidebar */}
-        <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-primary transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-dark-card border-r border-dark-border transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
+            <div className="flex items-center gap-3 px-6 py-5 border-b border-dark-border">
               <Image src="/icon48.png" alt="MineGlance" width={32} height={32} />
-              <span className="text-lg font-bold text-white">MineGlance</span>
-              <span className="ml-auto bg-green-400 text-green-900 text-xs font-bold px-2 py-0.5 rounded">
+              <span className="text-lg font-bold text-dark-text">MineGlance</span>
+              <span className="ml-auto bg-primary text-white text-xs font-bold px-2 py-0.5 rounded">
                 {user?.plan === 'bundle' ? 'PRO+' : 'PRO'}
               </span>
             </div>
@@ -135,8 +135,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     onClick={() => setSidebarOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-white/20 text-white'
-                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                        ? 'bg-primary/20 text-primary'
+                        : 'text-dark-text-muted hover:bg-dark-card-hover hover:text-dark-text'
                     }`}
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,9 +149,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </nav>
 
             {/* User section */}
-            <div className="px-4 py-4 border-t border-white/10">
+            <div className="px-4 py-4 border-t border-dark-border">
               <div className="flex items-center gap-3 px-2 py-2">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center overflow-hidden">
+                <div className="w-10 h-10 rounded-full bg-dark-card-hover flex items-center justify-center overflow-hidden">
                   {user?.profilePhoto ? (
                     <Image
                       src={user.profilePhoto}
@@ -161,21 +161,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-white font-semibold">
+                    <span className="text-primary font-semibold">
                       {user?.email?.[0]?.toUpperCase() || '?'}
                     </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
+                  <p className="text-sm font-medium text-dark-text truncate">
                     {user?.fullName || user?.email}
                   </p>
-                  <p className="text-xs text-white/60 truncate">{user?.email}</p>
+                  <p className="text-xs text-dark-text-dim truncate">{user?.email}</p>
                 </div>
               </div>
               <button
                 onClick={logout}
-                className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 text-sm text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -189,25 +189,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Main content */}
         <div className="lg:ml-64">
           {/* Top bar */}
-          <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 lg:px-8">
+          <header className="sticky top-0 z-30 bg-dark-card/80 backdrop-blur-md border-b border-dark-border px-4 py-3 lg:px-8">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900"
+                className="lg:hidden p-2 -ml-2 text-dark-text-muted hover:text-dark-text"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
               <div className="flex-1 lg:flex-none">
-                <h1 className="text-lg font-semibold text-gray-900 lg:text-xl">
+                <h1 className="text-lg font-semibold text-dark-text lg:text-xl">
                   {NAV_ITEMS.find(item => item.href === pathname)?.label || 'Dashboard'}
                 </h1>
               </div>
               <a
                 href="/"
                 target="_blank"
-                className="text-sm text-gray-500 hover:text-primary flex items-center gap-1"
+                className="text-sm text-dark-text-muted hover:text-primary flex items-center gap-1 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

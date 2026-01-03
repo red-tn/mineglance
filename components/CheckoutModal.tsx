@@ -178,20 +178,20 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div className="relative glass-card rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-dark-border">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-4 border-b border-dark-border">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-dark-text">
                 {pricingInfo?.isUpgrade ? 'Upgrade to Bundle' : details.name}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-dark-text-muted">
                 {pricingInfo?.isUpgrade
                   ? 'Add mobile app access to your Pro license'
                   : details.description
@@ -200,9 +200,9 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-full hover:bg-dark-card-hover transition-colors"
             >
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -213,33 +213,33 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
             {alreadyOwned ? (
               <div className="space-y-4">
                 <div className="text-center py-4">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-dark-text mb-2">
                     You already have {alreadyOwned === 'bundle' ? 'the Bundle' : 'Pro'}!
                   </h3>
-                  <p className="text-gray-600 text-sm">
-                    A license key was sent to <strong>{email}</strong> when you purchased.
+                  <p className="text-dark-text-muted text-sm">
+                    A license key was sent to <strong className="text-dark-text">{email}</strong> when you purchased.
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                  <p className="text-sm text-gray-600 mb-3">
+                <div className="bg-dark-card-hover rounded-lg p-4 text-center">
+                  <p className="text-sm text-dark-text-muted mb-3">
                     Can&apos;t find your license key?
                   </p>
                   {resendStatus === 'sent' ? (
-                    <div className="text-green-600 font-medium">
+                    <div className="text-primary font-medium">
                       License key sent! Check your email.
                     </div>
                   ) : resendStatus === 'error' ? (
                     <div className="space-y-2">
-                      <p className="text-red-600 text-sm">Failed to send. Please try again.</p>
+                      <p className="text-red-400 text-sm">Failed to send. Please try again.</p>
                       <button
                         onClick={handleResendLicense}
-                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+                        className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light transition-colors"
                       >
                         Try Again
                       </button>
@@ -248,7 +248,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
                     <button
                       onClick={handleResendLicense}
                       disabled={resendStatus === 'sending'}
-                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
+                      className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 transition-colors"
                     >
                       {resendStatus === 'sending' ? (
                         <span className="flex items-center justify-center gap-2">
@@ -264,7 +264,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
 
                 <button
                   onClick={handleBack}
-                  className="w-full py-2 text-gray-500 hover:text-gray-700 text-sm"
+                  className="w-full py-2 text-dark-text-muted hover:text-dark-text text-sm transition-colors"
                 >
                   Use a different email
                 </button>
@@ -272,7 +272,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
             ) : step === 'email' ? (
               <form onSubmit={handleEmailSubmit} className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-dark-text mb-1">
                     Email Address
                   </label>
                   <input
@@ -282,33 +282,33 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="w-full px-4 py-3 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-primary"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-dark-text-dim mt-1">
                     Your license key will be sent to this email
                   </p>
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-600 text-sm">{error}</p>
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <p className="text-red-400 text-sm">{error}</p>
                   </div>
                 )}
 
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-dark-card-hover rounded-lg p-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{details.name}</span>
+                    <span className="text-dark-text-muted">{details.name}</span>
                     <span className="text-xl font-bold text-primary">
                       ${(details.amount / 100).toFixed(0)}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">One-time payment, lifetime access</p>
+                  <p className="text-xs text-dark-text-dim mt-1">One-time payment, lifetime access</p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading || !email}
-                  className="w-full py-3 px-4 bg-primary text-white font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full py-3 px-4 bg-primary text-white font-semibold rounded-lg hover:bg-primary-light disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-glow hover:shadow-glow-lg"
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -322,29 +322,29 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
               </form>
             ) : !stripePromise ? (
               <div className="flex flex-col items-center justify-center h-64">
-                <p className="text-amber-600 mb-4">Payment system is being configured.</p>
-                <p className="text-gray-500 text-sm">Please contact control@mineglance.com to purchase.</p>
+                <p className="text-amber-400 mb-4">Payment system is being configured.</p>
+                <p className="text-dark-text-muted text-sm">Please contact control@mineglance.com to purchase.</p>
               </div>
             ) : loading ? (
               <div className="flex flex-col items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-                <p className="text-gray-500">Loading secure checkout...</p>
+                <p className="text-dark-text-muted">Loading secure checkout...</p>
               </div>
             ) : clientSecret ? (
               <div>
                 {pricingInfo?.isUpgrade && (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-green-800 text-sm font-medium">
+                  <div className="mb-4 p-3 bg-primary/10 border border-primary/30 rounded-lg">
+                    <p className="text-primary text-sm font-medium">
                       Pro member 10% loyalty discount applied!
                     </p>
-                    <p className="text-green-600 text-xs mt-1">
+                    <p className="text-primary/70 text-xs mt-1">
                       You&apos;re paying ${(displayAmount / 100).toFixed(0)} instead of $30
                     </p>
                   </div>
                 )}
                 <button
                   onClick={handleBack}
-                  className="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                  className="mb-4 text-sm text-dark-text-muted hover:text-dark-text flex items-center gap-1 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -368,7 +368,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-64">
-                <p className="text-gray-500">Initializing checkout...</p>
+                <p className="text-dark-text-muted">Initializing checkout...</p>
               </div>
             )}
           </div>

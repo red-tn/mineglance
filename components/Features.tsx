@@ -37,11 +37,11 @@ export default function Features() {
       )
     },
     {
-      title: 'Historical Charts',
-      description: 'Track your earnings over time. See trends, spot issues, and know your ROI timeline.',
+      title: 'Mobile App Sync',
+      description: 'Monitor your miners on the go. QR code sync between extension and iOS/Android app. PRO+ feature.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       )
     },
@@ -57,30 +57,30 @@ export default function Features() {
   ]
 
   return (
-    <section id="features" className="py-20 bg-background">
+    <section id="features" className="py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-primary">
-            Everything You Need, Nothing You Don&apos;t
+          <h2 className="text-3xl sm:text-4xl font-bold">
+            <span className="text-gradient">Everything You Need, Nothing You Don&apos;t</span>
           </h2>
-          <p className="mt-4 text-lg text-foreground/70 max-w-2xl mx-auto">
+          <p className="mt-4 text-lg text-dark-text-muted max-w-2xl mx-auto">
             Built by hobbyist miners who got tired of juggling 10 tabs.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-accent/30 transition-all"
+              className="glass-card rounded-xl p-6 card-hover"
             >
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center text-accent mb-4">
+              <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center text-primary mb-4">
                 {feature.icon}
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
+              <h3 className="text-lg font-semibold text-dark-text mb-2">
                 {feature.title}
               </h3>
-              <p className="text-foreground/70">
+              <p className="text-dark-text-muted">
                 {feature.description}
               </p>
             </div>

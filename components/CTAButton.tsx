@@ -11,11 +11,11 @@ export default function CTAButton({
   href = '#',
   className = ''
 }: CTAButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center px-6 py-3 text-base font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
+  const baseStyles = 'inline-flex items-center justify-center px-6 py-3 text-base font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg'
 
   const variants = {
-    primary: 'bg-accent text-white hover:bg-green-600 focus:ring-accent shadow-lg hover:shadow-xl',
-    secondary: 'bg-white text-primary border-2 border-primary hover:bg-primary hover:text-white focus:ring-primary'
+    primary: 'bg-primary text-white hover:bg-primary-light focus:ring-primary shadow-glow hover:shadow-glow-lg',
+    secondary: 'bg-transparent text-primary border-2 border-primary hover:bg-primary hover:text-white focus:ring-primary'
   }
 
   return (

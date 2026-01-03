@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import WireframeBackground from '@/components/WireframeBackground'
 
 export const metadata: Metadata = {
   title: 'MineGlance - Net Profit Dashboard for GPU Miners',
@@ -31,8 +32,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className="dark">
+      <body className="min-h-screen">
+        <WireframeBackground />
+        <div className="relative z-10">
+          {children}
+        </div>
+      </body>
     </html>
   )
 }
