@@ -31,12 +31,36 @@ export async function DELETE(
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
     }
 
+    // First get the release to find the download URL
+    const { data: release } = await supabase
+      .from('software_releases')
+      .select('download_url')
+      .eq('id', id)
+      .single()
+
+    // Delete from database
     const { error } = await supabase
       .from('software_releases')
       .delete()
       .eq('id', id)
 
     if (error) throw error
+
+    // Try to delete from storage if we have a download URL
+    if (release?.download_url) {
+      try {
+        // Extract filename from URL: .../storage/v1/object/public/software/filename.zip
+        const urlParts = release.download_url.split('/software/')
+        if (urlParts.length > 1) {
+          const filename = urlParts[1]
+          await supabase.storage.from('software').remove([filename])
+          console.log(`Deleted from storage: ${filename}`)
+        }
+      } catch (storageError) {
+        // Log but don't fail - file might not exist
+        console.log('Storage delete skipped:', storageError)
+      }
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

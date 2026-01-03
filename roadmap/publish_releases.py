@@ -15,6 +15,7 @@ Last Updated: 2026-01-03
 import os
 import subprocess
 import json
+import shutil
 import requests
 import boto3
 from botocore.config import Config
@@ -78,6 +79,43 @@ def get_s3_client():
         aws_secret_access_key=S3_SECRET,
         config=Config(signature_version='s3v4')
     )
+
+def get_extension_version():
+    """Read version from extension manifest.json"""
+    manifest_path = os.path.join(os.path.dirname(__file__), '..', 'extension', 'manifest.json')
+    try:
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+            return manifest.get('version', 'unknown')
+    except Exception as e:
+        print(f"  [WARN] Could not read manifest: {e}")
+        return None
+
+def create_extension_zip(filename=None):
+    """Create ZIP of extension folder"""
+    extension_dir = os.path.join(os.path.dirname(__file__), '..', 'extension')
+
+    if not os.path.exists(extension_dir):
+        print(f"  [ERROR] Extension folder not found: {extension_dir}")
+        return None
+
+    version = get_extension_version()
+    if not filename:
+        filename = f"mineglance-extension-v{version}.zip"
+
+    output_path = os.path.join(os.path.dirname(__file__), filename)
+
+    # Remove .zip extension for shutil.make_archive
+    archive_base = output_path.rsplit('.zip', 1)[0]
+
+    try:
+        print(f"  Creating ZIP from extension folder...")
+        shutil.make_archive(archive_base, 'zip', extension_dir)
+        print(f"  [OK] Created: {filename}")
+        return filename
+    except Exception as e:
+        print(f"  [ERROR] Failed to create ZIP: {e}")
+        return None
 
 def get_latest_eas_build(platform):
     """Get the latest EAS build URL for a platform (ios or android)"""
@@ -291,6 +329,10 @@ def main():
 
     for release in PENDING_RELEASES:
         print(f"\n- {release['platform']} v{release['version']}")
+
+        # Auto-create extension ZIP
+        if release['platform'] == 'extension':
+            create_extension_zip(release['zip_filename'])
 
         # Download from EAS if URL provided or auto-fetch for mobile
         eas_platform = 'ios' if release['platform'] == 'mobile_ios' else 'android' if release['platform'] == 'mobile_android' else None
