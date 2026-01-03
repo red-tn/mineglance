@@ -5,27 +5,36 @@ This script publishes software releases to the Supabase database.
 Run this after creating a new version ZIP file.
 
 Instructions:
-1. Set your password in the DB_PASSWORD variable below
+1. Create a .env file in this folder with:
+   user=postgres.zbytbrcumxgfeqvhmzsf
+   password=YOUR-PASSWORD-HERE
+   host=aws-0-us-west-1.pooler.supabase.com
+   port=6543
+   dbname=postgres
+
 2. Run: python publish_releases.py
 3. Upload the ZIP file from this folder to:
    https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software
 
-Last Updated: 2025-01-03
+Last Updated: 2026-01-03
 """
 
 import psycopg2
 from datetime import datetime
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ============================================
-# CONFIGURATION - Set your password here
+# CONFIGURATION - Load from .env file
 # ============================================
-DB_PASSWORD = "YOUR-PASSWORD-HERE"
-
-# Database connection
-DB_HOST = "db.zbytbrcumxgfeqvhmzsf.supabase.co"
-DB_PORT = 5432
-DB_NAME = "postgres"
-DB_USER = "postgres"
+DB_USER = os.getenv("user")
+DB_PASSWORD = os.getenv("password")
+DB_HOST = os.getenv("host")
+DB_PORT = os.getenv("port", 6543)
+DB_NAME = os.getenv("dbname", "postgres")
 
 # Supabase storage bucket URL base
 STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public/software"
@@ -56,13 +65,14 @@ PENDING_RELEASES = [
 # ============================================
 
 def get_connection():
-    """Create database connection"""
+    """Create database connection using Supabase pooler"""
     return psycopg2.connect(
         host=DB_HOST,
-        port=DB_PORT,
+        port=int(DB_PORT),
         database=DB_NAME,
         user=DB_USER,
-        password=DB_PASSWORD
+        password=DB_PASSWORD,
+        sslmode='require'
     )
 
 def publish_release(conn, release):
@@ -120,8 +130,14 @@ def main():
     print("MineGlance Release Publisher")
     print("=" * 50)
 
-    if DB_PASSWORD == "YOUR-PASSWORD-HERE":
-        print("\nERROR: Please set DB_PASSWORD in this script!")
+    if not DB_PASSWORD or not DB_USER:
+        print("\nERROR: Missing database credentials!")
+        print("Create a .env file in this folder with:")
+        print("  user=postgres.zbytbrcumxgfeqvhmzsf")
+        print("  password=YOUR-PASSWORD-HERE")
+        print("  host=aws-0-us-west-1.pooler.supabase.com")
+        print("  port=6543")
+        print("  dbname=postgres")
         return
 
     if not PENDING_RELEASES:

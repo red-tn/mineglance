@@ -22,10 +22,10 @@ const config: Config = {
         'dark-card-hover': '#1a2332',
         'dark-border': '#1f2937',
         'dark-border-light': '#374151',
-        // Text colors
+        // Text colors (all white/near-white for dark backgrounds)
         'dark-text': '#f3f4f6',
-        'dark-text-muted': '#9ca3af',
-        'dark-text-dim': '#6b7280',
+        'dark-text-muted': '#e5e7eb',
+        'dark-text-dim': '#d1d5db',
         // Legacy (for compatibility)
         background: '#0a0f1a',
         foreground: '#f3f4f6',
