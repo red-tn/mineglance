@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MineGlance",
-    "slug": "mineglance-website",
+    "slug": "mineglance",
     "version": "1.0.6",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",

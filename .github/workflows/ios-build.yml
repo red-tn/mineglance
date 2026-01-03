@@ -48,6 +48,12 @@ jobs:
       - name: Build iOS app locally
         run: |
           echo "Building iOS app v${{ inputs.version }}..."
+          echo "Current directory: $(pwd)"
+          echo "eas.json contents:"
+          cat eas.json
+          echo "app.json slug:"
+          cat app.json | grep slug
+          echo "Starting build..."
           eas build --platform ios --profile production --local --non-interactive --output ./build.ipa
 
       - name: Submit to TestFlight
