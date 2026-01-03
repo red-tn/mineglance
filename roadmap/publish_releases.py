@@ -47,22 +47,24 @@ STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public
 # PENDING RELEASES TO PUBLISH
 # Claude Code updates this section after version changes
 # ============================================
+# Add releases here when ready to publish
+# The script will:
+#   - Auto-create ZIP from extension/ folder for extension platform
+#   - Auto-download latest IPA from EAS for mobile_ios platform
+#   - Upload to Supabase Storage
+#   - Publish to software_releases table
+#
+# Example:
+# {
+#     "version": "1.0.6",
+#     "platform": "extension",  # Valid: extension, mobile_ios, mobile_android
+#     "release_notes": "Description of changes...",
+#     "zip_filename": "mineglance-extension-v1.0.6.zip",
+#     "is_latest": True
+# }
+
 PENDING_RELEASES = [
-    {
-        "version": "1.0.5",
-        "platform": "extension",  # Valid: extension, mobile_ios, mobile_android, website
-        "release_notes": "Complete dark mode overhaul matching website theme. Dark backgrounds (#0a0a0a) with green accent color (#38a169). Updated popup and settings pages with glass morphism effects and glow styling. Compact wallet cards with resizable wallet list.",
-        "zip_filename": "mineglance-extension-v1.0.5.zip",
-        "is_latest": True
-    },
-    {
-        "version": "1.0.3",
-        "platform": "mobile_ios",  # Valid: extension, mobile_ios, mobile_android, website
-        "release_notes": "Pro Plus features, QR wallet sync, wallet reordering, pool data fixes. Build 13.",
-        "zip_filename": "mineglance-ios-v1.0.3.ipa",
-        # eas_url not needed - script auto-fetches latest from EAS for mobile platforms
-        "is_latest": True
-    }
+    # Add new releases here
 ]
 
 # ============================================
