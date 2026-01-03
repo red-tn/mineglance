@@ -41,12 +41,12 @@ const PLATFORMS_LIST = [
 ]
 
 const STATUS_INFO: Record<string, { label: string; color: string }> = {
-  submitted: { label: 'Submitted', color: 'bg-gray-100 text-gray-800' },
-  reviewing: { label: 'Under Review', color: 'bg-blue-100 text-blue-800' },
-  planned: { label: 'Planned', color: 'bg-purple-100 text-purple-800' },
-  in_progress: { label: 'In Progress', color: 'bg-yellow-100 text-yellow-800' },
-  completed: { label: 'Completed', color: 'bg-green-100 text-green-800' },
-  declined: { label: 'Declined', color: 'bg-red-100 text-red-800' }
+  submitted: { label: 'Submitted', color: 'bg-gray-700 text-gray-200' },
+  reviewing: { label: 'Under Review', color: 'bg-blue-900 text-blue-200' },
+  planned: { label: 'Planned', color: 'bg-purple-900 text-purple-200' },
+  in_progress: { label: 'In Progress', color: 'bg-yellow-900 text-yellow-200' },
+  completed: { label: 'Completed', color: 'bg-green-900 text-green-200' },
+  declined: { label: 'Declined', color: 'bg-red-900 text-red-200' }
 }
 
 export default function RoadmapPage() {
@@ -142,8 +142,8 @@ export default function RoadmapPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Roadmap & Feature Requests</h1>
-        <p className="text-gray-500 mt-1">Submit ideas or see what&apos;s coming next</p>
+        <h1 className="text-2xl font-bold text-dark-text">Roadmap & Feature Requests</h1>
+        <p className="text-dark-text mt-1">Submit ideas or see what&apos;s coming next</p>
       </div>
 
       {/* Tabs */}
@@ -153,7 +153,7 @@ export default function RoadmapPage() {
           className={`px-6 py-3 font-medium border-b-2 transition ${
             activeTab === 'submit'
               ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-dark-text hover:text-dark-text'
           }`}
         >
           Submit Request
@@ -163,7 +163,7 @@ export default function RoadmapPage() {
           className={`px-6 py-3 font-medium border-b-2 transition ${
             activeTab === 'view'
               ? 'border-primary text-primary'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-dark-text hover:text-dark-text'
           }`}
         >
           View Roadmap
@@ -172,29 +172,29 @@ export default function RoadmapPage() {
 
       {/* Submit Tab */}
       {activeTab === 'submit' && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           {submitted ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Request Submitted!</h3>
-              <p className="text-gray-500">Thank you for your feedback. We&apos;ll review it soon.</p>
+              <h3 className="text-xl font-semibold text-dark-text mb-2">Request Submitted!</h3>
+              <p className="text-dark-text">Thank you for your feedback. We&apos;ll review it soon.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Category & Priority */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark-text mb-2">
                     Category *
                   </label>
                   <select
                     value={form.category}
                     onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-4 py-3 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     {Object.entries(CATEGORIES).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
@@ -203,13 +203,13 @@ export default function RoadmapPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-dark-text mb-2">
                     Priority *
                   </label>
                   <select
                     value={form.priority}
                     onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className="w-full px-4 py-3 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   >
                     {Object.entries(PRIORITIES).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
@@ -220,7 +220,7 @@ export default function RoadmapPage() {
 
               {/* Platforms */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark-text mb-2">
                   Platforms (select all that apply)
                 </label>
                 <div className="flex flex-wrap gap-3">
@@ -232,7 +232,7 @@ export default function RoadmapPage() {
                       className={`px-4 py-2 rounded-lg border transition ${
                         form.platforms.includes(value)
                           ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          : 'border-dark-border text-dark-text hover:border-dark-text'
                       }`}
                     >
                       {label}
@@ -243,14 +243,14 @@ export default function RoadmapPage() {
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark-text mb-2">
                   Title / Summary *
                 </label>
                 <input
                   type="text"
                   value={form.title}
                   onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-3 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Briefly describe your request..."
                   required
                 />
@@ -258,14 +258,14 @@ export default function RoadmapPage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-dark-text mb-2">
                   Description / Details
                 </label>
                 <textarea
                   value={form.description}
                   onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                   rows={5}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
                   placeholder="Provide any additional details, use cases, or examples..."
                 />
               </div>
@@ -306,25 +306,25 @@ export default function RoadmapPage() {
               </svg>
             </div>
           ) : items.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="glass-card rounded-xl border border-dark-border p-12 text-center">
+              <div className="w-16 h-16 bg-dark-card-hover rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-dark-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No roadmap items yet</h3>
-              <p className="text-gray-500">Be the first to submit a feature request!</p>
+              <h3 className="text-lg font-medium text-dark-text mb-2">No roadmap items yet</h3>
+              <p className="text-dark-text">Be the first to submit a feature request!</p>
             </div>
           ) : (
             items.map(item => (
-              <div key={item.id} className="bg-white rounded-xl shadow-sm p-6">
+              <div key={item.id} className="glass-card rounded-xl border border-dark-border p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${STATUS_INFO[item.status]?.color || 'bg-gray-100'}`}>
+                      <span className={`px-2 py-1 text-xs rounded-full ${STATUS_INFO[item.status]?.color || 'bg-dark-card-hover'}`}>
                         {STATUS_INFO[item.status]?.label || item.status}
                       </span>
-                      <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                      <span className="px-2 py-1 text-xs bg-dark-card-hover text-dark-text rounded-full">
                         {CATEGORIES[item.category as keyof typeof CATEGORIES] || item.category}
                       </span>
                       {item.target_version && (
@@ -333,30 +333,30 @@ export default function RoadmapPage() {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                    <h3 className="text-lg font-semibold text-dark-text">{item.title}</h3>
                     {item.description && (
-                      <p className="text-gray-600 mt-1">{item.description}</p>
+                      <p className="text-dark-text mt-1">{item.description}</p>
                     )}
                     {item.platforms?.length > 0 && (
                       <div className="flex gap-2 mt-3">
                         {item.platforms.map(p => (
-                          <span key={p} className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                          <span key={p} className="text-xs text-dark-text bg-dark-card-hover px-2 py-1 rounded">
                             {PLATFORMS_LIST.find(pl => pl.value === p)?.label || p}
                           </span>
                         ))}
                       </div>
                     )}
                     {item.admin_response && (
-                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <p className="text-sm font-medium text-blue-800 mb-1">Team Response:</p>
-                        <p className="text-sm text-blue-700">{item.admin_response}</p>
+                      <div className="mt-4 p-4 bg-blue-900/30 border border-blue-800 rounded-lg">
+                        <p className="text-sm font-medium text-blue-300 mb-1">Team Response:</p>
+                        <p className="text-sm text-blue-200">{item.admin_response}</p>
                       </div>
                     )}
                   </div>
                   {item.progress > 0 && item.status === 'in_progress' && (
                     <div className="text-right">
                       <div className="text-2xl font-bold text-primary">{item.progress}%</div>
-                      <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
+                      <div className="w-24 h-2 bg-dark-border rounded-full mt-1">
                         <div
                           className="h-full bg-primary rounded-full"
                           style={{ width: `${item.progress}%` }}

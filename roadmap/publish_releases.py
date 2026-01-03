@@ -5,19 +5,19 @@ This script publishes software releases to the Supabase database
 AND uploads ZIP files to Supabase Storage automatically.
 
 Instructions:
-1. Install dependencies: pip install psycopg2-binary python-dotenv boto3
+1. Install dependencies: pip install python-dotenv boto3 requests
 2. Create a .env file in this folder (see .env.example)
 3. Run: python publish_releases.py
 
 Last Updated: 2026-01-03
 """
 
-import psycopg2
-from datetime import datetime
-from dotenv import load_dotenv
 import os
+import requests
 import boto3
 from botocore.config import Config
+from datetime import datetime
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,11 +25,10 @@ load_dotenv()
 # ============================================
 # CONFIGURATION - Load from .env file
 # ============================================
-DB_USER = os.getenv("user")
-DB_PASSWORD = os.getenv("password")
-DB_HOST = os.getenv("host")
-DB_PORT = os.getenv("port", 6543)
-DB_NAME = os.getenv("dbname", "postgres")
+
+# Supabase REST API config
+SUPABASE_URL = os.getenv("supabase_url", "https://zbytbrcumxgfeqvhmzsf.supabase.co")
+SUPABASE_SERVICE_KEY = os.getenv("supabase_service_key")
 
 # S3 Storage config
 S3_ENDPOINT = os.getenv("s3_endpoint")
@@ -106,79 +105,100 @@ def upload_to_storage(filename):
         print(f"  [ERROR] Failed to upload {filename}: {e}")
         return False
 
-def get_connection():
-    """Create database connection using Supabase pooler"""
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=int(DB_PORT),
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        sslmode='require'
-    )
+def check_existing_release(platform, version):
+    """Check if release already exists using Supabase REST API"""
+    url = f"{SUPABASE_URL}/rest/v1/software_releases"
+    params = {
+        "platform": f"eq.{platform}",
+        "version": f"eq.{version}",
+        "select": "id"
+    }
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"
+    }
 
-def publish_release(conn, release):
-    """Publish a single release to the database"""
-    cursor = conn.cursor()
+    response = requests.get(url, params=params, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        return len(data) > 0
+    return False
 
+def unset_latest_for_platform(platform):
+    """Unset is_latest flag for all releases of this platform"""
+    url = f"{SUPABASE_URL}/rest/v1/software_releases"
+    params = {
+        "platform": f"eq.{platform}"
+    }
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+    }
+    data = {"is_latest": False}
+
+    response = requests.patch(url, params=params, headers=headers, json=data)
+    return response.status_code in [200, 204]
+
+def publish_release(release):
+    """Publish a single release to the database using Supabase REST API"""
     platform = release["platform"]
     version = release["version"]
 
     # Check if this version already exists
-    cursor.execute(
-        "SELECT id FROM software_releases WHERE platform = %s AND version = %s",
-        (platform, version)
-    )
-    existing = cursor.fetchone()
-
-    if existing:
+    if check_existing_release(platform, version):
         print(f"  [SKIP] {platform} v{version} already exists in database")
         return False
 
     # If this is latest, unmark previous latest
     if release.get("is_latest"):
-        cursor.execute(
-            "UPDATE software_releases SET is_latest = false WHERE platform = %s",
-            (platform,)
-        )
+        unset_latest_for_platform(platform)
 
     # Build download URL
     download_url = f"{STORAGE_URL}/{release['zip_filename']}"
 
     # Insert new release
-    cursor.execute("""
-        INSERT INTO software_releases
-        (version, platform, release_notes, download_url, is_latest, released_at)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        RETURNING id
-    """, (
-        version,
-        platform,
-        release["release_notes"],
-        download_url,
-        release.get("is_latest", False),
-        datetime.now().isoformat()
-    ))
+    url = f"{SUPABASE_URL}/rest/v1/software_releases"
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+    data = {
+        "version": version,
+        "platform": platform,
+        "release_notes": release["release_notes"],
+        "download_url": download_url,
+        "is_latest": release.get("is_latest", False),
+        "released_at": datetime.now().isoformat()
+    }
 
-    release_id = cursor.fetchone()[0]
-    conn.commit()
+    response = requests.post(url, headers=headers, json=data)
 
-    print(f"  [OK] {platform} v{version} published to database (ID: {release_id})")
-    return True
+    if response.status_code in [200, 201]:
+        result = response.json()
+        release_id = result[0]["id"] if result else "?"
+        print(f"  [OK] {platform} v{version} published to database (ID: {release_id})")
+        return True
+    else:
+        print(f"  [ERROR] Failed to publish {platform} v{version}: {response.status_code}")
+        print(f"         {response.text}")
+        return False
 
 def main():
     print("=" * 50)
     print("MineGlance Release Publisher")
     print("=" * 50)
 
-    if not DB_PASSWORD or not DB_USER:
-        print("\nERROR: Missing database credentials!")
-        print("Create a .env file in this folder with:")
-        print("  user=postgres.zbytbrcumxgfeqvhmzsf")
-        print("  password=YOUR-PASSWORD-HERE")
-        print("  host=aws-0-us-west-1.pooler.supabase.com")
-        print("  port=6543")
-        print("  dbname=postgres")
+    if not SUPABASE_SERVICE_KEY:
+        print("\nERROR: Missing Supabase service key!")
+        print("Add to your .env file:")
+        print("  supabase_url=https://zbytbrcumxgfeqvhmzsf.supabase.co")
+        print("  supabase_service_key=YOUR-SERVICE-ROLE-KEY")
+        print("\nGet your service role key from:")
+        print("  Supabase Dashboard > Project Settings > API > service_role key")
         return
 
     if not PENDING_RELEASES:
@@ -191,48 +211,39 @@ def main():
         print("\nWARNING: S3 credentials not configured - files will not be uploaded automatically")
         print("Add to .env: s3_endpoint, s3_key_id, s3_secret, s3_bucket")
 
-    print(f"\nConnecting to database...")
+    print(f"\nConnecting to Supabase REST API...")
+    print(f"URL: {SUPABASE_URL}")
 
-    try:
-        conn = get_connection()
-        print("Connected successfully!\n")
+    print(f"\nPublishing {len(PENDING_RELEASES)} release(s):\n")
 
-        print(f"Publishing {len(PENDING_RELEASES)} release(s):\n")
+    published = 0
+    uploaded = 0
 
-        published = 0
-        uploaded = 0
+    for release in PENDING_RELEASES:
+        print(f"\n- {release['platform']} v{release['version']}")
 
-        for release in PENDING_RELEASES:
-            print(f"\n- {release['platform']} v{release['version']}")
-
-            # Upload file first (if S3 configured)
-            if has_s3:
-                if upload_to_storage(release['zip_filename']):
-                    uploaded += 1
-
-            # Publish to database
-            if publish_release(conn, release):
-                published += 1
-
-        conn.close()
-
-        print(f"\n{'=' * 50}")
-        print(f"Results:")
-        print(f"  - Database: {published} release(s) published")
+        # Upload file first (if S3 configured)
         if has_s3:
-            print(f"  - Storage: {uploaded} file(s) uploaded")
-        print(f"{'=' * 50}")
+            if upload_to_storage(release['zip_filename']):
+                uploaded += 1
 
-        if not has_s3 and published > 0:
-            print("\nREMINDER: Upload these ZIP files manually to Supabase Storage:")
-            print("https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software")
-            print("\nFiles to upload from this folder:")
-            for release in PENDING_RELEASES:
-                print(f"  - {release['zip_filename']}")
+        # Publish to database
+        if publish_release(release):
+            published += 1
 
-    except Exception as e:
-        print(f"\nERROR: {e}")
-        raise
+    print(f"\n{'=' * 50}")
+    print(f"Results:")
+    print(f"  - Database: {published} release(s) published")
+    if has_s3:
+        print(f"  - Storage: {uploaded} file(s) uploaded")
+    print(f"{'=' * 50}")
+
+    if not has_s3 and published > 0:
+        print("\nREMINDER: Upload these ZIP files manually to Supabase Storage:")
+        print("https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software")
+        print("\nFiles to upload from this folder:")
+        for release in PENDING_RELEASES:
+            print(f"  - {release['zip_filename']}")
 
 if __name__ == "__main__":
     main()
