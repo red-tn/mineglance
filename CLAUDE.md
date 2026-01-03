@@ -10,14 +10,29 @@
 
 4. **Git commit format** - Use descriptive commit messages with HEREDOC format. Include the robot emoji footer.
 
-5. **Update release publisher script after EVERY release** - After bumping version numbers or making significant updates:
-   - Update `F:\MINEGLANCE\roadmap\publish_releases.py` with new release info in `PENDING_RELEASES` array
-   - Create the ZIP file in `F:\MINEGLANCE\roadmap\` folder (e.g., `mineglance-extension-v1.0.5.zip`)
-   - User will run the Python script to publish to Supabase and upload ZIP to storage bucket
-   - This is AUTOMATIC behavior after any version bump commit
+5. **Version Bump Workflow** - When user asks to bump version or release a new version:
+
+   **For Chrome Extension:**
+   1. Update version in `F:\MINEGLANCE\extension\manifest.json`
+   2. Update `PENDING_RELEASES` in `F:\MINEGLANCE\roadmap\publish_releases.py`
+   3. Commit and push
+   4. Run: `cd F:\MINEGLANCE\roadmap && python publish_releases.py`
+
+   **For iOS App:**
+   1. Update version/buildNumber in `F:\MINEGLANCE\mobile\app.json`
+   2. Update `PENDING_RELEASES` in `F:\MINEGLANCE\roadmap\publish_releases.py`
+   3. Commit and push
+   4. Run: `cd F:\MINEGLANCE\roadmap && python publish_releases.py`
+   5. (Optional) Build with EAS: `powershell -File "F:\MINEGLANCE\mobile\build-ios.ps1"`
+
+   **The publish script automatically:**
+   - Creates ZIP from `extension/` folder for extension releases
+   - Downloads latest IPA from EAS for mobile releases
+   - Uploads files to Supabase Storage
+   - Publishes release info to database
+   - Marks new release as "latest" and unmarks old ones
 
    **Release script location:** `F:\MINEGLANCE\roadmap\publish_releases.py`
-   **ZIP files location:** `F:\MINEGLANCE\roadmap\`
    **Storage bucket:** `https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software`
 
 ## Project Structure
