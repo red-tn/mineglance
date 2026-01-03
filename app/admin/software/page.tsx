@@ -28,9 +28,7 @@ interface BugFix {
 const PLATFORMS = {
   extension: 'Chrome Extension',
   mobile_ios: 'Mobile iOS',
-  mobile_android: 'Mobile Android',
-  website: 'Website',
-  api: 'API'
+  mobile_android: 'Mobile Android'
 }
 
 const SEVERITY_LEVELS = {
@@ -240,8 +238,8 @@ export default function AdminSoftwarePage() {
       </div>
 
       {/* Latest Versions Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Object.entries(PLATFORMS).filter(([k]) => k !== 'api').map(([key, label]) => (
+      <div className="grid grid-cols-3 gap-4">
+        {Object.entries(PLATFORMS).map(([key, label]) => (
           <div key={key} className="glass-card rounded-xl p-4 border border-dark-border">
             <div className="text-sm text-dark-text-muted">{label}</div>
             <div className="text-2xl font-bold text-primary">
@@ -432,7 +430,7 @@ export default function AdminSoftwarePage() {
                         onChange={e => setReleaseForm(p => ({ ...p, platform: e.target.value }))}
                         className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary focus:border-transparent"
                       >
-                        {Object.entries(PLATFORMS).filter(([k]) => k !== 'api').map(([key, label]) => (
+                        {Object.entries(PLATFORMS).map(([key, label]) => (
                           <option key={key} value={key}>{label}</option>
                         ))}
                       </select>

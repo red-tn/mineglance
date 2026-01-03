@@ -47,16 +47,16 @@ STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public
 PENDING_RELEASES = [
     {
         "version": "1.0.5",
-        "platform": "Chrome Extension",
+        "platform": "extension",  # Valid: extension, mobile_ios, mobile_android, website
         "release_notes": "Complete dark mode overhaul matching website theme. Dark backgrounds (#0a0a0a) with green accent color (#38a169). Updated popup and settings pages with glass morphism effects and glow styling. Compact wallet cards with resizable wallet list.",
         "zip_filename": "mineglance-extension-v1.0.5.zip",
         "is_latest": True
     },
     {
-        "version": "1.0.4",
-        "platform": "iOS App",
-        "release_notes": "Dark mode theme matching extension. Updated splash screen, headers, and tab bar with dark backgrounds. Green notification accent color. Build 14.",
-        "zip_filename": "mineglance-ios-v1.0.4.ipa",  # Or TestFlight link
+        "version": "1.0.3",
+        "platform": "mobile_ios",  # Valid: extension, mobile_ios, mobile_android, website
+        "release_notes": "Pro Plus features, QR wallet sync, wallet reordering, pool data fixes. Build 13.",
+        "zip_filename": "application-b4ed8f0b-b4e5-4721-8545-7f8a37e79dcc.ipa",
         "is_latest": True
     }
 ]
