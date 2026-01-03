@@ -58,8 +58,8 @@ S3_BUCKET = os.getenv("s3_bucket", "software")
 STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public/software"
 
 # Retry settings for EAS builds
-EAS_RETRY_WAIT = 120  # 2 minutes between checks
-EAS_MAX_RETRIES = 30  # 60 minutes total (iOS builds take ~15-20 min)
+EAS_RETRY_WAIT = 30   # 30 seconds between checks
+EAS_MAX_RETRIES = 120 # 60 minutes total (iOS builds take ~15-20 min)
 
 # ============================================
 # PENDING RELEASES TO PUBLISH
@@ -84,14 +84,7 @@ EAS_MAX_RETRIES = 30  # 60 minutes total (iOS builds take ~15-20 min)
 # }
 
 PENDING_RELEASES = [
-    # Example:
-    # {
-    #     "version": "1.0.6",
-    #     "platform": "mobile_ios",  # or "extension", "mobile_android"
-    #     "release_notes": "Description of changes...",
-    #     "zip_filename": "mineglance-ios-v1.0.6.ipa",
-    #     "is_latest": True
-    # }
+    # Add releases here when ready to publish
 ]
 
 # ============================================
@@ -250,8 +243,9 @@ def build_and_download_from_eas(filename, platform, expected_version):
 
     # Step 3: Wait for build to complete
     for attempt in range(EAS_MAX_RETRIES):
-        elapsed_min = attempt * (EAS_RETRY_WAIT // 60)
-        print(f"  Checking EAS for {platform} v{expected_version}... ({elapsed_min} min elapsed)")
+        elapsed_sec = attempt * EAS_RETRY_WAIT
+        elapsed_str = f"{elapsed_sec // 60}m {elapsed_sec % 60}s" if elapsed_sec >= 60 else f"{elapsed_sec}s"
+        print(f"  Checking EAS for {platform} v{expected_version}... ({elapsed_str} elapsed)")
 
         eas_url, found_version, build_number = get_latest_eas_build(platform, expected_version)
 
@@ -280,7 +274,7 @@ def build_and_download_from_eas(filename, platform, expected_version):
                 return False
 
         if attempt < EAS_MAX_RETRIES - 1:
-            print(f"  [WAIT] Build not ready. Waiting {EAS_RETRY_WAIT // 60} minutes before retry...")
+            print(f"  [WAIT] Build not ready. Waiting {EAS_RETRY_WAIT} seconds...")
             time.sleep(EAS_RETRY_WAIT)
 
     print(f"  [ERROR] Build not available after {EAS_MAX_RETRIES * EAS_RETRY_WAIT // 60} minutes")
