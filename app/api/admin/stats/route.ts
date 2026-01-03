@@ -52,15 +52,15 @@ export async function GET(request: NextRequest) {
       .select('*')
       .gte('created_at', thirtyDaysAgo.toISOString())
 
-    // Get installation stats from license_activations
+    // Get installation stats from extension_installs (all users)
     const { data: installations } = await supabase
-      .from('license_activations')
+      .from('extension_installs')
       .select('*')
 
     const { data: recentInstalls } = await supabase
-      .from('license_activations')
+      .from('extension_installs')
       .select('*')
-      .gte('activated_at', sevenDaysAgo.toISOString())
+      .gte('created_at', sevenDaysAgo.toISOString())
 
     // Get alert stats
     const { data: recentAlerts } = await supabase
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
       const dateStr = date.toISOString().split('T')[0]
 
       const dayInstalls = (installations || []).filter(inst => {
-        const instDate = new Date(inst.activated_at).toISOString().split('T')[0]
+        const instDate = new Date(inst.created_at).toISOString().split('T')[0]
         return instDate === dateStr
       }).length
 
