@@ -85,6 +85,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.local.set({ discoveryCollapsed: isCollapsed });
   });
 
+  // Resize handle for wallet list
+  const resizeHandle = document.getElementById('resizeHandle');
+  let isResizing = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  // Load saved height
+  chrome.storage.local.get(['walletListHeight'], (result) => {
+    if (result.walletListHeight) {
+      walletList.style.maxHeight = result.walletListHeight + 'px';
+      document.body.style.height = 'auto';
+    }
+  });
+
+  resizeHandle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    startY = e.clientY;
+    startHeight = walletList.offsetHeight;
+    document.body.style.cursor = 'ns-resize';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    const deltaY = e.clientY - startY;
+    const newHeight = Math.min(Math.max(startHeight + deltaY, 100), 400);
+    walletList.style.maxHeight = newHeight + 'px';
+  });
+
+  document.addEventListener('mouseup', async () => {
+    if (isResizing) {
+      isResizing = false;
+      document.body.style.cursor = '';
+      // Save the new height
+      const currentHeight = parseInt(walletList.style.maxHeight) || 180;
+      await chrome.storage.local.set({ walletListHeight: currentHeight });
+    }
+  });
+
   // Tab buttons
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
