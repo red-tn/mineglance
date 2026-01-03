@@ -268,6 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Display Settings
   const showDiscovery = document.getElementById('showDiscovery');
+  const liteMode = document.getElementById('liteMode');
 
   // QR Code elements
   const qrCodeSection = document.getElementById('qrCodeSection');
@@ -301,7 +302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     electricityRate, currency, refreshInterval, profitDropThreshold, alertEmail, emailFrequency
   ];
   const autoSaveCheckboxes = [
-    notifyWorkerOffline, notifyProfitDrop, notifyBetterCoin, emailAlertsEnabled, showDiscovery
+    notifyWorkerOffline, notifyProfitDrop, notifyBetterCoin, emailAlertsEnabled, showDiscovery, liteMode
   ];
 
   // Debounce function for text inputs
@@ -320,6 +321,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Add listeners for checkboxes/selects (immediate save)
   autoSaveCheckboxes.forEach(checkbox => {
     checkbox.addEventListener('change', saveSettings);
+  });
+
+  // Apply lite mode immediately when toggled
+  liteMode.addEventListener('change', () => {
+    if (liteMode.checked) {
+      document.body.classList.add('lite-mode');
+    } else {
+      document.body.classList.remove('lite-mode');
+    }
   });
 
   // Electricity lookup
@@ -427,6 +437,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load display settings (default to true/enabled)
     showDiscovery.checked = data.settings?.showDiscovery !== false;
+    liteMode.checked = data.settings?.liteMode === true; // Default to dark (false)
+
+    // Apply lite mode immediately on load
+    if (liteMode.checked) {
+      document.body.classList.add('lite-mode');
+    }
 
     renderWallets();
     renderRigs();
@@ -1024,6 +1040,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       settings: {
         refreshInterval: parseInt(refreshInterval.value) || 5,
         showDiscovery: showDiscovery.checked,
+        liteMode: liteMode.checked,
         notifications: {
           workerOffline: notifyWorkerOffline.checked,
           profitDrop: notifyProfitDrop.checked,

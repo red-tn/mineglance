@@ -1,5 +1,7 @@
-// MineGlance Theme - Dark Mode (matches extension v1.0.5)
-export const colors = {
+// MineGlance Theme (matches extension v1.0.6)
+
+// Dark Mode Colors (default)
+export const darkColors = {
   // Primary (green accent)
   primary: '#38a169',
   primaryLight: '#48bb78',
@@ -37,6 +39,52 @@ export const colors = {
   // Glow effect color
   glow: 'rgba(56, 161, 105, 0.3)',
 };
+
+// Lite Mode Colors (light theme)
+export const liteColors = {
+  // Primary (green accent)
+  primary: '#38a169',
+  primaryLight: '#48bb78',
+
+  // Accent (green)
+  accent: '#38a169',
+  accentLight: '#48bb78',
+
+  // Status colors
+  danger: '#f56565',
+  warning: '#ecc94b',
+  success: '#38a169',
+
+  // Backgrounds (lite mode)
+  background: '#f7fafc',
+  cardBackground: '#ffffff',
+  cardHover: '#f1f5f9',
+
+  // Text (lite mode)
+  text: '#1a202c',
+  textMuted: '#4a5568',
+  textLight: '#718096',
+
+  // Borders (lite mode)
+  border: '#e2e8f0',
+
+  // Pro badge (green)
+  proBadgeStart: '#4ade80',
+  proBadgeEnd: '#38a169',
+
+  // Status indicators
+  online: '#38a169',
+  offline: '#f56565',
+
+  // Glow effect color
+  glow: 'rgba(56, 161, 105, 0.15)',
+};
+
+// Default export (dark mode for backwards compatibility)
+export const colors = darkColors;
+
+// Get theme colors based on lite mode setting
+export const getColors = (liteMode: boolean) => liteMode ? liteColors : darkColors;
 
 export const spacing = {
   xs: 4,

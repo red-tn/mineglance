@@ -193,6 +193,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         fetchDiscoveryData();
       }
 
+      // Apply Lite Mode if enabled (dark is default)
+      if (settings?.liteMode === true) {
+        document.body.classList.add('lite-mode');
+      }
+
       // Check if we have wallets
       if (!wallets || wallets.length === 0) {
         showNoWallets();

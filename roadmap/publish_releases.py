@@ -84,7 +84,20 @@ EAS_MAX_RETRIES = 120 # 60 minutes total (iOS builds take ~15-20 min)
 # }
 
 PENDING_RELEASES = [
-    # Add releases here when ready to publish
+    {
+        "version": "1.0.6",
+        "platform": "extension",
+        "release_notes": "Add Lite Mode (light theme) option in Display settings. Dark mode remains the default.",
+        "zip_filename": "mineglance-extension-v1.0.6.zip",
+        "is_latest": True
+    },
+    {
+        "version": "1.0.6",
+        "platform": "mobile_ios",
+        "release_notes": "Add Lite Mode (light theme) option in Display settings. Dark mode remains the default. Build 17.",
+        "zip_filename": "mineglance-ios-v1.0.6.ipa",
+        "is_latest": True
+    }
 ]
 
 # ============================================

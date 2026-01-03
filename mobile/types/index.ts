@@ -74,6 +74,7 @@ export interface Settings {
   currency: string;
   notifications: NotificationSettings;
   showDiscoveryCoins: boolean;
+  liteMode: boolean; // false = dark mode (default), true = light mode
 }
 
 export interface NotificationSettings {

@@ -11,6 +11,7 @@ interface SettingsStore extends Settings {
   setCurrency: (currency: string) => void;
   setNotifications: (settings: Partial<NotificationSettings>) => void;
   setShowDiscoveryCoins: (show: boolean) => void;
+  setLiteMode: (enabled: boolean) => void;
   loadFromStorage: () => Promise<void>;
   saveToStorage: () => Promise<void>;
   importSettings: (settings: Partial<Settings>) => void;
@@ -30,6 +31,7 @@ const defaultSettings: Settings = {
     betterCoin: false,
   },
   showDiscoveryCoins: true,
+  liteMode: false, // Dark mode by default
 };
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
@@ -72,6 +74,11 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     get().saveToStorage();
   },
 
+  setLiteMode: (enabled: boolean) => {
+    set({ liteMode: enabled });
+    get().saveToStorage();
+  },
+
   loadFromStorage: async () => {
     try {
       const stored = await AsyncStorage.getItem('settings');
@@ -100,6 +107,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         currency: state.currency,
         notifications: state.notifications,
         showDiscoveryCoins: state.showDiscoveryCoins,
+        liteMode: state.liteMode,
       };
       await AsyncStorage.setItem('settings', JSON.stringify(toSave));
     } catch (error) {

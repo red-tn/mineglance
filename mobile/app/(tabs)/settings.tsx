@@ -252,6 +252,19 @@ export default function SettingsScreen() {
 
         <View style={styles.card}>
           <View style={styles.switchRow}>
+            <View>
+              <Text style={styles.label}>Lite Mode (Light Theme)</Text>
+              <Text style={styles.helpTextSmall}>Dark mode is the default</Text>
+            </View>
+            <Switch
+              value={settings.liteMode}
+              onValueChange={(value) => settings.setLiteMode(value)}
+              trackColor={{ false: colors.border, true: colors.accentLight }}
+              thumbColor={settings.liteMode ? colors.accent : '#f4f3f4'}
+            />
+          </View>
+
+          <View style={styles.switchRow}>
             <Text style={styles.label}>Show Discovery Coins</Text>
             <Switch
               value={settings.showDiscoveryCoins}
@@ -457,6 +470,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textMuted,
     marginTop: spacing.sm,
+  },
+  helpTextSmall: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   switchRow: {
     flexDirection: 'row',

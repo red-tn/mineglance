@@ -19,6 +19,20 @@
   --glow: 0 0 20px rgba(56, 161, 105, 0.3);
 }
 
+/* Lite Mode (Light Theme) */
+body.lite-mode {
+  --bg: #f7fafc;
+  --card-bg: #ffffff;
+  --card-hover: #f1f5f9;
+  --text: #1a202c;
+  --text-muted: #4a5568;
+  --text-dim: #718096;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+  --glow: 0 0 20px rgba(56, 161, 105, 0.15);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
