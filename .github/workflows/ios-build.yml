@@ -40,6 +40,11 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Configure EAS project
+        run: |
+          echo "Configuring EAS project..."
+          eas init --id 806d6110-a544-4eb1-bb6e-d3436e4d594c --non-interactive || true
+
       - name: Build iOS app locally
         run: |
           echo "Building iOS app v${{ inputs.version }}..."
