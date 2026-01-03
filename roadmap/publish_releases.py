@@ -39,6 +39,16 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Node.js path for Windows (add to PATH for subprocess)
+NODEJS_PATH = r"C:\Program Files\nodejs"
+
+def get_env_with_nodejs():
+    """Get environment dict with Node.js in PATH for subprocess calls"""
+    env = os.environ.copy()
+    if os.name == 'nt':  # Windows
+        env['PATH'] = NODEJS_PATH + os.pathsep + env.get('PATH', '')
+    return env
+
 # ============================================
 # CONFIGURATION - Load from .env file
 # ============================================
@@ -160,13 +170,15 @@ def trigger_eas_build(platform):
     print(f"  [EAS] This will take 15-20 minutes. Please wait...")
 
     try:
-        # Run the EAS build command
+        # Run the EAS build command (use string for Windows shell=True)
+        cmd = f'npx eas build --platform {platform} --profile production --non-interactive'
         result = subprocess.run(
-            ['npx', 'eas', 'build', '--platform', platform, '--profile', 'production', '--non-interactive'],
+            cmd,
             capture_output=True,
             text=True,
             cwd=mobile_dir,
-            shell=True  # Required on Windows
+            shell=True,  # Required on Windows
+            env=get_env_with_nodejs()
         )
 
         if result.returncode != 0:
@@ -191,12 +203,15 @@ def submit_to_app_store(platform):
     print(f"  [EAS] Submitting to {store_name}...")
 
     try:
+        # Use string command for Windows shell=True compatibility
+        cmd = f'npx eas submit --platform {platform} --latest --non-interactive'
         result = subprocess.run(
-            ['npx', 'eas', 'submit', '--platform', platform, '--latest', '--non-interactive'],
+            cmd,
             capture_output=True,
             text=True,
             cwd=mobile_dir,
-            shell=True  # Required on Windows
+            shell=True,  # Required on Windows
+            env=get_env_with_nodejs()
         )
 
         if result.returncode != 0:
@@ -222,12 +237,15 @@ def get_latest_eas_build(platform, expected_version=None):
         # Run from mobile directory where eas.json is located
         mobile_dir = os.path.join(os.path.dirname(__file__), '..', 'mobile')
 
+        # Use string command for Windows shell=True compatibility
+        cmd = f'npx eas build:list --platform {platform} --limit 1 --json --non-interactive'
         result = subprocess.run(
-            ['npx', 'eas', 'build:list', '--platform', platform, '--limit', '1', '--json', '--non-interactive'],
+            cmd,
             capture_output=True,
             text=True,
             cwd=mobile_dir,
-            shell=True  # Required on Windows
+            shell=True,  # Required on Windows
+            env=get_env_with_nodejs()
         )
 
         if result.returncode != 0:
