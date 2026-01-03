@@ -2,7 +2,7 @@
   "expo": {
     "name": "MineGlance",
     "slug": "mineglance",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -30,7 +30,7 @@
       "entitlements": {
         "aps-environment": "production"
       },
-      "buildNumber": "18"
+      "buildNumber": "20"
     },
     "android": {
       "adaptiveIcon": {
