@@ -201,17 +201,17 @@ BUILD_MAX_RETRIES = 80  # 40 minutes total (GitHub Actions iOS builds take ~20-3
 
 PENDING_RELEASES = [
     {
-        "version": "1.0.6",
+        "version": "1.0.7",
         "platform": "extension",
-        "release_notes": "Add Lite Mode (light theme) in settings. Compact profit summary. Fixed wallet list to not cover Minable Coins section.",
-        "zip_filename": "mineglance-extension-v1.0.6.zip",
+        "release_notes": "Bug fixes and improvements. License verification updates.",
+        "zip_filename": "mineglance-extension-v1.0.7.zip",
         "is_latest": True
     },
     {
-        "version": "1.0.6",
+        "version": "1.0.7",
         "platform": "mobile_ios",
-        "release_notes": "Add Lite Mode (light theme) option in Display settings. Dark mode remains the default. Build 17.",
-        "zip_filename": "mineglance-ios-v1.0.6.ipa",
+        "release_notes": "Fix theme switching - dark/lite mode now works properly. Add proper tab bar icons (speedometer, wallet, settings). License verification on app startup. Build 20.",
+        "zip_filename": "mineglance-ios-v1.0.7.ipa",
         "is_latest": True
     }
 ]
@@ -240,6 +240,47 @@ def get_extension_version():
             return manifest.get('version', 'unknown')
     except Exception as e:
         print(f"  [WARN] Could not read manifest: {e}")
+        return None
+
+def get_ios_build_number():
+    """Read iOS build number from app.json"""
+    app_json_path = os.path.join(os.path.dirname(__file__), '..', 'mobile', 'app.json')
+    try:
+        with open(app_json_path, 'r') as f:
+            config = json.load(f)
+            return int(config.get('expo', {}).get('ios', {}).get('buildNumber', '1'))
+    except Exception as e:
+        print(f"  [WARN] Could not read app.json: {e}")
+        return None
+
+def increment_ios_build_number():
+    """Increment iOS build number in app.json and commit"""
+    app_json_path = os.path.join(os.path.dirname(__file__), '..', 'mobile', 'app.json')
+    try:
+        with open(app_json_path, 'r') as f:
+            config = json.load(f)
+
+        current_build = int(config.get('expo', {}).get('ios', {}).get('buildNumber', '1'))
+        new_build = current_build + 1
+
+        config['expo']['ios']['buildNumber'] = str(new_build)
+
+        with open(app_json_path, 'w') as f:
+            json.dump(config, f, indent=2)
+            f.write('\n')
+
+        print(f"  [OK] Incremented iOS build number: {current_build} -> {new_build}")
+
+        # Git commit and push
+        repo_dir = os.path.join(os.path.dirname(__file__), '..')
+        subprocess.run(['git', 'add', 'mobile/app.json'], cwd=repo_dir, capture_output=True)
+        subprocess.run(['git', 'commit', '-m', f'Bump iOS build number to {new_build}'], cwd=repo_dir, capture_output=True)
+        subprocess.run(['git', 'push'], cwd=repo_dir, capture_output=True)
+        print(f"  [OK] Committed and pushed build number change")
+
+        return new_build
+    except Exception as e:
+        print(f"  [ERROR] Could not increment build number: {e}")
         return None
 
 def create_extension_zip(filename=None):
@@ -541,8 +582,13 @@ def publish_release(release):
     if release.get("is_latest"):
         unset_latest_for_platform(platform)
 
-    # Build download URL
-    download_url = f"{STORAGE_URL}/{release['zip_filename']}"
+    # Build download URL (iOS/Android don't have direct downloads - they're on app stores)
+    if platform == 'mobile_ios':
+        download_url = "https://testflight.apple.com/join/YOUR_LINK"  # TestFlight
+    elif platform == 'mobile_android':
+        download_url = "https://play.google.com/store/apps/details?id=com.mineglance.app"
+    else:
+        download_url = f"{STORAGE_URL}/{release['zip_filename']}"
 
     # Insert new release
     url = f"{SUPABASE_URL}/rest/v1/software_releases"
@@ -624,12 +670,23 @@ def main():
                 print(f"  [SKIP] iOS v{release['version']} already in database")
                 continue
 
+            # Increment build number before building
+            print(f"  [iOS] Incrementing build number...")
+            new_build = increment_ios_build_number()
+            if not new_build:
+                print(f"  [ERROR] Failed to increment build number, skipping iOS release")
+                continue
+
             # Build iOS using GitHub Actions
             if build_ios_with_github_actions(release['version'], release['release_notes']):
                 # GitHub Actions handles TestFlight submission
-                published += 1
                 submitted += 1
-                print(f"  [OK] iOS v{release['version']} built and submitted to TestFlight!")
+                print(f"  [OK] iOS v{release['version']} (build {new_build}) built and submitted to TestFlight!")
+
+                # Publish to database (iOS doesn't have a download URL - it's on TestFlight)
+                release['zip_filename'] = f"mineglance-ios-v{release['version']}-build{new_build}.ipa"
+                if publish_release(release):
+                    published += 1
             else:
                 print(f"  [ERROR] iOS build failed")
             continue
