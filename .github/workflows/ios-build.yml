@@ -42,11 +42,19 @@ jobs:
 
       - name: Verify config files
         run: |
-          echo "Verifying app.json has bundleIdentifier..."
-          cat app.json | grep bundleIdentifier
+          echo "=== app.json ==="
+          cat app.json
           echo ""
-          echo "Verifying eas.json exists..."
+          echo "=== eas.json ==="
           cat eas.json
+
+      - name: Link EAS project
+        run: |
+          # Link project WITHOUT --force to preserve existing config
+          eas init --id 806d6110-a544-4eb1-bb6e-d3436e4d594c --non-interactive
+          echo ""
+          echo "=== app.json after init ==="
+          cat app.json
 
       - name: Build iOS app
         run: |
