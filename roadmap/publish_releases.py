@@ -4,12 +4,9 @@ MineGlance Release Publisher
 This script builds, uploads, and publishes software releases automatically.
 
 For iOS/Android:
-  - Triggers EAS build if no matching build exists
-  - Waits up to 60 minutes for build to complete
-  - Downloads IPA/APK from EAS
-  - Uploads to Supabase Storage
+  - Triggers GitHub Actions workflow (builds on free macOS runner)
+  - Waits for workflow to complete and submit to TestFlight
   - Publishes to software_releases table
-  - Cleans up local files
 
 For Extension:
   - Creates ZIP from extension/ folder
@@ -49,6 +46,109 @@ def get_env_with_nodejs():
         env['PATH'] = NODEJS_PATH + os.pathsep + env.get('PATH', '')
     return env
 
+def trigger_github_workflow(version, release_notes):
+    """Trigger GitHub Actions workflow for iOS build"""
+    if not GITHUB_TOKEN:
+        print("  [ERROR] GitHub token not configured!")
+        print("  Add github_token to your .env file")
+        return None
+
+    url = f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/{GITHUB_WORKFLOW_FILE}/dispatches"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+    data = {
+        "ref": "main",
+        "inputs": {
+            "version": version,
+            "release_notes": release_notes
+        }
+    }
+
+    print(f"  [GitHub] Triggering iOS build workflow...")
+    response = requests.post(url, headers=headers, json=data)
+
+    if response.status_code == 204:
+        print(f"  [OK] Workflow triggered successfully!")
+        # Get the workflow run ID (need to poll for it)
+        time.sleep(3)  # Wait for GitHub to create the run
+        return get_latest_workflow_run()
+    else:
+        print(f"  [ERROR] Failed to trigger workflow: {response.status_code}")
+        print(f"         {response.text}")
+        return None
+
+def get_latest_workflow_run():
+    """Get the most recent workflow run ID"""
+    url = f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/workflows/{GITHUB_WORKFLOW_FILE}/runs"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+    params = {"per_page": 1}
+
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+        runs = response.json().get("workflow_runs", [])
+        if runs:
+            return runs[0]["id"]
+    return None
+
+def get_workflow_run_status(run_id):
+    """Get the status of a workflow run"""
+    url = f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/actions/runs/{run_id}"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        return data.get("status"), data.get("conclusion")
+    return None, None
+
+def wait_for_workflow_completion(run_id):
+    """Wait for a GitHub Actions workflow to complete"""
+    print(f"  [GitHub] Waiting for workflow to complete (run #{run_id})...")
+    print(f"  [GitHub] This typically takes 20-30 minutes for iOS builds...")
+
+    for attempt in range(BUILD_MAX_RETRIES):
+        elapsed_sec = attempt * BUILD_RETRY_WAIT
+        elapsed_str = f"{elapsed_sec // 60}m {elapsed_sec % 60}s" if elapsed_sec >= 60 else f"{elapsed_sec}s"
+
+        status, conclusion = get_workflow_run_status(run_id)
+
+        if status == "completed":
+            if conclusion == "success":
+                print(f"  [OK] Workflow completed successfully! ({elapsed_str})")
+                return True
+            else:
+                print(f"  [ERROR] Workflow failed with conclusion: {conclusion}")
+                return False
+
+        print(f"  [WAIT] Status: {status} ({elapsed_str} elapsed)")
+        time.sleep(BUILD_RETRY_WAIT)
+
+    print(f"  [ERROR] Workflow did not complete within {BUILD_MAX_RETRIES * BUILD_RETRY_WAIT // 60} minutes")
+    return False
+
+def build_ios_with_github_actions(version, release_notes):
+    """Build iOS app using GitHub Actions and wait for completion"""
+    print(f"  [GitHub] Starting iOS build via GitHub Actions...")
+
+    # Trigger the workflow
+    run_id = trigger_github_workflow(version, release_notes)
+    if not run_id:
+        return False
+
+    # Wait for completion
+    return wait_for_workflow_completion(run_id)
+
 # ============================================
 # CONFIGURATION - Load from .env file
 # ============================================
@@ -67,9 +167,15 @@ S3_BUCKET = os.getenv("s3_bucket", "software")
 # Supabase storage bucket URL base
 STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public/software"
 
-# Retry settings for EAS builds
-EAS_RETRY_WAIT = 30   # 30 seconds between checks
-EAS_MAX_RETRIES = 120 # 60 minutes total (iOS builds take ~15-20 min)
+# GitHub Actions config
+GITHUB_TOKEN = os.getenv("github_token")
+GITHUB_REPO_OWNER = os.getenv("github_repo_owner", "red-tn")
+GITHUB_REPO_NAME = os.getenv("github_repo_name", "mineglance")
+GITHUB_WORKFLOW_FILE = "ios-build.yml"
+
+# Retry settings for builds
+BUILD_RETRY_WAIT = 30   # 30 seconds between checks
+BUILD_MAX_RETRIES = 80  # 40 minutes total (GitHub Actions iOS builds take ~20-30 min)
 
 # ============================================
 # PENDING RELEASES TO PUBLISH
@@ -512,13 +618,27 @@ def main():
         eas_platform = None
         already_in_db = check_existing_release(release['platform'], release['version'])
 
-        # For mobile builds, check if we should just submit to TestFlight
-        if release['platform'] in ['mobile_ios', 'mobile_android']:
-            eas_platform = 'ios' if release['platform'] == 'mobile_ios' else 'android'
-
-            # If already in DB, just try to submit to app store
+        # For iOS builds, use GitHub Actions (free macOS runners)
+        if release['platform'] == 'mobile_ios':
             if already_in_db:
-                print(f"  [INFO] Already in database, checking for TestFlight submission...")
+                print(f"  [SKIP] iOS v{release['version']} already in database")
+                continue
+
+            # Build iOS using GitHub Actions
+            if build_ios_with_github_actions(release['version'], release['release_notes']):
+                # GitHub Actions handles TestFlight submission
+                published += 1
+                submitted += 1
+                print(f"  [OK] iOS v{release['version']} built and submitted to TestFlight!")
+            else:
+                print(f"  [ERROR] iOS build failed")
+            continue
+
+        # For Android builds, still use EAS (for now)
+        if release['platform'] == 'mobile_android':
+            eas_platform = 'android'
+            if already_in_db:
+                print(f"  [INFO] Already in database, checking for Play Store submission...")
                 eas_url, found_version, _ = get_latest_eas_build(eas_platform, release['version'])
                 if eas_url:
                     print(f"  [INFO] Found matching build on EAS, submitting to app store...")
@@ -532,8 +652,8 @@ def main():
         if release['platform'] == 'extension':
             if create_extension_zip(filename):
                 file_ready = True
-        elif eas_platform:
-            if build_and_download_from_eas(filename, eas_platform, release['version']):
+        elif release['platform'] == 'mobile_android':
+            if build_and_download_from_eas(filename, 'android', release['version']):
                 file_ready = True
         else:
             # Check if file exists locally
