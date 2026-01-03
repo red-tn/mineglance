@@ -1,13 +1,26 @@
 """
 MineGlance Release Publisher
 ============================
-This script publishes software releases to the Supabase database
-AND uploads ZIP files to Supabase Storage automatically.
+This script builds, uploads, and publishes software releases automatically.
+
+For iOS/Android:
+  - Triggers EAS build if no matching build exists
+  - Waits up to 60 minutes for build to complete
+  - Downloads IPA/APK from EAS
+  - Uploads to Supabase Storage
+  - Publishes to software_releases table
+  - Cleans up local files
+
+For Extension:
+  - Creates ZIP from extension/ folder
+  - Uploads to Supabase Storage
+  - Publishes to software_releases table
 
 Instructions:
 1. Install dependencies: pip install python-dotenv boto3 requests
 2. Create a .env file in this folder (see .env.example)
-3. Run: python publish_releases.py
+3. Update PENDING_RELEASES with the new version info
+4. Run: python publish_releases.py
 
 Last Updated: 2026-01-03
 """
@@ -45,8 +58,8 @@ S3_BUCKET = os.getenv("s3_bucket", "software")
 STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public/software"
 
 # Retry settings for EAS builds
-EAS_RETRY_WAIT = 300  # 5 minutes
-EAS_MAX_RETRIES = 6   # 30 minutes total
+EAS_RETRY_WAIT = 120  # 2 minutes between checks
+EAS_MAX_RETRIES = 30  # 60 minutes total (iOS builds take ~15-20 min)
 
 # ============================================
 # PENDING RELEASES TO PUBLISH
@@ -55,7 +68,8 @@ EAS_MAX_RETRIES = 6   # 30 minutes total
 # Add releases here when ready to publish
 # The script will:
 #   - Auto-create ZIP from extension/ folder for extension platform
-#   - Auto-download latest IPA from EAS for mobile_ios platform
+#   - Auto-trigger EAS build and wait for completion (mobile_ios/android)
+#   - Auto-download IPA/APK from EAS after build completes
 #   - Upload to Supabase Storage
 #   - Publish to software_releases table
 #   - Clean up local files after successful upload
@@ -70,13 +84,14 @@ EAS_MAX_RETRIES = 6   # 30 minutes total
 # }
 
 PENDING_RELEASES = [
-    {
-        "version": "1.0.5",
-        "platform": "mobile_ios",
-        "release_notes": "Fix back button showing '(TABS)' on wallet detail screen. Build 15.",
-        "zip_filename": "mineglance-ios-v1.0.5.ipa",
-        "is_latest": True
-    }
+    # Example:
+    # {
+    #     "version": "1.0.6",
+    #     "platform": "mobile_ios",  # or "extension", "mobile_android"
+    #     "release_notes": "Description of changes...",
+    #     "zip_filename": "mineglance-ios-v1.0.6.ipa",
+    #     "is_latest": True
+    # }
 ]
 
 # ============================================
@@ -131,6 +146,37 @@ def create_extension_zip(filename=None):
         print(f"  [ERROR] Failed to create ZIP: {e}")
         return None
 
+def trigger_eas_build(platform):
+    """Trigger a new EAS build for iOS or Android"""
+    mobile_dir = os.path.join(os.path.dirname(__file__), '..', 'mobile')
+
+    print(f"  [EAS] Starting {platform} build...")
+    print(f"  [EAS] This will take 15-20 minutes. Please wait...")
+
+    try:
+        # Run the EAS build command
+        result = subprocess.run(
+            ['npx', 'eas', 'build', '--platform', platform, '--profile', 'production', '--non-interactive'],
+            capture_output=True,
+            text=True,
+            cwd=mobile_dir,
+            shell=True  # Required on Windows
+        )
+
+        if result.returncode != 0:
+            print(f"  [ERROR] EAS build command failed!")
+            print(f"  STDOUT: {result.stdout[:500] if result.stdout else 'None'}")
+            print(f"  STDERR: {result.stderr[:500] if result.stderr else 'None'}")
+            return False
+
+        print(f"  [EAS] Build submitted successfully!")
+        print(f"  [EAS] Waiting for build to complete...")
+        return True
+
+    except Exception as e:
+        print(f"  [ERROR] Failed to trigger EAS build: {e}")
+        return False
+
 def get_latest_eas_build(platform, expected_version=None):
     """Get the latest EAS build URL for a platform (ios or android)"""
     try:
@@ -179,16 +225,33 @@ def get_latest_eas_build(platform, expected_version=None):
         print(f"  [WARN] Could not get EAS build: {e}")
         return None, None, None
 
-def download_from_eas_with_retry(filename, platform, expected_version):
-    """Download IPA/APK from Expo EAS with retry logic"""
+def build_and_download_from_eas(filename, platform, expected_version):
+    """Trigger EAS build, wait for completion, and download IPA/APK"""
     filepath = os.path.join(os.path.dirname(__file__), filename)
 
     if os.path.exists(filepath):
         print(f"  [SKIP] File already exists: {filename}")
         return True
 
+    # Step 1: Check if matching build already exists
+    print(f"  Checking for existing EAS build...")
+    eas_url, found_version, build_number = get_latest_eas_build(platform, expected_version)
+
+    if not eas_url:
+        # Step 2: No matching build - trigger a new one
+        print(f"  [EAS] No matching build found. Starting new build...")
+        if not trigger_eas_build(platform):
+            print(f"  [ERROR] Failed to start EAS build")
+            return False
+
+        # Give EAS a moment to register the build
+        print(f"  [WAIT] Waiting 30 seconds for build to register...")
+        time.sleep(30)
+
+    # Step 3: Wait for build to complete
     for attempt in range(EAS_MAX_RETRIES):
-        print(f"  Checking EAS for {platform} v{expected_version}... (attempt {attempt + 1}/{EAS_MAX_RETRIES})")
+        elapsed_min = attempt * (EAS_RETRY_WAIT // 60)
+        print(f"  Checking EAS for {platform} v{expected_version}... ({elapsed_min} min elapsed)")
 
         eas_url, found_version, build_number = get_latest_eas_build(platform, expected_version)
 
@@ -220,7 +283,7 @@ def download_from_eas_with_retry(filename, platform, expected_version):
             print(f"  [WAIT] Build not ready. Waiting {EAS_RETRY_WAIT // 60} minutes before retry...")
             time.sleep(EAS_RETRY_WAIT)
 
-    print(f"  [ERROR] Build not available after {EAS_MAX_RETRIES} attempts")
+    print(f"  [ERROR] Build not available after {EAS_MAX_RETRIES * EAS_RETRY_WAIT // 60} minutes")
     return False
 
 def upload_to_storage(filename):
@@ -394,7 +457,7 @@ def main():
                 file_ready = True
         elif release['platform'] in ['mobile_ios', 'mobile_android']:
             eas_platform = 'ios' if release['platform'] == 'mobile_ios' else 'android'
-            if download_from_eas_with_retry(filename, eas_platform, release['version']):
+            if build_and_download_from_eas(filename, eas_platform, release['version']):
                 file_ready = True
         else:
             # Check if file exists locally
