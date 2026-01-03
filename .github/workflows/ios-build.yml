@@ -40,15 +40,20 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build iOS app locally
-        env:
-          EAS_NO_VCS: "1"
+      - name: Configure and Build iOS app
         run: |
           echo "Building iOS app v${{ inputs.version }}..."
-          # Ensure app.json has correct project ID
-          echo "Checking app.json..."
-          cat app.json | head -20
+
+          # Initialize EAS project with force
+          echo "Initializing EAS project..."
+          eas init --id 806d6110-a544-4eb1-bb6e-d3436e4d594c --force --non-interactive
+
+          # Verify the eas.json
+          echo "eas.json after init:"
+          cat eas.json
+
           # Run the build
+          echo "Starting local build..."
           eas build --platform ios --profile production --local --non-interactive --output ./build.ipa
 
       - name: Submit to TestFlight
