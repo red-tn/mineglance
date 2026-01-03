@@ -87,7 +87,7 @@ PENDING_RELEASES = [
     {
         "version": "1.0.6",
         "platform": "extension",
-        "release_notes": "Add Lite Mode (light theme) option in Display settings. Dark mode remains the default.",
+        "release_notes": "Add Lite Mode (light theme) in settings. Compact profit summary. Fixed wallet list to not cover Minable Coins section.",
         "zip_filename": "mineglance-extension-v1.0.6.zip",
         "is_latest": True
     },

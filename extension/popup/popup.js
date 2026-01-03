@@ -110,7 +110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('mousemove', (e) => {
     if (!isResizing) return;
     const deltaY = e.clientY - startY;
-    const newHeight = Math.min(Math.max(startHeight + deltaY, 100), 400);
+    // Limit to 220px max so coin discovery section stays visible
+    const newHeight = Math.min(Math.max(startHeight + deltaY, 100), 220);
     walletList.style.maxHeight = newHeight + 'px';
   });
 
