@@ -100,16 +100,36 @@ body {
   cursor: pointer;
   padding: 8px;
   border-radius: 8px;
-  color: white;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
 }
 
+.icon-btn svg {
+  stroke: #ffffff;
+  width: 18px;
+  height: 18px;
+}
+
 .icon-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   transform: scale(1.05);
+}
+
+/* Lite mode icon button */
+body.lite-mode .icon-btn {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1a202c;
+}
+
+body.lite-mode .icon-btn svg {
+  stroke: #1a202c;
+}
+
+body.lite-mode .icon-btn:hover {
+  background: rgba(0, 0, 0, 0.15);
 }
 
 /* Dashboard Layout */
