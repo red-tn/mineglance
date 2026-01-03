@@ -43,7 +43,9 @@ jobs:
       - name: Configure EAS project
         run: |
           echo "Configuring EAS project..."
-          eas init --id 806d6110-a544-4eb1-bb6e-d3436e4d594c --non-interactive || true
+          eas init --id 806d6110-a544-4eb1-bb6e-d3436e4d594c --force --non-interactive || echo "EAS init failed, continuing..."
+          echo "Verifying eas.json after init:"
+          cat eas.json || echo "No eas.json found"
 
       - name: Build iOS app locally
         run: |
