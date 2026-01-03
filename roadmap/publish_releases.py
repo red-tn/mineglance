@@ -16,6 +16,7 @@ import os
 import subprocess
 import json
 import shutil
+import time
 import requests
 import boto3
 from botocore.config import Config
@@ -43,6 +44,10 @@ S3_BUCKET = os.getenv("s3_bucket", "software")
 # Supabase storage bucket URL base
 STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public/software"
 
+# Retry settings for EAS builds
+EAS_RETRY_WAIT = 300  # 5 minutes
+EAS_MAX_RETRIES = 6   # 30 minutes total
+
 # ============================================
 # PENDING RELEASES TO PUBLISH
 # Claude Code updates this section after version changes
@@ -53,6 +58,7 @@ STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public
 #   - Auto-download latest IPA from EAS for mobile_ios platform
 #   - Upload to Supabase Storage
 #   - Publish to software_releases table
+#   - Clean up local files after successful upload
 #
 # Example:
 # {
@@ -125,7 +131,7 @@ def create_extension_zip(filename=None):
         print(f"  [ERROR] Failed to create ZIP: {e}")
         return None
 
-def get_latest_eas_build(platform):
+def get_latest_eas_build(platform, expected_version=None):
     """Get the latest EAS build URL for a platform (ios or android)"""
     try:
         # Run from mobile directory where eas.json is located
@@ -140,8 +146,8 @@ def get_latest_eas_build(platform):
         )
 
         if result.returncode != 0:
-            print(f"  [WARN] EAS command failed: {result.stderr}")
-            return None
+            print(f"  [WARN] EAS command failed: {result.stderr.strip()}")
+            return None, None, None
 
         builds = json.loads(result.stdout)
         if builds and len(builds) > 0:
@@ -149,48 +155,73 @@ def get_latest_eas_build(platform):
             artifact_url = build.get('artifacts', {}).get('buildUrl')
             version = build.get('appVersion', 'unknown')
             build_number = build.get('appBuildVersion', '')
-            print(f"  [EAS] Found build: v{version} ({build_number})")
-            return artifact_url
+            status = build.get('status', 'unknown')
 
-        return None
+            print(f"  [EAS] Latest build: v{version} (build {build_number}) - {status}")
+
+            # Check if build is finished
+            if status != 'FINISHED':
+                print(f"  [WAIT] Build not finished yet (status: {status})")
+                return None, version, build_number
+
+            # Check if version matches expected
+            if expected_version and version != expected_version:
+                print(f"  [WAIT] Expected v{expected_version}, found v{version}")
+                return None, version, build_number
+
+            return artifact_url, version, build_number
+
+        return None, None, None
+    except json.JSONDecodeError as e:
+        print(f"  [WARN] Could not parse EAS response: {e}")
+        return None, None, None
     except Exception as e:
         print(f"  [WARN] Could not get EAS build: {e}")
-        return None
+        return None, None, None
 
-def download_from_eas(eas_url, filename, platform=None):
-    """Download IPA/APK from Expo EAS"""
+def download_from_eas_with_retry(filename, platform, expected_version):
+    """Download IPA/APK from Expo EAS with retry logic"""
     filepath = os.path.join(os.path.dirname(__file__), filename)
-
-    # If no URL provided but platform specified, try to get latest from EAS
-    if not eas_url and platform:
-        print(f"  Checking EAS for latest {platform} build...")
-        eas_url = get_latest_eas_build(platform)
-        if not eas_url:
-            print(f"  [SKIP] No EAS build URL available")
-            return False
 
     if os.path.exists(filepath):
         print(f"  [SKIP] File already exists: {filename}")
         return True
 
-    if not eas_url:
-        print(f"  [SKIP] No download URL provided")
-        return False
+    for attempt in range(EAS_MAX_RETRIES):
+        print(f"  Checking EAS for {platform} v{expected_version}... (attempt {attempt + 1}/{EAS_MAX_RETRIES})")
 
-    try:
-        print(f"  Downloading from EAS: {eas_url}")
-        response = requests.get(eas_url, stream=True)
-        response.raise_for_status()
+        eas_url, found_version, build_number = get_latest_eas_build(platform, expected_version)
 
-        with open(filepath, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+        if eas_url:
+            # Found the right build, download it
+            try:
+                print(f"  Downloading from EAS...")
+                response = requests.get(eas_url, stream=True)
+                response.raise_for_status()
 
-        print(f"  [OK] Downloaded: {filename}")
-        return True
-    except Exception as e:
-        print(f"  [ERROR] Failed to download from EAS: {e}")
-        return False
+                total_size = int(response.headers.get('content-length', 0))
+                downloaded = 0
+
+                with open(filepath, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total_size > 0:
+                            pct = int(downloaded * 100 / total_size)
+                            print(f"\r  Downloading: {pct}%", end='', flush=True)
+
+                print(f"\n  [OK] Downloaded: {filename}")
+                return True
+            except Exception as e:
+                print(f"  [ERROR] Failed to download: {e}")
+                return False
+
+        if attempt < EAS_MAX_RETRIES - 1:
+            print(f"  [WAIT] Build not ready. Waiting {EAS_RETRY_WAIT // 60} minutes before retry...")
+            time.sleep(EAS_RETRY_WAIT)
+
+    print(f"  [ERROR] Build not available after {EAS_MAX_RETRIES} attempts")
+    return False
 
 def upload_to_storage(filename):
     """Upload a file to Supabase Storage via S3 API"""
@@ -220,6 +251,18 @@ def upload_to_storage(filename):
     except Exception as e:
         print(f"  [ERROR] Failed to upload {filename}: {e}")
         return False
+
+def cleanup_local_file(filename):
+    """Delete local file after successful upload"""
+    filepath = os.path.join(os.path.dirname(__file__), filename)
+    try:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            print(f"  [CLEANUP] Deleted local file: {filename}")
+            return True
+    except Exception as e:
+        print(f"  [WARN] Could not delete {filename}: {e}")
+    return False
 
 def check_existing_release(platform, version):
     """Check if release already exists using Supabase REST API"""
@@ -324,8 +367,9 @@ def main():
     # Check S3 credentials
     has_s3 = S3_KEY_ID and S3_SECRET and S3_ENDPOINT
     if not has_s3:
-        print("\nWARNING: S3 credentials not configured - files will not be uploaded automatically")
+        print("\nERROR: S3 credentials not configured!")
         print("Add to .env: s3_endpoint, s3_key_id, s3_secret, s3_bucket")
+        return
 
     print(f"\nConnecting to Supabase REST API...")
     print(f"URL: {SUPABASE_URL}")
@@ -334,41 +378,56 @@ def main():
 
     published = 0
     uploaded = 0
+    cleaned = 0
 
     for release in PENDING_RELEASES:
-        print(f"\n- {release['platform']} v{release['version']}")
+        print(f"\n{'=' * 40}")
+        print(f"Processing: {release['platform']} v{release['version']}")
+        print(f"{'=' * 40}")
 
-        # Auto-create extension ZIP
+        filename = release['zip_filename']
+        file_ready = False
+
+        # Step 1: Get the file (create ZIP or download IPA)
         if release['platform'] == 'extension':
-            create_extension_zip(release['zip_filename'])
+            if create_extension_zip(filename):
+                file_ready = True
+        elif release['platform'] in ['mobile_ios', 'mobile_android']:
+            eas_platform = 'ios' if release['platform'] == 'mobile_ios' else 'android'
+            if download_from_eas_with_retry(filename, eas_platform, release['version']):
+                file_ready = True
+        else:
+            # Check if file exists locally
+            filepath = os.path.join(os.path.dirname(__file__), filename)
+            if os.path.exists(filepath):
+                file_ready = True
+            else:
+                print(f"  [ERROR] File not found: {filename}")
 
-        # Download from EAS if URL provided or auto-fetch for mobile
-        eas_platform = 'ios' if release['platform'] == 'mobile_ios' else 'android' if release['platform'] == 'mobile_android' else None
-        if release.get('eas_url') or eas_platform:
-            download_from_eas(release.get('eas_url'), release['zip_filename'], eas_platform)
+        if not file_ready:
+            print(f"  [SKIP] Could not get file, skipping release")
+            continue
 
-        # Upload file first (if S3 configured)
-        if has_s3:
-            if upload_to_storage(release['zip_filename']):
-                uploaded += 1
+        # Step 2: Upload to storage
+        if upload_to_storage(filename):
+            uploaded += 1
 
-        # Publish to database
-        if publish_release(release):
-            published += 1
+            # Step 3: Publish to database (only after successful upload)
+            if publish_release(release):
+                published += 1
+
+                # Step 4: Cleanup local file after success
+                if cleanup_local_file(filename):
+                    cleaned += 1
+        else:
+            print(f"  [ERROR] Upload failed, not publishing to database")
 
     print(f"\n{'=' * 50}")
     print(f"Results:")
-    print(f"  - Database: {published} release(s) published")
-    if has_s3:
-        print(f"  - Storage: {uploaded} file(s) uploaded")
+    print(f"  - Files uploaded: {uploaded}")
+    print(f"  - Releases published: {published}")
+    print(f"  - Local files cleaned: {cleaned}")
     print(f"{'=' * 50}")
-
-    if not has_s3 and published > 0:
-        print("\nREMINDER: Upload these ZIP files manually to Supabase Storage:")
-        print("https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software")
-        print("\nFiles to upload from this folder:")
-        for release in PENDING_RELEASES:
-            print(f"  - {release['zip_filename']}")
 
 if __name__ == "__main__":
     main()
