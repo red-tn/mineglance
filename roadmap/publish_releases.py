@@ -13,6 +13,8 @@ Last Updated: 2026-01-03
 """
 
 import os
+import subprocess
+import json
 import requests
 import boto3
 from botocore.config import Config
@@ -57,7 +59,7 @@ PENDING_RELEASES = [
         "platform": "mobile_ios",  # Valid: extension, mobile_ios, mobile_android, website
         "release_notes": "Pro Plus features, QR wallet sync, wallet reordering, pool data fixes. Build 13.",
         "zip_filename": "mineglance-ios-v1.0.3.ipa",
-        "eas_url": "https://expo.dev/artifacts/eas/okPEL6RNgdvN1QHyuA5uoy.ipa",  # Optional: download from EAS
+        # eas_url not needed - script auto-fetches latest from EAS for mobile platforms
         "is_latest": True
     }
 ]
@@ -77,13 +79,57 @@ def get_s3_client():
         config=Config(signature_version='s3v4')
     )
 
-def download_from_eas(eas_url, filename):
+def get_latest_eas_build(platform):
+    """Get the latest EAS build URL for a platform (ios or android)"""
+    try:
+        # Run from mobile directory where eas.json is located
+        mobile_dir = os.path.join(os.path.dirname(__file__), '..', 'mobile')
+
+        result = subprocess.run(
+            ['npx', 'eas', 'build:list', '--platform', platform, '--limit', '1', '--json', '--non-interactive'],
+            capture_output=True,
+            text=True,
+            cwd=mobile_dir,
+            shell=True  # Required on Windows
+        )
+
+        if result.returncode != 0:
+            print(f"  [WARN] EAS command failed: {result.stderr}")
+            return None
+
+        builds = json.loads(result.stdout)
+        if builds and len(builds) > 0:
+            build = builds[0]
+            artifact_url = build.get('artifacts', {}).get('buildUrl')
+            version = build.get('appVersion', 'unknown')
+            build_number = build.get('appBuildVersion', '')
+            print(f"  [EAS] Found build: v{version} ({build_number})")
+            return artifact_url
+
+        return None
+    except Exception as e:
+        print(f"  [WARN] Could not get EAS build: {e}")
+        return None
+
+def download_from_eas(eas_url, filename, platform=None):
     """Download IPA/APK from Expo EAS"""
     filepath = os.path.join(os.path.dirname(__file__), filename)
+
+    # If no URL provided but platform specified, try to get latest from EAS
+    if not eas_url and platform:
+        print(f"  Checking EAS for latest {platform} build...")
+        eas_url = get_latest_eas_build(platform)
+        if not eas_url:
+            print(f"  [SKIP] No EAS build URL available")
+            return False
 
     if os.path.exists(filepath):
         print(f"  [SKIP] File already exists: {filename}")
         return True
+
+    if not eas_url:
+        print(f"  [SKIP] No download URL provided")
+        return False
 
     try:
         print(f"  Downloading from EAS: {eas_url}")
@@ -246,9 +292,10 @@ def main():
     for release in PENDING_RELEASES:
         print(f"\n- {release['platform']} v{release['version']}")
 
-        # Download from EAS if URL provided
-        if release.get('eas_url'):
-            download_from_eas(release['eas_url'], release['zip_filename'])
+        # Download from EAS if URL provided or auto-fetch for mobile
+        eas_platform = 'ios' if release['platform'] == 'mobile_ios' else 'android' if release['platform'] == 'mobile_android' else None
+        if release.get('eas_url') or eas_platform:
+            download_from_eas(release.get('eas_url'), release['zip_filename'], eas_platform)
 
         # Upload file first (if S3 configured)
         if has_s3:
