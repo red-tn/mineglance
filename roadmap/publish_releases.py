@@ -183,6 +183,39 @@ def trigger_eas_build(platform):
         print(f"  [ERROR] Failed to trigger EAS build: {e}")
         return False
 
+def submit_to_app_store(platform):
+    """Submit the latest build to App Store Connect (TestFlight) or Google Play"""
+    mobile_dir = os.path.join(os.path.dirname(__file__), '..', 'mobile')
+
+    store_name = "TestFlight" if platform == "ios" else "Google Play"
+    print(f"  [EAS] Submitting to {store_name}...")
+
+    try:
+        result = subprocess.run(
+            ['npx', 'eas', 'submit', '--platform', platform, '--latest', '--non-interactive'],
+            capture_output=True,
+            text=True,
+            cwd=mobile_dir,
+            shell=True  # Required on Windows
+        )
+
+        if result.returncode != 0:
+            print(f"  [WARN] Submit command returned non-zero, checking output...")
+            # Sometimes submit succeeds but returns non-zero, check output
+            if "Submitted" in result.stdout or "submitted" in result.stdout.lower():
+                print(f"  [OK] Submitted to {store_name}!")
+                return True
+            print(f"  STDOUT: {result.stdout[:500] if result.stdout else 'None'}")
+            print(f"  STDERR: {result.stderr[:500] if result.stderr else 'None'}")
+            return False
+
+        print(f"  [OK] Submitted to {store_name}!")
+        return True
+
+    except Exception as e:
+        print(f"  [ERROR] Failed to submit to {store_name}: {e}")
+        return False
+
 def get_latest_eas_build(platform, expected_version=None):
     """Get the latest EAS build URL for a platform (ios or android)"""
     try:
@@ -449,6 +482,7 @@ def main():
     published = 0
     uploaded = 0
     cleaned = 0
+    submitted = 0
 
     for release in PENDING_RELEASES:
         print(f"\n{'=' * 40}")
@@ -457,13 +491,30 @@ def main():
 
         filename = release['zip_filename']
         file_ready = False
+        eas_platform = None
+        already_in_db = check_existing_release(release['platform'], release['version'])
+
+        # For mobile builds, check if we should just submit to TestFlight
+        if release['platform'] in ['mobile_ios', 'mobile_android']:
+            eas_platform = 'ios' if release['platform'] == 'mobile_ios' else 'android'
+
+            # If already in DB, just try to submit to app store
+            if already_in_db:
+                print(f"  [INFO] Already in database, checking for TestFlight submission...")
+                eas_url, found_version, _ = get_latest_eas_build(eas_platform, release['version'])
+                if eas_url:
+                    print(f"  [INFO] Found matching build on EAS, submitting to app store...")
+                    if submit_to_app_store(eas_platform):
+                        submitted += 1
+                else:
+                    print(f"  [SKIP] No matching build found on EAS")
+                continue
 
         # Step 1: Get the file (create ZIP or download IPA)
         if release['platform'] == 'extension':
             if create_extension_zip(filename):
                 file_ready = True
-        elif release['platform'] in ['mobile_ios', 'mobile_android']:
-            eas_platform = 'ios' if release['platform'] == 'mobile_ios' else 'android'
+        elif eas_platform:
             if build_and_download_from_eas(filename, eas_platform, release['version']):
                 file_ready = True
         else:
@@ -486,7 +537,12 @@ def main():
             if publish_release(release):
                 published += 1
 
-                # Step 4: Cleanup local file after success
+                # Step 4: Submit to TestFlight/Google Play (for mobile builds)
+                if eas_platform:
+                    if submit_to_app_store(eas_platform):
+                        submitted += 1
+
+                # Step 5: Cleanup local file after success
                 if cleanup_local_file(filename):
                     cleaned += 1
         else:
@@ -496,6 +552,7 @@ def main():
     print(f"Results:")
     print(f"  - Files uploaded: {uploaded}")
     print(f"  - Releases published: {published}")
+    print(f"  - App store submissions: {submitted}")
     print(f"  - Local files cleaned: {cleaned}")
     print(f"{'=' * 50}")
 
