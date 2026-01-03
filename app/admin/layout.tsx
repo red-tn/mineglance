@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface AdminUser {
   email: string
@@ -104,10 +105,8 @@ export default function AdminLayout({
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark-card border-r border-dark-border transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="flex items-center justify-between h-16 px-4 border-b border-dark-border">
           <Link href="/admin" className="text-primary font-bold text-lg flex items-center gap-2">
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-            Admin
+            <Image src="/logo-icon.svg" alt="MineGlance" width={28} height={28} />
+            <span>Admin</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
