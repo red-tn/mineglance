@@ -95,7 +95,7 @@ export default function HealthPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b border-dark-border-2 border-b border-dark-borderlue-600"></div>
       </div>
     )
   }
@@ -104,8 +104,8 @@ export default function HealthPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">System Health</h1>
-          <p className="text-gray-600">Monitor service status and configuration</p>
+          <h1 className="text-2xl font-bold text-dark-text">System Health</h1>
+          <p className="text-dark-text">Monitor service status and configuration</p>
         </div>
         <button
           onClick={() => fetchHealth(true)}
@@ -114,7 +114,7 @@ export default function HealthPage() {
         >
           {refreshing ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b border-dark-border-2 border-white"></div>
               Checking...
             </>
           ) : (
@@ -129,7 +129,7 @@ export default function HealthPage() {
       </div>
 
       {/* Overall Status */}
-      <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+      <div className="glass-card rounded-xl border border-dark-border p-6 mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={`w-16 h-16 rounded-full ${getStatusColor(health?.overallStatus || 'unknown')} flex items-center justify-center`}>
@@ -138,10 +138,10 @@ export default function HealthPage() {
               </span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-dark-text">
                 System Status: <span className="capitalize">{health?.overallStatus || 'Unknown'}</span>
               </h2>
-              <p className="text-gray-500">
+              <p className="text-dark-text">
                 Last checked: {health?.checkedAt ? new Date(health.checkedAt).toLocaleString() : 'Never'}
               </p>
             </div>
@@ -154,36 +154,36 @@ export default function HealthPage() {
 
       {/* SendGrid Stats Card */}
       {health?.sendgridStats && (
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+        <div className="glass-card rounded-xl border border-dark-border p-6 mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">SendGrid Email Stats</h3>
+            <h3 className="text-lg font-semibold text-dark-text">SendGrid Email Stats</h3>
             <span className="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800">
               {health.sendgridStats.planName} Plan
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-3xl font-bold text-gray-900">{health.sendgridStats.usedToday}</p>
-              <p className="text-sm text-gray-500 mt-1">Sent Today</p>
+            <div className="text-center p-4 bg-dark-card-hover rounded-lg">
+              <p className="text-3xl font-bold text-dark-text">{health.sendgridStats.usedToday}</p>
+              <p className="text-sm text-dark-text mt-1">Sent Today</p>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <p className="text-3xl font-bold text-gray-900">{health.sendgridStats.dailyLimit}</p>
-              <p className="text-sm text-gray-500 mt-1">Daily Limit</p>
+            <div className="text-center p-4 bg-dark-card-hover rounded-lg">
+              <p className="text-3xl font-bold text-dark-text">{health.sendgridStats.dailyLimit}</p>
+              <p className="text-sm text-dark-text mt-1">Daily Limit</p>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
+            <div className="text-center p-4 bg-dark-card-hover rounded-lg">
               <p className={`text-3xl font-bold ${health.sendgridStats.remainingToday < 20 ? 'text-amber-600' : 'text-green-600'}`}>
                 {health.sendgridStats.remainingToday}
               </p>
-              <p className="text-sm text-gray-500 mt-1">Remaining Today</p>
+              <p className="text-sm text-dark-text mt-1">Remaining Today</p>
             </div>
           </div>
           {/* Usage Bar */}
           <div className="mt-4">
-            <div className="flex justify-between text-sm text-gray-500 mb-1">
+            <div className="flex justify-between text-sm text-dark-text mb-1">
               <span>Usage</span>
               <span>{Math.round((health.sendgridStats.usedToday / health.sendgridStats.dailyLimit) * 100)}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-dark-border rounded-full h-2">
               <div
                 className={`h-2 rounded-full ${
                   health.sendgridStats.usedToday / health.sendgridStats.dailyLimit > 0.9
@@ -202,11 +202,11 @@ export default function HealthPage() {
       {/* Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {health?.services.map((service) => (
-          <div key={service.name} className="bg-white rounded-xl shadow-sm border p-6">
+          <div key={service.name} className="glass-card rounded-xl border border-dark-border p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${getStatusColor(service.status)}`}></div>
-                <h3 className="font-semibold text-gray-900">{service.name}</h3>
+                <h3 className="font-semibold text-dark-text">{service.name}</h3>
               </div>
               <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(service.status)}`}>
                 {service.status}
@@ -214,20 +214,20 @@ export default function HealthPage() {
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">Status</span>
-                <span className="text-gray-900">{service.details || 'No details'}</span>
+                <span className="text-dark-text">Status</span>
+                <span className="text-dark-text">{service.details || 'No details'}</span>
               </div>
               {service.latency !== undefined && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Latency</span>
+                  <span className="text-dark-text">Latency</span>
                   <span className={`font-medium ${service.latency > 1000 ? 'text-amber-600' : 'text-green-600'}`}>
                     {service.latency}ms
                   </span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-gray-500">Last Check</span>
-                <span className="text-gray-900">
+                <span className="text-dark-text">Last Check</span>
+                <span className="text-dark-text">
                   {new Date(service.lastCheck).toLocaleTimeString()}
                 </span>
               </div>
@@ -237,15 +237,15 @@ export default function HealthPage() {
       </div>
 
       {/* Environment Configuration */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">Environment Configuration</h3>
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden mb-8">
+        <div className="p-6 border-b border-dark-border">
+          <h3 className="text-lg font-semibold text-dark-text">Environment Configuration</h3>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {health?.environment && Object.entries(health.environment).map(([key, value]) => (
-              <div key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-600">
+              <div key={key} className="flex items-center justify-between p-3 bg-dark-card-hover rounded-lg">
+                <span className="text-sm text-dark-text">
                   {key.replace(/^has/, '').replace(/([A-Z])/g, ' $1').trim()}
                 </span>
                 {typeof value === 'boolean' ? (
@@ -255,7 +255,7 @@ export default function HealthPage() {
                     <span className="text-red-600 font-medium">✕</span>
                   )
                 ) : (
-                  <span className="text-gray-900 font-medium">{String(value)}</span>
+                  <span className="text-dark-text font-medium">{String(value)}</span>
                 )}
               </div>
             ))}
@@ -264,9 +264,9 @@ export default function HealthPage() {
       </div>
 
       {/* Required Configuration Checklist */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">Configuration Checklist</h3>
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden mb-8">
+        <div className="p-6 border-b border-dark-border">
+          <h3 className="text-lg font-semibold text-dark-text">Configuration Checklist</h3>
         </div>
         <div className="p-6">
           <div className="space-y-3">
@@ -311,21 +311,21 @@ export default function HealthPage() {
 
       {/* Recent Errors */}
       {health?.recentErrors && health.recentErrors.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-          <div className="p-6 border-b">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Errors</h3>
+        <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
+          <div className="p-6 border-b border-dark-border">
+            <h3 className="text-lg font-semibold text-dark-text">Recent Errors</h3>
           </div>
           <div className="divide-y">
             {health.recentErrors.map((error, index) => (
-              <div key={index} className="p-4 hover:bg-gray-50">
+              <div key={index} className="p-4 hover:bg-dark-card-hover">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-red-600">{error.action}</span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-dark-text">
                     {new Date(error.created_at).toLocaleString()}
                   </span>
                 </div>
                 {error.details && (
-                  <pre className="text-sm text-gray-600 bg-gray-50 p-2 rounded overflow-x-auto">
+                  <pre className="text-sm text-dark-text bg-dark-card-hover p-2 rounded overflow-x-auto">
                     {JSON.stringify(error.details, null, 2)}
                   </pre>
                 )}
@@ -340,10 +340,10 @@ export default function HealthPage() {
 
 function ConfigItem({ label, configured, description }: { label: string; configured?: boolean; description: string }) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-lg border">
+    <div className="flex items-center justify-between p-3 rounded-lg border border-dark-border">
       <div>
-        <span className="font-medium text-gray-900">{label}</span>
-        <p className="text-sm text-gray-500">{description}</p>
+        <span className="font-medium text-dark-text">{label}</span>
+        <p className="text-sm text-dark-text">{description}</p>
       </div>
       {configured ? (
         <span className="flex items-center gap-1 text-green-600">

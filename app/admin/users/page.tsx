@@ -110,29 +110,29 @@ export default function UsersPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Users & Licenses</h1>
-        <p className="text-gray-600">Manage user licenses and subscriptions</p>
+        <h1 className="text-2xl font-bold text-dark-text">Users & Licenses</h1>
+        <p className="text-dark-text">Manage user licenses and subscriptions</p>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
+      <div className="glass-card rounded-xl border border-dark-border p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <label className="block text-sm font-medium text-dark-text mb-1">Search</label>
             <input
               type="text"
               placeholder="Email or license key..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-dark-text mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -141,11 +141,11 @@ export default function UsersPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+            <label className="block text-sm font-medium text-dark-text mb-1">Plan</label>
             <select
               value={planFilter}
               onChange={(e) => { setPlanFilter(e.target.value); setPage(1) }}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Plans</option>
               <option value="pro">Pro ($29)</option>
@@ -155,7 +155,7 @@ export default function UsersPage() {
           <div className="flex items-end">
             <button
               onClick={() => { setSearch(''); setStatusFilter('all'); setPlanFilter('all'); setPage(1) }}
-              className="px-4 py-2 text-gray-600 hover:text-gray-900"
+              className="px-4 py-2 text-dark-text hover:text-primary"
             >
               Clear Filters
             </button>
@@ -164,42 +164,42 @@ export default function UsersPage() {
       </div>
 
       {/* Results count */}
-      <div className="mb-4 text-sm text-gray-600">
+      <div className="mb-4 text-sm text-dark-text">
         Showing {users.length} of {total} licenses
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-500">Loading users...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-dark-text">Loading users...</p>
           </div>
         ) : users.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
+          <div className="p-12 text-center text-dark-text">
             No licenses found
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-dark-card-hover border-b border-dark-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">License Key</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Installs</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">License Key</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Plan</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Installs</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Created</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-dark-border">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-dark-card-hover">
                   <td className="px-4 py-3">
-                    <span className="font-medium text-gray-900">{user.email}</span>
+                    <span className="font-medium text-dark-text">{user.email}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded">
                       {user.key.substring(0, 12)}...
                     </code>
                   </td>
@@ -213,16 +213,16 @@ export default function UsersPage() {
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">
+                  <td className="px-4 py-3 text-dark-text">
                     {user.installCount}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-dark-text">
                     {formatDate(user.created_at)}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => setSelectedUser(user)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      className="text-primary hover:text-primary-light text-sm font-medium"
                     >
                       View
                     </button>
@@ -235,21 +235,21 @@ export default function UsersPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t flex items-center justify-between">
+          <div className="px-4 py-3 border-t border-dark-border flex items-center justify-between">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border border-dark-border text-dark-text rounded hover:bg-dark-card-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-dark-text">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border border-dark-border text-dark-text rounded hover:bg-dark-card-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -259,14 +259,14 @@ export default function UsersPage() {
 
       {/* User Detail Modal */}
       {selectedUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="glass-card rounded-xl border border-dark-border max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-dark-border">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">License Details</h2>
+                <h2 className="text-xl font-bold text-dark-text">License Details</h2>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-dark-text-muted hover:text-dark-text"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -277,18 +277,18 @@ export default function UsersPage() {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-500">Email</label>
-                <p className="text-gray-900">{selectedUser.email}</p>
+                <label className="text-sm font-medium text-dark-text-muted">Email</label>
+                <p className="text-dark-text">{selectedUser.email}</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-500">License Key</label>
-                <p className="font-mono text-sm bg-gray-100 p-2 rounded break-all">{selectedUser.key}</p>
+                <label className="text-sm font-medium text-dark-text-muted">License Key</label>
+                <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded break-all">{selectedUser.key}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Plan</label>
+                  <label className="text-sm font-medium text-dark-text-muted">Plan</label>
                   <p>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(selectedUser.plan)}`}>
                       {selectedUser.plan === 'bundle' ? 'PRO PLUS ($59)' : 'PRO ($29)'}
@@ -296,7 +296,7 @@ export default function UsersPage() {
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Status</label>
+                  <label className="text-sm font-medium text-dark-text-muted">Status</label>
                   <p>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(selectedUser.status)}`}>
                       {selectedUser.status}
@@ -307,31 +307,31 @@ export default function UsersPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Installations</label>
-                  <p className="text-gray-900">{selectedUser.installCount}</p>
+                  <label className="text-sm font-medium text-dark-text-muted">Installations</label>
+                  <p className="text-dark-text">{selectedUser.installCount}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Created</label>
-                  <p className="text-gray-900">{formatDate(selectedUser.created_at)}</p>
+                  <label className="text-sm font-medium text-dark-text-muted">Created</label>
+                  <p className="text-dark-text">{formatDate(selectedUser.created_at)}</p>
                 </div>
               </div>
 
               {selectedUser.stripe_customer_id && (
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Stripe Customer</label>
-                  <p className="font-mono text-sm text-gray-600">{selectedUser.stripe_customer_id}</p>
+                  <label className="text-sm font-medium text-dark-text-muted">Stripe Customer</label>
+                  <p className="font-mono text-sm text-dark-text">{selectedUser.stripe_customer_id}</p>
                 </div>
               )}
 
               {selectedUser.stripe_payment_id && (
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Stripe Payment</label>
-                  <p className="font-mono text-sm text-gray-600">{selectedUser.stripe_payment_id}</p>
+                  <label className="text-sm font-medium text-dark-text-muted">Stripe Payment</label>
+                  <p className="font-mono text-sm text-dark-text">{selectedUser.stripe_payment_id}</p>
                 </div>
               )}
             </div>
 
-            <div className="p-6 border-t bg-gray-50 flex gap-3">
+            <div className="p-6 border-t border-dark-border bg-dark-card-hover flex gap-3">
               {selectedUser.status === 'active' ? (
                 <button
                   onClick={() => handleAction(selectedUser.key, 'revoke')}
@@ -351,7 +351,7 @@ export default function UsersPage() {
               )}
               <button
                 onClick={() => setSelectedUser(null)}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+                className="px-4 py-2 border border-dark-border text-dark-text rounded-lg hover:bg-dark-card-hover"
               >
                 Close
               </button>

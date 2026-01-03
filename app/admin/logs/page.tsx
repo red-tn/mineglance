@@ -22,7 +22,7 @@ interface LogSummary {
 const actionColors: Record<string, string> = {
   login_success: 'bg-green-100 text-green-800',
   login_failed: 'bg-red-100 text-red-800',
-  logout: 'bg-gray-100 text-gray-800',
+  logout: 'bg-dark-bg text-dark-text text-gray-800',
   license_revoke: 'bg-red-100 text-red-800',
   license_activate: 'bg-green-100 text-green-800',
   license_update: 'bg-blue-100 text-blue-800'
@@ -85,7 +85,7 @@ export default function LogsPage() {
   }
 
   const getActionBadge = (action: string) => {
-    return actionColors[action] || 'bg-gray-100 text-gray-800'
+    return actionColors[action] || 'bg-dark-bg text-dark-text text-gray-800'
   }
 
   const formatAction = (action: string) => {
@@ -95,62 +95,62 @@ export default function LogsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-        <p className="text-gray-600">Track admin actions and security events</p>
+        <h1 className="text-2xl font-bold text-dark-text">Audit Logs</h1>
+        <p className="text-dark-text">Track admin actions and security events</p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Total Logs</span>
+            <span className="text-dark-text text-sm">Total Logs</span>
             <span className="text-blue-600 text-xl">📋</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{summary?.total || 0}</p>
+          <p className="text-3xl font-bold text-dark-text">{summary?.total || 0}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Last 24h</span>
+            <span className="text-dark-text text-sm">Last 24h</span>
             <span className="text-green-600 text-xl">⏰</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{summary?.last24h || 0}</p>
+          <p className="text-3xl font-bold text-dark-text">{summary?.last24h || 0}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Last 7 Days</span>
+            <span className="text-dark-text text-sm">Last 7 Days</span>
             <span className="text-purple-600 text-xl">📅</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{summary?.last7d || 0}</p>
+          <p className="text-3xl font-bold text-dark-text">{summary?.last7d || 0}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Login Attempts (24h)</span>
+            <span className="text-dark-text text-sm">Login Attempts (24h)</span>
             <span className="text-amber-600 text-xl">🔐</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{summary?.loginAttempts24h || 0}</p>
+          <p className="text-3xl font-bold text-dark-text">{summary?.loginAttempts24h || 0}</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Failed Logins (7d)</span>
+            <span className="text-dark-text text-sm">Failed Logins (7d)</span>
             <span className="text-red-600 text-xl">⚠️</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{summary?.failedLogins7d || 0}</p>
+          <p className="text-3xl font-bold text-dark-text">{summary?.failedLogins7d || 0}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
+      <div className="glass-card rounded-xl border border-dark-border p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Action</label>
+            <label className="block text-sm font-medium text-dark-text mb-1">Action</label>
             <select
               value={actionFilter}
               onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Actions</option>
               {actions.map(action => (
@@ -161,19 +161,19 @@ export default function LogsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-dark-text mb-1">Email</label>
             <input
               type="text"
               placeholder="Filter by email..."
               value={emailFilter}
               onChange={(e) => { setEmailFilter(e.target.value); setPage(1) }}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
             />
           </div>
           <div className="flex items-end">
             <button
               onClick={() => { setActionFilter('all'); setEmailFilter(''); setPage(1) }}
-              className="px-4 py-2 text-gray-600 hover:text-gray-900"
+              className="px-4 py-2 text-dark-text hover:text-dark-text"
             >
               Clear Filters
             </button>
@@ -182,36 +182,36 @@ export default function LogsPage() {
       </div>
 
       {/* Results count */}
-      <div className="mb-4 text-sm text-gray-600">
+      <div className="mb-4 text-sm text-dark-text">
         Showing {logs.length} of {total} logs
       </div>
 
       {/* Logs Table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-500">Loading logs...</p>
+            <p className="mt-2 text-dark-text">Loading logs...</p>
           </div>
         ) : logs.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
+          <div className="p-12 text-center text-dark-text">
             No audit logs found
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-dark-card-hover border-b border-dark-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP Address</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Timestamp</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Action</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">User</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">IP Address</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Details</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-dark-border">
               {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+                <tr key={log.id} className="hover:bg-dark-card-hover">
+                  <td className="px-4 py-3 text-sm text-dark-text whitespace-nowrap">
                     {formatDate(log.created_at)}
                   </td>
                   <td className="px-4 py-3">
@@ -219,13 +219,13 @@ export default function LogsPage() {
                       {formatAction(log.action)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-900">{log.admin_email}</td>
+                  <td className="px-4 py-3 text-dark-text">{log.admin_email}</td>
                   <td className="px-4 py-3">
-                    <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                    <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded">
                       {log.ip_address || 'unknown'}
                     </code>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
+                  <td className="px-4 py-3 text-sm text-dark-text max-w-xs truncate">
                     {log.details ? JSON.stringify(log.details) : '-'}
                   </td>
                 </tr>
@@ -236,21 +236,21 @@ export default function LogsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t flex items-center justify-between">
+          <div className="px-4 py-3 border-t border-dark-border flex items-center justify-between">
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border border-dark-border text-dark-text rounded hover:bg-dark-card-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-dark-text">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border border-dark-border text-dark-text rounded hover:bg-dark-card-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>

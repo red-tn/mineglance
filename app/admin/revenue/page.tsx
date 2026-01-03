@@ -91,13 +91,13 @@ export default function RevenuePage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Revenue & Analytics</h1>
-          <p className="text-gray-600">Track sales and revenue metrics</p>
+          <h1 className="text-2xl font-bold text-dark-text">Revenue & Analytics</h1>
+          <p className="text-dark-text">Track sales and revenue metrics</p>
         </div>
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
-          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
         >
           <option value="7">Last 7 days</option>
           <option value="30">Last 30 days</option>
@@ -108,54 +108,54 @@ export default function RevenuePage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Total Revenue</span>
+            <span className="text-dark-text text-sm">Total Revenue</span>
             <span className="text-green-600 text-2xl">$</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{formatCurrency(summary?.totalRevenue || 0)}</p>
-          <p className="text-sm text-gray-500 mt-1">All time</p>
+          <p className="text-3xl font-bold text-dark-text">{formatCurrency(summary?.totalRevenue || 0)}</p>
+          <p className="text-sm text-dark-text mt-1">All time</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Period Revenue</span>
+            <span className="text-dark-text text-sm">Period Revenue</span>
             <span className="text-blue-600 text-2xl">$</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{formatCurrency(summary?.periodRevenue || 0)}</p>
-          <p className="text-sm text-gray-500 mt-1">Last {period} days</p>
+          <p className="text-3xl font-bold text-dark-text">{formatCurrency(summary?.periodRevenue || 0)}</p>
+          <p className="text-sm text-dark-text mt-1">Last {period} days</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Total Sales</span>
+            <span className="text-dark-text text-sm">Total Sales</span>
             <span className="text-purple-600 text-2xl">#</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{summary?.totalSales || 0}</p>
-          <p className="text-sm text-gray-500 mt-1">{summary?.periodSales || 0} in period</p>
+          <p className="text-3xl font-bold text-dark-text">{summary?.totalSales || 0}</p>
+          <p className="text-sm text-dark-text mt-1">{summary?.periodSales || 0} in period</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Avg Order Value</span>
+            <span className="text-dark-text text-sm">Avg Order Value</span>
             <span className="text-amber-600 text-2xl">~</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{formatCurrency(summary?.avgOrderValue || 0)}</p>
-          <p className="text-sm text-gray-500 mt-1">{formatCurrency(summary?.dailyAvgRevenue || 0)}/day avg</p>
+          <p className="text-3xl font-bold text-dark-text">{formatCurrency(summary?.avgOrderValue || 0)}</p>
+          <p className="text-sm text-dark-text mt-1">{formatCurrency(summary?.dailyAvgRevenue || 0)}/day avg</p>
         </div>
       </div>
 
       {/* Revenue by Plan */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Plan</h3>
+        <div className="glass-card rounded-xl border border-dark-border p-6">
+          <h3 className="text-lg font-semibold text-dark-text mb-4">Revenue by Plan</h3>
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-blue-700">Pro ($29)</span>
-                <span className="text-sm text-gray-600">{byPlan?.pro.count || 0} sales</span>
+                <span className="text-sm font-medium text-blue-400">Pro ($29)</span>
+                <span className="text-sm text-dark-text">{byPlan?.pro.count || 0} sales</span>
               </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-3 bg-dark-card-hover rounded-full overflow-hidden">
                 <div
                   className="h-full bg-blue-500 rounded-full"
                   style={{
@@ -165,15 +165,15 @@ export default function RevenuePage() {
                   }}
                 />
               </div>
-              <p className="text-lg font-bold text-gray-900 mt-1">{formatCurrency(byPlan?.pro.revenue || 0)}</p>
+              <p className="text-lg font-bold text-dark-text mt-1">{formatCurrency(byPlan?.pro.revenue || 0)}</p>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-purple-700">Pro Plus ($59)</span>
-                <span className="text-sm text-gray-600">{byPlan?.bundle.count || 0} sales</span>
+                <span className="text-sm font-medium text-purple-400">Pro Plus ($59)</span>
+                <span className="text-sm text-dark-text">{byPlan?.bundle.count || 0} sales</span>
               </div>
-              <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-3 bg-dark-card-hover rounded-full overflow-hidden">
                 <div
                   className="h-full bg-purple-500 rounded-full"
                   style={{
@@ -183,17 +183,17 @@ export default function RevenuePage() {
                   }}
                 />
               </div>
-              <p className="text-lg font-bold text-gray-900 mt-1">{formatCurrency(byPlan?.bundle.revenue || 0)}</p>
+              <p className="text-lg font-bold text-dark-text mt-1">{formatCurrency(byPlan?.bundle.revenue || 0)}</p>
             </div>
           </div>
         </div>
 
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Daily Revenue</h3>
+        <div className="lg:col-span-2 glass-card rounded-xl border border-dark-border p-6">
+          <h3 className="text-lg font-semibold text-dark-text mb-4">Daily Revenue</h3>
           <div className="h-48">
             {chartData.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-400">
+              <div className="flex items-center justify-center h-full text-dark-text">
                 No data available
               </div>
             ) : (
@@ -213,7 +213,7 @@ export default function RevenuePage() {
                     />
                     {/* Tooltip */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                      <div className="bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                      <div className="bg-dark-card border border-dark-border text-dark-text text-xs rounded px-2 py-1 whitespace-nowrap">
                         {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         <br />
                         {formatCurrency(day.revenue)} ({day.sales})
@@ -224,7 +224,7 @@ export default function RevenuePage() {
               </div>
             )}
           </div>
-          <div className="flex justify-between text-xs text-gray-400 mt-2">
+          <div className="flex justify-between text-xs text-dark-text mt-2">
             <span>{chartData[0]?.date ? new Date(chartData[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
             <span>{chartData[chartData.length - 1]?.date ? new Date(chartData[chartData.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
           </div>
@@ -232,45 +232,45 @@ export default function RevenuePage() {
       </div>
 
       {/* Recent Transactions */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
+        <div className="p-6 border-b border-dark-border">
+          <h3 className="text-lg font-semibold text-dark-text">Recent Transactions</h3>
         </div>
         {transactions.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
+          <div className="p-12 text-center text-dark-text">
             No transactions yet
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-dark-card-hover border-b border-dark-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stripe ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Plan</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Stripe ID</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-dark-border">
               {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">{tx.email}</td>
+                <tr key={tx.id} className="hover:bg-dark-card-hover">
+                  <td className="px-6 py-4 font-medium text-dark-text">{tx.email}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      tx.plan === 'bundle' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                      tx.plan === 'bundle' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'
                     }`}>
                       {tx.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-medium text-green-600">{formatCurrency(tx.amount)}</td>
-                  <td className="px-6 py-4 text-gray-500">{formatDate(tx.date)}</td>
+                  <td className="px-6 py-4 font-medium text-green-400">{formatCurrency(tx.amount)}</td>
+                  <td className="px-6 py-4 text-dark-text">{formatDate(tx.date)}</td>
                   <td className="px-6 py-4">
                     {tx.stripePaymentId ? (
-                      <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                      <code className="text-xs bg-dark-bg text-dark-text px-2 py-1 rounded">
                         {tx.stripePaymentId.substring(0, 16)}...
                       </code>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-dark-text-muted">-</span>
                     )}
                   </td>
                 </tr>

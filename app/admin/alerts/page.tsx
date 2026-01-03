@@ -103,14 +103,14 @@ export default function AlertsPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Email Alerts</h1>
-          <p className="text-gray-600">Monitor alert notifications sent to users</p>
+          <h1 className="text-2xl font-bold text-dark-text">Email Alerts</h1>
+          <p className="text-dark-text">Monitor alert notifications sent to users</p>
         </div>
         <div className="flex gap-3">
           <select
             value={alertType}
             onChange={(e) => { setAlertType(e.target.value); setPage(1) }}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
           >
             <option value="all">All Types</option>
             <option value="worker_offline">Worker Offline</option>
@@ -123,7 +123,7 @@ export default function AlertsPage() {
           <select
             value={period}
             onChange={(e) => { setPeriod(e.target.value); setPage(1) }}
-            className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
           >
             <option value="1">Last 24 hours</option>
             <option value="7">Last 7 days</option>
@@ -134,53 +134,53 @@ export default function AlertsPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Total Alerts</span>
+            <span className="text-dark-text text-sm">Total Alerts</span>
             <span className="text-blue-600 text-xl">📧</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{summary?.total || 0}</p>
-          <p className="text-sm text-gray-500 mt-1">In selected period</p>
+          <p className="text-3xl font-bold text-dark-text">{summary?.total || 0}</p>
+          <p className="text-sm text-dark-text mt-1">In selected period</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Last 24 Hours</span>
+            <span className="text-dark-text text-sm">Last 24 Hours</span>
             <span className="text-green-600 text-xl">⏰</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">{summary?.last24h || 0}</p>
-          <p className="text-sm text-gray-500 mt-1">Recent activity</p>
+          <p className="text-3xl font-bold text-dark-text">{summary?.last24h || 0}</p>
+          <p className="text-sm text-dark-text mt-1">Recent activity</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Worker Alerts</span>
+            <span className="text-dark-text text-sm">Worker Alerts</span>
             <span className="text-red-500 text-xl">⚠️</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">
+          <p className="text-3xl font-bold text-dark-text">
             {(summary?.byType?.worker_offline || 0) + (summary?.byType?.worker_back_online || 0)}
           </p>
-          <p className="text-sm text-gray-500 mt-1">Offline + Online alerts</p>
+          <p className="text-sm text-dark-text mt-1">Offline + Online alerts</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-500 text-sm">Profit Alerts</span>
+            <span className="text-dark-text text-sm">Profit Alerts</span>
             <span className="text-amber-500 text-xl">📊</span>
           </div>
-          <p className="text-3xl font-bold text-gray-900">
+          <p className="text-3xl font-bold text-dark-text">
             {(summary?.byType?.profit_drop || 0) + (summary?.byType?.better_coin || 0)}
           </p>
-          <p className="text-sm text-gray-500 mt-1">Profit + coin alerts</p>
+          <p className="text-sm text-dark-text mt-1">Profit + coin alerts</p>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Alert Volume</h3>
+      <div className="glass-card rounded-xl border border-dark-border p-6 mb-8">
+        <h3 className="text-lg font-semibold text-dark-text mb-4">Alert Volume</h3>
         <div className="h-32">
           {chartData.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-gray-400">
+            <div className="flex items-center justify-center h-full text-dark-text">
               No data available
             </div>
           ) : (
@@ -208,7 +208,7 @@ export default function AlertsPage() {
             </div>
           )}
         </div>
-        <div className="flex justify-between text-xs text-gray-400 mt-2">
+        <div className="flex justify-between text-xs text-dark-text mt-2">
           <span>{chartData[0]?.label || ''}</span>
           <span>{chartData[chartData.length - 1]?.label || ''}</span>
         </div>
@@ -216,15 +216,15 @@ export default function AlertsPage() {
 
       {/* Alerts by Type */}
       {summary && Object.keys(summary.byType).length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">By Alert Type</h3>
+        <div className="glass-card rounded-xl border border-dark-border p-6 mb-8">
+          <h3 className="text-lg font-semibold text-dark-text mb-4">By Alert Type</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {Object.entries(summary.byType).map(([type, count]) => (
               <div key={type} className="text-center">
                 <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${alertTypeColors[type] || 'bg-gray-100 text-gray-800'}`}>
                   {alertTypeLabels[type] || type}
                 </span>
-                <p className="text-2xl font-bold text-gray-900 mt-2">{count}</p>
+                <p className="text-2xl font-bold text-dark-text mt-2">{count}</p>
               </div>
             ))}
           </div>
@@ -232,45 +232,45 @@ export default function AlertsPage() {
       )}
 
       {/* Alerts Table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
         <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Alerts</h3>
+          <h3 className="text-lg font-semibold text-dark-text">Recent Alerts</h3>
         </div>
 
         {loading ? (
           <div className="p-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-500">Loading alerts...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-dark-text">Loading alerts...</p>
           </div>
         ) : alerts.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
+          <div className="p-12 text-center text-dark-text">
             No alerts found for the selected period
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-dark-card-hover border-b border-dark-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sent At</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recipient</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Response</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Sent At</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Message ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Recipient</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Subject</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text uppercase">Response</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-dark-border">
               {alerts.map((alert) => (
-                <tr key={alert.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-4 text-gray-500 whitespace-nowrap text-sm">
+                <tr key={alert.id} className="hover:bg-dark-card-hover">
+                  <td className="px-4 py-4 text-dark-text whitespace-nowrap text-sm">
                     {formatDate(alert.created_at)}
                   </td>
                   <td className="px-4 py-4">
-                    <span className="font-mono text-xs text-gray-600 truncate max-w-[150px] inline-block" title={alert.sendgrid_message_id || 'N/A'}>
+                    <span className="font-mono text-xs text-dark-text truncate max-w-[150px] inline-block" title={alert.sendgrid_message_id || 'N/A'}>
                       {alert.sendgrid_message_id ? alert.sendgrid_message_id.substring(0, 20) + '...' : '-'}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-gray-900 text-sm">{alert.email}</td>
-                  <td className="px-4 py-4 text-gray-600 text-sm max-w-xs truncate" title={alert.subject || ''}>
+                  <td className="px-4 py-4 text-dark-text text-sm">{alert.email}</td>
+                  <td className="px-4 py-4 text-dark-text text-sm max-w-xs truncate" title={alert.subject || ''}>
                     {alert.subject || alert.wallet_name || '-'}
                   </td>
                   <td className="px-4 py-4">
@@ -284,7 +284,7 @@ export default function AlertsPage() {
                       {alert.sendgrid_status || 'unknown'}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-xs text-gray-500 max-w-[200px] truncate" title={alert.sendgrid_response || ''}>
+                  <td className="px-4 py-4 text-xs text-dark-text max-w-[200px] truncate" title={alert.sendgrid_response || ''}>
                     {alert.sendgrid_response || '-'}
                   </td>
                 </tr>
@@ -299,17 +299,17 @@ export default function AlertsPage() {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border rounded hover:bg-dark-card-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-dark-text">
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 border rounded hover:bg-dark-card-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
