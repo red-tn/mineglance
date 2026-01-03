@@ -10,11 +10,15 @@
 
 4. **Git commit format** - Use descriptive commit messages with HEREDOC format. Include the robot emoji footer.
 
-5. **Update admin software panel after EVERY release** - After bumping version numbers, fixing bugs, or making significant updates:
-   - Add a new release entry in the admin Software page database with version, platform, release notes, and download URL
-   - Log all bug fixes with severity (low/medium/high/critical) and fixed version
-   - For Chrome Extension releases, provide a ZIP file download link (upload to `/public/downloads/` or external hosting)
-   - This is AUTOMATIC behavior after any version bump or bug fix commit
+5. **Update release publisher script after EVERY release** - After bumping version numbers or making significant updates:
+   - Update `F:\MINEGLANCE\roadmap\publish_releases.py` with new release info in `PENDING_RELEASES` array
+   - Create the ZIP file in `F:\MINEGLANCE\roadmap\` folder (e.g., `mineglance-extension-v1.0.5.zip`)
+   - User will run the Python script to publish to Supabase and upload ZIP to storage bucket
+   - This is AUTOMATIC behavior after any version bump commit
+
+   **Release script location:** `F:\MINEGLANCE\roadmap\publish_releases.py`
+   **ZIP files location:** `F:\MINEGLANCE\roadmap\`
+   **Storage bucket:** `https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software`
 
 ## Project Structure
 
