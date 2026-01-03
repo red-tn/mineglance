@@ -103,6 +103,7 @@ export default function RootLayout() {
           name="wallet/[id]"
           options={{
             title: 'Wallet Details',
+            headerBackTitle: 'Back',
           }}
         />
       </Stack>

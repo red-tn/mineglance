@@ -64,7 +64,13 @@ STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public
 # }
 
 PENDING_RELEASES = [
-    # Add new releases here
+    {
+        "version": "1.0.5",
+        "platform": "mobile_ios",
+        "release_notes": "Fix back button showing '(TABS)' on wallet detail screen. Build 15.",
+        "zip_filename": "mineglance-ios-v1.0.5.ipa",
+        "is_latest": True
+    }
 ]
 
 # ============================================
