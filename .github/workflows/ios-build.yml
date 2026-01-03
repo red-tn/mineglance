@@ -40,20 +40,17 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Configure and Build iOS app
+      - name: Verify config files
         run: |
-          echo "Building iOS app v${{ inputs.version }}..."
-
-          # Initialize EAS project with force
-          echo "Initializing EAS project..."
-          eas init --id 806d6110-a544-4eb1-bb6e-d3436e4d594c --force --non-interactive
-
-          # Verify the eas.json
-          echo "eas.json after init:"
+          echo "Verifying app.json has bundleIdentifier..."
+          cat app.json | grep bundleIdentifier
+          echo ""
+          echo "Verifying eas.json exists..."
           cat eas.json
 
-          # Run the build
-          echo "Starting local build..."
+      - name: Build iOS app
+        run: |
+          echo "Building iOS app v${{ inputs.version }}..."
           eas build --platform ios --profile production --local --non-interactive --output ./build.ipa
 
       - name: Submit to TestFlight
