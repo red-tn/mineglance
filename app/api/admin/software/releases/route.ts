@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const { data: session } = await supabase
       .from('admin_sessions')
       .select('*')
-      .eq('session_token', token)
+      .eq('token', token)
       .gt('expires_at', new Date().toISOString())
       .single()
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const { data: session } = await supabase
       .from('admin_sessions')
       .select('*')
-      .eq('session_token', token)
+      .eq('token', token)
       .gt('expires_at', new Date().toISOString())
       .single()
 

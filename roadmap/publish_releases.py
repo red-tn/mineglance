@@ -56,7 +56,8 @@ PENDING_RELEASES = [
         "version": "1.0.3",
         "platform": "mobile_ios",  # Valid: extension, mobile_ios, mobile_android, website
         "release_notes": "Pro Plus features, QR wallet sync, wallet reordering, pool data fixes. Build 13.",
-        "zip_filename": "application-b4ed8f0b-b4e5-4721-8545-7f8a37e79dcc.ipa",
+        "zip_filename": "mineglance-ios-v1.0.3.ipa",
+        "eas_url": "https://expo.dev/artifacts/eas/okPEL6RNgdvN1QHyuA5uoy.ipa",  # Optional: download from EAS
         "is_latest": True
     }
 ]
@@ -75,6 +76,29 @@ def get_s3_client():
         aws_secret_access_key=S3_SECRET,
         config=Config(signature_version='s3v4')
     )
+
+def download_from_eas(eas_url, filename):
+    """Download IPA/APK from Expo EAS"""
+    filepath = os.path.join(os.path.dirname(__file__), filename)
+
+    if os.path.exists(filepath):
+        print(f"  [SKIP] File already exists: {filename}")
+        return True
+
+    try:
+        print(f"  Downloading from EAS: {eas_url}")
+        response = requests.get(eas_url, stream=True)
+        response.raise_for_status()
+
+        with open(filepath, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+        print(f"  [OK] Downloaded: {filename}")
+        return True
+    except Exception as e:
+        print(f"  [ERROR] Failed to download from EAS: {e}")
+        return False
 
 def upload_to_storage(filename):
     """Upload a file to Supabase Storage via S3 API"""
@@ -221,6 +245,10 @@ def main():
 
     for release in PENDING_RELEASES:
         print(f"\n- {release['platform']} v{release['version']}")
+
+        # Download from EAS if URL provided
+        if release.get('eas_url'):
+            download_from_eas(release['eas_url'], release['zip_filename'])
 
         # Upload file first (if S3 configured)
         if has_s3:

@@ -23,7 +23,7 @@ export async function DELETE(
     const { data: session } = await supabase
       .from('admin_sessions')
       .select('*')
-      .eq('session_token', token)
+      .eq('token', token)
       .gt('expires_at', new Date().toISOString())
       .single()
 
