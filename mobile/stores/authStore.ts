@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { AuthState } from '@/types';
 
+const API_BASE = 'https://www.mineglance.com/api';
+
 interface AuthStore extends AuthState {
   onboardingCompleted: boolean;
   isLoading: boolean;
@@ -10,6 +12,7 @@ interface AuthStore extends AuthState {
   setInstanceId: (id: string) => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => Promise<void>;
   loadFromStorage: () => Promise<void>;
+  verifyLicense: () => Promise<void>;
   clearAuth: () => Promise<void>;
   isPro: () => boolean;
 }
@@ -61,6 +64,36 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to load auth from storage:', error);
       set({ isLoading: false });
+    }
+  },
+
+  verifyLicense: async () => {
+    const { licenseKey } = get();
+
+    // No license to verify
+    if (!licenseKey) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE}/activate-license?key=${encodeURIComponent(licenseKey)}`
+      );
+      const data = await response.json();
+
+      if (!data.isPro) {
+        // License revoked or invalid - clear pro status
+        console.log('License no longer valid, reverting to free');
+        await SecureStore.setItemAsync('plan', 'free');
+        set({ plan: 'free' });
+      } else if (data.plan) {
+        // Update plan if changed
+        await SecureStore.setItemAsync('plan', data.plan);
+        set({ plan: data.plan });
+      }
+    } catch (error) {
+      console.error('License verification failed:', error);
+      // Don't clear on network errors - be lenient
     }
   },
 
