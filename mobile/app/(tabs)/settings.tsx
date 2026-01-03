@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import Constants from 'expo-constants';
 const WEBSITE_URL = 'https://www.mineglance.com';
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 const BUILD_NUMBER = Constants.expoConfig?.ios?.buildNumber || '1';
-import { colors, spacing, borderRadius, fontSize } from '@/constants/theme';
+import { getColors, spacing, borderRadius, fontSize } from '@/constants/theme';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -25,6 +25,10 @@ export default function SettingsScreen() {
   const settings = useSettingsStore();
   const { licenseKey, plan, clearAuth, isPro } = useAuthStore();
   const [showLicenseKey, setShowLicenseKey] = useState(false);
+
+  // Dynamic colors based on theme
+  const colors = getColors(settings.liteMode);
+  const styles = useMemo(() => createStyles(colors), [settings.liteMode]);
 
   const handleDeactivate = () => {
     Alert.alert(
@@ -309,7 +313,8 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Dynamic styles factory
+const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

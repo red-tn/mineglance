@@ -101,24 +101,32 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-dark-bg">
+      {/* Mobile backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark-card border-r border-dark-border transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-        <div className="flex items-center justify-between h-16 px-4 border-b border-dark-border">
+        <div className="flex items-center justify-between h-14 px-4 border-b border-dark-border">
           <Link href="/admin" className="text-primary font-bold text-lg flex items-center gap-2">
-            <Image src="/logo-icon.svg" alt="MineGlance" width={28} height={28} />
+            <Image src="/logo-icon.svg" alt="MineGlance" width={24} height={24} />
             <span>Admin</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-dark-text-muted hover:text-dark-text"
+            className="lg:hidden text-dark-text-muted hover:text-dark-text p-1"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        <nav className="mt-4 px-2 space-y-1">
+        <nav className="mt-2 px-2 space-y-0.5 overflow-y-auto max-h-[calc(100vh-120px)]">
           {navigation.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -133,7 +141,7 @@ export default function AdminLayout({
                 }`}
               >
                 <svg
-                  className="mr-3 h-5 w-5 flex-shrink-0"
+                  className="mr-3 h-4 w-4 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -146,17 +154,17 @@ export default function AdminLayout({
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-dark-border">
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-dark-border bg-dark-card">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-dark-text-muted truncate">
+            <div className="text-xs text-dark-text-muted truncate max-w-[160px]">
               {user.email}
             </div>
             <button
               onClick={handleLogout}
-              className="text-dark-text-muted hover:text-red-400 transition"
+              className="text-dark-text-muted hover:text-red-400 transition p-1"
               title="Logout"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>
@@ -164,21 +172,22 @@ export default function AdminLayout({
         </div>
       </div>
 
-      {/* Mobile sidebar button */}
-      <div className="lg:hidden fixed top-0 left-0 z-40 p-4">
+      {/* Mobile header bar with hamburger */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-12 bg-dark-card border-b border-dark-border flex items-center px-3">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="p-2 rounded-lg glass-card border border-dark-border"
+          className="p-1.5 rounded-lg hover:bg-dark-card-hover"
         >
-          <svg className="w-6 h-6 text-dark-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-dark-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+        <span className="ml-3 text-sm font-semibold text-dark-text">MineGlance Admin</span>
       </div>
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <main className="pt-16 pb-6 px-4 sm:px-6 lg:pt-6 lg:px-8">
+        <main className="pt-14 pb-4 px-3 sm:px-4 lg:pt-4 lg:px-6">
           {children}
         </main>
       </div>

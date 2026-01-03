@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
-import { colors } from '@/constants/theme';
+import { getColors } from '@/constants/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useWalletStore } from '@/stores/walletStore';
@@ -25,6 +25,8 @@ export default function RootLayout() {
   const verifyLicense = useAuthStore(state => state.verifyLicense);
   const loadSettings = useSettingsStore(state => state.loadFromStorage);
   const loadWallets = useWalletStore(state => state.loadFromStorage);
+  const liteMode = useSettingsStore(state => state.liteMode);
+  const colors = getColors(liteMode);
 
   useEffect(() => {
     async function initialize() {
@@ -73,11 +75,13 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="light" backgroundColor={colors.cardBackground} />
+      <StatusBar style={liteMode ? 'dark' : 'light'} backgroundColor={colors.cardBackground} />
       <Stack
         screenOptions={{
           headerStyle: {
             backgroundColor: colors.cardBackground,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
           },
           headerTintColor: colors.text,
           headerTitleStyle: {

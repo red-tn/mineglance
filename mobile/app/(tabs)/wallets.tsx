@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,9 @@ import {
   Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, spacing, borderRadius, fontSize } from '@/constants/theme';
+import { getColors, spacing, borderRadius, fontSize } from '@/constants/theme';
 import { useWalletStore } from '@/stores/walletStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useAuthStore } from '@/stores/authStore';
 import { usePoolData } from '@/hooks/usePoolData';
 import { usePrices } from '@/hooks/usePrices';
@@ -20,10 +21,15 @@ const WEBSITE_URL = 'https://www.mineglance.com';
 export default function WalletsScreen() {
   const router = useRouter();
   const { wallets, walletData, isLoading, reorderWallets } = useWalletStore();
+  const { liteMode } = useSettingsStore();
   const { isPro } = useAuthStore();
   const { fetchAllWallets } = usePoolData();
   const { fetchPrices } = usePrices();
   const [isReordering, setIsReordering] = useState(false);
+
+  // Dynamic colors based on theme
+  const colors = getColors(liteMode);
+  const styles = useMemo(() => createStyles(colors), [liteMode]);
 
   const sortedWallets = [...wallets].sort((a, b) => (a.order || 0) - (b.order || 0));
 
@@ -207,7 +213,8 @@ export default function WalletsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Dynamic styles factory
+const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

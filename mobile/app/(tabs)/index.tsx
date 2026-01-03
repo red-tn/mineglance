@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, spacing, borderRadius, fontSize } from '@/constants/theme';
+import { getColors, spacing, borderRadius, fontSize } from '@/constants/theme';
 import { useWalletStore } from '@/stores/walletStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -28,9 +28,13 @@ export default function DashboardScreen() {
     getOnlineWorkerCount,
     getEnabledWallets,
   } = useWalletStore();
-  const { electricityRate, powerConsumption } = useSettingsStore();
+  const { electricityRate, powerConsumption, liteMode } = useSettingsStore();
   const { fetchAllWallets } = usePoolData();
   const { getPrice, calculateUsdValue, fetchPrices } = usePrices();
+
+  // Dynamic colors based on theme
+  const colors = getColors(liteMode);
+  const styles = useMemo(() => createStyles(colors), [liteMode]);
 
   const { isActivated, plan, onboardingCompleted, isLoading: authLoading } = useAuthStore();
   const enabledWallets = getEnabledWallets();
@@ -216,7 +220,8 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+// Dynamic styles factory
+const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
