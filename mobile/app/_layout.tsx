@@ -22,7 +22,7 @@ export default function RootLayout() {
 
   // Load stores from storage on app start
   const loadAuth = useAuthStore(state => state.loadFromStorage);
-  const verifyLicense = useAuthStore(state => state.verifyLicense);
+  const verifyAuth = useAuthStore(state => state.verifyAuth);
   const loadSettings = useSettingsStore(state => state.loadFromStorage);
   const loadWallets = useWalletStore(state => state.loadFromStorage);
   const liteMode = useSettingsStore(state => state.liteMode);
@@ -38,8 +38,8 @@ export default function RootLayout() {
           loadWallets(),
         ]);
 
-        // Verify license is still valid with server (non-blocking)
-        verifyLicense();
+        // Verify auth is still valid with server (non-blocking)
+        verifyAuth();
 
         // Request notification permissions
         await requestNotificationPermissions();
