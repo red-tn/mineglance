@@ -177,7 +177,7 @@ export default function Support() {
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-primary">&#10003;</span>
-                  <div><strong className="text-dark-text">iOS Mobile App</strong> &mdash; Check mining stats on the go</div>
+                  <div><strong className="text-dark-text">iOS Mobile App</strong> &mdash; Check mining stats on the go (Android coming soon)</div>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-primary">&#10003;</span>

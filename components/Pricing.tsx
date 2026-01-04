@@ -53,15 +53,15 @@ export default function Pricing() {
       name: 'Pro + Mobile',
       price: '$59',
       period: 'lifetime',
-      description: 'Extension + iOS/Android app',
+      description: 'Extension + iOS app',
       features: [
         'Everything in Pro',
-        'Mobile app (iOS & Android)',
+        'Mobile app (iOS)',
         'Push notifications',
-        'Widget support',
+        'Dark & Lite themes',
         'Sync across devices',
         'Early access to new features',
-        'Founding member status'
+        'Android coming soon'
       ],
       cta: 'Get Bundle',
       href: '#',

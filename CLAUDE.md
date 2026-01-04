@@ -19,20 +19,22 @@
    4. Run: `cd F:\MINEGLANCE\roadmap && python publish_releases.py`
 
    **For iOS App:**
-   1. Update version/buildNumber in `F:\MINEGLANCE\mobile\app.json`
+   1. Update version in `F:\MINEGLANCE\mobile\app.json` (buildNumber is auto-incremented)
    2. Update `PENDING_RELEASES` in `F:\MINEGLANCE\roadmap\publish_releases.py`
    3. Commit and push
    4. Run: `cd F:\MINEGLANCE\roadmap && python publish_releases.py`
-   5. (Optional) Build with EAS: `powershell -File "F:\MINEGLANCE\mobile\build-ios.ps1"`
 
    **The publish script automatically:**
    - Creates ZIP from `extension/` folder for extension releases
-   - Downloads latest IPA from EAS for mobile releases
-   - Uploads files to Supabase Storage
-   - Publishes release info to database
+   - **Auto-increments iOS buildNumber** before triggering build
+   - Triggers **GitHub Actions workflow** for iOS builds (free macOS runners)
+   - Waits for build completion and TestFlight submission
+   - Publishes release info to `software_releases` table
+   - Commits and pushes build number changes
    - Marks new release as "latest" and unmarks old ones
 
    **Release script location:** `F:\MINEGLANCE\roadmap\publish_releases.py`
+   **GitHub Workflow:** `.github/workflows/ios-build.yml`
    **Storage bucket:** `https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software`
 
 ## Project Structure
@@ -76,6 +78,9 @@
 
 ### Other Tables
 - `email_alerts_log` - Alert notification history
+- `software_releases` - Published software versions (extension, mobile_ios, mobile_android)
+- `bug_fixes` - Bug fix log
+- `roadmap_items` - Feature requests and roadmap items
 
 ## Key API Routes
 
@@ -177,6 +182,14 @@
 - `mobile/app/scan.tsx` - QR code scanner (300px scanner frame)
 - `mobile/app/onboarding.tsx` - First-time setup
 - `mobile/stores/*` - Zustand stores for wallets, settings, auth
+- `mobile/constants/theme.ts` - Theme colors with `getColors(liteMode)` function
+
+### Theme System
+- **Dark mode** is the default
+- **Lite mode** (light theme) can be enabled in Settings
+- All screens use `getColors(liteMode)` for dynamic theming
+- Tab bar icons: Ionicons (speedometer, wallet, settings)
+- StatusBar style changes based on theme
 
 ### Build & Deploy (Automated)
 
