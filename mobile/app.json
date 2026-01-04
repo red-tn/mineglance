@@ -18,10 +18,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mineglance.mg-app",
       "infoPlist": {
-        "NSCameraUsageDescription": "MineGlance needs camera access to scan QR codes from your extension settings.",
         "UIBackgroundModes": [
-          "fetch",
-          "remote-notification",
           "fetch",
           "remote-notification"
         ],
@@ -30,7 +27,7 @@
       "entitlements": {
         "aps-environment": "production"
       },
-      "buildNumber": "24"
+      "buildNumber": "25"
     },
     "android": {
       "adaptiveIcon": {
@@ -39,11 +36,8 @@
       },
       "package": "com.mineglance.app",
       "permissions": [
-        "CAMERA",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.WAKE_LOCK"
       ]
@@ -51,12 +45,6 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "MineGlance needs camera access to scan QR codes from your extension settings."
-        }
-      ],
       [
         "expo-notifications",
         {
