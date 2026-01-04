@@ -180,7 +180,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.forgotLink}>Forgot password?</Text>
               </TouchableOpacity>
             </View>
-          )}
+          ) : null}
 
           {error ? (
             <View style={styles.errorContainer}>
