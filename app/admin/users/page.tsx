@@ -199,13 +199,17 @@ export default function UsersPage() {
                     <span className="font-medium text-dark-text">{user.email}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded">
-                      {user.key.substring(0, 12)}...
-                    </code>
+                    {user.key ? (
+                      <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded">
+                        {user.key.substring(0, 12)}...
+                      </code>
+                    ) : (
+                      <span className="text-dark-text-muted">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(user.plan)}`}>
-                      {user.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
+                      {user.plan === 'free' ? 'FREE' : user.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
                     </span>
                   </td>
                   <td className="px-4 py-3">

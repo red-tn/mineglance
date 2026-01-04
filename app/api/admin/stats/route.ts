@@ -90,9 +90,9 @@ export async function GET(request: NextRequest) {
     if (latestLicenses) {
       latestLicenses.forEach(l => {
         recentActivity.push({
-          type: 'license_activated',
-          identifier: l.license_key?.substring(0, 7) + '...',
-          detail: l.email,
+          type: l.plan === 'free' ? 'free_signup' : 'license_activated',
+          identifier: l.license_key ? l.license_key.substring(0, 7) + '...' : 'Free',
+          detail: l.email || 'Unknown',
           created_at: l.created_at
         })
       })
