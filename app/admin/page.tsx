@@ -245,16 +245,19 @@ export default function AdminDashboard() {
               <div key={i} className="flex items-center gap-2 sm:gap-3 p-2 bg-dark-card-hover rounded-lg">
                 <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-sm ${
                   activity.type === 'license_activated' ? 'bg-green-500/20' :
+                  activity.type === 'free_signup' ? 'bg-blue-500/20' :
                   activity.type === 'alert_sent' ? 'bg-orange-500/20' :
-                  'bg-blue-500/20'
+                  'bg-purple-500/20'
                 }`}>
                   {activity.type === 'license_activated' ? '🔑' :
+                   activity.type === 'free_signup' ? '👤' :
                    activity.type === 'alert_sent' ? '🔔' :
                    activity.type === 'purchase' ? '💰' : '📋'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs sm:text-sm font-medium text-dark-text">
-                    {activity.type === 'license_activated' ? 'License Activated' :
+                    {activity.type === 'license_activated' ? 'Pro Activated' :
+                     activity.type === 'free_signup' ? 'Free Signup' :
                      activity.type === 'alert_sent' ? `Alert: ${activity.identifier}` :
                      activity.type === 'purchase' ? 'Purchase' :
                      activity.type}
