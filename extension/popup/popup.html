@@ -8,6 +8,36 @@
 </head>
 <body>
   <div id="app">
+    <!-- Auth Modal (First Launch) -->
+    <div id="authModal" class="auth-modal hidden">
+      <div class="auth-modal-content">
+        <div class="auth-logo">
+          <img src="../icons/logo-icon.svg" alt="MineGlance">
+        </div>
+        <h2>Welcome to MineGlance</h2>
+        <p class="auth-subtitle">Sign in to sync your wallets across devices</p>
+
+        <!-- Step 1: Email -->
+        <div id="authEmailStep" class="auth-step">
+          <input type="email" id="authEmail" class="auth-input" placeholder="Enter your email" />
+          <button id="authContinueBtn" class="btn btn-primary auth-btn">Continue</button>
+          <p class="auth-note">Free account - 1 wallet. <a href="https://mineglance.com/#pricing" target="_blank">Upgrade to Pro</a> for unlimited.</p>
+        </div>
+
+        <!-- Step 2: License Key (for Pro users) -->
+        <div id="authLicenseStep" class="auth-step hidden">
+          <p class="auth-info">A Pro license is associated with this email.</p>
+          <input type="text" id="authLicenseKey" class="auth-input" placeholder="Enter your license key" />
+          <button id="authActivateBtn" class="btn btn-primary auth-btn">Activate Pro</button>
+          <button id="authSkipBtn" class="btn btn-secondary auth-btn-link">Continue as Free</button>
+          <p class="auth-forgot"><a href="#" id="authResendKey">Forgot your key? Send it to me</a></p>
+        </div>
+
+        <!-- Success / Error Messages -->
+        <div id="authMessage" class="auth-message hidden"></div>
+      </div>
+    </div>
+
     <!-- Header -->
     <header class="header">
       <div class="logo">
@@ -88,14 +118,14 @@
 
       <!-- Version -->
       <div class="version-info">
-        <span id="versionNumber">v1.0.5</span>
+        <span id="versionNumber">v1.1.0</span>
       </div>
     </div>
 
     <!-- Upgrade Banner (Free Users) -->
     <div id="upgradeBanner" class="upgrade-banner hidden">
-      <p>Unlock auto-refresh, alerts & more</p>
-      <button id="upgradeBtn" class="btn btn-accent">Upgrade $29</button>
+      <p>Unlock unlimited wallets & cloud sync</p>
+      <button id="upgradeBtn" class="btn btn-accent">Upgrade $59</button>
     </div>
   </div>
 

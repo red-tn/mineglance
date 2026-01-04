@@ -31,6 +31,8 @@ function getPoolUrl(pool, coin, address) {
   return null;
 }
 
+const API_BASE = 'https://www.mineglance.com/api';
+
 document.addEventListener('DOMContentLoaded', async () => {
   // DOM Elements
   const loading = document.getElementById('loading');
@@ -47,11 +49,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const discoveryList = document.getElementById('discoveryList');
   const toggleDiscovery = document.getElementById('toggleDiscovery');
 
+  // Auth Modal Elements
+  const authModal = document.getElementById('authModal');
+  const authEmailStep = document.getElementById('authEmailStep');
+  const authLicenseStep = document.getElementById('authLicenseStep');
+  const authEmail = document.getElementById('authEmail');
+  const authLicenseKey = document.getElementById('authLicenseKey');
+  const authContinueBtn = document.getElementById('authContinueBtn');
+  const authActivateBtn = document.getElementById('authActivateBtn');
+  const authSkipBtn = document.getElementById('authSkipBtn');
+  const authResendKey = document.getElementById('authResendKey');
+  const authMessage = document.getElementById('authMessage');
+
   // Buttons
   const settingsBtn = document.getElementById('settingsBtn');
   const addWalletBtn = document.getElementById('addWalletBtn');
   const refreshBtn = document.getElementById('refreshBtn');
   const upgradeBtn = document.getElementById('upgradeBtn');
+
+  // Auth state
+  let pendingEmail = '';
 
   // State
   let currentTab = 'trending';
@@ -77,6 +94,205 @@ document.addEventListener('DOMContentLoaded', async () => {
   upgradeBtn.addEventListener('click', () => {
     chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
   });
+
+  // Auth Modal Event Handlers
+  authContinueBtn.addEventListener('click', handleEmailContinue);
+  authEmail.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleEmailContinue();
+  });
+
+  authActivateBtn.addEventListener('click', handleLicenseActivate);
+  authLicenseKey.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLicenseActivate();
+  });
+
+  authSkipBtn.addEventListener('click', () => {
+    // Login as free user
+    handleFreeLogin();
+  });
+
+  authResendKey.addEventListener('click', async (e) => {
+    e.preventDefault();
+    showAuthMessage('Sending license key...', 'success');
+    try {
+      const response = await fetch(`${API_BASE}/auth/resend-key`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail })
+      });
+      const data = await response.json();
+      if (data.success) {
+        showAuthMessage('License key sent to your email!', 'success');
+      } else {
+        showAuthMessage(data.error || 'Failed to send key', 'error');
+      }
+    } catch (err) {
+      showAuthMessage('Failed to send key. Try again.', 'error');
+    }
+  });
+
+  async function handleEmailContinue() {
+    const email = authEmail.value.trim().toLowerCase();
+    if (!email || !email.includes('@')) {
+      showAuthMessage('Please enter a valid email', 'error');
+      return;
+    }
+
+    pendingEmail = email;
+    authContinueBtn.disabled = true;
+    authContinueBtn.textContent = 'Checking...';
+    hideAuthMessage();
+
+    try {
+      // Try to login with email only
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, installId: await getInstallId() })
+      });
+      const data = await response.json();
+
+      if (data.requiresLicenseKey) {
+        // User has Pro license, needs key
+        authEmailStep.classList.add('hidden');
+        authLicenseStep.classList.remove('hidden');
+      } else if (data.token) {
+        // Login successful (new or existing free user)
+        await handleLoginSuccess(data);
+      } else {
+        showAuthMessage(data.error || 'Login failed', 'error');
+      }
+    } catch (err) {
+      showAuthMessage('Connection error. Please try again.', 'error');
+    } finally {
+      authContinueBtn.disabled = false;
+      authContinueBtn.textContent = 'Continue';
+    }
+  }
+
+  async function handleLicenseActivate() {
+    const licenseKey = authLicenseKey.value.trim().toUpperCase();
+    if (!licenseKey) {
+      showAuthMessage('Please enter your license key', 'error');
+      return;
+    }
+
+    authActivateBtn.disabled = true;
+    authActivateBtn.textContent = 'Activating...';
+    hideAuthMessage();
+
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: pendingEmail,
+          licenseKey: licenseKey,
+          installId: await getInstallId()
+        })
+      });
+      const data = await response.json();
+
+      if (data.token) {
+        await handleLoginSuccess(data);
+      } else {
+        showAuthMessage(data.error || 'Invalid license key', 'error');
+      }
+    } catch (err) {
+      showAuthMessage('Connection error. Please try again.', 'error');
+    } finally {
+      authActivateBtn.disabled = false;
+      authActivateBtn.textContent = 'Activate Pro';
+    }
+  }
+
+  async function handleFreeLogin() {
+    authSkipBtn.disabled = true;
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: pendingEmail,
+          installId: await getInstallId(),
+          skipProCheck: true
+        })
+      });
+      const data = await response.json();
+      if (data.token) {
+        await handleLoginSuccess(data);
+      } else {
+        showAuthMessage(data.error || 'Login failed', 'error');
+      }
+    } catch (err) {
+      showAuthMessage('Connection error. Please try again.', 'error');
+    } finally {
+      authSkipBtn.disabled = false;
+    }
+  }
+
+  async function handleLoginSuccess(data) {
+    // Store auth data
+    await chrome.storage.local.set({
+      authToken: data.token,
+      userId: data.userId,
+      userEmail: data.email,
+      plan: data.plan,
+      isPaid: data.plan === 'pro',
+      wallets: data.wallets || [],
+      settings: data.settings || {}
+    });
+
+    // Hide auth modal and show dashboard
+    authModal.classList.add('hidden');
+    await initPopup();
+  }
+
+  async function getInstallId() {
+    let { installId } = await chrome.storage.local.get('installId');
+    if (!installId) {
+      installId = 'ext_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      await chrome.storage.local.set({ installId });
+    }
+    return installId;
+  }
+
+  function showAuthMessage(message, type) {
+    authMessage.textContent = message;
+    authMessage.className = `auth-message ${type}`;
+    authMessage.classList.remove('hidden');
+  }
+
+  function hideAuthMessage() {
+    authMessage.classList.add('hidden');
+  }
+
+  async function verifyAuthToken(token) {
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+
+      if (!data.valid) {
+        // Token expired or invalid - show auth modal
+        await chrome.storage.local.remove(['authToken', 'userId', 'userEmail']);
+        authModal.classList.remove('hidden');
+        loading.classList.add('hidden');
+        dashboard.classList.add('hidden');
+      } else {
+        // Update plan info
+        await chrome.storage.local.set({
+          plan: data.plan,
+          isPaid: data.plan === 'pro'
+        });
+      }
+    } catch (err) {
+      // Network error - continue with cached data
+      console.log('Token verification failed, using cached data');
+    }
+  }
 
   // Discovery toggle
   toggleDiscovery.addEventListener('click', async () => {
@@ -149,7 +365,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-      let { wallets, isPaid, electricity, settings, discoveryCollapsed, plan } = await chrome.storage.local.get([
+      let { authToken, wallets, isPaid, electricity, settings, discoveryCollapsed, plan } = await chrome.storage.local.get([
+        'authToken',
         'wallets',
         'isPaid',
         'electricity',
@@ -157,6 +374,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         'discoveryCollapsed',
         'plan'
       ]);
+
+      // Check if user is logged in
+      if (!authToken) {
+        // Show auth modal
+        loading.classList.add('hidden');
+        authModal.classList.remove('hidden');
+        return;
+      }
+
+      // Verify token is still valid (non-blocking)
+      verifyAuthToken(authToken);
 
       // Verify license with server (non-blocking, runs in background)
       if (isPaid) {
@@ -167,7 +395,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             upgradeBanner.classList.remove('hidden');
           } else if (response && response.plan) {
             // Update badge text based on plan
-            proBadge.textContent = response.plan === 'bundle' ? 'PRO+' : 'PRO';
+            proBadge.textContent = response.plan === 'pro' ? 'PRO' : 'PRO';
             chrome.storage.local.set({ plan: response.plan });
           }
         });

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Find session by setup token
     const { data: session, error: sessionError } = await supabase
       .from('user_sessions')
-      .select('*, user:paid_users(*)')
+      .select('*, user:users(*)')
       .eq('token', setupToken)
       .single()
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = hashPassword(password)
 
     const { error: updateError } = await supabase
-      .from('paid_users')
+      .from('users')
       .update({
         password_hash: passwordHash,
         last_login: new Date().toISOString()

@@ -5,19 +5,29 @@ import { AuthState } from '@/types';
 const API_BASE = 'https://www.mineglance.com/api';
 
 interface AuthStore extends AuthState {
+  email: string | null;
+  authToken: string | null;
+  userId: string | null;
   onboardingCompleted: boolean;
   isLoading: boolean;
+  setAuthData: (data: { email: string; authToken: string; userId: string; plan: 'free' | 'pro'; licenseKey?: string }) => Promise<void>;
   setLicenseKey: (key: string) => Promise<void>;
-  setPlan: (plan: 'free' | 'pro' | 'bundle') => Promise<void>;
+  setPlan: (plan: 'free' | 'pro') => Promise<void>;
   setInstanceId: (id: string) => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => Promise<void>;
   loadFromStorage: () => Promise<void>;
-  verifyLicense: () => Promise<void>;
+  verifyAuth: () => Promise<boolean>;
   clearAuth: () => Promise<void>;
   isPro: () => boolean;
+  login: (email: string, licenseKey?: string) => Promise<{ success: boolean; error?: string; requiresLicenseKey?: boolean }>;
+  register: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resendKey: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
+  email: null,
+  authToken: null,
+  userId: null,
   licenseKey: null,
   plan: null,
   instanceId: null,
@@ -25,13 +35,33 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   onboardingCompleted: false,
   isLoading: true,
 
+  setAuthData: async (data) => {
+    await SecureStore.setItemAsync('email', data.email);
+    await SecureStore.setItemAsync('authToken', data.authToken);
+    await SecureStore.setItemAsync('userId', data.userId);
+    await SecureStore.setItemAsync('plan', data.plan);
+    await SecureStore.setItemAsync('onboardingCompleted', 'true');
+    if (data.licenseKey) {
+      await SecureStore.setItemAsync('licenseKey', data.licenseKey);
+    }
+    set({
+      email: data.email,
+      authToken: data.authToken,
+      userId: data.userId,
+      plan: data.plan,
+      licenseKey: data.licenseKey || null,
+      isActivated: true,
+      onboardingCompleted: true,
+    });
+  },
+
   setLicenseKey: async (key: string) => {
     await SecureStore.setItemAsync('licenseKey', key);
     await SecureStore.setItemAsync('onboardingCompleted', 'true');
     set({ licenseKey: key, isActivated: true, onboardingCompleted: true });
   },
 
-  setPlan: async (plan: 'free' | 'pro' | 'bundle') => {
+  setPlan: async (plan: 'free' | 'pro') => {
     await SecureStore.setItemAsync('plan', plan);
     set({ plan });
   },
@@ -48,16 +78,24 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   loadFromStorage: async () => {
     try {
-      const licenseKey = await SecureStore.getItemAsync('licenseKey');
-      const instanceId = await SecureStore.getItemAsync('instanceId');
-      const onboardingCompleted = await SecureStore.getItemAsync('onboardingCompleted');
-      const plan = await SecureStore.getItemAsync('plan') as 'free' | 'pro' | 'bundle' | null;
+      const [email, authToken, userId, licenseKey, instanceId, onboardingCompleted, plan] = await Promise.all([
+        SecureStore.getItemAsync('email'),
+        SecureStore.getItemAsync('authToken'),
+        SecureStore.getItemAsync('userId'),
+        SecureStore.getItemAsync('licenseKey'),
+        SecureStore.getItemAsync('instanceId'),
+        SecureStore.getItemAsync('onboardingCompleted'),
+        SecureStore.getItemAsync('plan') as Promise<'free' | 'pro' | null>,
+      ]);
 
       set({
+        email,
+        authToken,
+        userId,
         licenseKey,
         instanceId,
         plan,
-        isActivated: !!licenseKey,
+        isActivated: !!authToken,
         onboardingCompleted: onboardingCompleted === 'true',
         isLoading: false,
       });
@@ -67,42 +105,125 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
-  verifyLicense: async () => {
-    const { licenseKey } = get();
+  verifyAuth: async () => {
+    const { authToken } = get();
 
-    // No license to verify
-    if (!licenseKey) {
-      return;
+    if (!authToken) {
+      return false;
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE}/activate-license?key=${encodeURIComponent(licenseKey)}`
-      );
+      const response = await fetch(`${API_BASE}/wallets/sync`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+
+      if (response.status === 401) {
+        // Token expired or invalid
+        await get().clearAuth();
+        return false;
+      }
+
+      return response.ok;
+    } catch (error) {
+      console.error('Auth verification failed:', error);
+      // Don't clear on network errors - be lenient
+      return true;
+    }
+  },
+
+  login: async (email: string, licenseKey?: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, licenseKey }),
+      });
+
       const data = await response.json();
 
-      if (!data.isPro) {
-        // License revoked or invalid - clear pro status
-        console.log('License no longer valid, reverting to free');
-        await SecureStore.setItemAsync('plan', 'free');
-        set({ plan: 'free' });
-      } else if (data.plan) {
-        // Update plan if changed
-        await SecureStore.setItemAsync('plan', data.plan);
-        set({ plan: data.plan });
+      if (!response.ok) {
+        if (data.requiresLicenseKey) {
+          return { success: false, requiresLicenseKey: true };
+        }
+        return { success: false, error: data.error || 'Login failed' };
       }
+
+      await get().setAuthData({
+        email: data.email,
+        authToken: data.token,
+        userId: data.userId,
+        plan: data.plan,
+        licenseKey: data.licenseKey,
+      });
+
+      return { success: true };
     } catch (error) {
-      console.error('License verification failed:', error);
-      // Don't clear on network errors - be lenient
+      console.error('Login failed:', error);
+      return { success: false, error: 'Network error. Please try again.' };
+    }
+  },
+
+  register: async (email: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Registration failed' };
+      }
+
+      await get().setAuthData({
+        email: data.email,
+        authToken: data.token,
+        userId: data.userId,
+        plan: 'free',
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error('Registration failed:', error);
+      return { success: false, error: 'Network error. Please try again.' };
+    }
+  },
+
+  resendKey: async (email: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/auth/resend-key`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Failed to send key' };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Resend key failed:', error);
+      return { success: false, error: 'Network error. Please try again.' };
     }
   },
 
   clearAuth: async () => {
+    await SecureStore.deleteItemAsync('email');
+    await SecureStore.deleteItemAsync('authToken');
+    await SecureStore.deleteItemAsync('userId');
     await SecureStore.deleteItemAsync('licenseKey');
     await SecureStore.deleteItemAsync('instanceId');
     await SecureStore.deleteItemAsync('onboardingCompleted');
     await SecureStore.deleteItemAsync('plan');
     set({
+      email: null,
+      authToken: null,
+      userId: null,
       licenseKey: null,
       plan: null,
       instanceId: null,
@@ -113,6 +234,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   isPro: () => {
     const { plan } = get();
-    return plan === 'pro' || plan === 'bundle';
+    return plan === 'pro';
   },
 }));

@@ -47,10 +47,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Verify license is valid (using paid_users table)
+    // Verify license is valid
     const normalizedKey = licenseKey.toUpperCase().trim()
     const { data: license, error } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('email, plan, is_revoked')
       .eq('license_key', normalizedKey)
       .single()

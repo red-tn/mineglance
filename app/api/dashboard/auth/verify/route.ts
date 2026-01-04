@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // Find session
     const { data: session, error: sessionError } = await supabase
       .from('user_sessions')
-      .select('*, user:paid_users(*)')
+      .select('*, user:users(*)')
       .eq('token', token)
       .single()
 

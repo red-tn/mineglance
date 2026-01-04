@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Find user by license key and email
     const { data: user, error } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('*')
       .eq('license_key', normalizedKey)
       .eq('email', normalizedEmail)
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     // Update last login
     await supabase
-      .from('paid_users')
+      .from('users')
       .update({ last_login: new Date().toISOString() })
       .eq('id', user.id)
 

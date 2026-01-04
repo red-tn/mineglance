@@ -91,6 +91,23 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={styles.iconWrapper}>
+              <Ionicons
+                name={focused ? 'person' : 'person-outline'}
+                size={24}
+                color={color}
+              />
+              {focused && <View style={[styles.activeIndicator, { backgroundColor: colors.primary }]} />}
+            </View>
+          ),
+          headerLeft: () => <HeaderLeft />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',

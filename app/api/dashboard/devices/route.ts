@@ -16,7 +16,7 @@ async function getAuthenticatedUser(request: NextRequest) {
 
   const { data: session, error } = await supabase
     .from('user_sessions')
-    .select('*, user:paid_users(*)')
+    .select('*, user:users(*)')
     .eq('token', token)
     .single()
 
@@ -34,44 +34,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get all activations for this license key
-    const { data: activations, error: activationsError } = await supabase
-      .from('license_activations')
+    // Get all instances for this user from user_instances
+    const { data: instances, error: instancesError } = await supabase
+      .from('user_instances')
       .select('*')
-      .eq('license_key', user.license_key)
-      .order('activated_at', { ascending: false })
+      .eq('user_id', user.id)
+      .order('last_seen', { ascending: false })
 
-    if (activationsError) {
-      console.error('Failed to get activations:', activationsError)
+    if (instancesError) {
+      console.error('Failed to get instances:', instancesError)
       return NextResponse.json({ error: 'Failed to get devices' }, { status: 500 })
     }
 
-    // Also get extension install info for more details
-    const installIds = activations.map(a => a.install_id)
-    const { data: installs } = await supabase
-      .from('extension_installs')
-      .select('*')
-      .in('install_id', installIds)
-
-    // Merge activation with install data
-    const devices = activations.map(activation => {
-      const install = installs?.find(i => i.install_id === activation.install_id)
-      return {
-        id: activation.id,
-        installId: activation.install_id,
-        deviceName: activation.device_name || 'Unknown Device',
-        browser: install?.browser || null,
-        version: install?.version || null,
-        activatedAt: activation.activated_at,
-        lastSeen: activation.last_seen || install?.last_seen,
-        isActive: activation.is_active
-      }
-    })
+    // Format devices for response
+    const devices = (instances || []).map(instance => ({
+      id: instance.id,
+      installId: instance.instance_id,
+      deviceName: instance.device_name || 'Unknown Device',
+      deviceType: instance.device_type,
+      browser: instance.browser || null,
+      version: instance.version || null,
+      createdAt: instance.created_at,
+      lastSeen: instance.last_seen
+    }))
 
     return NextResponse.json({
       devices,
-      maxActivations: user.max_activations || 3,
-      activeCount: devices.filter(d => d.isActive).length
+      deviceCount: devices.length
     })
 
   } catch (error) {
@@ -88,39 +77,39 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const installId = searchParams.get('installId')
+    const instanceId = searchParams.get('instanceId')
 
-    if (!installId) {
-      return NextResponse.json({ error: 'Install ID required' }, { status: 400 })
+    if (!instanceId) {
+      return NextResponse.json({ error: 'Instance ID required' }, { status: 400 })
     }
 
-    // Verify the activation belongs to this user
-    const { data: activation, error: findError } = await supabase
-      .from('license_activations')
+    // Verify the instance belongs to this user
+    const { data: instance, error: findError } = await supabase
+      .from('user_instances')
       .select('*')
-      .eq('license_key', user.license_key)
-      .eq('install_id', installId)
+      .eq('user_id', user.id)
+      .eq('instance_id', instanceId)
       .single()
 
-    if (findError || !activation) {
+    if (findError || !instance) {
       return NextResponse.json({ error: 'Device not found' }, { status: 404 })
     }
 
-    // Deactivate (soft delete) the device
-    const { error: updateError } = await supabase
-      .from('license_activations')
-      .update({ is_active: false })
-      .eq('id', activation.id)
+    // Delete the instance
+    const { error: deleteError } = await supabase
+      .from('user_instances')
+      .delete()
+      .eq('id', instance.id)
 
-    if (updateError) {
-      console.error('Failed to deactivate:', updateError)
-      return NextResponse.json({ error: 'Failed to deactivate device' }, { status: 500 })
+    if (deleteError) {
+      console.error('Failed to delete instance:', deleteError)
+      return NextResponse.json({ error: 'Failed to remove device' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
 
   } catch (error) {
     console.error('Delete device error:', error)
-    return NextResponse.json({ error: 'Failed to deactivate device' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to remove device' }, { status: 500 })
   }
 }

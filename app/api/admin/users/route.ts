@@ -43,9 +43,9 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit
 
-    // Build query for paid_users table
+    // Build query for users table
     let query = supabase
-      .from('paid_users')
+      .from('users')
       .select('*', { count: 'exact' })
 
     // Apply filters
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     // Get paginated data
     let dataQuery = supabase
-      .from('paid_users')
+      .from('users')
       .select('*')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -94,14 +94,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [], total: 0, page, limit })
     }
 
-    // Get installation counts for each license from license_activations
+    // Get installation counts for each user from user_instances
     const usersWithStats = await Promise.all(
       (licenses || []).map(async (license) => {
         const { count: installCount } = await supabase
-          .from('license_activations')
+          .from('user_instances')
           .select('*', { count: 'exact', head: true })
-          .eq('license_key', license.license_key)
-          .eq('is_active', true)
+          .eq('user_id', license.id)
 
         return {
           ...license,
@@ -143,14 +142,14 @@ export async function PATCH(request: NextRequest) {
     switch (action) {
       case 'revoke':
         await supabase
-          .from('paid_users')
+          .from('users')
           .update({ is_revoked: true })
           .eq('license_key', licenseKey)
         break
 
       case 'activate':
         await supabase
-          .from('paid_users')
+          .from('users')
           .update({ is_revoked: false })
           .eq('license_key', licenseKey)
         break

@@ -38,7 +38,7 @@ interface ServiceStatus {
 async function checkSupabase(): Promise<ServiceStatus> {
   const start = Date.now()
   try {
-    const { error } = await supabase.from('paid_users').select('id').limit(1)
+    const { error } = await supabase.from('users').select('id').limit(1)
     const latency = Date.now() - start
 
     return {

@@ -1,5 +1,7 @@
 // MineGlance Options Page Script
 
+const API_BASE = 'https://www.mineglance.com/api';
+
 // Average electricity rates by state (USD/kWh) - 2024 data
 const STATE_RATES = {
   'AL': 0.12, 'AK': 0.22, 'AZ': 0.12, 'AR': 0.10, 'CA': 0.23,
@@ -270,12 +272,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showDiscovery = document.getElementById('showDiscovery');
   const liteMode = document.getElementById('liteMode');
 
-  // QR Code elements
-  const qrCodeSection = document.getElementById('qrCodeSection');
-  const qrProNotice = document.getElementById('qrProNotice');
-  const generateQrBtn = document.getElementById('generateQrBtn');
-  const qrCodeCanvas = document.getElementById('qrCodeCanvas');
-  const qrExpiry = document.getElementById('qrExpiry');
+  // Mobile app section elements
+  const mobileAppSection = document.getElementById('mobileAppSection');
+  const mobileAppProNotice = document.getElementById('mobileAppProNotice');
 
   // Modals
   const walletModal = document.getElementById('walletModal');
@@ -296,6 +295,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('upgradeBtn').addEventListener('click', () => {
     chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
   });
+
+  // Mobile app upgrade button
+  const upgradeMobileBtn = document.getElementById('upgradeMobileBtn');
+  if (upgradeMobileBtn) {
+    upgradeMobileBtn.addEventListener('click', () => {
+      chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
+    });
+  }
 
   // Auto-save: Add listeners to all settings inputs
   const autoSaveInputs = [
@@ -366,12 +373,63 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Functions
   async function loadSettings() {
     const data = await chrome.storage.local.get([
-      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'licenseKey', 'plan', 'installId'
+      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'licenseKey', 'plan', 'installId', 'authToken', 'userId', 'userEmail'
     ]);
 
     wallets = data.wallets || [];
     rigs = data.rigs || [];
     isPaid = data.isPaid || false;
+
+    // If authenticated, load wallets and settings from server
+    if (data.authToken) {
+      try {
+        const [walletsRes, settingsRes] = await Promise.all([
+          fetch(`${API_BASE}/wallets/sync`, {
+            headers: { 'Authorization': `Bearer ${data.authToken}` }
+          }),
+          fetch(`${API_BASE}/settings/sync`, {
+            headers: { 'Authorization': `Bearer ${data.authToken}` }
+          })
+        ]);
+
+        if (walletsRes.ok) {
+          const walletsData = await walletsRes.json();
+          if (walletsData.wallets) {
+            wallets = walletsData.wallets;
+            await chrome.storage.local.set({ wallets });
+          }
+        }
+
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          if (settingsData.settings) {
+            // Merge server settings with local
+            await chrome.storage.local.set({
+              electricity: {
+                rate: settingsData.settings.electricity_rate || 0.12,
+                currency: settingsData.settings.electricity_currency || 'USD'
+              },
+              settings: {
+                refreshInterval: settingsData.settings.refresh_interval || 30,
+                showDiscovery: settingsData.settings.show_discovery_coins !== false,
+                liteMode: settingsData.settings.lite_mode === true,
+                notifications: {
+                  workerOffline: settingsData.settings.notify_worker_offline,
+                  profitDrop: settingsData.settings.notify_profit_drop,
+                  profitDropThreshold: settingsData.settings.profit_drop_threshold || 20,
+                  betterCoin: settingsData.settings.notify_better_coin,
+                  emailEnabled: false,
+                  alertEmail: '',
+                  emailFrequency: 'daily'
+                }
+              }
+            });
+          }
+        }
+      } catch (err) {
+        console.log('Failed to load from server, using local data:', err);
+      }
+    }
 
     // Display instance ID in header
     const instanceIdEl = document.getElementById('instanceId');
@@ -459,131 +517,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     emailFrequency.disabled = false;
     testEmailBtn.disabled = false;
 
-    // Show QR code section for Pro users
-    if (qrCodeSection && qrProNotice) {
-      qrCodeSection.classList.remove('hidden');
-      qrProNotice.classList.add('hidden');
-    }
-  }
-
-  // QR Code Generation
-  if (generateQrBtn) {
-    generateQrBtn.addEventListener('click', generateQrCode);
-  }
-
-  // Upgrade button for QR section
-  const upgradeQrBtn = document.getElementById('upgradeQrBtn');
-  if (upgradeQrBtn) {
-    upgradeQrBtn.addEventListener('click', () => {
-      chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
-    });
-  }
-
-  async function generateQrCode() {
-    if (wallets.length === 0) {
-      alert('Please add at least one wallet before generating a QR code.');
-      return;
-    }
-
-    generateQrBtn.disabled = true;
-    generateQrBtn.textContent = 'Generating...';
-    qrExpiry.textContent = '';
-
-    try {
-      const { licenseKey, settings, electricity } = await chrome.storage.local.get(['licenseKey', 'settings', 'electricity']);
-
-      if (!licenseKey) {
-        throw new Error('License key not found. Please activate your Pro license.');
-      }
-
-      // Prepare wallet data (sanitize for QR)
-      const walletData = wallets.map(w => ({
-        n: w.name,
-        p: w.pool,
-        c: w.coin,
-        a: w.address,
-        pw: w.power || 200
-      }));
-
-      // Prepare settings data
-      const settingsData = {
-        elec: electricity?.rate || 0.12,
-        curr: electricity?.currency || 'USD',
-        ref: settings?.refreshInterval || 30
-      };
-
-      console.log('Generating QR with license:', licenseKey.substring(0, 8) + '...');
-      console.log('Full license key length:', licenseKey.length);
-
-      // Build headers
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${licenseKey}`
-      };
-      console.log('Request headers:', JSON.stringify(headers));
-
-      // Get QR data from server (use www to avoid redirect stripping auth header)
-      const response = await fetch('https://www.mineglance.com/api/dashboard/qr', {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-          wallets: walletData,
-          settings: settingsData
-        })
-      });
-
-      console.log('Response status:', response.status);
-
-      // Check if response is ok before parsing
-      const responseText = await response.text();
-      console.log('QR API response:', response.status, responseText.substring(0, 200));
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        throw new Error(`Server returned invalid response: ${responseText.substring(0, 100)}`);
-      }
-
-      if (!response.ok) {
-        const errMsg = data.debug ? `${data.error} (${data.debug})` : data.error;
-        throw new Error(errMsg || `Server error: ${response.status}`);
-      }
-
-      if (!data.qrData) {
-        throw new Error('No QR data received from server');
-      }
-
-      // Generate QR code using QR Server API (free public API)
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(data.qrData)}`;
-
-      // Load and draw on canvas
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const ctx = qrCodeCanvas.getContext('2d');
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, 400, 400);
-        ctx.drawImage(img, 0, 0, 400, 400);
-
-        // Show expiry time
-        const expiresIn = Math.round((data.expiresAt - Date.now()) / 60000);
-        qrExpiry.textContent = `QR code expires in ${expiresIn} minutes. Generate a new one if expired.`;
-        qrExpiry.style.color = '#38a169';
-      };
-      img.onerror = () => {
-        qrExpiry.textContent = 'Failed to load QR image. Try again.';
-        qrExpiry.style.color = '#e53e3e';
-      };
-      img.src = qrApiUrl;
-
-    } catch (error) {
-      console.error('QR generation error:', error);
-      qrExpiry.textContent = error.message || 'Failed to generate QR code.';
-      qrExpiry.style.color = '#e53e3e';
-    } finally {
-      generateQrBtn.disabled = false;
-      generateQrBtn.textContent = 'Generate New QR Code';
+    // Show mobile app section for Pro users
+    if (mobileAppSection && mobileAppProNotice) {
+      mobileAppSection.classList.remove('hidden');
+      mobileAppProNotice.classList.add('hidden');
     }
   }
 
@@ -947,15 +884,37 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // Check for auth token for cloud sync
+    const { authToken } = await chrome.storage.local.get('authToken');
+
     if (editingWalletId) {
       // Update existing
       const index = wallets.findIndex(w => w.id === editingWalletId);
       if (index !== -1) {
         wallets[index] = { ...wallets[index], name, pool, coin, address, power };
+
+        // Sync to server if authenticated
+        if (authToken) {
+          try {
+            await fetch(`${API_BASE}/wallets/sync`, {
+              method: 'PUT',
+              headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                id: editingWalletId,
+                name, pool, coin, address, power
+              })
+            });
+          } catch (err) {
+            console.log('Wallet sync failed, saved locally:', err);
+          }
+        }
       }
     } else {
       // Add new
-      wallets.push({
+      const newWallet = {
         id: Date.now().toString(),
         name,
         pool,
@@ -963,7 +922,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         address,
         power,
         enabled: true
-      });
+      };
+
+      // Sync to server if authenticated
+      if (authToken) {
+        try {
+          const response = await fetch(`${API_BASE}/wallets/sync`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(newWallet)
+          });
+          const data = await response.json();
+          if (data.wallet?.id) {
+            newWallet.id = data.wallet.id; // Use server-assigned ID
+          }
+          if (data.limitReached) {
+            alert('Free accounts are limited to 1 wallet. Upgrade to Pro for unlimited wallets.');
+            return;
+          }
+        } catch (err) {
+          console.log('Wallet sync failed, saved locally:', err);
+        }
+      }
+
+      wallets.push(newWallet);
     }
 
     // Auto-save wallets immediately
@@ -973,10 +958,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     showSaveStatus();
   }
 
-  function deleteWallet(id) {
+  async function deleteWallet(id) {
     if (confirm('Delete this wallet?')) {
       wallets = wallets.filter(w => w.id !== id);
-      chrome.storage.local.set({ wallets });
+      await chrome.storage.local.set({ wallets });
+
+      // Sync deletion to server if authenticated
+      const { authToken } = await chrome.storage.local.get('authToken');
+      if (authToken) {
+        try {
+          await fetch(`${API_BASE}/wallets/sync?id=${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+        } catch (err) {
+          console.log('Wallet delete sync failed:', err);
+        }
+      }
+
       renderWallets();
     }
   }
@@ -1030,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function saveSettings() {
-    await chrome.storage.local.set({
+    const settingsToSave = {
       wallets,
       rigs,
       electricity: {
@@ -1038,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currency: currency.value
       },
       settings: {
-        refreshInterval: parseInt(refreshInterval.value) || 5,
+        refreshInterval: parseInt(refreshInterval.value) || 30,
         showDiscovery: showDiscovery.checked,
         liteMode: liteMode.checked,
         notifications: {
@@ -1051,7 +1050,37 @@ document.addEventListener('DOMContentLoaded', async () => {
           emailFrequency: emailFrequency.value
         }
       }
-    });
+    };
+
+    await chrome.storage.local.set(settingsToSave);
+
+    // Sync settings to server if authenticated
+    const { authToken } = await chrome.storage.local.get('authToken');
+    if (authToken) {
+      try {
+        await fetch(`${API_BASE}/settings/sync`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            refresh_interval: settingsToSave.settings.refreshInterval,
+            electricity_rate: settingsToSave.electricity.rate,
+            electricity_currency: settingsToSave.electricity.currency,
+            currency: settingsToSave.electricity.currency,
+            notify_worker_offline: settingsToSave.settings.notifications.workerOffline,
+            notify_profit_drop: settingsToSave.settings.notifications.profitDrop,
+            profit_drop_threshold: settingsToSave.settings.notifications.profitDropThreshold,
+            notify_better_coin: settingsToSave.settings.notifications.betterCoin,
+            show_discovery_coins: settingsToSave.settings.showDiscovery,
+            lite_mode: settingsToSave.settings.liteMode
+          })
+        });
+      } catch (err) {
+        console.log('Settings sync failed:', err);
+      }
+    }
 
     // Update auto-refresh
     chrome.runtime.sendMessage({ action: 'setupAutoRefresh' });

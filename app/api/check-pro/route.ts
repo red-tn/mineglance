@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
     const { data, error } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('id, plan, created_at')
       .eq('email', email.toLowerCase())
       .single()

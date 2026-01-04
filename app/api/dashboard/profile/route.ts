@@ -16,7 +16,7 @@ async function getAuthenticatedUser(request: NextRequest) {
 
   const { data: session, error } = await supabase
     .from('user_sessions')
-    .select('*, user:paid_users(*)')
+    .select('*, user:users(*)')
     .eq('token', token)
     .single()
 
@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const { error: updateError } = await supabase
-      .from('paid_users')
+      .from('users')
       .update({
         full_name: fullName || null,
         phone: phone || null,

@@ -54,93 +54,20 @@ export async function POST(request: NextRequest) {
     const customerEmail = session.customer_email || session.customer_details?.email
 
     if (session.payment_status === 'paid' && customerEmail) {
-      // Check if this is a license purchase (additional activations)
-      if (session.metadata?.type === 'license_purchase') {
-        const totalLicenses = parseInt(session.metadata.total_licenses || '5')
-        const emailLower = customerEmail.toLowerCase()
-
-        console.log('Processing license purchase:', {
-          email: emailLower,
-          totalLicenses,
-          amount: session.amount_total
-        })
-
-        // Update max_activations for existing user
-        const { data: user, error: fetchError } = await supabase
-          .from('paid_users')
-          .select('id, max_activations')
-          .eq('email', emailLower)
-          .single()
-
-        if (fetchError || !user) {
-          console.error('User not found for license purchase:', emailLower)
-          return NextResponse.json({ received: true })
-        }
-
-        const newMaxActivations = (user.max_activations || 3) + totalLicenses
-
-        const { error: updateError } = await supabase
-          .from('paid_users')
-          .update({
-            max_activations: newMaxActivations,
-            updated_at: new Date().toISOString()
-          })
-          .eq('email', emailLower)
-
-        if (updateError) {
-          console.error('Error updating max_activations:', updateError)
-        } else {
-          console.log('License purchase complete:', emailLower, '- New max:', newMaxActivations)
-          // Send confirmation email
-          await sendLicensePurchaseEmail(emailLower, totalLicenses, newMaxActivations)
-        }
-
-        return NextResponse.json({ received: true })
-      }
-
-      // Determine plan from metadata or infer from amount
-      let plan: 'pro' | 'bundle' = (session.metadata?.plan as 'pro' | 'bundle') || 'pro'
       const amount = session.amount_total || 0
-
-      // Infer plan from amount if no metadata (Payment Links)
-      if (!session.metadata?.plan) {
-        if (amount >= 5500) {
-          plan = 'bundle' // $55+ is bundle
-        } else if (amount >= 2500 && amount <= 3100) {
-          // $25-$31 could be Pro ($29) or upgrade ($27-$30)
-          // Check if user exists with pro plan - if so, this is an upgrade
-          const emailLower = customerEmail.toLowerCase()
-          const { data: existing } = await supabase
-            .from('paid_users')
-            .select('plan')
-            .eq('email', emailLower)
-            .single()
-
-          if (existing?.plan === 'pro' || existing?.plan === 'lifetime_pro') {
-            plan = 'bundle' // Existing Pro user paying again = upgrade
-          }
-        }
-      }
-
-      const isUpgrade = session.metadata?.isUpgrade === 'true' ||
-        (plan === 'bundle' && amount < 5500) // Upgrade if bundle but paid less than full price
 
       console.log('Processing checkout:', {
         email: customerEmail,
-        plan,
-        isUpgrade,
         amount,
-        metadataPlan: session.metadata?.plan
+        productId: session.metadata?.product_id
       })
 
       await handleNewPurchase(supabase, {
         email: customerEmail,
         customerId: session.customer as string,
         paymentId: session.payment_intent as string,
-        amount: amount || 2900,
-        currency: session.currency || 'usd',
-        plan,
-        isUpgrade
+        amount: amount,
+        currency: session.currency || 'usd'
       })
     }
   }
@@ -150,15 +77,12 @@ export async function POST(request: NextRequest) {
     const charge = event.data.object as Stripe.Charge
 
     if (charge.paid && charge.billing_details?.email) {
-      const plan = charge.amount >= 5900 ? 'bundle' : 'pro'
-
       await handleNewPurchase(supabase, {
         email: charge.billing_details.email,
         customerId: charge.customer as string || null,
         paymentId: charge.payment_intent as string,
         amount: charge.amount,
-        currency: charge.currency,
-        plan
+        currency: charge.currency
       })
     }
   }
@@ -172,34 +96,30 @@ async function handleNewPurchase(supabase: any, data: {
   paymentId: string
   amount: number
   currency: string
-  plan: 'pro' | 'bundle'
-  isUpgrade?: boolean
 }) {
   const emailLower = data.email.toLowerCase()
 
   // Check if user already exists
   const { data: existing } = await supabase
-    .from('paid_users')
+    .from('users')
     .select('id, plan, license_key')
     .eq('email', emailLower)
     .single()
 
   if (existing) {
-    // Normalize existing plan name
-    const existingPlan = existing.plan === 'lifetime_pro' ? 'pro'
-      : existing.plan === 'lifetime_bundle' ? 'bundle'
-      : existing.plan
+    // User exists - upgrade from free to pro or handle duplicate payment
+    if (existing.plan === 'free') {
+      // Upgrade free user to pro
+      const licenseKey = generateLicenseKey()
 
-    // If upgrading from pro to bundle, update the record
-    // Also handle case where plan is already 'lifetime_pro' (not normalized in DB)
-    if ((existingPlan === 'pro' || existing.plan === 'lifetime_pro') && data.plan === 'bundle') {
       const { error } = await supabase
-        .from('paid_users')
+        .from('users')
         .update({
-          plan: 'bundle',
-          amount_paid: (existing.amount_paid || 2900) + data.amount, // Track total paid
+          plan: 'pro',
+          license_key: licenseKey,
+          stripe_customer_id: data.customerId,
           stripe_payment_id: data.paymentId,
-          max_activations: 5, // Upgrade to 5 activations
+          amount_paid: data.amount,
           updated_at: new Date().toISOString()
         })
         .eq('email', emailLower)
@@ -207,12 +127,12 @@ async function handleNewPurchase(supabase: any, data: {
       if (error) {
         console.error('Error upgrading user:', error)
       } else {
-        console.log('User upgraded to bundle:', emailLower, '- Upgrade price:', data.amount)
-        // Send upgrade confirmation email with existing license key
-        await sendUpgradeEmail(emailLower, existing.license_key)
+        console.log('User upgraded to Pro:', emailLower, '- License:', licenseKey)
+        await sendWelcomeEmail(emailLower, licenseKey)
       }
     } else {
-      console.log('User already exists with plan:', existingPlan, 'email:', emailLower)
+      console.log('User already Pro:', emailLower)
+      // Maybe send a duplicate payment notification?
     }
     return
   }
@@ -220,27 +140,25 @@ async function handleNewPurchase(supabase: any, data: {
   // Generate new license key for new user
   const licenseKey = generateLicenseKey()
 
-  const { error } = await supabase.from('paid_users').insert({
+  const { error } = await supabase.from('users').insert({
     email: emailLower,
     license_key: licenseKey,
     stripe_customer_id: data.customerId,
     stripe_payment_id: data.paymentId,
     amount_paid: data.amount,
     currency: data.currency,
-    plan: data.plan,
-    max_activations: data.plan === 'bundle' ? 5 : 3
+    plan: 'pro'
   })
 
   if (error) {
-    console.error('Error saving paid user:', error)
+    console.error('Error saving user:', error)
   } else {
     console.log('Pro user added:', emailLower, '- License:', licenseKey)
-    // Send welcome email with license key
-    await sendWelcomeEmail(emailLower, licenseKey, data.plan)
+    await sendWelcomeEmail(emailLower, licenseKey)
   }
 }
 
-async function sendWelcomeEmail(to: string, licenseKey: string, plan: 'pro' | 'bundle') {
+async function sendWelcomeEmail(to: string, licenseKey: string) {
   try {
     const baseUrl = process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
@@ -252,7 +170,7 @@ async function sendWelcomeEmail(to: string, licenseKey: string, plan: 'pro' | 'b
         'Content-Type': 'application/json',
         'x-internal-auth': process.env.INTERNAL_API_SECRET || 'internal-secret'
       },
-      body: JSON.stringify({ to, licenseKey, plan })
+      body: JSON.stringify({ to, licenseKey, plan: 'pro' })
     })
 
     if (!response.ok) {
@@ -262,65 +180,5 @@ async function sendWelcomeEmail(to: string, licenseKey: string, plan: 'pro' | 'b
     }
   } catch (error) {
     console.error('Error sending welcome email:', error)
-  }
-}
-
-async function sendUpgradeEmail(to: string, licenseKey: string) {
-  try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_SITE_URL || 'https://mineglance.com'
-
-    const response = await fetch(`${baseUrl}/api/send-welcome-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-auth': process.env.INTERNAL_API_SECRET || 'internal-secret'
-      },
-      body: JSON.stringify({
-        to,
-        licenseKey,
-        plan: 'bundle',
-        isUpgrade: true
-      })
-    })
-
-    if (!response.ok) {
-      console.error('Failed to send upgrade email:', await response.text())
-    } else {
-      console.log('Upgrade email sent to:', to)
-    }
-  } catch (error) {
-    console.error('Error sending upgrade email:', error)
-  }
-}
-
-async function sendLicensePurchaseEmail(to: string, licensesAdded: number, newMax: number) {
-  try {
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : process.env.NEXT_PUBLIC_SITE_URL || 'https://mineglance.com'
-
-    const response = await fetch(`${baseUrl}/api/send-welcome-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-auth': process.env.INTERNAL_API_SECRET || 'internal-secret'
-      },
-      body: JSON.stringify({
-        to,
-        licensesAdded,
-        newMax,
-        isLicensePurchase: true
-      })
-    })
-
-    if (!response.ok) {
-      console.error('Failed to send license purchase email:', await response.text())
-    } else {
-      console.log('License purchase email sent to:', to)
-    }
-  } catch (error) {
-    console.error('Error sending license purchase email:', error)
   }
 }

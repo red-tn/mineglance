@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Get user settings
     const { data: user, error } = await supabase
-      .from('paid_users')
+      .from('users')
       .select(`
         notify_worker_offline,
         notify_profit_drop,
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
 
     // Update user settings
     const { error } = await supabase
-      .from('paid_users')
+      .from('users')
       .update({
         notify_worker_offline: body.notifyWorkerOffline,
         notify_profit_drop: body.notifyProfitDrop,

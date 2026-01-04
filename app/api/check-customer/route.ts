@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
 
     const emailLower = email.toLowerCase().trim()
 
-    // Check if user exists in paid_users
+    // Check if user exists
     const { data: user, error } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('plan, is_revoked')
       .eq('email', emailLower)
       .single()
@@ -32,14 +32,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ exists: false, plan: null })
     }
 
-    // Normalize plan names (lifetime_pro -> pro, lifetime_bundle -> bundle)
-    let plan = user.plan
-    if (plan === 'lifetime_pro') plan = 'pro'
-    if (plan === 'lifetime_bundle') plan = 'bundle'
-
     return NextResponse.json({
       exists: true,
-      plan
+      plan: user.plan
     })
 
   } catch (error) {

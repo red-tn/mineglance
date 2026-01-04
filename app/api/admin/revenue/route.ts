@@ -41,14 +41,14 @@ export async function GET(request: NextRequest) {
     const periodDays = parseInt(period)
     const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000)
 
-    // Get all licenses from paid_users
+    // Get all licenses from users
     const { data: allLicenses } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('*')
       .order('created_at', { ascending: false })
 
     const { data: periodLicenses } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('*')
       .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: false })
@@ -56,25 +56,20 @@ export async function GET(request: NextRequest) {
     const licenses = allLicenses || []
     const recentLicenses = periodLicenses || []
 
-    // Revenue calculation (handle lifetime_pro, pro, bundle plans)
+    // Revenue calculation (single Pro plan at $59)
     const getRevenue = (plan: string) => {
-      if (plan === 'pro' || plan === 'lifetime_pro') return 2900
-      if (plan === 'bundle' || plan === 'lifetime_bundle') return 5900
+      if (plan === 'pro') return 5900
       return 0
     }
-
-    const isPro = (plan: string) => plan === 'pro' || plan === 'lifetime_pro'
-    const isBundle = (plan: string) => plan === 'bundle' || plan === 'lifetime_bundle'
 
     // Calculate totals
     const totalRevenue = licenses.reduce((sum, l) => sum + getRevenue(l.plan), 0)
     const periodRevenue = recentLicenses.reduce((sum, l) => sum + getRevenue(l.plan), 0)
 
     // Calculate by plan
-    const proCount = licenses.filter(l => isPro(l.plan)).length
-    const bundleCount = licenses.filter(l => isBundle(l.plan)).length
-    const proRevenue = proCount * 2900
-    const bundleRevenue = bundleCount * 5900
+    const proCount = licenses.filter(l => l.plan === 'pro').length
+    const freeCount = licenses.filter(l => l.plan === 'free').length
+    const proRevenue = proCount * 5900
 
     // Generate daily chart data
     const chartData: Array<{ date: string; revenue: number; sales: number }> = []
@@ -114,14 +109,14 @@ export async function GET(request: NextRequest) {
       summary: {
         totalRevenue,
         periodRevenue,
-        totalSales: licenses.length,
-        periodSales: recentLicenses.length,
+        totalSales: proCount,
+        periodSales: recentLicenses.filter(l => l.plan === 'pro').length,
         avgOrderValue: Math.round(avgOrderValue),
         dailyAvgRevenue: Math.round(dailyAvgRevenue)
       },
       byPlan: {
         pro: { count: proCount, revenue: proRevenue },
-        bundle: { count: bundleCount, revenue: bundleRevenue }
+        free: { count: freeCount, revenue: 0 }
       },
       chartData,
       recentTransactions
@@ -138,7 +133,7 @@ export async function GET(request: NextRequest) {
         avgOrderValue: 0,
         dailyAvgRevenue: 0
       },
-      byPlan: { pro: { count: 0, revenue: 0 }, bundle: { count: 0, revenue: 0 } },
+      byPlan: { pro: { count: 0, revenue: 0 }, free: { count: 0, revenue: 0 } },
       chartData: [],
       recentTransactions: []
     })

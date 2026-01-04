@@ -16,7 +16,7 @@ async function getAuthenticatedUser(request: NextRequest) {
 
   const { data: session, error } = await supabase
     .from('user_sessions')
-    .select('*, user:paid_users(*)')
+    .select('*, user:users(*)')
     .eq('token', token)
     .single()
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Store the base64 image directly (for simplicity)
     // In production, you'd upload to a storage service like S3 or Supabase Storage
     const { error: updateError } = await supabase
-      .from('paid_users')
+      .from('users')
       .update({
         profile_photo_url: photo,
         updated_at: new Date().toISOString()
@@ -84,7 +84,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { error: updateError } = await supabase
-      .from('paid_users')
+      .from('users')
       .update({
         profile_photo_url: null,
         updated_at: new Date().toISOString()

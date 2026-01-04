@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     // Look up user's license
     const { data: user, error } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('license_key, plan, is_revoked')
       .eq('email', emailLower)
       .single()
@@ -34,12 +34,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'License has been revoked' }, { status: 403 })
     }
 
-    // Normalize plan name
-    let plan = user.plan
-    if (plan === 'lifetime_pro') plan = 'pro'
-    if (plan === 'lifetime_bundle') plan = 'bundle'
+    if (!user.license_key || user.plan === 'free') {
+      return NextResponse.json({ error: 'No Pro license found for this email' }, { status: 404 })
+    }
 
-    const planName = plan === 'bundle' ? 'Pro + Mobile Bundle' : 'Pro'
+    const planName = 'Pro'
 
     // Send the license key email
     const emailHtml = `

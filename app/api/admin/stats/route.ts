@@ -42,23 +42,23 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-    // Get license stats from paid_users table
+    // Get license stats from users table
     const { data: licenses } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('*')
 
     const { data: recentLicenses } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('*')
       .gte('created_at', thirtyDaysAgo.toISOString())
 
-    // Get installation stats from extension_installs (all users)
+    // Get installation stats from user_instances (all users)
     const { data: installations } = await supabase
-      .from('extension_installs')
+      .from('user_instances')
       .select('*')
 
     const { data: recentInstalls } = await supabase
-      .from('extension_installs')
+      .from('user_instances')
       .select('*')
       .gte('created_at', sevenDaysAgo.toISOString())
 
@@ -68,10 +68,9 @@ export async function GET(request: NextRequest) {
       .select('*')
       .gte('created_at', oneDayAgo.toISOString())
 
-    // Calculate revenue (handle lifetime_pro, pro, bundle plans)
+    // Calculate revenue (single Pro plan at $59)
     const getRevenue = (plan: string) => {
-      if (plan === 'pro' || plan === 'lifetime_pro') return 2900
-      if (plan === 'bundle' || plan === 'lifetime_bundle') return 5900
+      if (plan === 'pro') return 5900
       return 0
     }
 
@@ -83,7 +82,7 @@ export async function GET(request: NextRequest) {
 
     // Add recent licenses
     const { data: latestLicenses } = await supabase
-      .from('paid_users')
+      .from('users')
       .select('license_key, email, plan, created_at')
       .order('created_at', { ascending: false })
       .limit(5)
@@ -144,13 +143,13 @@ export async function GET(request: NextRequest) {
     }
 
     const activeLicenses = (licenses || []).filter(l => !l.is_revoked)
-    const proOnlyUsers = activeLicenses.filter(l => l.plan === 'pro' || l.plan === 'lifetime_pro').length
-    const proPlusUsers = activeLicenses.filter(l => l.plan === 'bundle' || l.plan === 'lifetime_bundle').length
+    const proUsers = activeLicenses.filter(l => l.plan === 'pro').length
+    const freeUsers = activeLicenses.filter(l => l.plan === 'free').length
 
     const stats = {
       totalInstalls: (installations || []).length,
-      proUsers: proOnlyUsers,
-      proPlusUsers: proPlusUsers,
+      proUsers: proUsers,
+      freeUsers: freeUsers,
       revenue30d,
       activeUsers: (installations || []).filter(i => {
         const lastSeen = new Date(i.last_seen)
@@ -174,7 +173,7 @@ export async function GET(request: NextRequest) {
       stats: {
         totalInstalls: 0,
         proUsers: 0,
-        proPlusUsers: 0,
+        freeUsers: 0,
         revenue30d: 0,
         activeUsers: 0,
         alertsSent24h: 0,

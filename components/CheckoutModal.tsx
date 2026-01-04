@@ -13,44 +13,29 @@ const stripePromise = stripeKey ? loadStripe(stripeKey) : null
 interface CheckoutModalProps {
   isOpen: boolean
   onClose: () => void
-  plan: 'pro' | 'bundle' | null
-  dashboardUpgrade?: boolean  // 10% off upgrade price for existing Pro members
-  userEmail?: string          // Pre-fill email from dashboard
-}
-
-interface PricingInfo {
-  amount: number
-  isUpgrade: boolean
-  existingPlan: string | null
+  plan: 'pro' | null
+  userEmail?: string  // Pre-fill email from dashboard
 }
 
 const planDetails = {
-  pro: {
-    name: 'MineGlance Pro',
-    description: 'Lifetime access to all Pro features',
-    amount: 2900
-  },
-  bundle: {
-    name: 'MineGlance Pro + Mobile Bundle',
-    description: 'Lifetime access to Pro extension + upcoming mobile app',
-    amount: 5900
-  }
+  name: 'MineGlance Pro',
+  description: 'Lifetime access to all Pro features + mobile app',
+  amount: 5900  // $59
 }
 
 type Step = 'email' | 'checkout'
 
-export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade, userEmail }: CheckoutModalProps) {
+export default function CheckoutModal({ isOpen, onClose, plan, userEmail }: CheckoutModalProps) {
   const [step, setStep] = useState<Step>('email')
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [pricingInfo, setPricingInfo] = useState<PricingInfo | null>(null)
-  const [alreadyOwned, setAlreadyOwned] = useState<'pro' | 'bundle' | null>(null)
+  const [alreadyOwned, setAlreadyOwned] = useState(false)
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const currentSessionRef = useRef<string | null>(null)
 
-  // Reset when modal closes or plan changes
+  // Reset when modal closes
   useEffect(() => {
     if (!isOpen) {
       setStep('email')
@@ -58,8 +43,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
       setError(null)
       setClientSecret(null)
       setLoading(false)
-      setPricingInfo(null)
-      setAlreadyOwned(null)
+      setAlreadyOwned(false)
       setResendStatus('idle')
       currentSessionRef.current = null
     } else if (userEmail && !email) {
@@ -75,7 +59,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
     setError(null)
 
     try {
-      // Check if user is an existing Pro customer
+      // Check if user already has Pro
       const checkResponse = await fetch('/api/check-customer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -83,43 +67,28 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
       })
 
       const customerData = await checkResponse.json()
-      console.log('Customer check:', customerData)
 
-      // Calculate pricing
-      let amount = planDetails[plan].amount
-      let isUpgrade = false
-      const existingPlan = customerData.plan || null
-
-      if (plan === 'bundle' && existingPlan === 'pro') {
-        // Existing Pro user upgrading to Bundle - always apply 10% loyalty discount
-        amount = 2700 // $27 upgrade price (10% off $30 difference)
-        isUpgrade = true
-      } else if (existingPlan === plan || existingPlan === 'bundle') {
-        // Already has this plan or higher
-        setAlreadyOwned(existingPlan === 'bundle' ? 'bundle' : plan)
+      if (customerData.plan === 'pro') {
+        setAlreadyOwned(true)
         setLoading(false)
         return
       }
 
-      setPricingInfo({ amount, isUpgrade, existingPlan })
-
-      // Create checkout session with the calculated amount
-      const sessionId = `${email}-${plan}-${Date.now()}`
+      // Create checkout session
+      const sessionId = `${email}-pro-${Date.now()}`
       currentSessionRef.current = sessionId
 
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan,
+          plan: 'pro',
           email,
-          isUpgrade,
-          amount
+          amount: planDetails.amount
         }),
       })
 
       const data = await response.json()
-      console.log('Checkout response:', response.status, data)
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create checkout session')
@@ -128,7 +97,6 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
         throw new Error('No client secret returned')
       }
 
-      // Only update if this is still the current session
       if (currentSessionRef.current === sessionId) {
         setClientSecret(data.clientSecret)
         setStep('checkout')
@@ -145,7 +113,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
     setStep('email')
     setClientSecret(null)
     setError(null)
-    setAlreadyOwned(null)
+    setAlreadyOwned(false)
     setResendStatus('idle')
     currentSessionRef.current = null
   }
@@ -171,9 +139,6 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
 
   if (!isOpen || !plan) return null
 
-  const details = planDetails[plan]
-  const displayAmount = pricingInfo?.amount || details.amount
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
@@ -189,13 +154,10 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
           <div className="flex items-center justify-between p-4 border-b border-dark-border">
             <div>
               <h2 className="text-lg font-semibold text-dark-text">
-                {pricingInfo?.isUpgrade ? 'Upgrade to Bundle' : details.name}
+                {planDetails.name}
               </h2>
               <p className="text-sm text-dark-text-muted">
-                {pricingInfo?.isUpgrade
-                  ? 'Add mobile app access to your Pro license'
-                  : details.description
-                }
+                {planDetails.description}
               </p>
             </div>
             <button
@@ -219,7 +181,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
                     </svg>
                   </div>
                   <h3 className="text-lg font-semibold text-dark-text mb-2">
-                    You already have {alreadyOwned === 'bundle' ? 'the Bundle' : 'Pro'}!
+                    You already have Pro!
                   </h3>
                   <p className="text-dark-text-muted text-sm">
                     A license key was sent to <strong className="text-dark-text">{email}</strong> when you purchased.
@@ -297,9 +259,9 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
 
                 <div className="bg-dark-card-hover rounded-lg p-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-dark-text-muted">{details.name}</span>
+                    <span className="text-dark-text-muted">{planDetails.name}</span>
                     <span className="text-xl font-bold text-primary">
-                      ${(details.amount / 100).toFixed(0)}
+                      ${(planDetails.amount / 100).toFixed(0)}
                     </span>
                   </div>
                   <p className="text-xs text-dark-text-dim mt-1">One-time payment, lifetime access</p>
@@ -332,16 +294,6 @@ export default function CheckoutModal({ isOpen, onClose, plan, dashboardUpgrade,
               </div>
             ) : clientSecret ? (
               <div>
-                {pricingInfo?.isUpgrade && (
-                  <div className="mb-4 p-3 bg-primary/10 border border-primary/30 rounded-lg">
-                    <p className="text-primary text-sm font-medium">
-                      Pro member 10% loyalty discount applied!
-                    </p>
-                    <p className="text-primary/70 text-xs mt-1">
-                      You&apos;re paying ${(displayAmount / 100).toFixed(0)} instead of $30
-                    </p>
-                  </div>
-                )}
                 <button
                   onClick={handleBack}
                   className="mb-4 text-sm text-dark-text-muted hover:text-dark-text flex items-center gap-1 transition-colors"
