@@ -13,7 +13,7 @@ interface RevenueSummary {
 
 interface ByPlan {
   pro: { count: number; revenue: number }
-  bundle: { count: number; revenue: number }
+  free: { count: number; revenue: number }
 }
 
 interface ChartData {
@@ -152,38 +152,34 @@ export default function RevenuePage() {
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-blue-400">Pro ($29)</span>
-                <span className="text-sm text-dark-text">{byPlan?.pro.count || 0} sales</span>
+                <span className="text-sm font-medium text-green-400">Pro ($59)</span>
+                <span className="text-sm text-dark-text">{byPlan?.pro?.count || 0} sales</span>
               </div>
               <div className="h-3 bg-dark-card-hover rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 rounded-full"
+                  className="h-full bg-green-500 rounded-full"
                   style={{
                     width: `${(summary?.totalRevenue || 0) > 0
-                      ? ((byPlan?.pro.revenue || 0) / (summary?.totalRevenue || 1)) * 100
+                      ? ((byPlan?.pro?.revenue || 0) / (summary?.totalRevenue || 1)) * 100
                       : 0}%`
                   }}
                 />
               </div>
-              <p className="text-lg font-bold text-dark-text mt-1">{formatCurrency(byPlan?.pro.revenue || 0)}</p>
+              <p className="text-lg font-bold text-dark-text mt-1">{formatCurrency(byPlan?.pro?.revenue || 0)}</p>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-purple-400">Pro Plus ($59)</span>
-                <span className="text-sm text-dark-text">{byPlan?.bundle.count || 0} sales</span>
+                <span className="text-sm font-medium text-gray-400">Free</span>
+                <span className="text-sm text-dark-text">{byPlan?.free?.count || 0} users</span>
               </div>
               <div className="h-3 bg-dark-card-hover rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-purple-500 rounded-full"
-                  style={{
-                    width: `${(summary?.totalRevenue || 0) > 0
-                      ? ((byPlan?.bundle.revenue || 0) / (summary?.totalRevenue || 1)) * 100
-                      : 0}%`
-                  }}
+                  className="h-full bg-gray-500 rounded-full"
+                  style={{ width: '0%' }}
                 />
               </div>
-              <p className="text-lg font-bold text-dark-text mt-1">{formatCurrency(byPlan?.bundle.revenue || 0)}</p>
+              <p className="text-lg font-bold text-dark-text mt-1">$0.00</p>
             </div>
           </div>
         </div>
@@ -257,9 +253,9 @@ export default function RevenuePage() {
                   <td className="px-6 py-4 font-medium text-dark-text">{tx.email}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      tx.plan === 'bundle' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'
+                      tx.plan === 'free' ? 'bg-gray-700 text-gray-300' : 'bg-green-900 text-green-200'
                     }`}>
-                      {tx.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
+                      {tx.plan === 'free' ? 'FREE' : 'PRO'}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-medium text-green-400">{formatCurrency(tx.amount)}</td>
