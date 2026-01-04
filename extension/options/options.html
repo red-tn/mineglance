@@ -24,12 +24,39 @@
     </header>
 
     <main class="main">
+      <!-- Account Section -->
+      <section class="section" id="accountSection">
+        <h2>Account</h2>
+
+        <!-- Not signed in state -->
+        <div id="accountSignInPrompt">
+          <p class="section-desc">Sign in to sync your wallets across devices and manage your Pro license.</p>
+          <p style="margin: 12px 0; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
+            <span id="userEmailDisplay" style="font-weight: 600;"></span>
+          </p>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="https://www.mineglance.com/dashboard" target="_blank" class="btn btn-secondary" id="dashboardLink" style="display: none;">
+              Open Dashboard
+            </a>
+            <button id="signOutBtn" class="btn btn-small" style="display: none; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- Pro Activation Section -->
       <section class="section" id="proActivationSection">
         <h2>Pro License</h2>
-        <p class="section-desc">Enter your license key from your purchase confirmation email.</p>
 
+        <!-- Not signed in message -->
+        <div id="proNeedAuth" class="hidden">
+          <p class="section-desc">Sign in via the popup to activate your Pro license.</p>
+        </div>
+
+        <!-- Activation form for signed-in free users -->
         <div id="proActivationForm">
+          <p class="section-desc">Enter your license key from your purchase confirmation email.</p>
           <div class="form-group">
             <label for="licenseKey">License Key</label>
             <div class="input-with-button">
@@ -38,7 +65,9 @@
             </div>
             <p id="activationResult" class="lookup-result hidden"></p>
           </div>
-          <p class="help-text">License can be activated on up to 3 devices.</p>
+          <p class="help-text">
+            <a href="https://www.mineglance.com/support#license-key" target="_blank" style="color: var(--primary);">Lost your license key?</a>
+          </p>
         </div>
 
         <div id="proActiveStatus" class="pro-active-status hidden">

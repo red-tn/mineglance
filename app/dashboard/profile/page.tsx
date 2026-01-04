@@ -83,6 +83,16 @@ export default function ProfilePage() {
     country: ''
   })
 
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+
   useEffect(() => {
     loadProfile()
   }, [])
@@ -209,6 +219,59 @@ export default function ProfilePage() {
     } catch {
       setError('Failed to upload photo')
       setUploadingPhoto(false)
+    }
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess('')
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters')
+      return
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('Passwords do not match')
+      return
+    }
+
+    setChangingPassword(true)
+
+    const token = localStorage.getItem('user_token')
+    if (!token) return
+
+    try {
+      const res = await fetch('/api/dashboard/profile/password', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setPasswordError(data.error || 'Failed to change password')
+        return
+      }
+
+      setPasswordSuccess('Password changed successfully')
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setPasswordSuccess(''), 3000)
+
+    } catch {
+      setPasswordError('Connection error. Please try again.')
+    } finally {
+      setChangingPassword(false)
     }
   }
 
@@ -433,7 +496,7 @@ export default function ProfilePage() {
             <h3 className="text-lg font-semibold text-dark-text mb-4">Subscription</h3>
             <div className="flex items-center gap-4">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary text-white">
-                {profile?.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
+                {profile?.plan === 'bundle' ? 'PRO PLUS' : profile?.plan === 'pro' ? 'PRO' : 'FREE'}
               </span>
               <span className="text-sm text-dark-text-muted">
                 Member since {new Date(profile?.createdAt || '').toLocaleDateString()}
@@ -449,6 +512,67 @@ export default function ProfilePage() {
               className="w-full sm:w-auto px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg"
             >
               {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Change Password Section */}
+      <div className="glass-card rounded-xl border border-dark-border p-6">
+        <h3 className="text-lg font-semibold text-dark-text mb-4">Change Password</h3>
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          {passwordError && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
+              {passwordError}
+            </div>
+          )}
+          {passwordSuccess && (
+            <div className="bg-primary/10 border border-primary/30 text-primary px-4 py-3 rounded-lg text-sm">
+              {passwordSuccess}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-dark-text mb-1">Current Password</label>
+            <input
+              type="password"
+              value={passwordData.currentPassword}
+              onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+              className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Enter current password"
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-dark-text mb-1">New Password</label>
+              <input
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="At least 6 characters"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-dark-text mb-1">Confirm New Password</label>
+              <input
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Re-enter new password"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={changingPassword}
+              className="px-6 py-2.5 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg font-medium hover:bg-primary/20 hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {changingPassword ? 'Changing...' : 'Change Password'}
             </button>
           </div>
         </form>

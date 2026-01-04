@@ -8,9 +8,10 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { login, register, resendKey } = useAuthStore();
 
-  const [step, setStep] = useState<'email' | 'license'>('email');
+  const [step, setStep] = useState<'email' | 'password'>('email');
   const [email, setEmail] = useState('');
-  const [licenseKey, setLicenseKey] = useState('');
+  const [password, setPassword] = useState('');
+  const [isNewUser, setIsNewUser] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -25,80 +26,59 @@ export default function OnboardingScreen() {
     setError('');
     setMessage('');
 
-    // Try to login first
+    // Check if user exists
     const result = await login(email.trim());
 
     if (result.success) {
-      // Logged in successfully
+      // Logged in successfully (shouldn't happen without password)
       router.replace('/(tabs)');
-    } else if (result.requiresLicenseKey) {
-      // Pro user needs license key
-      setStep('license');
-      setMessage('A Pro license is associated with this email.');
-    } else if (result.error?.includes('not found')) {
-      // New user - register
-      const regResult = await register(email.trim());
-      if (regResult.success) {
-        router.replace('/(tabs)');
-      } else {
-        setError(regResult.error || 'Registration failed');
-      }
+    } else if (result.requiresPassword) {
+      // Existing user needs password
+      setIsNewUser(false);
+      setStep('password');
+      setMessage('Enter your password to sign in.');
+    } else if (result.error?.includes('not found') || result.exists === false) {
+      // New user - show password field for signup
+      setIsNewUser(true);
+      setStep('password');
+      setMessage('Create a password for your new account.');
     } else {
-      setError(result.error || 'Login failed');
+      setError(result.error || 'Something went wrong');
     }
 
     setIsLoading(false);
   };
 
-  const handleLicenseActivate = async () => {
-    if (!licenseKey.trim()) {
-      setError('Please enter your license key');
+  const handlePasswordSubmit = async () => {
+    if (!password.trim() || password.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
 
     setIsLoading(true);
     setError('');
 
-    const result = await login(email.trim(), licenseKey.trim().toUpperCase());
-
-    if (result.success) {
-      router.replace('/(tabs)');
+    if (isNewUser) {
+      // Register new user with password
+      const result = await register(email.trim(), password.trim());
+      if (result.success) {
+        router.replace('/(tabs)');
+      } else {
+        setError(result.error || 'Registration failed');
+      }
     } else {
-      setError(result.error || 'Invalid license key');
+      // Login existing user with password
+      const result = await login(email.trim(), password.trim());
+      if (result.success) {
+        router.replace('/(tabs)');
+      } else {
+        setError(result.error || 'Invalid password');
+      }
     }
 
     setIsLoading(false);
   };
 
-  const handleContinueAsFree = async () => {
-    setIsLoading(true);
-    setError('');
-
-    const result = await register(email.trim());
-
-    if (result.success) {
-      router.replace('/(tabs)');
-    } else {
-      setError(result.error || 'Registration failed');
-    }
-
-    setIsLoading(false);
-  };
-
-  const handleResendKey = async () => {
-    setIsLoading(true);
-    setError('');
-
-    const result = await resendKey(email.trim());
-
-    if (result.success) {
-      setMessage('License key sent to your email!');
-    } else {
-      setError(result.error || 'Failed to send key');
-    }
-
-    setIsLoading(false);
-  };
 
   return (
     <KeyboardAvoidingView
@@ -156,7 +136,7 @@ export default function OnboardingScreen() {
                 {' '}for unlimited.
               </Text>
             </View>
-          ) : (
+          ) : step === 'password' ? (
             <View style={styles.form}>
               {message ? (
                 <Text style={styles.infoText}>{message}</Text>
@@ -164,37 +144,40 @@ export default function OnboardingScreen() {
 
               <TextInput
                 style={styles.input}
-                placeholder="Enter your license key"
+                placeholder={isNewUser ? "Create a password" : "Enter your password"}
                 placeholderTextColor="rgba(255,255,255,0.5)"
-                value={licenseKey}
-                onChangeText={setLicenseKey}
-                autoCapitalize="characters"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
               />
 
               <TouchableOpacity
                 style={[styles.primaryButton, isLoading && styles.buttonDisabled]}
-                onPress={handleLicenseActivate}
+                onPress={handlePasswordSubmit}
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <ActivityIndicator color={colors.primary} />
                 ) : (
-                  <Text style={styles.primaryButtonText}>Activate Pro</Text>
+                  <Text style={styles.primaryButtonText}>
+                    {isNewUser ? 'Create Account' : 'Sign In'}
+                  </Text>
                 )}
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.secondaryButton}
-                onPress={handleContinueAsFree}
+                onPress={() => { setStep('email'); setPassword(''); setError(''); setMessage(''); }}
                 disabled={isLoading}
               >
-                <Text style={styles.secondaryButtonText}>Continue as Free</Text>
+                <Text style={styles.secondaryButtonText}>Back</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={handleResendKey} disabled={isLoading}>
-                <Text style={styles.forgotLink}>Forgot your key? Send it to me</Text>
+              <TouchableOpacity onPress={() => Linking.openURL('https://www.mineglance.com/reset-password')}>
+                <Text style={styles.forgotLink}>Forgot password?</Text>
               </TouchableOpacity>
             </View>
           )}

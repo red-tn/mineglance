@@ -1,8 +1,34 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import * as Device from 'expo-device';
+import { Platform } from 'react-native';
 import { AuthState } from '@/types';
 
 const API_BASE = 'https://www.mineglance.com/api';
+
+// Generate or retrieve a unique instance ID for this device
+async function getOrCreateInstanceId(): Promise<string> {
+  let instanceId = await SecureStore.getItemAsync('instanceId');
+  if (!instanceId) {
+    instanceId = 'mobile_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    await SecureStore.setItemAsync('instanceId', instanceId);
+  }
+  return instanceId;
+}
+
+// Get human-readable device name
+function getDeviceName(): string {
+  const modelName = Device.modelName || Device.deviceName;
+  if (modelName) {
+    return modelName;
+  }
+  return Platform.OS === 'ios' ? 'iPhone' : 'Android Device';
+}
+
+// Get device type for database
+function getDeviceType(): string {
+  return Platform.OS === 'ios' ? 'mobile_ios' : 'mobile_android';
+}
 
 interface AuthStore extends AuthState {
   email: string | null;
@@ -19,8 +45,9 @@ interface AuthStore extends AuthState {
   verifyAuth: () => Promise<boolean>;
   clearAuth: () => Promise<void>;
   isPro: () => boolean;
-  login: (email: string, licenseKey?: string) => Promise<{ success: boolean; error?: string; requiresLicenseKey?: boolean }>;
-  register: (email: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password?: string) => Promise<{ success: boolean; error?: string; requiresPassword?: boolean; exists?: boolean }>;
+  activateLicense: (licenseKey: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   resendKey: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -131,21 +158,32 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
-  login: async (email: string, licenseKey?: string) => {
+  login: async (email: string, password?: string) => {
     try {
+      // Get device info for registration
+      const instanceId = await getOrCreateInstanceId();
+      const deviceType = getDeviceType();
+      const deviceName = getDeviceName();
+
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, licenseKey }),
+        body: JSON.stringify({
+          email,
+          password,
+          instanceId,
+          deviceType,
+          deviceName,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        if (data.requiresLicenseKey) {
-          return { success: false, requiresLicenseKey: true };
+        if (data.requiresPassword) {
+          return { success: false, requiresPassword: true, exists: true };
         }
-        return { success: false, error: data.error || 'Login failed' };
+        return { success: false, error: data.error || 'Login failed', exists: data.exists };
       }
 
       await get().setAuthData({
@@ -156,6 +194,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         licenseKey: data.licenseKey,
       });
 
+      // Store instanceId
+      await get().setInstanceId(instanceId);
+
       return { success: true };
     } catch (error) {
       console.error('Login failed:', error);
@@ -163,12 +204,56 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
-  register: async (email: string) => {
+  activateLicense: async (licenseKey: string) => {
     try {
+      const { authToken } = get();
+      if (!authToken) {
+        return { success: false, error: 'Not logged in' };
+      }
+
+      const response = await fetch(`${API_BASE}/auth/activate-license`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ licenseKey: licenseKey.toUpperCase().trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.error || 'Invalid license key' };
+      }
+
+      // Update local state to Pro
+      await get().setLicenseKey(licenseKey);
+      await get().setPlan('pro');
+
+      return { success: true };
+    } catch (error) {
+      console.error('License activation failed:', error);
+      return { success: false, error: 'Network error. Please try again.' };
+    }
+  },
+
+  register: async (email: string, password: string) => {
+    try {
+      // Get device info for registration
+      const instanceId = await getOrCreateInstanceId();
+      const deviceType = getDeviceType();
+      const deviceName = getDeviceName();
+
       const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          password,
+          instanceId,
+          deviceType,
+          deviceName,
+        }),
       });
 
       const data = await response.json();
@@ -183,6 +268,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         userId: data.userId,
         plan: 'free',
       });
+
+      // Store instanceId
+      await get().setInstanceId(instanceId);
 
       return { success: true };
     } catch (error) {

@@ -304,6 +304,12 @@ export default function SettingsScreen() {
           </View>
           <TouchableOpacity
             style={styles.linkRow}
+            onPress={() => Linking.openURL(`${WEBSITE_URL}/dashboard`)}
+          >
+            <Text style={styles.linkText}>Open Dashboard</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.linkRow}
             onPress={() => Linking.openURL(`${WEBSITE_URL}/support`)}
           >
             <Text style={styles.linkText}>Support & FAQ</Text>

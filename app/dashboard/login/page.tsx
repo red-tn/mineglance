@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
 export default function DashboardLogin() {
-  const [licenseKey, setLicenseKey] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [needsPassword, setNeedsPassword] = useState(false)
+  const [step, setStep] = useState<'email' | 'password'>('email')
+  const [isNewUser, setIsNewUser] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -37,35 +37,36 @@ export default function DashboardLogin() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
-      const res = await fetch('/api/dashboard/auth/login', {
+      // Check if user exists
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ licenseKey, email, password: needsPassword ? password : undefined })
+        body: JSON.stringify({ email })
       })
 
       const data = await res.json()
 
-      if (!res.ok) {
-        setError(data.error || 'Login failed')
-        return
+      if (data.requiresPassword) {
+        // Existing user - needs password
+        setIsNewUser(false)
+        setStep('password')
+      } else if (data.exists === false || data.error?.includes('not found')) {
+        // New user - can create account
+        setIsNewUser(true)
+        setStep('password')
+      } else if (res.ok && data.token) {
+        // Logged in (shouldn't happen without password)
+        localStorage.setItem('user_token', data.token)
+        router.push('/dashboard')
+      } else {
+        setError(data.error || 'Something went wrong')
       }
-
-      if (data.requiresPasswordSetup) {
-        // Store setup token and redirect to password setup
-        localStorage.setItem('setup_token', data.setupToken)
-        router.push('/dashboard/set-password')
-        return
-      }
-
-      // Successful login
-      localStorage.setItem('user_token', data.token)
-      router.push('/dashboard')
 
     } catch {
       setError('Connection error. Please try again.')
@@ -74,33 +75,47 @@ export default function DashboardLogin() {
     }
   }
 
-  async function handleInitialCheck(e: React.FormEvent) {
+  async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
-      const res = await fetch('/api/dashboard/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ licenseKey, email })
-      })
+      if (isNewUser) {
+        // Register new user
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        })
 
-      const data = await res.json()
+        const data = await res.json()
 
-      if (!res.ok) {
-        setError(data.error || 'Login failed')
-        return
+        if (!res.ok) {
+          setError(data.error || 'Registration failed')
+          return
+        }
+
+        localStorage.setItem('user_token', data.token)
+        router.push('/dashboard')
+      } else {
+        // Login existing user
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          setError(data.error || 'Invalid password')
+          return
+        }
+
+        localStorage.setItem('user_token', data.token)
+        router.push('/dashboard')
       }
-
-      if (data.requiresPasswordSetup) {
-        localStorage.setItem('setup_token', data.setupToken)
-        router.push('/dashboard/set-password')
-        return
-      }
-
-      // User has a password, show password field
-      setNeedsPassword(true)
 
     } catch {
       setError('Connection error. Please try again.')
@@ -122,53 +137,70 @@ export default function DashboardLogin() {
             />
             <span className="text-2xl font-bold text-primary">MineGlance</span>
           </div>
-          <h1 className="text-xl font-semibold text-dark-text">Pro Dashboard</h1>
-          <p className="text-dark-text-muted mt-2">Sign in with your license</p>
+          <h1 className="text-xl font-semibold text-dark-text">Dashboard</h1>
+          <p className="text-dark-text-muted mt-2">
+            {step === 'email' ? 'Sign in to manage your account' : (isNewUser ? 'Create a password' : 'Enter your password')}
+          </p>
         </div>
 
-        <form onSubmit={needsPassword ? handleSubmit : handleInitialCheck} className="space-y-5">
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
-              {error}
+        {step === 'email' ? (
+          <form onSubmit={handleEmailSubmit} className="space-y-5">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-dark-text mb-1">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg bg-dark-card-hover border border-dark-border text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                placeholder="you@example.com"
+                required
+                autoFocus
+              />
             </div>
-          )}
 
-          <div>
-            <label htmlFor="licenseKey" className="block text-sm font-medium text-dark-text mb-1">
-              License Key
-            </label>
-            <input
-              id="licenseKey"
-              type="text"
-              value={licenseKey}
-              onChange={(e) => setLicenseKey(e.target.value.toUpperCase())}
-              className="w-full px-4 py-3 rounded-lg bg-dark-card-hover border border-dark-border text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-mono"
-              placeholder="XXXX-XXXX-XXXX-XXXX"
-              required
-              disabled={needsPassword}
-            />
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Checking...
+                </span>
+              ) : (
+                'Continue'
+              )}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handlePasswordSubmit} className="space-y-5">
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-dark-text mb-1">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg bg-dark-card-hover border border-dark-border text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-              placeholder="you@example.com"
-              required
-              disabled={needsPassword}
-            />
-          </div>
+            <div className="bg-dark-card-hover px-4 py-3 rounded-lg border border-dark-border">
+              <p className="text-sm text-dark-text-muted">Signing in as:</p>
+              <p className="text-dark-text font-medium">{email}</p>
+            </div>
 
-          {needsPassword && (
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-dark-text mb-1">
-                Password
+                {isNewUser ? 'Create Password' : 'Password'}
               </label>
               <input
                 id="password"
@@ -176,51 +208,61 @@ export default function DashboardLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg bg-dark-card-hover border border-dark-border text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                placeholder="Enter your password"
+                placeholder={isNewUser ? 'Create a password (min 6 characters)' : 'Enter your password'}
                 required
                 autoFocus
+                minLength={6}
               />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {needsPassword ? 'Signing in...' : 'Checking...'}
-              </span>
-            ) : (
-              needsPassword ? 'Sign In' : 'Continue'
-            )}
-          </button>
-
-          {needsPassword && (
             <button
-              type="button"
-              onClick={() => {
-                setNeedsPassword(false)
-                setPassword('')
-                setError('')
-              }}
-              className="w-full text-sm text-dark-text-muted hover:text-dark-text transition-colors"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow hover:shadow-glow-lg"
             >
-              Use a different license
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {isNewUser ? 'Creating account...' : 'Signing in...'}
+                </span>
+              ) : (
+                isNewUser ? 'Create Account' : 'Sign In'
+              )}
             </button>
-          )}
-        </form>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('email')
+                  setPassword('')
+                  setError('')
+                }}
+                className="text-sm text-dark-text-muted hover:text-dark-text transition-colors"
+              >
+                Back
+              </button>
+
+              {!isNewUser && (
+                <a
+                  href="/reset-password"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot password?
+                </a>
+              )}
+            </div>
+          </form>
+        )}
 
         <div className="mt-8 pt-6 border-t border-dark-border">
           <p className="text-center text-sm text-dark-text-muted">
-            Don&apos;t have a license?{' '}
+            Don&apos;t have Pro?{' '}
             <a href="/#pricing" className="text-primary hover:underline font-medium">
-              Get MineGlance Pro
+              Upgrade to Pro - $59
             </a>
           </p>
         </div>

@@ -235,6 +235,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const proUpgradeNotice = document.getElementById('proUpgradeNotice');
   const saveStatus = document.getElementById('saveStatus');
 
+  // Account elements
+  const userEmailDisplay = document.getElementById('userEmailDisplay');
+  const dashboardLink = document.getElementById('dashboardLink');
+  const signOutBtn = document.getElementById('signOutBtn');
+  const proNeedAuth = document.getElementById('proNeedAuth');
+
   // Pro activation elements
   const proActivationForm = document.getElementById('proActivationForm');
   const proActiveStatus = document.getElementById('proActiveStatus');
@@ -342,6 +348,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     deactivateBtn.addEventListener('click', deactivatePro);
   }
 
+  // Sign out
+  signOutBtn.addEventListener('click', async () => {
+    if (confirm('Sign out of MineGlance? Your settings will be saved locally.')) {
+      await chrome.storage.local.remove(['authToken', 'userId', 'userEmail', 'isPaid', 'licenseKey', 'plan']);
+      location.reload();
+    }
+  });
+
   // Wallet modal
   document.getElementById('closeWalletModal').addEventListener('click', () => closeModal(walletModal));
   document.getElementById('cancelWalletBtn').addEventListener('click', () => closeModal(walletModal));
@@ -445,6 +459,23 @@ document.addEventListener('DOMContentLoaded', async () => {
           instanceIdEl.textContent = `ID: ${shortId}`;
         }, 1500);
       });
+    }
+
+    // Update Account section based on auth state
+    if (data.authToken && data.userEmail) {
+      // User is signed in
+      userEmailDisplay.textContent = data.userEmail;
+      dashboardLink.style.display = 'inline-flex';
+      signOutBtn.style.display = 'inline-flex';
+      proNeedAuth.classList.add('hidden');
+      proActivationForm.classList.remove('hidden');
+    } else {
+      // User is not signed in
+      userEmailDisplay.textContent = 'Not signed in - open the popup to sign in';
+      dashboardLink.style.display = 'none';
+      signOutBtn.style.display = 'none';
+      proNeedAuth.classList.remove('hidden');
+      proActivationForm.classList.add('hidden');
     }
 
     // Update UI
@@ -765,31 +796,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // Check if user is signed in
+    const { authToken } = await chrome.storage.local.get('authToken');
+    if (!authToken) {
+      showActivationResult('Please sign in first via the extension popup.', 'error');
+      return;
+    }
+
     activateProBtn.disabled = true;
     activateProBtn.textContent = 'Activating...';
 
     try {
-      const response = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-          { action: 'activateLicense', licenseKey },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-            } else {
-              resolve(response);
-            }
-          }
-        );
+      const response = await fetch(`${API_BASE}/auth/activate-license`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ licenseKey })
       });
 
-      if (response.success && response.isPro) {
-        const msg = response.activations
-          ? `Activated! (${response.activations}/${response.maxActivations} devices)`
-          : 'License activated successfully!';
-        showActivationResult(msg, 'success');
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Save Pro status locally
+        await chrome.storage.local.set({
+          isPaid: true,
+          licenseKey,
+          plan: data.plan || 'pro'
+        });
+        showActivationResult('License activated! You now have Pro access on all devices.', 'success');
         setTimeout(() => location.reload(), 1500);
       } else {
-        showActivationResult(response.error || 'Invalid license key.', 'error');
+        showActivationResult(data.error || 'Invalid license key.', 'error');
       }
     } catch (error) {
       showActivationResult('Connection error. Please try again.', 'error');

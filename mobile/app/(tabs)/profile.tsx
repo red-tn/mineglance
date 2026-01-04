@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Linking, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -23,9 +23,14 @@ export default function ProfileScreen() {
   const liteMode = useSettingsStore(state => state.liteMode);
   const colors = getColors(liteMode);
 
-  const { email, plan, authToken, clearAuth, isPro } = useAuthStore();
+  const { email, plan, authToken, clearAuth, isPro, activateLicense } = useAuthStore();
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoadingDevices, setIsLoadingDevices] = useState(true);
+
+  // License activation state
+  const [licenseKey, setLicenseKey] = useState('');
+  const [isActivating, setIsActivating] = useState(false);
+  const [activationError, setActivationError] = useState('');
 
   useEffect(() => {
     loadDevices();
@@ -114,6 +119,31 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleActivateLicense = async () => {
+    if (!licenseKey.trim()) {
+      setActivationError('Please enter a license key');
+      return;
+    }
+
+    setIsActivating(true);
+    setActivationError('');
+
+    const result = await activateLicense(licenseKey.trim());
+
+    if (result.success) {
+      Alert.alert(
+        'License Activated!',
+        'You now have Pro access on all your devices.',
+        [{ text: 'OK' }]
+      );
+      setLicenseKey('');
+    } else {
+      setActivationError(result.error || 'Failed to activate license');
+    }
+
+    setIsActivating(false);
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* User Info Card */}
@@ -141,6 +171,54 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* License Activation Card - Only for free users */}
+      {!isPro() && (
+        <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Activate License</Text>
+          <Text style={[styles.licenseInfo, { color: colors.textMuted }]}>
+            Already have a Pro license key? Enter it below to unlock Pro features on all your devices.
+          </Text>
+
+          <TextInput
+            style={[styles.licenseInput, {
+              backgroundColor: colors.background,
+              borderColor: activationError ? colors.danger : colors.border,
+              color: colors.text
+            }]}
+            placeholder="XXXX-XXXX-XXXX-XXXX"
+            placeholderTextColor={colors.textMuted}
+            value={licenseKey}
+            onChangeText={(text) => {
+              setLicenseKey(text.toUpperCase());
+              setActivationError('');
+            }}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            editable={!isActivating}
+          />
+
+          {activationError ? (
+            <Text style={[styles.errorText, { color: colors.danger }]}>{activationError}</Text>
+          ) : null}
+
+          <TouchableOpacity
+            style={[styles.activateButton, { backgroundColor: colors.primary }, isActivating && styles.buttonDisabled]}
+            onPress={handleActivateLicense}
+            disabled={isActivating}
+          >
+            {isActivating ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.activateButtonText}>Activate License</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => Linking.openURL('https://www.mineglance.com/support#license-key')}>
+            <Text style={[styles.helpLink, { color: colors.primary }]}>Lost your license key?</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Subscription Card */}
       <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
@@ -334,5 +412,43 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
     marginLeft: spacing.sm,
+  },
+  licenseInfo: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.md,
+    lineHeight: 20,
+  },
+  licenseInput: {
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    fontSize: fontSize.md,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+    letterSpacing: 2,
+  },
+  errorText: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  activateButton: {
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    marginTop: spacing.xs,
+  },
+  activateButtonText: {
+    color: '#fff',
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  helpLink: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
+    marginTop: spacing.md,
   },
 });

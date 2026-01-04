@@ -52,13 +52,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Auth Modal Elements
   const authModal = document.getElementById('authModal');
   const authEmailStep = document.getElementById('authEmailStep');
-  const authLicenseStep = document.getElementById('authLicenseStep');
+  const authPasswordStep = document.getElementById('authPasswordStep');
   const authEmail = document.getElementById('authEmail');
-  const authLicenseKey = document.getElementById('authLicenseKey');
+  const authPassword = document.getElementById('authPassword');
+  const authPasswordInfo = document.getElementById('authPasswordInfo');
   const authContinueBtn = document.getElementById('authContinueBtn');
-  const authActivateBtn = document.getElementById('authActivateBtn');
-  const authSkipBtn = document.getElementById('authSkipBtn');
-  const authResendKey = document.getElementById('authResendKey');
+  const authPasswordBtn = document.getElementById('authPasswordBtn');
+  const authBackBtn = document.getElementById('authBackBtn');
   const authMessage = document.getElementById('authMessage');
 
   // Buttons
@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Auth state
   let pendingEmail = '';
+  let isNewUser = false;
 
   // State
   let currentTab = 'trending';
@@ -101,34 +102,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Enter') handleEmailContinue();
   });
 
-  authActivateBtn.addEventListener('click', handleLicenseActivate);
-  authLicenseKey.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleLicenseActivate();
+  authPasswordBtn.addEventListener('click', handlePasswordSubmit);
+  authPassword.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handlePasswordSubmit();
   });
 
-  authSkipBtn.addEventListener('click', () => {
-    // Login as free user
-    handleFreeLogin();
-  });
-
-  authResendKey.addEventListener('click', async (e) => {
-    e.preventDefault();
-    showAuthMessage('Sending license key...', 'success');
-    try {
-      const response = await fetch(`${API_BASE}/auth/resend-key`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: pendingEmail })
-      });
-      const data = await response.json();
-      if (data.success) {
-        showAuthMessage('License key sent to your email!', 'success');
-      } else {
-        showAuthMessage(data.error || 'Failed to send key', 'error');
-      }
-    } catch (err) {
-      showAuthMessage('Failed to send key. Try again.', 'error');
-    }
+  authBackBtn.addEventListener('click', () => {
+    authPasswordStep.classList.add('hidden');
+    authEmailStep.classList.remove('hidden');
+    authPassword.value = '';
+    hideAuthMessage();
   });
 
   async function handleEmailContinue() {
@@ -144,24 +127,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     hideAuthMessage();
 
     try {
-      // Try to login with email only
+      // Try to login with email only to check if user exists
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, installId: await getInstallId() })
+        body: JSON.stringify({ email, instanceId: await getInstallId(), deviceType: 'extension' })
       });
       const data = await response.json();
 
-      if (data.requiresLicenseKey) {
-        // User has Pro license, needs key
+      if (data.requiresPassword) {
+        // Existing user - needs password
+        isNewUser = false;
+        authPasswordInfo.textContent = 'Enter your password to sign in';
+        authPasswordBtn.textContent = 'Sign In';
         authEmailStep.classList.add('hidden');
-        authLicenseStep.classList.remove('hidden');
+        authPasswordStep.classList.remove('hidden');
       } else if (data.token) {
-        // Login successful (existing user)
+        // Login successful (shouldn't happen without password)
         await handleLoginSuccess(data);
       } else if (data.exists === false) {
-        // User doesn't exist, auto-register as free
-        await registerNewUser(email);
+        // New user - needs to create password
+        isNewUser = true;
+        authPasswordInfo.textContent = 'Create a password for your account';
+        authPasswordBtn.textContent = 'Create Account';
+        authEmailStep.classList.add('hidden');
+        authPasswordStep.classList.remove('hidden');
       } else {
         showAuthMessage(data.error || 'Login failed', 'error');
       }
@@ -173,64 +163,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  async function handleLicenseActivate() {
-    const licenseKey = authLicenseKey.value.trim().toUpperCase();
-    if (!licenseKey) {
-      showAuthMessage('Please enter your license key', 'error');
+  async function handlePasswordSubmit() {
+    const password = authPassword.value.trim();
+    if (!password || password.length < 6) {
+      showAuthMessage('Password must be at least 6 characters', 'error');
       return;
     }
 
-    authActivateBtn.disabled = true;
-    authActivateBtn.textContent = 'Activating...';
+    authPasswordBtn.disabled = true;
+    authPasswordBtn.textContent = isNewUser ? 'Creating...' : 'Signing in...';
     hideAuthMessage();
 
     try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: pendingEmail,
-          licenseKey: licenseKey,
-          installId: await getInstallId()
-        })
-      });
-      const data = await response.json();
-
-      if (data.token) {
-        await handleLoginSuccess(data);
+      if (isNewUser) {
+        // Register new user with password
+        await registerNewUser(pendingEmail, password);
       } else {
-        showAuthMessage(data.error || 'Invalid license key', 'error');
+        // Login existing free user with password
+        const response = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: pendingEmail,
+            password: password,
+            instanceId: await getInstallId(),
+            deviceType: 'extension',
+            deviceName: navigator.userAgent.includes('Chrome') ? 'Chrome Extension' : 'Browser Extension'
+          })
+        });
+        const data = await response.json();
+
+        if (data.token) {
+          await handleLoginSuccess(data);
+        } else {
+          showAuthMessage(data.error || 'Invalid password', 'error');
+        }
       }
     } catch (err) {
       showAuthMessage('Connection error. Please try again.', 'error');
     } finally {
-      authActivateBtn.disabled = false;
-      authActivateBtn.textContent = 'Activate Pro';
-    }
-  }
-
-  async function handleFreeLogin() {
-    authSkipBtn.disabled = true;
-    try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: pendingEmail,
-          installId: await getInstallId(),
-          skipProCheck: true
-        })
-      });
-      const data = await response.json();
-      if (data.token) {
-        await handleLoginSuccess(data);
-      } else {
-        showAuthMessage(data.error || 'Login failed', 'error');
-      }
-    } catch (err) {
-      showAuthMessage('Connection error. Please try again.', 'error');
-    } finally {
-      authSkipBtn.disabled = false;
+      authPasswordBtn.disabled = false;
+      authPasswordBtn.textContent = isNewUser ? 'Create Account' : 'Sign In';
     }
   }
 
@@ -251,15 +224,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initPopup();
   }
 
-  async function registerNewUser(email) {
+  async function registerNewUser(email, password) {
     try {
       const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
+          password,
           instanceId: await getInstallId(),
           deviceType: 'extension',
+          deviceName: navigator.userAgent.includes('Chrome') ? 'Chrome Extension' : 'Browser Extension',
           browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other'
         })
       });

@@ -24,13 +24,13 @@
           <p class="auth-note">Free account - 1 wallet. <a href="https://mineglance.com/#pricing" target="_blank">Upgrade to Pro</a> for unlimited.</p>
         </div>
 
-        <!-- Step 2: License Key (for Pro users) -->
-        <div id="authLicenseStep" class="auth-step hidden">
-          <p class="auth-info">A Pro license is associated with this email.</p>
-          <input type="text" id="authLicenseKey" class="auth-input" placeholder="Enter your license key" />
-          <button id="authActivateBtn" class="btn btn-primary auth-btn">Activate Pro</button>
-          <button id="authSkipBtn" class="btn btn-secondary auth-btn-link">Continue as Free</button>
-          <p class="auth-forgot"><a href="#" id="authResendKey">Forgot your key? Send it to me</a></p>
+        <!-- Step 2: Password -->
+        <div id="authPasswordStep" class="auth-step hidden">
+          <p class="auth-info" id="authPasswordInfo">Enter your password</p>
+          <input type="password" id="authPassword" class="auth-input" placeholder="Enter your password" />
+          <button id="authPasswordBtn" class="btn btn-primary auth-btn">Sign In</button>
+          <button id="authBackBtn" class="btn btn-secondary auth-btn-link">Back</button>
+          <p class="auth-forgot"><a href="https://www.mineglance.com/reset-password" target="_blank">Forgot password?</a></p>
         </div>
 
         <!-- Success / Error Messages -->

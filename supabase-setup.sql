@@ -232,3 +232,142 @@ CREATE INDEX IF NOT EXISTS idx_bug_fixes_fixed_at ON bug_fixes(fixed_at DESC);
 ALTER TABLE bug_fixes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow service role full access to bug_fixes" ON bug_fixes;
 CREATE POLICY "Allow service role full access to bug_fixes" ON bug_fixes FOR ALL USING (true);
+
+-- =====================================================
+-- v1.1.0 Schema Updates - Email-First Auth + Cloud Sync
+-- =====================================================
+
+-- For existing installs: Rename paid_users to users
+-- ALTER TABLE paid_users RENAME TO users;
+-- ALTER TABLE paid_users DROP CONSTRAINT IF EXISTS paid_users_plan_check;
+-- UPDATE users SET plan = 'pro' WHERE plan = 'bundle';
+
+-- For fresh installs: Create users table
+-- Note: If migrating from paid_users, run the rename commands above instead
+CREATE TABLE IF NOT EXISTS users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT,
+  license_key TEXT UNIQUE,
+  stripe_customer_id TEXT,
+  stripe_payment_id TEXT,
+  amount_paid INTEGER DEFAULT 0,
+  currency TEXT DEFAULT 'usd',
+  plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'pro')),
+  is_revoked BOOLEAN DEFAULT FALSE,
+  -- Profile fields
+  full_name TEXT,
+  phone TEXT,
+  address_line1 TEXT,
+  address_line2 TEXT,
+  city TEXT,
+  state TEXT,
+  zip TEXT,
+  country TEXT,
+  profile_photo_url TEXT,
+  last_login TIMESTAMP WITH TIME ZONE,
+  -- Notification preferences
+  notify_worker_offline BOOLEAN DEFAULT TRUE,
+  notify_profit_drop BOOLEAN DEFAULT TRUE,
+  profit_drop_threshold INTEGER DEFAULT 20,
+  email_alerts_enabled BOOLEAN DEFAULT FALSE,
+  email_alerts_address TEXT,
+  email_frequency TEXT DEFAULT 'immediate' CHECK (email_frequency IN ('immediate', 'hourly', 'daily', 'weekly')),
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_license_key ON users(license_key);
+CREATE INDEX IF NOT EXISTS idx_users_plan ON users(plan);
+
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to users" ON users;
+CREATE POLICY "Allow service role full access to users" ON users FOR ALL USING (true);
+
+-- Password reset tokens
+CREATE TABLE IF NOT EXISTS password_resets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token TEXT UNIQUE NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
+CREATE INDEX IF NOT EXISTS idx_password_resets_expires ON password_resets(expires_at);
+
+ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to password_resets" ON password_resets;
+CREATE POLICY "Allow service role full access to password_resets" ON password_resets FOR ALL USING (true);
+
+-- User wallets (cloud-synced)
+CREATE TABLE IF NOT EXISTS user_wallets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  pool TEXT NOT NULL,
+  coin TEXT NOT NULL,
+  address TEXT NOT NULL,
+  power INTEGER DEFAULT 200,
+  enabled BOOLEAN DEFAULT TRUE,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_wallets_user_id ON user_wallets(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_wallets_order ON user_wallets(display_order);
+
+ALTER TABLE user_wallets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to user_wallets" ON user_wallets;
+CREATE POLICY "Allow service role full access to user_wallets" ON user_wallets FOR ALL USING (true);
+
+-- User settings (cloud-synced)
+CREATE TABLE IF NOT EXISTS user_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+  refresh_interval INTEGER DEFAULT 30,
+  electricity_rate DECIMAL(10,4) DEFAULT 0.12,
+  electricity_currency TEXT DEFAULT 'USD',
+  power_consumption INTEGER DEFAULT 0,
+  currency TEXT DEFAULT 'USD',
+  notify_worker_offline BOOLEAN DEFAULT TRUE,
+  notify_profit_drop BOOLEAN DEFAULT TRUE,
+  profit_drop_threshold INTEGER DEFAULT 20,
+  notify_better_coin BOOLEAN DEFAULT FALSE,
+  show_discovery_coins BOOLEAN DEFAULT TRUE,
+  lite_mode BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
+
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to user_settings" ON user_settings;
+CREATE POLICY "Allow service role full access to user_settings" ON user_settings FOR ALL USING (true);
+
+-- User instances/devices (track connected devices)
+CREATE TABLE IF NOT EXISTS user_instances (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  instance_id TEXT NOT NULL,
+  device_type TEXT NOT NULL CHECK (device_type IN ('extension', 'mobile_ios', 'mobile_android')),
+  device_name TEXT,
+  browser TEXT,
+  version TEXT,
+  last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, instance_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_instances_user_id ON user_instances(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_instances_instance ON user_instances(instance_id);
+CREATE INDEX IF NOT EXISTS idx_user_instances_last_seen ON user_instances(last_seen);
+
+ALTER TABLE user_instances ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to user_instances" ON user_instances;
+CREATE POLICY "Allow service role full access to user_instances" ON user_instances FOR ALL USING (true);

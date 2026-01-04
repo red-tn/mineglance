@@ -201,17 +201,17 @@ BUILD_MAX_RETRIES = 80  # 40 minutes total (GitHub Actions iOS builds take ~20-3
 
 PENDING_RELEASES = [
     {
-        "version": "1.1.0",
+        "version": "1.1.1",
         "platform": "extension",
-        "release_notes": "Major update: Email-first authentication with cloud sync. Sign in with your email to sync wallets across all devices. Simplified pricing (Free $0 / Pro $59). Mobile app download links added. QR code sync removed.",
-        "zip_filename": "mineglance-extension-v1.1.0.zip",
+        "release_notes": "Email-first auth: All users now sign in with email + password. License keys are separate - enter in Settings to upgrade to Pro. Added dashboard link. Cloud sync across all devices.",
+        "zip_filename": "mineglance-extension-v1.1.1.zip",
         "is_latest": True
     },
     {
-        "version": "1.1.0",
+        "version": "1.1.1",
         "platform": "mobile_ios",
-        "release_notes": "Major update: Email-first authentication replaces QR scanning. Sign in with email to sync wallets from extension. New Profile tab with device management. Cloud sync for wallets and settings. Build 22.",
-        "zip_filename": "mineglance-ios-v1.1.0.ipa",
+        "release_notes": "Email-first auth: Sign in with email + password (no more QR scanning). Enter license key in Profile to upgrade to Pro. Added dashboard link in Settings. Cloud sync across all devices.",
+        "zip_filename": "mineglance-ios-v1.1.1.ipa",
         "is_latest": True
     }
 ]

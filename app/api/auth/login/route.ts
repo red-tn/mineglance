@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { promisify } from 'util'
+
+const scrypt = promisify(crypto.scrypt)
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,9 +15,16 @@ function generateToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
+// Verify password against hash
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  const [salt, key] = hash.split(':')
+  const derivedKey = await scrypt(password, salt, 64) as Buffer
+  return key === derivedKey.toString('hex')
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { email, licenseKey, instanceId, deviceType, deviceName, browser, version } = await request.json()
+    const { email, password, licenseKey, instanceId, deviceType, deviceName, browser, version } = await request.json()
 
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
@@ -42,20 +52,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Account has been suspended' }, { status: 403 })
     }
 
-    // If user is Pro, require license key
-    if (user.plan === 'pro' && user.license_key) {
-      if (!normalizedLicenseKey) {
-        return NextResponse.json({
-          error: 'License key required',
-          requiresLicenseKey: true,
-          email: normalizedEmail
-        }, { status: 401 })
-      }
+    // All users authenticate with password
+    if (!password) {
+      return NextResponse.json({
+        error: 'Password required',
+        requiresPassword: true,
+        email: normalizedEmail
+      }, { status: 401 })
+    }
 
-      // Validate license key
-      if (normalizedLicenseKey !== user.license_key) {
-        return NextResponse.json({ error: 'Invalid license key' }, { status: 401 })
-      }
+    // Verify password
+    if (!user.password_hash) {
+      return NextResponse.json({ error: 'Account needs password reset. Use the reset link.' }, { status: 401 })
+    }
+
+    const isValid = await verifyPassword(password, user.password_hash)
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
     }
 
     // Generate session token

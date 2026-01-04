@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { promisify } from 'util'
+
+const scrypt = promisify(crypto.scrypt)
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,6 +16,13 @@ const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'hello@mineglance.com'
 // Generate session token
 function generateToken(): string {
   return crypto.randomBytes(32).toString('hex')
+}
+
+// Hash password with salt
+async function hashPassword(password: string): Promise<string> {
+  const salt = crypto.randomBytes(16).toString('hex')
+  const derivedKey = await scrypt(password, salt, 64) as Buffer
+  return `${salt}:${derivedKey.toString('hex')}`
 }
 
 // Send welcome email with MINE26 coupon
@@ -164,10 +174,14 @@ async function sendWelcomeEmail(email: string): Promise<void> {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, instanceId, deviceType, deviceName, browser, version } = await request.json()
+    const { email, password, instanceId, deviceType, deviceName, browser, version } = await request.json()
 
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
+    }
+
+    if (!password || password.length < 6) {
+      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
     }
 
     const normalizedEmail = email.toLowerCase().trim()
@@ -189,6 +203,9 @@ export async function POST(request: NextRequest) {
       }, { status: 409 })
     }
 
+    // Hash the password
+    const passwordHash = await hashPassword(password)
+
     // Create new free user
     const userId = crypto.randomUUID()
     const { error: insertError } = await supabase
@@ -196,6 +213,7 @@ export async function POST(request: NextRequest) {
       .insert({
         id: userId,
         email: normalizedEmail,
+        password_hash: passwordHash,
         plan: 'free',
         license_key: null,
         created_at: new Date().toISOString(),
