@@ -272,9 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showDiscovery = document.getElementById('showDiscovery');
   const liteMode = document.getElementById('liteMode');
 
-  // Mobile app section elements
-  const mobileAppSection = document.getElementById('mobileAppSection');
-  const mobileAppProNotice = document.getElementById('mobileAppProNotice');
+  // Mobile app section is now shown for all users (no Pro restriction)
 
   // Modals
   const walletModal = document.getElementById('walletModal');
@@ -296,13 +294,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
   });
 
-  // Mobile app upgrade button
-  const upgradeMobileBtn = document.getElementById('upgradeMobileBtn');
-  if (upgradeMobileBtn) {
-    upgradeMobileBtn.addEventListener('click', () => {
-      chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
-    });
-  }
 
   // Auto-save: Add listeners to all settings inputs
   const autoSaveInputs = [
@@ -517,11 +508,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     emailFrequency.disabled = false;
     testEmailBtn.disabled = false;
 
-    // Show mobile app section for Pro users
-    if (mobileAppSection && mobileAppProNotice) {
-      mobileAppSection.classList.remove('hidden');
-      mobileAppProNotice.classList.add('hidden');
-    }
+    // Mobile app section is now always visible for all users
   }
 
   // Toggle email input visibility
