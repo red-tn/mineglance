@@ -28,6 +28,9 @@ yarn-error.log*
 .env
 roadmap/.env
 
+# claude code settings (may contain tokens)
+.claude/
+
 # vercel
 .vercel
 
