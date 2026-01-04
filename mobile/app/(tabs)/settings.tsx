@@ -110,19 +110,32 @@ export default function SettingsScreen() {
         </View>
       </View>
 
-      {/* Sync Section */}
+      {/* Sign Out Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Sync</Text>
+        <Text style={styles.sectionTitle}>Account</Text>
 
         <View style={styles.card}>
           <TouchableOpacity
-            style={styles.syncButton}
-            onPress={() => router.push('/scan')}
+            style={styles.signOutButton}
+            onPress={() => {
+              Alert.alert(
+                'Sign Out',
+                'Are you sure you want to sign out? Your wallets will be removed from this device.',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Sign Out',
+                    style: 'destructive',
+                    onPress: () => {
+                      clearAuth();
+                      router.replace('/onboarding');
+                    },
+                  },
+                ]
+              );
+            }}
           >
-            <Text style={styles.syncButtonText}>Scan QR Code</Text>
-            <Text style={styles.syncDescription}>
-              Sync wallets and settings from extension
-            </Text>
+            <Text style={styles.signOutButtonText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -414,19 +427,14 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
-  syncButton: {
+  signOutButton: {
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
   },
-  syncButtonText: {
+  signOutButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.primary,
-    marginBottom: spacing.xs,
-  },
-  syncDescription: {
-    fontSize: fontSize.sm,
-    color: colors.textMuted,
+    color: colors.danger,
   },
   intervalButtons: {
     flexDirection: 'row',

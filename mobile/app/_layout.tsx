@@ -101,13 +101,6 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
-          name="scan"
-          options={{
-            title: 'Scan QR Code',
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
           name="wallet/[id]"
           options={{
             title: 'Wallet Details',

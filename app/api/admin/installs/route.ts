@@ -45,78 +45,45 @@ export async function GET(request: NextRequest) {
     const periodDays = parseInt(period)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    // Get ALL extension installs (includes free + pro that have tracked)
-    const { data: allExtInstalls } = await supabase
-      .from('extension_installs')
-      .select('*')
+    // Get all user instances with their user data
+    const { data: instances } = await supabase
+      .from('user_instances')
+      .select(`
+        *,
+        user:users(id, email, plan, license_key)
+      `)
       .order('last_seen', { ascending: false })
 
-    // Get Pro activations
-    const { data: proActivations } = await supabase
-      .from('license_activations')
-      .select('*')
-
-    // Create a map of extension installs by install_id
-    const extInstallMap = new Map()
-    ;(allExtInstalls || []).forEach(inst => {
-      extInstallMap.set(inst.install_id, inst)
-    })
-
-    // Create a map of pro users by install_id
-    const proMap = new Map()
-    ;(proActivations || []).forEach(p => {
-      proMap.set(p.install_id, p)
-    })
-
-    // Combine: Start with extension_installs, enrich with pro status
-    const combinedInstalls: any[] = []
-    const seenInstallIds = new Set()
-
-    // First, add all extension_installs entries
-    ;(allExtInstalls || []).forEach(inst => {
-      const proData = proMap.get(inst.install_id)
-      seenInstallIds.add(inst.install_id)
-      combinedInstalls.push({
-        ...inst,
-        isPro: proData?.is_active || false,
-        license_key: proData?.license_key || null
-      })
-    })
-
-    // Then, add any pro activations that don't have a matching extension_install
-    // These are "orphaned" - license activated but no extension tracking
-    ;(proActivations || []).forEach(p => {
-      if (!seenInstallIds.has(p.install_id)) {
-        combinedInstalls.push({
-          id: p.id,
-          install_id: p.install_id,
-          browser: 'Chrome',
-          version: '-',
-          created_at: p.activated_at,
-          last_seen: p.last_seen,
-          isPro: p.is_active,
-          license_key: p.license_key,
-          isOrphan: true // Flag as orphan - no matching extension_install
-        })
-      }
-    })
-
-    // Count orphans for summary
-    const orphanCount = combinedInstalls.filter(i => i.isOrphan).length
+    // Map to installation format
+    const allInstalls = (instances || []).map(inst => ({
+      id: inst.id,
+      instance_id: inst.instance_id || inst.id,
+      user_id: inst.user_id,
+      email: inst.user?.email,
+      plan: inst.user?.plan || 'free',
+      license_key: inst.user?.license_key,
+      isPro: inst.user?.plan === 'pro',
+      device_type: inst.device_type,
+      device_name: inst.device_name,
+      browser: inst.browser || inst.device_type,
+      version: inst.version,
+      created_at: inst.created_at,
+      last_seen: inst.last_seen
+    }))
 
     // Filter by pro status if requested
-    let filteredInstalls = combinedInstalls
+    let filteredInstalls = allInstalls
     if (isPro === 'true') {
-      filteredInstalls = combinedInstalls.filter(i => i.isPro)
+      filteredInstalls = allInstalls.filter(i => i.isPro)
     } else if (isPro === 'false') {
-      filteredInstalls = combinedInstalls.filter(i => !i.isPro)
+      filteredInstalls = allInstalls.filter(i => !i.isPro)
     }
 
     // Calculate totals
-    const total = combinedInstalls.length
-    const proUsers = combinedInstalls.filter(i => i.isPro).length
+    const total = allInstalls.length
+    const proUsers = allInstalls.filter(i => i.isPro).length
     const freeUsers = total - proUsers
-    const activeUsers = combinedInstalls.filter(i => {
+    const activeUsers = allInstalls.filter(i => {
       const lastSeen = new Date(i.last_seen)
       return lastSeen >= sevenDaysAgo
     }).length
@@ -130,12 +97,12 @@ export async function GET(request: NextRequest) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
       const dateStr = date.toISOString().split('T')[0]
 
-      const dayInstalls = combinedInstalls.filter(inst => {
-        const instDate = new Date(inst.created_at || inst.last_seen).toISOString().split('T')[0]
+      const dayInstalls = allInstalls.filter(inst => {
+        const instDate = new Date(inst.created_at).toISOString().split('T')[0]
         return instDate === dateStr
       }).length
 
-      const dayActive = combinedInstalls.filter(inst => {
+      const dayActive = allInstalls.filter(inst => {
         const lastSeenDate = new Date(inst.last_seen).toISOString().split('T')[0]
         return lastSeenDate === dateStr
       }).length
@@ -153,14 +120,15 @@ export async function GET(request: NextRequest) {
     // Map installations to expected format
     const mappedInstallations = paginatedInstalls.map(i => ({
       id: i.id,
-      instance_id: i.install_id,
+      instance_id: i.instance_id || i.id,
+      email: i.email,
       license_key: i.license_key,
-      browser: i.browser || 'Chrome',
+      browser: i.browser || i.device_type || 'Unknown',
       extension_version: i.version || '-',
-      first_seen: i.created_at || i.last_seen,
+      first_seen: i.created_at,
       last_seen: i.last_seen,
       isPro: i.isPro,
-      isOrphan: i.isOrphan || false // Orphan = in license_activations but not extension_installs
+      plan: i.plan
     }))
 
     return NextResponse.json({

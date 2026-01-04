@@ -252,19 +252,16 @@ export default function InstallsPage() {
                   <td className="px-4 py-3">
                     <code
                       className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded cursor-pointer hover:bg-dark-card-hover"
-                      title={install.instance_id}
+                      title={install.instance_id || 'N/A'}
                       onClick={() => {
-                        navigator.clipboard.writeText(install.instance_id)
-                        alert('Copied: ' + install.instance_id)
+                        if (install.instance_id) {
+                          navigator.clipboard.writeText(install.instance_id)
+                          alert('Copied: ' + install.instance_id)
+                        }
                       }}
                     >
-                      {install.instance_id.substring(0, 12)}...
+                      {install.instance_id ? `${install.instance_id.substring(0, 12)}...` : 'N/A'}
                     </code>
-                    {install.isOrphan && (
-                      <span className="ml-2 px-1.5 py-0.5 text-xs font-medium rounded bg-amber-500/20 text-amber-400" title="Orphan: License activation without matching extension install">
-                        ⚠️
-                      </span>
-                    )}
                   </td>
                   <td className="px-4 py-3">
                     {isActive(install.last_seen) ? (
