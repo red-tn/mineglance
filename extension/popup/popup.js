@@ -157,8 +157,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         authEmailStep.classList.add('hidden');
         authLicenseStep.classList.remove('hidden');
       } else if (data.token) {
-        // Login successful (new or existing free user)
+        // Login successful (existing user)
         await handleLoginSuccess(data);
+      } else if (data.exists === false) {
+        // User doesn't exist, auto-register as free
+        await registerNewUser(email);
       } else {
         showAuthMessage(data.error || 'Login failed', 'error');
       }
@@ -246,6 +249,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Hide auth modal and show dashboard
     authModal.classList.add('hidden');
     await initPopup();
+  }
+
+  async function registerNewUser(email) {
+    try {
+      const response = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          instanceId: await getInstallId(),
+          deviceType: 'extension',
+          browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other'
+        })
+      });
+      const data = await response.json();
+
+      if (data.token) {
+        await handleLoginSuccess(data);
+      } else {
+        showAuthMessage(data.error || 'Registration failed', 'error');
+      }
+    } catch (err) {
+      showAuthMessage('Connection error. Please try again.', 'error');
+    }
   }
 
   async function getInstallId() {
