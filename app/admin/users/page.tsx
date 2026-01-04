@@ -6,7 +6,7 @@ interface License {
   id: string
   key: string
   email: string
-  plan: 'pro' | 'bundle'
+  plan: 'free' | 'pro' | 'bundle'
   status: 'active' | 'revoked' | 'expired'
   created_at: string
   stripe_customer_id?: string
@@ -92,19 +92,20 @@ export default function UsersPage() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      active: 'bg-green-100 text-green-800',
-      revoked: 'bg-red-100 text-red-800',
-      expired: 'bg-gray-100 text-gray-800'
+      active: 'bg-green-900 text-green-200',
+      revoked: 'bg-red-900 text-red-200',
+      expired: 'bg-gray-700 text-gray-300'
     }
-    return colors[status] || 'bg-gray-100 text-gray-800'
+    return colors[status] || 'bg-gray-700 text-gray-300'
   }
 
   const getPlanBadge = (plan: string) => {
     const colors: Record<string, string> = {
-      pro: 'bg-blue-100 text-blue-800',
-      bundle: 'bg-purple-100 text-purple-800'
+      free: 'bg-gray-700 text-gray-200',
+      pro: 'bg-green-700 text-green-200',
+      bundle: 'bg-green-700 text-green-200'
     }
-    return colors[plan] || 'bg-gray-100 text-gray-800'
+    return colors[plan] || 'bg-gray-700 text-gray-200'
   }
 
   return (
@@ -148,8 +149,8 @@ export default function UsersPage() {
               className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary"
             >
               <option value="all">All Plans</option>
-              <option value="pro">Pro ($29)</option>
-              <option value="bundle">Pro Plus ($59)</option>
+              <option value="free">Free</option>
+              <option value="pro">Pro ($59)</option>
             </select>
           </div>
           <div className="flex items-end">
@@ -295,7 +296,7 @@ export default function UsersPage() {
                   <label className="text-sm font-medium text-dark-text-muted">Plan</label>
                   <p>
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(selectedUser.plan)}`}>
-                      {selectedUser.plan === 'bundle' ? 'PRO PLUS ($59)' : 'PRO ($29)'}
+                      {selectedUser.plan === 'free' ? 'FREE' : selectedUser.plan === 'bundle' ? 'PRO PLUS ($59)' : 'PRO ($59)'}
                     </span>
                   </p>
                 </div>
