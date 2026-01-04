@@ -360,8 +360,7 @@ export default function DashboardOverview() {
       <CheckoutModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        plan="bundle"
-        dashboardUpgrade={true}
+        plan="pro"
         userEmail={user?.email}
       />
     </div>
