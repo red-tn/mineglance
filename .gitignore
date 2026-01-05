@@ -31,6 +31,16 @@ roadmap/.env
 # claude code settings (may contain tokens)
 .claude/
 
+# Internal docs - DO NOT COMMIT
+CLAUDE.md
+ADMIN_DASHBOARD_PLAN.md
+AUDIT_REPORT.md
+
+# Release tooling (contains config)
+roadmap/publish_releases.py
+roadmap/*.p8
+roadmap/*.ipa
+
 # vercel
 .vercel
 
