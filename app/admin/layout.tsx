@@ -17,7 +17,7 @@ export default function AdminLayout({
 }) {
   const [user, setUser] = useState<AdminUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -110,23 +110,19 @@ export default function AdminLayout({
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-dark-card border-r border-dark-border transform transition-transform duration-200 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-        <div className="flex items-center justify-between h-14 px-4 border-b border-dark-border">
-          <Link href="/admin" className="text-primary font-bold text-lg flex items-center gap-2">
-            <Image src="/logo-icon.svg" alt="MineGlance" width={24} height={24} />
-            <span>Admin</span>
-          </Link>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-dark-text-muted hover:text-dark-text p-1"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+      <aside className={`fixed top-0 left-0 z-50 h-full w-64 bg-dark-card border-r border-dark-border transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-dark-border">
+            <Image src="/icon48.png" alt="MineGlance" width={32} height={32} />
+            <span className="text-lg font-bold text-dark-text">Admin</span>
+            <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+              ADMIN
+            </span>
+          </div>
 
-        <nav className="mt-2 px-2 space-y-0.5 overflow-y-auto max-h-[calc(100vh-120px)]">
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = pathname === item.href
             return (
@@ -134,18 +130,13 @@ export default function AdminLayout({
                 key={item.name}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   isActive
                     ? 'bg-primary/20 text-primary'
                     : 'text-dark-text-muted hover:bg-dark-card-hover hover:text-dark-text'
                 }`}
               >
-                <svg
-                  className="mr-3 h-4 w-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                 </svg>
                 {item.name}
@@ -154,40 +145,66 @@ export default function AdminLayout({
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-dark-border bg-dark-card">
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-dark-text-muted truncate max-w-[160px]">
-              {user.email}
+        <div className="px-4 py-4 border-t border-dark-border">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+              <span className="text-red-400 font-semibold text-sm">
+                {user.email?.[0]?.toUpperCase() || 'A'}
+              </span>
             </div>
-            <button
-              onClick={handleLogout}
-              className="text-dark-text-muted hover:text-red-400 transition p-1"
-              title="Logout"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-dark-text truncate">
+                Admin
+              </p>
+              <p className="text-xs text-dark-text-dim truncate">{user.email}</p>
+            </div>
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 text-sm text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded-lg transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Sign Out
+          </button>
         </div>
-      </div>
-
-      {/* Mobile header bar with hamburger */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-12 bg-dark-card border-b border-dark-border flex items-center px-3">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="p-1.5 rounded-lg hover:bg-dark-card-hover"
-        >
-          <svg className="w-5 h-5 text-dark-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <span className="ml-3 text-sm font-semibold text-dark-text">MineGlance Admin</span>
-      </div>
+        </div>
+      </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64">
-        <main className="pt-14 pb-4 px-3 sm:px-4 lg:pt-4 lg:px-6">
+      <div className="lg:ml-64">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 bg-dark-card/80 backdrop-blur-md border-b border-dark-border px-4 py-3 lg:px-8">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 text-dark-text-muted hover:text-dark-text"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="flex-1 lg:flex-none">
+              <h1 className="text-lg font-semibold text-dark-text lg:text-xl">
+                {navigation.find(item => item.href === pathname)?.name || 'Admin Dashboard'}
+              </h1>
+            </div>
+            <a
+              href="/"
+              target="_blank"
+              className="text-sm text-dark-text-muted hover:text-primary flex items-center gap-1 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Website
+            </a>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="p-4 lg:p-8">
           {children}
         </main>
       </div>

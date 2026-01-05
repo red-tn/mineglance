@@ -1,85 +1,27 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '../auth-context'
-import { loadStripe } from '@stripe/stripe-js'
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+import { useState, useEffect } from 'react'
 
 interface Device {
   id: string
-  installId: string
+  instanceId: string
   deviceName: string
+  deviceType: string
   browser: string | null
   version: string | null
-  activatedAt: string
+  createdAt: string
   lastSeen: string | null
-  isActive: boolean
 }
 
 export default function DevicesPage() {
-  const { user } = useAuth()
   const [devices, setDevices] = useState<Device[]>([])
-  const [maxActivations, setMaxActivations] = useState(3)
-  const [activeCount, setActiveCount] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [deactivating, setDeactivating] = useState<string | null>(null)
+  const [removing, setRemoving] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
-  const [licenseQuantity, setLicenseQuantity] = useState(1)
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
-  const [purchasing, setPurchasing] = useState(false)
-  const [purchaseSuccess, setPurchaseSuccess] = useState(false)
 
   useEffect(() => {
     loadDevices()
-    // Check for success param in URL (returned from Stripe checkout)
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('success') === 'true') {
-      setPurchaseSuccess(true)
-      // Remove the query param from URL
-      window.history.replaceState({}, '', '/dashboard/devices')
-      // Reload devices to get updated max_activations
-      setTimeout(() => loadDevices(), 1000)
-    }
   }, [])
-
-  const fetchClientSecret = useCallback(async () => {
-    if (!user?.email) return ''
-    const res = await fetch('/api/create-license-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email, quantity: licenseQuantity })
-    })
-    const data = await res.json()
-    if (data.error) {
-      setError(data.error)
-      return ''
-    }
-    return data.clientSecret
-  }, [user?.email, licenseQuantity])
-
-  async function startPurchase() {
-    setPurchasing(true)
-    setError('')
-    try {
-      const secret = await fetchClientSecret()
-      if (secret) {
-        setClientSecret(secret)
-      }
-    } catch (e) {
-      setError('Failed to start checkout. Please try again.')
-    } finally {
-      setPurchasing(false)
-    }
-  }
-
-  function closePurchaseModal() {
-    setShowPurchaseModal(false)
-    setClientSecret(null)
-    setLicenseQuantity(1)
-  }
 
   async function loadDevices() {
     const token = localStorage.getItem('user_token')
@@ -92,9 +34,7 @@ export default function DevicesPage() {
 
       if (res.ok) {
         const data = await res.json()
-        setDevices(data.devices)
-        setMaxActivations(data.maxActivations)
-        setActiveCount(data.activeCount)
+        setDevices(data.devices || [])
       }
     } catch (e) {
       console.error('Failed to load devices:', e)
@@ -103,34 +43,33 @@ export default function DevicesPage() {
     }
   }
 
-  async function handleDeactivate(installId: string) {
-    if (!confirm('Are you sure you want to deactivate this device? It will need to be re-activated to use MineGlance Pro.')) {
+  async function handleRemove(instanceId: string) {
+    if (!confirm('Are you sure you want to remove this device? It will be signed out.')) {
       return
     }
 
-    setDeactivating(installId)
+    setRemoving(instanceId)
     setError('')
 
     const token = localStorage.getItem('user_token')
     if (!token) return
 
     try {
-      const res = await fetch(`/api/dashboard/devices?installId=${installId}`, {
+      const res = await fetch(`/api/dashboard/devices?instanceId=${instanceId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
       if (res.ok) {
-        // Refresh the list
         loadDevices()
       } else {
         const data = await res.json()
-        setError(data.error || 'Failed to deactivate device')
+        setError(data.error || 'Failed to remove device')
       }
     } catch {
       setError('Connection error. Please try again.')
     } finally {
-      setDeactivating(null)
+      setRemoving(null)
     }
   }
 
@@ -161,6 +100,61 @@ export default function DevicesPage() {
     return null
   }
 
+  function getPlatformIcon(deviceType: string) {
+    switch (deviceType) {
+      case 'extension':
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+          </svg>
+        )
+      case 'mobile_ios':
+        return (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+          </svg>
+        )
+      case 'mobile_android':
+        return (
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4483-.9993.9993-.9993c.5511 0 .9993.4483.9993.9993.0001.5511-.4482.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4483.9993.9993 0 .5511-.4483.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.2439 13.8533 7.8508 12 7.8508s-3.5902.3931-5.1367 1.0989L4.841 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3435-4.1021-2.6892-7.5743-6.1185-9.4396"/>
+          </svg>
+        )
+      default:
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        )
+    }
+  }
+
+  function getPlatformLabel(deviceType: string) {
+    switch (deviceType) {
+      case 'extension':
+        return 'Chrome Extension'
+      case 'mobile_ios':
+        return 'iOS App'
+      case 'mobile_android':
+        return 'Android App'
+      default:
+        return 'Unknown'
+    }
+  }
+
+  function getPlatformColor(deviceType: string) {
+    switch (deviceType) {
+      case 'extension':
+        return 'text-blue-400 bg-blue-500/20'
+      case 'mobile_ios':
+        return 'text-gray-300 bg-gray-500/20'
+      case 'mobile_android':
+        return 'text-green-400 bg-green-500/20'
+      default:
+        return 'text-dark-text-muted bg-dark-card-hover'
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -172,40 +166,68 @@ export default function DevicesPage() {
     )
   }
 
+  // Count by platform
+  const extensionCount = devices.filter(d => d.deviceType === 'extension').length
+  const iosCount = devices.filter(d => d.deviceType === 'mobile_ios').length
+  const androidCount = devices.filter(d => d.deviceType === 'mobile_android').length
+
   return (
     <div className="space-y-6">
       {/* Header Card */}
       <div className="glass-card rounded-xl p-6 border border-dark-border">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-dark-text">Active Devices</h2>
+            <h2 className="text-lg font-semibold text-dark-text">Connected Devices</h2>
             <p className="text-sm text-dark-text-muted mt-1">
-              Manage devices using your MineGlance Pro license
+              Devices signed in with your MineGlance account
             </p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold text-primary">{activeCount}/{maxActivations}</p>
-            <p className="text-xs text-dark-text-muted">activations used</p>
+            <p className="text-2xl font-bold text-primary">{devices.length}</p>
+            <p className="text-xs text-dark-text-muted">total devices</p>
           </div>
         </div>
+      </div>
 
-        {/* Progress bar */}
-        <div className="mt-4 h-2 bg-dark-card-hover rounded-full overflow-hidden">
-          <div
-            className={`h-full transition-all ${activeCount >= maxActivations ? 'bg-amber-500' : 'bg-primary'}`}
-            style={{ width: `${(activeCount / maxActivations) * 100}%` }}
-          />
+      {/* Platform Summary */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="glass-card rounded-xl p-4 border border-dark-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+              {getPlatformIcon('extension')}
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-dark-text">{extensionCount}</p>
+              <p className="text-xs text-dark-text-muted">Extensions</p>
+            </div>
+          </div>
         </div>
-
-        {activeCount >= maxActivations && (
-          <p className="mt-3 text-sm text-amber-400">
-            You&apos;ve reached your activation limit. Deactivate a device to activate a new one.
-          </p>
-        )}
+        <div className="glass-card rounded-xl p-4 border border-dark-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gray-500/20 flex items-center justify-center text-gray-300">
+              {getPlatformIcon('mobile_ios')}
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-dark-text">{iosCount}</p>
+              <p className="text-xs text-dark-text-muted">iOS Devices</p>
+            </div>
+          </div>
+        </div>
+        <div className="glass-card rounded-xl p-4 border border-dark-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400">
+              {getPlatformIcon('mobile_android')}
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-dark-text">{androidCount}</p>
+              <p className="text-xs text-dark-text-muted">Android Devices</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-6">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -222,44 +244,36 @@ export default function DevicesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             <p className="font-medium text-dark-text">No devices found</p>
-            <p className="text-sm mt-1">Activate MineGlance Pro in your browser extension to see devices here.</p>
+            <p className="text-sm mt-1">Sign in to MineGlance on any device to see it here.</p>
           </div>
         ) : (
           <ul className="divide-y divide-dark-border">
             {devices.map((device) => {
               const recentActivity = getTimeSince(device.lastSeen)
               const isOnline = recentActivity === 'Active now'
+              const colorClass = getPlatformColor(device.deviceType)
 
               return (
                 <li key={device.id} className="px-6 py-4">
                   <div className="flex items-start gap-4">
-                    {/* Device Icon */}
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${device.isActive ? 'bg-primary/20 text-primary' : 'bg-dark-card-hover text-dark-text-dim'}`}>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
+                    {/* Platform Icon */}
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+                      {getPlatformIcon(device.deviceType)}
                     </div>
 
                     {/* Device Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className={`font-medium ${device.isActive ? 'text-dark-text' : 'text-dark-text-dim'}`}>
-                          {device.deviceName}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-medium text-dark-text">
+                          {device.deviceName || 'Unknown Device'}
                         </h4>
-                        {device.isActive ? (
-                          isOnline ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary">
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1 animate-pulse" />
-                              Online
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-dark-card-hover text-dark-text-muted">
-                              Active
-                            </span>
-                          )
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400">
-                            Deactivated
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
+                          {getPlatformLabel(device.deviceType)}
+                        </span>
+                        {isOnline && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1 animate-pulse" />
+                            Online
                           </span>
                         )}
                       </div>
@@ -270,25 +284,25 @@ export default function DevicesPage() {
                         {device.version && (
                           <span>v{device.version}</span>
                         )}
-                        <span className="text-dark-border">|</span>
-                        <span>Activated {formatDate(device.activatedAt)}</span>
+                        {(device.browser || device.version) && <span className="text-dark-border">|</span>}
+                        <span>Added {formatDate(device.createdAt)}</span>
                       </div>
-                      {recentActivity && device.isActive && (
+                      {recentActivity && (
                         <p className="text-xs text-dark-text-dim mt-1">Last seen: {recentActivity}</p>
                       )}
-                      <p className="text-xs text-dark-text-dim mt-1 font-mono">ID: {device.installId.substring(0, 16)}...</p>
+                      <p className="text-xs text-dark-text-dim mt-1 font-mono">
+                        ID: {device.instanceId.substring(0, 20)}...
+                      </p>
                     </div>
 
                     {/* Actions */}
-                    {device.isActive && (
-                      <button
-                        onClick={() => handleDeactivate(device.installId)}
-                        disabled={deactivating === device.installId}
-                        className="px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                      >
-                        {deactivating === device.installId ? 'Deactivating...' : 'Deactivate'}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleRemove(device.instanceId)}
+                      disabled={removing === device.instanceId}
+                      className="px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {removing === device.instanceId ? 'Removing...' : 'Remove'}
+                    </button>
                   </div>
                 </li>
               )
@@ -297,141 +311,23 @@ export default function DevicesPage() {
         )}
       </div>
 
-      {/* Purchase Success Banner */}
-      {purchaseSuccess && (
-        <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center gap-3">
-          <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div>
-            <h4 className="font-medium text-dark-text">Additional licenses purchased!</h4>
-            <p className="text-sm text-dark-text-muted">Your new activation limit has been updated.</p>
-          </div>
-          <button
-            onClick={() => setPurchaseSuccess(false)}
-            className="ml-auto text-dark-text-muted hover:text-dark-text"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      {/* Buy More Licenses */}
-      <div className="glass-card rounded-xl p-6 border border-primary/30 bg-gradient-to-r from-primary/10 to-blue-500/10">
+      {/* Info Card */}
+      <div className="glass-card rounded-xl p-6 border border-dark-border">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          <div className="w-10 h-10 rounded-lg bg-dark-card-hover flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div className="flex-1">
-            <h4 className="font-semibold text-dark-text mb-1">Need more activations?</h4>
-            <p className="text-sm text-dark-text-muted mb-4">
-              Purchase additional licenses to use MineGlance Pro on more devices.
-              Each license pack includes <strong className="text-dark-text">5 lifetime activations</strong> for only <strong className="text-dark-text">$5</strong> (one-time).
+          <div>
+            <h4 className="font-medium text-dark-text mb-1">Unlimited Devices</h4>
+            <p className="text-sm text-dark-text-muted">
+              Your MineGlance Pro license works on unlimited devices. Sign in on your browser extension,
+              iPhone, iPad, or Android device - all your data syncs automatically via the cloud.
             </p>
-            <button
-              onClick={() => setShowPurchaseModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-light transition-colors shadow-glow hover:shadow-glow-lg"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              Buy More Licenses
-            </button>
           </div>
         </div>
       </div>
-
-      {/* Purchase Modal */}
-      {showPurchaseModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-dark-border">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-dark-border">
-              <h3 className="text-lg font-semibold text-dark-text">Buy Additional Licenses</h3>
-              <button
-                onClick={closePurchaseModal}
-                className="text-dark-text-muted hover:text-dark-text transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6">
-              {clientSecret ? (
-                <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
-                  <EmbeddedCheckout />
-                </EmbeddedCheckoutProvider>
-              ) : (
-                <>
-                  <div className="mb-6">
-                    <p className="text-sm text-dark-text-muted mb-4">
-                      Each license pack adds <strong className="text-dark-text">5 lifetime activations</strong> to your account for <strong className="text-dark-text">$5</strong>. One-time purchase, no subscription.
-                    </p>
-
-                    <label className="block text-sm font-medium text-dark-text mb-2">
-                      Number of license packs
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => setLicenseQuantity(Math.max(1, licenseQuantity - 1))}
-                        disabled={licenseQuantity <= 1}
-                        className="w-10 h-10 rounded-lg border border-dark-border flex items-center justify-center text-dark-text hover:bg-dark-card-hover disabled:opacity-50"
-                      >
-                        -
-                      </button>
-                      <span className="text-2xl font-bold text-dark-text w-12 text-center">{licenseQuantity}</span>
-                      <button
-                        onClick={() => setLicenseQuantity(licenseQuantity + 1)}
-                        className="w-10 h-10 rounded-lg border border-dark-border flex items-center justify-center text-dark-text hover:bg-dark-card-hover"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-dark-card-hover rounded-lg p-4 mb-6">
-                    <div className="flex justify-between text-sm text-dark-text-muted mb-2">
-                      <span>License packs ({licenseQuantity}x)</span>
-                      <span>${licenseQuantity * 5}.00</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-dark-text-muted mb-2">
-                      <span>Activations added</span>
-                      <span className="font-medium text-primary">+{licenseQuantity * 5}</span>
-                    </div>
-                    <div className="border-t border-dark-border my-2 pt-2">
-                      <div className="flex justify-between text-base font-semibold text-dark-text">
-                        <span>Total</span>
-                        <span>${licenseQuantity * 5}.00</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {error && (
-                    <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
-                      {error}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={startPurchase}
-                    disabled={purchasing}
-                    className="w-full py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-light transition-colors disabled:opacity-50 shadow-glow hover:shadow-glow-lg"
-                  >
-                    {purchasing ? 'Loading...' : `Pay $${licenseQuantity * 5}.00`}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

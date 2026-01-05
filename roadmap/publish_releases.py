@@ -13,13 +13,18 @@ For Extension:
   - Uploads to Supabase Storage
   - Publishes to software_releases table
 
+Website Sync:
+  - Checks for uncommitted changes
+  - Checks for unpushed commits
+  - Automatically commits and pushes website updates
+
 Instructions:
 1. Install dependencies: pip install python-dotenv boto3 requests
 2. Create a .env file in this folder (see .env.example)
 3. Update PENDING_RELEASES with the new version info
 4. Run: python publish_releases.py
 
-Last Updated: 2026-01-03
+Last Updated: 2026-01-05
 """
 
 import os
@@ -201,17 +206,17 @@ BUILD_MAX_RETRIES = 80  # 40 minutes total (GitHub Actions iOS builds take ~20-3
 
 PENDING_RELEASES = [
     {
-        "version": "1.1.1",
+        "version": "1.1.2",
         "platform": "extension",
-        "release_notes": "Email-first auth: All users now sign in with email + password. License keys are separate - enter in Settings to upgrade to Pro. Added dashboard link. Cloud sync across all devices.",
-        "zip_filename": "mineglance-extension-v1.1.1.zip",
+        "release_notes": "Installation tracking: Anonymous instance registration for install analytics. Admin dashboard now shows platform-specific stats (Extension, iOS, Android). Fixed instance registration to use new API.",
+        "zip_filename": "mineglance-extension-v1.1.2.zip",
         "is_latest": True
     },
     {
-        "version": "1.1.1",
+        "version": "1.1.2",
         "platform": "mobile_ios",
-        "release_notes": "Email-first auth: Sign in with email + password (no more QR scanning). Enter license key in Profile to upgrade to Pro. Added dashboard link in Settings. Cloud sync across all devices.",
-        "zip_filename": "mineglance-ios-v1.1.1.ipa",
+        "release_notes": "Installation tracking: App now registers instance on first launch for analytics. Improved conversion tracking (install → signup → pro). Admin dashboard shows iOS-specific stats.",
+        "zip_filename": "mineglance-ios-v1.1.2.ipa",
         "is_latest": True
     }
 ]
@@ -619,10 +624,131 @@ def publish_release(release):
         print(f"         {response.text}")
         return False
 
+def check_git_status():
+    """Check if there are uncommitted changes in the repo"""
+    repo_dir = os.path.join(os.path.dirname(__file__), '..')
+    try:
+        result = subprocess.run(
+            ['git', 'status', '--porcelain'],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True
+        )
+        # Returns list of changed files, empty if clean
+        return result.stdout.strip().split('\n') if result.stdout.strip() else []
+    except Exception as e:
+        print(f"  [WARN] Could not check git status: {e}")
+        return []
+
+def check_unpushed_commits():
+    """Check if there are commits that haven't been pushed"""
+    repo_dir = os.path.join(os.path.dirname(__file__), '..')
+    try:
+        # First fetch to make sure we have latest remote state
+        subprocess.run(['git', 'fetch'], cwd=repo_dir, capture_output=True)
+
+        # Check for unpushed commits
+        result = subprocess.run(
+            ['git', 'log', 'origin/main..HEAD', '--oneline'],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True
+        )
+        commits = result.stdout.strip().split('\n') if result.stdout.strip() else []
+        return commits
+    except Exception as e:
+        print(f"  [WARN] Could not check unpushed commits: {e}")
+        return []
+
+def sync_website_to_git():
+    """Check for changes and push website updates to git"""
+    print("\n" + "=" * 50)
+    print("Checking Git Status...")
+    print("=" * 50)
+
+    repo_dir = os.path.join(os.path.dirname(__file__), '..')
+
+    # Check for uncommitted changes
+    changes = check_git_status()
+    unpushed = check_unpushed_commits()
+
+    if not changes and not unpushed:
+        print("  [OK] No changes to push - repo is up to date")
+        return True
+
+    # Show what's changed
+    if changes:
+        print(f"\n  Found {len(changes)} uncommitted change(s):")
+        for change in changes[:10]:  # Show first 10
+            print(f"    {change}")
+        if len(changes) > 10:
+            print(f"    ... and {len(changes) - 10} more")
+
+    if unpushed:
+        print(f"\n  Found {len(unpushed)} unpushed commit(s):")
+        for commit in unpushed[:5]:
+            print(f"    {commit}")
+        if len(unpushed) > 5:
+            print(f"    ... and {len(unpushed) - 5} more")
+
+    # If there are uncommitted changes, commit them
+    if changes:
+        print("\n  [GIT] Staging and committing changes...")
+        try:
+            # Stage all changes
+            subprocess.run(['git', 'add', '-A'], cwd=repo_dir, capture_output=True, check=True)
+
+            # Create commit message
+            commit_msg = f"""Website updates - auto-commit
+
+Changes include dashboard, admin, and extension updates.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"""
+
+            result = subprocess.run(
+                ['git', 'commit', '-m', commit_msg],
+                cwd=repo_dir,
+                capture_output=True,
+                text=True
+            )
+
+            if result.returncode == 0:
+                print("  [OK] Changes committed")
+            else:
+                print(f"  [WARN] Commit may have failed: {result.stderr}")
+        except Exception as e:
+            print(f"  [ERROR] Failed to commit: {e}")
+            return False
+
+    # Push to remote
+    print("  [GIT] Pushing to origin/main...")
+    try:
+        result = subprocess.run(
+            ['git', 'push'],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode == 0:
+            print("  [OK] Pushed to remote successfully!")
+            return True
+        else:
+            print(f"  [ERROR] Push failed: {result.stderr}")
+            return False
+    except Exception as e:
+        print(f"  [ERROR] Failed to push: {e}")
+        return False
+
 def main():
     print("=" * 50)
     print("MineGlance Release Publisher")
     print("=" * 50)
+
+    # Step 0: Sync website changes to git first
+    sync_website_to_git()
 
     if not SUPABASE_SERVICE_KEY:
         print("\nERROR: Missing Supabase service key!")
