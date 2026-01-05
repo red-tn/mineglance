@@ -208,14 +208,14 @@ PENDING_RELEASES = [
     {
         "version": "1.1.2",
         "platform": "extension",
-        "release_notes": "Installation tracking: Anonymous instance registration for install analytics. Admin dashboard now shows platform-specific stats (Extension, iOS, Android). Fixed instance registration to use new API.",
+        "release_notes": "Installation tracking, dashboard fixes: Anonymous instance registration for install analytics. Fixed user dashboard (removed Mobile App Coming Soon, fixed license display, removed device limits). Admin menu now matches user dashboard behavior.",
         "zip_filename": "mineglance-extension-v1.1.2.zip",
         "is_latest": True
     },
     {
         "version": "1.1.2",
         "platform": "mobile_ios",
-        "release_notes": "Installation tracking: App now registers instance on first launch for analytics. Improved conversion tracking (install → signup → pro). Admin dashboard shows iOS-specific stats.",
+        "release_notes": "Installation tracking (build 35): App registers instance on first launch for analytics. Improved conversion tracking. Dashboard shows iOS-specific stats.",
         "zip_filename": "mineglance-ios-v1.1.2.ipa",
         "is_latest": True
     }
@@ -695,8 +695,10 @@ def sync_website_to_git():
     if changes:
         print("\n  [GIT] Staging and committing changes...")
         try:
-            # Stage all changes
-            subprocess.run(['git', 'add', '-A'], cwd=repo_dir, capture_output=True, check=True)
+            # Stage only tracked files (avoid untracked junk folders)
+            subprocess.run(['git', 'add', '-u'], cwd=repo_dir, capture_output=True, check=True)
+            # Also add .gitignore if modified
+            subprocess.run(['git', 'add', '.gitignore'], cwd=repo_dir, capture_output=True)
 
             # Create commit message
             commit_msg = f"""Website updates - auto-commit

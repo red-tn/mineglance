@@ -37,3 +37,16 @@ roadmap/.env
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# junk folders
+MINEGLANCEmobile/
+mobile/dist/
+mobile/node_modules/
+screenshots/
+scripts/
+*.docx
+*.zip
+nul
+*.bat
+workflow_logs/
+*.log
