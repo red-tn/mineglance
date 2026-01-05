@@ -40,36 +40,13 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Generate native project
+      - name: Build iOS app (EAS Cloud)
         run: |
-          echo "Running expo prebuild for iOS..."
-          npx expo prebuild --platform ios --clean
-
-          echo ""
-          echo "=== Checking generated ios folder ==="
-          ls -la ios/
-
-      - name: Build iOS app
-        run: |
-          echo "Building iOS app v${{ inputs.version }}..."
-          cd ios
-          pod install
-          cd ..
-          eas build --platform ios --profile production --local --non-interactive --output ./build.ipa
-
-      - name: Submit to TestFlight
-        run: |
-          echo "Submitting to TestFlight..."
-          eas submit --platform ios --path ./build.ipa --non-interactive
-
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build-${{ inputs.version }}
-          path: mobile/build.ipa
-          retention-days: 30
+          echo "Building iOS app v${{ inputs.version }} on EAS Cloud..."
+          eas build --platform ios --profile production --non-interactive --auto-submit
 
       - name: Notify completion
         run: |
-          echo "✅ iOS v${{ inputs.version }} built and submitted to TestFlight!"
+          echo "✅ iOS v${{ inputs.version }} submitted to EAS!"
+          echo "EAS will build and auto-submit to TestFlight."
           echo "Release notes: ${{ inputs.release_notes }}"
