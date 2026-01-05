@@ -17,6 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mineglance.mg-app",
+      "appleTeamId": "6GBT58TX68",
       "infoPlist": {
         "UIBackgroundModes": [
           "fetch",
