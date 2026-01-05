@@ -172,11 +172,16 @@ S3_BUCKET = os.getenv("s3_bucket", "software")
 # Supabase storage bucket URL base
 STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public/software"
 
-# GitHub Actions config
+# GitHub Actions config (deprecated - using local Mac builds now)
 GITHUB_TOKEN = os.getenv("github_token")
 GITHUB_REPO_OWNER = os.getenv("github_repo_owner", "red-tn")
 GITHUB_REPO_NAME = os.getenv("github_repo_name", "mineglance")
 GITHUB_WORKFLOW_FILE = "ios-build.yml"
+
+# Local Mac build config
+# Set USE_LOCAL_MAC_BUILD=true in .env to use local Mac for iOS builds
+USE_LOCAL_MAC_BUILD = os.getenv("use_local_mac_build", "false").lower() == "true"
+MAC_BUILD_SCRIPT = "build-ios-mac.sh"
 
 # Retry settings for builds
 BUILD_RETRY_WAIT = 30   # 30 seconds between checks
