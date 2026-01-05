@@ -100,19 +100,35 @@ echo ""
 echo -e "${YELLOW}[4/6]${NC} Building iOS archive (this takes 5-10 minutes)..."
 ARCHIVE_PATH="./build/MineGlance.xcarchive"
 
-xcodebuild -workspace ios/MineGlance.xcworkspace \
-  -scheme MineGlance \
-  -configuration Release \
-  -archivePath "$ARCHIVE_PATH" \
-  -destination "generic/platform=iOS" \
-  DEVELOPMENT_TEAM=6GBT58TX68 \
-  CODE_SIGN_STYLE=Automatic \
-  -authenticationKeyPath "$API_KEY_PATH" \
-  -authenticationKeyID "$API_KEY_ID" \
-  -authenticationKeyIssuerID "$API_KEY_ISSUER" \
-  -allowProvisioningUpdates \
-  -quiet \
-  archive
+# Build with or without API key authentication
+if [ "$SKIP_UPLOAD" = true ]; then
+  # No API key - build without auth (will need manual signing setup in Xcode)
+  xcodebuild -workspace ios/MineGlance.xcworkspace \
+    -scheme MineGlance \
+    -configuration Release \
+    -archivePath "$ARCHIVE_PATH" \
+    -destination "generic/platform=iOS" \
+    DEVELOPMENT_TEAM=6GBT58TX68 \
+    CODE_SIGN_STYLE=Automatic \
+    -allowProvisioningUpdates \
+    -quiet \
+    archive
+else
+  # With API key - full automatic signing
+  xcodebuild -workspace ios/MineGlance.xcworkspace \
+    -scheme MineGlance \
+    -configuration Release \
+    -archivePath "$ARCHIVE_PATH" \
+    -destination "generic/platform=iOS" \
+    DEVELOPMENT_TEAM=6GBT58TX68 \
+    CODE_SIGN_STYLE=Automatic \
+    -authenticationKeyPath "$API_KEY_PATH" \
+    -authenticationKeyID "$API_KEY_ID" \
+    -authenticationKeyIssuerID "$API_KEY_ISSUER" \
+    -allowProvisioningUpdates \
+    -quiet \
+    archive
+fi
 
 echo -e "${GREEN}Archive created!${NC}"
 
