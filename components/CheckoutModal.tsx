@@ -267,6 +267,21 @@ export default function CheckoutModal({ isOpen, onClose, plan, userEmail }: Chec
                   <p className="text-xs text-dark-text-dim mt-1">One-time payment, lifetime access</p>
                 </div>
 
+                {/* Coupon Code Banner */}
+                <div className="bg-primary/10 border border-primary/30 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-dark-text">
+                        Use code <span className="font-bold text-primary">MINE26</span> for 10% off!
+                      </p>
+                      <p className="text-xs text-dark-text-muted">Enter at checkout → Pay only $53</p>
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={loading || !email}

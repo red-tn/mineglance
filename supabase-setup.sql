@@ -425,13 +425,16 @@ CREATE POLICY "Allow service role full access to admin_users" ON admin_users FOR
 -- Admin sessions table
 CREATE TABLE IF NOT EXISTS admin_sessions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  admin_id UUID NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+  admin_id UUID REFERENCES admin_users(id) ON DELETE CASCADE,
   token TEXT UNIQUE NOT NULL,
   expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
   ip_address TEXT,
   user_agent TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Migration: Remove NOT NULL constraint if exists (for flexibility)
+ALTER TABLE admin_sessions ALTER COLUMN admin_id DROP NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_admin_sessions_token ON admin_sessions(token);
 CREATE INDEX IF NOT EXISTS idx_admin_sessions_admin_id ON admin_sessions(admin_id);
@@ -451,6 +454,9 @@ CREATE TABLE IF NOT EXISTS admin_audit_log (
   ip_address TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Migration: Add missing columns
+ALTER TABLE admin_audit_log ADD COLUMN IF NOT EXISTS target_email TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_admin ON admin_audit_log(admin_email);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_log_action ON admin_audit_log(action);

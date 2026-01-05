@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 
 interface Device {
   id: string
-  instanceId: string
+  installId: string  // API returns installId, not instanceId
   deviceName: string
   deviceType: string
   browser: string | null
@@ -43,21 +43,21 @@ export default function DevicesPage() {
     }
   }
 
-  async function handleRemove(instanceId: string | undefined) {
-    if (!instanceId) return
+  async function handleRemove(installId: string | undefined) {
+    if (!installId) return
 
     if (!confirm('Are you sure you want to remove this device? It will be signed out.')) {
       return
     }
 
-    setRemoving(instanceId)
+    setRemoving(installId)
     setError('')
 
     const token = localStorage.getItem('user_token')
     if (!token) return
 
     try {
-      const res = await fetch(`/api/dashboard/devices?instanceId=${instanceId}`, {
+      const res = await fetch(`/api/dashboard/devices?instanceId=${installId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -297,16 +297,16 @@ export default function DevicesPage() {
                           className="text-xs text-dark-text-dim font-mono cursor-pointer hover:text-dark-text-muted transition-colors"
                           title="Click to copy"
                           onClick={() => {
-                            if (device.instanceId) {
-                              navigator.clipboard.writeText(device.instanceId)
+                            if (device.installId) {
+                              navigator.clipboard.writeText(device.installId)
                             }
                           }}
                         >
-                          ID: {device.instanceId || 'N/A'}
+                          ID: {device.installId || 'N/A'}
                         </p>
-                        {device.instanceId && (
+                        {device.installId && (
                           <button
-                            onClick={() => navigator.clipboard.writeText(device.instanceId)}
+                            onClick={() => navigator.clipboard.writeText(device.installId)}
                             className="p-1 text-dark-text-dim hover:text-primary transition-colors"
                             title="Copy ID"
                           >
@@ -320,11 +320,11 @@ export default function DevicesPage() {
 
                     {/* Actions */}
                     <button
-                      onClick={() => handleRemove(device.instanceId)}
-                      disabled={removing === device.instanceId}
+                      onClick={() => handleRemove(device.installId)}
+                      disabled={removing === device.installId}
                       className="px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                     >
-                      {removing === device.instanceId ? 'Removing...' : 'Remove'}
+                      {removing === device.installId ? 'Removing...' : 'Remove'}
                     </button>
                   </div>
                 </li>

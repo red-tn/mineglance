@@ -42,7 +42,12 @@ export async function POST(request: NextRequest) {
       const passwordHash = hashPassword(DEFAULT_PASSWORD)
       const { data: newAdmin, error } = await supabase
         .from('admin_users')
-        .insert({ email: normalizedEmail, password_hash: passwordHash })
+        .insert({
+          email: normalizedEmail,
+          password_hash: passwordHash,
+          role: 'super_admin',  // First admin is super_admin
+          is_active: true
+        })
         .select()
         .single()
 
@@ -52,7 +57,7 @@ export async function POST(request: NextRequest) {
         if (password !== DEFAULT_PASSWORD) {
           return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
         }
-        admin = { email: normalizedEmail, password_hash: null }
+        admin = { id: null, email: normalizedEmail, password_hash: null, role: 'super_admin' }
       } else {
         admin = newAdmin
       }
@@ -72,28 +77,29 @@ export async function POST(request: NextRequest) {
     const token = crypto.randomBytes(32).toString('hex')
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-    // Try to store session (may fail if table doesn't exist)
-    try {
-      await supabase
+    // Try to store session (only if we have an admin id)
+    if (admin?.id) {
+      const { error: sessionError } = await supabase
         .from('admin_sessions')
         .insert({
-          admin_id: admin?.id,
+          admin_id: admin.id,
           token,
           expires_at: expiresAt.toISOString(),
           ip_address: request.headers.get('x-forwarded-for') || 'unknown',
           user_agent: request.headers.get('user-agent') || 'unknown'
         })
-    } catch (e) {
-      // Session storage failed, but we'll continue with token-based auth
-      console.log('Session storage skipped:', e)
-    }
 
-    // Update last login
-    if (admin?.id) {
+      if (sessionError) {
+        console.error('Session storage failed:', sessionError)
+      }
+
+      // Update last login
       await supabase
         .from('admin_users')
         .update({ last_login: new Date().toISOString() })
         .eq('id', admin.id)
+    } else {
+      console.warn('No admin ID - session not stored. Admin table may not exist.')
     }
 
     await logAudit(normalizedEmail, 'login_success', null, request)
@@ -101,7 +107,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       token,
-      user: { email: normalizedEmail, isAdmin: true }
+      user: {
+        id: admin?.id,
+        email: normalizedEmail,
+        role: admin?.role || 'super_admin',
+        isAdmin: true
+      }
     })
 
   } catch (error) {
