@@ -33,7 +33,7 @@ function getDeviceType(): string {
 // Get app version
 function getAppVersion(): string {
   // This will be set from app.json at build time
-  return '1.1.2';
+  return '1.1.8';
 }
 
 interface AuthStore extends AuthState {

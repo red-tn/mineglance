@@ -90,9 +90,7 @@ export default function DashboardScreen() {
       {/* Pro Badge */}
       {plan && plan !== 'free' && (
         <View style={styles.proBadge}>
-          <Text style={styles.proBadgeText}>
-            {plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
-          </Text>
+          <Text style={styles.proBadgeText}>PRO</Text>
         </View>
       )}
 

@@ -57,9 +57,7 @@ export default function SettingsScreen() {
               <View style={styles.row}>
                 <Text style={styles.label}>Plan</Text>
                 <View style={[styles.proBadge, { backgroundColor: '#4ade80' }]}>
-                  <Text style={[styles.proBadgeText, { color: '#14532d' }]}>
-                    {plan === 'bundle' ? 'PRO+' : 'PRO'}
-                  </Text>
+                  <Text style={[styles.proBadgeText, { color: '#14532d' }]}>PRO</Text>
                 </View>
               </View>
 
@@ -79,16 +77,6 @@ export default function SettingsScreen() {
                 </View>
               </View>
 
-              {/* Show upgrade option for PRO users (not bundle) */}
-              {plan === 'pro' && (
-                <TouchableOpacity
-                  style={[styles.upgradeButton, { marginTop: spacing.md }]}
-                  onPress={() => Linking.openURL(`${WEBSITE_URL}/#pricing`)}
-                >
-                  <Text style={styles.upgradeButtonText}>Upgrade to Pro+</Text>
-                </TouchableOpacity>
-              )}
-
               <TouchableOpacity style={styles.deactivateButton} onPress={handleDeactivate}>
                 <Text style={styles.deactivateText}>Deactivate License</Text>
               </TouchableOpacity>
@@ -97,13 +85,13 @@ export default function SettingsScreen() {
             <>
               <Text style={styles.freeText}>Free Plan</Text>
               <Text style={styles.freeDescription}>
-                Upgrade to Pro+ for unlimited wallets, email alerts, and mobile app access.
+                Upgrade to Pro for unlimited wallets, email alerts, and mobile app access.
               </Text>
               <TouchableOpacity
                 style={styles.upgradeButton}
                 onPress={() => Linking.openURL(`${WEBSITE_URL}/#pricing`)}
               >
-                <Text style={styles.upgradeButtonText}>Upgrade to Pro+</Text>
+                <Text style={styles.upgradeButtonText}>Upgrade to Pro - $59/year</Text>
               </TouchableOpacity>
             </>
           )}
@@ -112,8 +100,6 @@ export default function SettingsScreen() {
 
       {/* Sign Out Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
-
         <View style={styles.card}>
           <TouchableOpacity
             style={styles.signOutButton}

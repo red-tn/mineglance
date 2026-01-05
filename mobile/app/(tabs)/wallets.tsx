@@ -128,7 +128,7 @@ export default function WalletsScreen() {
               >
                 {isLocked && (
                   <View style={styles.lockedOverlay}>
-                    <Text style={styles.lockedText}>PRO+</Text>
+                    <Text style={styles.lockedText}>PRO</Text>
                   </View>
                 )}
 
@@ -190,10 +190,13 @@ export default function WalletsScreen() {
         <View style={styles.upgradeCard}>
           <Text style={styles.upgradeTitle}>Unlock All Wallets</Text>
           <Text style={styles.upgradeText}>
-            Free users can only view one wallet. Upgrade to Pro+ to monitor unlimited wallets.
+            Free users can only view one wallet. Upgrade to Pro to monitor unlimited wallets.
           </Text>
-          <TouchableOpacity style={styles.upgradeButton}>
-            <Text style={styles.upgradeButtonText}>Upgrade to Pro+</Text>
+          <TouchableOpacity
+            style={styles.upgradeButton}
+            onPress={() => Linking.openURL(`${WEBSITE_URL}/#pricing`)}
+          >
+            <Text style={styles.upgradeButtonText}>Upgrade to Pro - $59/year</Text>
           </TouchableOpacity>
         </View>
       )}

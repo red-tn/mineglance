@@ -206,17 +206,17 @@ BUILD_MAX_RETRIES = 80  # 40 minutes total (GitHub Actions iOS builds take ~20-3
 
 PENDING_RELEASES = [
     {
-        "version": "1.1.2",
+        "version": "1.1.8",
         "platform": "extension",
-        "release_notes": "Installation tracking, dashboard fixes: Anonymous instance registration for install analytics. Fixed user dashboard (removed Mobile App Coming Soon, fixed license display, removed device limits). Admin menu now matches user dashboard behavior.",
-        "zip_filename": "mineglance-extension-v1.1.2.zip",
+        "release_notes": "Version sync with mobile app. No functional changes from 1.1.3.",
+        "zip_filename": "mineglance-extension-v1.1.8.zip",
         "is_latest": True
     },
     {
-        "version": "1.1.2",
+        "version": "1.1.8",
         "platform": "mobile_ios",
-        "release_notes": "Installation tracking (build 35): App registers instance on first launch for analytics. Improved conversion tracking. Dashboard shows iOS-specific stats.",
-        "zip_filename": "mineglance-ios-v1.1.2.ipa",
+        "release_notes": "Pro/Free restrictions audit (build 40): Fixed all PRO+ references to PRO (single tier). Wallet locking confirmed working for free users. Fixed upgrade buttons with $59/year pricing. Removed duplicate Account section in settings. Updated version display.",
+        "zip_filename": "mineglance-ios-v1.1.8.ipa",
         "is_latest": True
     }
 ]
