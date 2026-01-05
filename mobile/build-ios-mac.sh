@@ -51,14 +51,15 @@ if ! command -v pod &> /dev/null; then
     exit 1
 fi
 
-# Check for Apple credentials
-if [ -z "$APPLE_ID" ] || [ -z "$APPLE_APP_PASSWORD" ]; then
-    echo -e "${YELLOW}WARNING: Apple credentials not set!${NC}"
-    echo "Set these environment variables:"
-    echo "  export APPLE_ID=\"your@email.com\""
-    echo "  export APPLE_APP_PASSWORD=\"xxxx-xxxx-xxxx-xxxx\""
-    echo ""
-    echo "Get app-specific password at: https://appleid.apple.com"
+# App Store Connect API Key configuration
+API_KEY_ID="U93Q4A3Q3M"
+API_KEY_ISSUER="44c8d35a-fab9-44f9-b6d9-c047f068afca"
+API_KEY_PATH="$HOME/AuthKey_U93Q4A3Q3M.p8"
+
+# Check for API key
+if [ ! -f "$API_KEY_PATH" ]; then
+    echo -e "${YELLOW}WARNING: API key not found at $API_KEY_PATH${NC}"
+    echo "Download from App Store Connect and place at: $API_KEY_PATH"
     echo ""
     read -p "Continue without auto-upload? (y/n) " -n 1 -r
     echo
@@ -85,7 +86,7 @@ npm install --silent
 # Step 2: Generate native iOS project
 echo ""
 echo -e "${YELLOW}[2/6]${NC} Generating native iOS project (expo prebuild)..."
-npx expo prebuild --platform ios --clean
+yes | npx expo prebuild --platform ios --clean
 
 # Step 3: Install CocoaPods
 echo ""
@@ -106,6 +107,9 @@ xcodebuild -workspace ios/MineGlance.xcworkspace \
   -destination "generic/platform=iOS" \
   DEVELOPMENT_TEAM=6GBT58TX68 \
   CODE_SIGN_STYLE=Automatic \
+  -authenticationKeyPath "$API_KEY_PATH" \
+  -authenticationKeyID "$API_KEY_ID" \
+  -authenticationKeyIssuerID "$API_KEY_ISSUER" \
   -allowProvisioningUpdates \
   -quiet \
   archive
@@ -166,8 +170,8 @@ else
     xcrun altool --upload-app \
       -f "$IPA_PATH" \
       --type ios \
-      --apple-id "$APPLE_ID" \
-      --password "$APPLE_APP_PASSWORD"
+      --apiKey "$API_KEY_ID" \
+      --apiIssuer "$API_KEY_ISSUER"
 
     echo -e "${GREEN}Uploaded to TestFlight!${NC}"
 fi
