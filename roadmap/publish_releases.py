@@ -210,17 +210,18 @@ BUILD_MAX_RETRIES = 80  # 40 minutes total (GitHub Actions iOS builds take ~20-3
 # }
 
 PENDING_RELEASES = [
-    {
-        "version": "1.1.8",
-        "platform": "extension",
-        "release_notes": "Version sync with mobile app. No functional changes from 1.1.3.",
-        "zip_filename": "mineglance-extension-v1.1.8.zip",
-        "is_latest": True
-    },
+    # Extension v1.1.8 already published
+    # {
+    #     "version": "1.1.8",
+    #     "platform": "extension",
+    #     "release_notes": "Version sync with mobile app. No functional changes from 1.1.3.",
+    #     "zip_filename": "mineglance-extension-v1.1.8.zip",
+    #     "is_latest": True
+    # },
     {
         "version": "1.1.8",
         "platform": "mobile_ios",
-        "release_notes": "Pro/Free restrictions audit (build 40): Fixed all PRO+ references to PRO (single tier). Wallet locking confirmed working for free users. Fixed upgrade buttons with $59/year pricing. Removed duplicate Account section in settings. Updated version display.",
+        "release_notes": "Pro/Free restrictions audit: Fixed all PRO+ references to PRO (single tier). Wallet locking confirmed working for free users. Fixed upgrade buttons with $59/year pricing. Removed duplicate Account section in settings.",
         "zip_filename": "mineglance-ios-v1.1.8.ipa",
         "is_latest": True
     }
@@ -806,7 +807,7 @@ def main():
         eas_platform = None
         already_in_db = check_existing_release(release['platform'], release['version'])
 
-        # For iOS builds, use GitHub Actions (free macOS runners)
+        # For iOS builds, use local Mac build (no EAS/GitHub Actions)
         if release['platform'] == 'mobile_ios':
             if already_in_db:
                 print(f"  [SKIP] iOS v{release['version']} already in database")
@@ -819,18 +820,26 @@ def main():
                 print(f"  [ERROR] Failed to increment build number, skipping iOS release")
                 continue
 
-            # Build iOS using GitHub Actions
-            if build_ios_with_github_actions(release['version'], release['release_notes']):
-                # GitHub Actions handles TestFlight submission
-                submitted += 1
-                print(f"  [OK] iOS v{release['version']} (build {new_build}) built and submitted to TestFlight!")
+            print(f"")
+            print(f"  ╔══════════════════════════════════════════════════════════╗")
+            print(f"  ║  iOS BUILD READY - Run on Mac                            ║")
+            print(f"  ╠══════════════════════════════════════════════════════════╣")
+            print(f"  ║  Version: {release['version']} (build {new_build})                            ║")
+            print(f"  ║                                                          ║")
+            print(f"  ║  On your Mac, run:                                       ║")
+            print(f"  ║    cd ~/mineglance/mobile                                ║")
+            print(f"  ║    git pull                                              ║")
+            print(f"  ║    ./build-ios-mac.sh                                    ║")
+            print(f"  ║                                                          ║")
+            print(f"  ║  Build takes ~10-15 minutes, then uploads to TestFlight  ║")
+            print(f"  ╚══════════════════════════════════════════════════════════╝")
+            print(f"")
 
-                # Publish to database (iOS doesn't have a download URL - it's on TestFlight)
-                release['zip_filename'] = f"mineglance-ios-v{release['version']}-build{new_build}.ipa"
-                if publish_release(release):
-                    published += 1
-            else:
-                print(f"  [ERROR] iOS build failed")
+            # Publish to database (iOS doesn't have a download URL - it's on TestFlight)
+            release['zip_filename'] = f"mineglance-ios-v{release['version']}-build{new_build}.ipa"
+            if publish_release(release):
+                published += 1
+                print(f"  [OK] iOS v{release['version']} published to database")
             continue
 
         # For Android builds, still use EAS (for now)
