@@ -167,7 +167,7 @@ export default function ProfileScreen() {
             style={[styles.upgradeButton, { backgroundColor: colors.primary }]}
             onPress={() => Linking.openURL('https://mineglance.com/#pricing')}
           >
-            <Text style={styles.upgradeButtonText}>Upgrade to Pro - $59</Text>
+            <Text style={styles.upgradeButtonText}>Upgrade to Pro - $59/year</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -227,7 +227,7 @@ export default function ProfileScreen() {
         <View style={styles.infoRow}>
           <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Plan</Text>
           <Text style={[styles.infoValue, { color: colors.text }]}>
-            {isPro() ? 'Pro (Lifetime)' : 'Free'}
+            {isPro() ? 'Pro (Annual)' : 'Free'}
           </Text>
         </View>
 

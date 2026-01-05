@@ -19,8 +19,8 @@ interface CheckoutModalProps {
 
 const planDetails = {
   name: 'MineGlance Pro',
-  description: 'Lifetime access to all Pro features + mobile app',
-  amount: 5900  // $59
+  description: 'Annual subscription to all Pro features + mobile app',
+  amount: 5900  // $59/year
 }
 
 type Step = 'email' | 'checkout'
@@ -264,7 +264,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, userEmail }: Chec
                       ${(planDetails.amount / 100).toFixed(0)}
                     </span>
                   </div>
-                  <p className="text-xs text-dark-text-dim mt-1">One-time payment, lifetime access</p>
+                  <p className="text-xs text-dark-text-dim mt-1">Annual subscription, cancel anytime</p>
                 </div>
 
                 {/* Coupon Code Banner */}
@@ -277,7 +277,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, userEmail }: Chec
                       <p className="text-sm text-dark-text">
                         Use code <span className="font-bold text-primary">MINE26</span> for 10% off!
                       </p>
-                      <p className="text-xs text-dark-text-muted">Enter at checkout → Pay only $53</p>
+                      <p className="text-xs text-dark-text-muted">Enter at checkout → Pay only $53/year</p>
                     </div>
                   </div>
                 </div>

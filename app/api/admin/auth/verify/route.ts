@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
           id: session.admin_users.id,
           email: session.admin_users.email,
           fullName: session.admin_users.full_name,
+          profilePhotoUrl: session.admin_users.profile_photo_url,
           role: session.admin_users.role,
           isAdmin: true
         }

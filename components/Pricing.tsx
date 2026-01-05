@@ -32,7 +32,7 @@ export default function Pricing() {
       id: 'pro',
       name: 'Pro',
       price: '$59',
-      period: 'lifetime',
+      period: '/year',
       description: 'Unlimited mining monitoring',
       features: [
         'Unlimited wallets',
@@ -57,10 +57,10 @@ export default function Pricing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
-              <span className="text-gradient">Simple Pricing, No Subscriptions</span>
+              <span className="text-gradient">Simple, Transparent Pricing</span>
             </h2>
             <p className="mt-3 sm:mt-4 text-base sm:text-lg text-dark-text-muted max-w-2xl mx-auto px-4">
-              Pay once, use forever. Like buying a tool, not renting one.
+              One low annual fee. Cancel anytime.
             </p>
           </div>
 

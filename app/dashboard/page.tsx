@@ -226,6 +226,65 @@ export default function DashboardOverview() {
         </div>
       </div>
 
+      {/* Pro Upgrade Offer - Show for Free users */}
+      {user?.plan === 'free' && (
+        <div className="glass-card rounded-xl p-6 border border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-semibold text-dark-text">Upgrade to Pro</h3>
+                <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs font-medium rounded">10% OFF</span>
+              </div>
+              <p className="text-dark-text-muted text-sm mb-3">
+                Unlock unlimited wallets, mobile app access, cloud sync, and email alerts.
+              </p>
+              <ul className="text-sm text-dark-text-muted space-y-1 mb-4">
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Unlimited wallets &amp; pools
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  iOS &amp; Android mobile app
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Cloud sync across all devices
+                </li>
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Email &amp; browser alerts
+                </li>
+              </ul>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setShowUpgradeModal(true)}
+                  className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors"
+                >
+                  Upgrade Now - $59/year
+                </button>
+                <p className="text-xs text-dark-text-muted">
+                  Use code <span className="font-bold text-primary">MINE26</span> for 10% off!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="glass-card rounded-xl p-6 border border-dark-border">
         <h2 className="text-lg font-semibold text-dark-text mb-4">Quick Actions</h2>

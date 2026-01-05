@@ -8,6 +8,8 @@ import Image from 'next/image'
 interface AdminUser {
   email: string
   isAdmin: boolean
+  profilePhotoUrl?: string | null
+  fullName?: string | null
 }
 
 export default function AdminLayout({
@@ -148,14 +150,22 @@ export default function AdminLayout({
 
         <div className="px-4 py-4 border-t border-dark-border">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
-              <span className="text-red-400 font-semibold text-sm">
-                {user.email?.[0]?.toUpperCase() || 'A'}
-              </span>
-            </div>
+            {user.profilePhotoUrl ? (
+              <img
+                src={user.profilePhotoUrl}
+                alt=""
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-primary font-semibold text-sm">
+                  {user.email?.[0]?.toUpperCase() || 'A'}
+                </span>
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-dark-text truncate">
-                Admin
+                {user.fullName || 'Admin'}
               </p>
               <p className="text-xs text-dark-text-dim truncate">{user.email}</p>
             </div>

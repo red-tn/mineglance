@@ -200,7 +200,7 @@ export default function OnboardingScreen() {
             style={styles.upgradeButton}
             onPress={() => Linking.openURL('https://www.mineglance.com/#pricing')}
           >
-            <Text style={styles.upgradeButtonText}>Get Pro - $59</Text>
+            <Text style={styles.upgradeButtonText}>Get Pro - $59/year</Text>
           </TouchableOpacity>
 
           <Text style={styles.upgradeNote}>

@@ -167,21 +167,17 @@ export default function Support() {
 
             <div className="glass-card rounded-xl p-6 border border-primary/30">
               <h3 className="font-semibold text-dark-text mb-4 flex items-center gap-2">
-                Pro+ Bundle Features
-                <span className="px-2 py-0.5 bg-primary text-white text-xs rounded-full">PRO+</span>
+                Mobile App Features
+                <span className="px-2 py-0.5 bg-primary text-white text-xs rounded-full">PRO</span>
               </h3>
               <ul className="space-y-3 text-dark-text-muted">
-                <li className="flex items-start gap-3">
-                  <span className="text-primary">&#10003;</span>
-                  <div><strong className="text-dark-text">Everything in Pro</strong></div>
-                </li>
                 <li className="flex items-start gap-3">
                   <span className="text-primary">&#10003;</span>
                   <div><strong className="text-dark-text">iOS Mobile App</strong> &mdash; Check mining stats on the go (Android coming soon)</div>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-primary">&#10003;</span>
-                  <div><strong className="text-dark-text">QR Code Sync</strong> &mdash; Instantly transfer settings to mobile</div>
+                  <div><strong className="text-dark-text">Cloud Sync</strong> &mdash; Wallets sync automatically across all devices</div>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-primary">&#10003;</span>
@@ -204,8 +200,7 @@ export default function Support() {
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-dark-text">Feature</th>
                   <th className="px-6 py-4 text-center text-sm font-semibold text-dark-text">Free</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-dark-text">Pro ($29)</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-dark-text">Pro+ ($59)</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-dark-text">Pro ($59/year)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-dark-border">
@@ -213,11 +208,9 @@ export default function Support() {
                   <td className="px-6 py-3 text-sm text-dark-text">Wallets</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-muted">1</td>
                   <td className="px-6 py-3 text-center text-sm text-primary font-medium">Unlimited</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary font-medium">Unlimited</td>
                 </tr>
                 <tr className="bg-dark-card-hover/50">
                   <td className="px-6 py-3 text-sm text-dark-text">Auto-Refresh</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
@@ -225,11 +218,9 @@ export default function Support() {
                   <td className="px-6 py-3 text-sm text-dark-text">Worker Status</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr className="bg-dark-card-hover/50">
                   <td className="px-6 py-3 text-sm text-dark-text">Profit Calculation</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
@@ -237,43 +228,36 @@ export default function Support() {
                   <td className="px-6 py-3 text-sm text-dark-text">Browser Alerts</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr className="bg-dark-card-hover/50">
                   <td className="px-6 py-3 text-sm text-dark-text">Email Alerts</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-dark-text">User Dashboard</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr className="bg-dark-card-hover/50">
                   <td className="px-6 py-3 text-sm text-dark-text">Mobile App (iOS)</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr>
-                  <td className="px-6 py-3 text-sm text-dark-text">Push Notifications</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
+                  <td className="px-6 py-3 text-sm text-dark-text">Cloud Sync</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr className="bg-dark-card-hover/50">
-                  <td className="px-6 py-3 text-sm text-dark-text">Device Activations</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-muted">&mdash;</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-muted">3</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-muted">3</td>
+                  <td className="px-6 py-3 text-sm text-dark-text">Push Notifications</td>
+                  <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
+                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-dark-text">License Type</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-muted">&mdash;</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-muted">Lifetime</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-muted">Lifetime</td>
+                  <td className="px-6 py-3 text-center text-sm text-dark-text-muted">Annual</td>
                 </tr>
               </tbody>
             </table>
@@ -342,7 +326,7 @@ export default function Support() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-gradient mb-6">
             Mobile App
-            <span className="ml-2 px-2 py-0.5 bg-primary text-white text-xs rounded-full align-middle">PRO+</span>
+            <span className="ml-2 px-2 py-0.5 bg-primary text-white text-xs rounded-full align-middle">PRO</span>
           </h2>
 
           <div className="space-y-6">
@@ -350,17 +334,16 @@ export default function Support() {
               <h3 className="font-semibold text-dark-text mb-4">Setting Up the Mobile App</h3>
               <ol className="list-decimal pl-6 space-y-3 text-dark-text-muted">
                 <li>Download &quot;MineGlance&quot; from the App Store (iOS)</li>
-                <li>In the Chrome extension, go to <strong className="text-dark-text">Settings &rarr; Display QR Code</strong></li>
-                <li>Open the mobile app and tap <strong className="text-dark-text">Scan QR Code</strong></li>
-                <li>Point your camera at the QR code on screen</li>
-                <li>All your wallets and settings will sync instantly</li>
+                <li>Open the app and sign in with your email</li>
+                <li>Enter your license key when prompted</li>
+                <li>All your wallets and settings will sync automatically via cloud</li>
               </ol>
             </div>
 
             <div className="glass-card rounded-xl p-6 border border-dark-border">
               <h3 className="font-semibold text-dark-text mb-4">Mobile App Features</h3>
               <ul className="space-y-2 text-dark-text-muted">
-                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> All wallets synced from extension</li>
+                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Cloud sync across all devices</li>
                 <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Real-time hashrate and worker status</li>
                 <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Net profit calculation with your electricity settings</li>
                 <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Pull-to-refresh for latest stats</li>
@@ -467,10 +450,10 @@ export default function Support() {
             <div className="glass-card rounded-xl p-6 border border-dark-border">
               <h3 className="font-semibold text-dark-text mb-2">Mobile app not syncing</h3>
               <ul className="list-disc pl-6 space-y-2 text-dark-text-muted">
-                <li>Mobile app requires Pro+ Bundle license</li>
-                <li>Re-scan the QR code from extension settings</li>
-                <li>Make sure the extension is up to date</li>
-                <li>Check that camera permissions are enabled for the app</li>
+                <li>Mobile app requires Pro license ($59/year)</li>
+                <li>Sign out and sign back in to refresh your session</li>
+                <li>Make sure you&apos;re using the same email as your Pro license</li>
+                <li>Check your internet connection</li>
               </ul>
             </div>
           </div>
