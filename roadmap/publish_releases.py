@@ -278,9 +278,9 @@ def increment_ios_build_number():
 
         # Git commit and push
         repo_dir = os.path.join(os.path.dirname(__file__), '..')
-        subprocess.run(['git', 'add', 'mobile/app.json'], cwd=repo_dir, capture_output=True)
-        subprocess.run(['git', 'commit', '-m', f'Bump iOS build number to {new_build}'], cwd=repo_dir, capture_output=True)
-        subprocess.run(['git', 'push'], cwd=repo_dir, capture_output=True)
+        subprocess.run(['git', 'add', 'mobile/app.json'], cwd=repo_dir, capture_output=True, timeout=10)
+        subprocess.run(['git', 'commit', '-m', f'Bump iOS build number to {new_build}'], cwd=repo_dir, capture_output=True, timeout=10)
+        subprocess.run(['git', 'push'], cwd=repo_dir, capture_output=True, timeout=60)
         print(f"  [OK] Committed and pushed build number change")
 
         return new_build
@@ -644,15 +644,19 @@ def check_unpushed_commits():
     """Check if there are commits that haven't been pushed"""
     repo_dir = os.path.join(os.path.dirname(__file__), '..')
     try:
-        # First fetch to make sure we have latest remote state
-        subprocess.run(['git', 'fetch'], cwd=repo_dir, capture_output=True)
+        # First fetch to make sure we have latest remote state (with timeout)
+        try:
+            subprocess.run(['git', 'fetch'], cwd=repo_dir, capture_output=True, timeout=10)
+        except subprocess.TimeoutExpired:
+            print("  [WARN] Git fetch timed out, skipping remote check")
 
         # Check for unpushed commits
         result = subprocess.run(
             ['git', 'log', 'origin/main..HEAD', '--oneline'],
             cwd=repo_dir,
             capture_output=True,
-            text=True
+            text=True,
+            timeout=10
         )
         commits = result.stdout.strip().split('\n') if result.stdout.strip() else []
         return commits
@@ -696,9 +700,9 @@ def sync_website_to_git():
         print("\n  [GIT] Staging and committing changes...")
         try:
             # Stage only tracked files (avoid untracked junk folders)
-            subprocess.run(['git', 'add', '-u'], cwd=repo_dir, capture_output=True, check=True)
+            subprocess.run(['git', 'add', '-u'], cwd=repo_dir, capture_output=True, check=True, timeout=10)
             # Also add .gitignore if modified
-            subprocess.run(['git', 'add', '.gitignore'], cwd=repo_dir, capture_output=True)
+            subprocess.run(['git', 'add', '.gitignore'], cwd=repo_dir, capture_output=True, timeout=10)
 
             # Create commit message
             commit_msg = f"""Website updates - auto-commit
@@ -713,7 +717,8 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"""
                 ['git', 'commit', '-m', commit_msg],
                 cwd=repo_dir,
                 capture_output=True,
-                text=True
+                text=True,
+                timeout=30
             )
 
             if result.returncode == 0:
@@ -731,7 +736,8 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"""
             ['git', 'push'],
             cwd=repo_dir,
             capture_output=True,
-            text=True
+            text=True,
+            timeout=120  # 2 minute timeout for push
         )
 
         if result.returncode == 0:
@@ -740,6 +746,9 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"""
         else:
             print(f"  [ERROR] Push failed: {result.stderr}")
             return False
+    except subprocess.TimeoutExpired:
+        print("  [ERROR] Git push timed out after 2 minutes")
+        return False
     except Exception as e:
         print(f"  [ERROR] Failed to push: {e}")
         return False
