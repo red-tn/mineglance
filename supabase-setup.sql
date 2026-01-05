@@ -399,6 +399,21 @@ CREATE TABLE IF NOT EXISTS admin_users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Migration: Add columns if table already exists
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS full_name TEXT;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS profile_photo_url TEXT;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'admin';
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS invited_by UUID;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS invite_token TEXT;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS invite_expires_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP WITH TIME ZONE;
+ALTER TABLE admin_users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+-- Update existing admins to super_admin if they don't have a role
+UPDATE admin_users SET role = 'super_admin' WHERE role IS NULL OR role = '';
+
 CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
 CREATE INDEX IF NOT EXISTS idx_admin_users_invite_token ON admin_users(invite_token);
 CREATE INDEX IF NOT EXISTS idx_admin_users_is_active ON admin_users(is_active);
