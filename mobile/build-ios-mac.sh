@@ -103,6 +103,9 @@ xcodebuild -workspace ios/MineGlance.xcworkspace \
   -scheme MineGlance \
   -configuration Release \
   -archivePath "$ARCHIVE_PATH" \
+  -destination "generic/platform=iOS" \
+  DEVELOPMENT_TEAM=6GBT58TX68 \
+  CODE_SIGN_STYLE=Automatic \
   -allowProvisioningUpdates \
   -quiet \
   archive
