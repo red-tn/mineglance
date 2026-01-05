@@ -154,12 +154,25 @@ cat > ./build/ExportOptions.plist << EOF
 </plist>
 EOF
 
-xcodebuild -exportArchive \
-  -archivePath "$ARCHIVE_PATH" \
-  -exportPath "./build" \
-  -exportOptionsPlist ./build/ExportOptions.plist \
-  -allowProvisioningUpdates \
-  -quiet
+# Export with or without API key authentication
+if [ "$SKIP_UPLOAD" = true ]; then
+  xcodebuild -exportArchive \
+    -archivePath "$ARCHIVE_PATH" \
+    -exportPath "./build" \
+    -exportOptionsPlist ./build/ExportOptions.plist \
+    -allowProvisioningUpdates \
+    -quiet
+else
+  xcodebuild -exportArchive \
+    -archivePath "$ARCHIVE_PATH" \
+    -exportPath "./build" \
+    -exportOptionsPlist ./build/ExportOptions.plist \
+    -authenticationKeyPath "$API_KEY_PATH" \
+    -authenticationKeyID "$API_KEY_ID" \
+    -authenticationKeyIssuerID "$API_KEY_ISSUER" \
+    -allowProvisioningUpdates \
+    -quiet
+fi
 
 echo -e "${GREEN}IPA exported!${NC}"
 
