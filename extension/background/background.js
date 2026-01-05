@@ -37,8 +37,8 @@ function generateInstallId() {
   return 'mg_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
-// Track extension install/usage
-async function trackInstall() {
+// Register extension instance (anonymous or with user association)
+async function registerInstance() {
   const { installId } = await chrome.storage.local.get(['installId']);
 
   let id = installId;
@@ -48,17 +48,21 @@ async function trackInstall() {
   }
 
   try {
-    await fetch(`${API_BASE}/track-install`, {
+    // Register anonymous instance for install tracking
+    await fetch(`${API_BASE}/instances/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        installId: id,
-        browser: 'chrome',
+        instanceId: id,
+        deviceType: 'extension',
+        browser: 'Chrome',
         version: chrome.runtime.getManifest().version
       })
     });
+    console.log('Instance registered:', id);
   } catch (e) {
     // Silent fail - tracking is non-critical
+    console.log('Instance registration skipped:', e.message);
   }
 }
 
@@ -123,16 +127,16 @@ chrome.runtime.onInstalled.addListener(() => {
     }
   });
 
-  // Track this install
-  trackInstall();
+  // Register this instance (anonymous until user signs in)
+  registerInstance();
 
   // Set up auto-refresh for all users (after slight delay to ensure storage is ready)
   setTimeout(() => setupAutoRefresh(), 1000);
 });
 
-// Also track on startup (for returning users)
+// Also register instance on startup (for returning users)
 chrome.runtime.onStartup.addListener(() => {
-  trackInstall();
+  registerInstance();
   // Verify license is still valid
   verifyLicenseOnStartup();
   // Set up auto-refresh for all users

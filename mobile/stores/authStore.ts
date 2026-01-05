@@ -30,6 +30,12 @@ function getDeviceType(): string {
   return Platform.OS === 'ios' ? 'mobile_ios' : 'mobile_android';
 }
 
+// Get app version
+function getAppVersion(): string {
+  // This will be set from app.json at build time
+  return '1.1.2';
+}
+
 interface AuthStore extends AuthState {
   email: string | null;
   authToken: string | null;
@@ -42,6 +48,7 @@ interface AuthStore extends AuthState {
   setInstanceId: (id: string) => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => Promise<void>;
   loadFromStorage: () => Promise<void>;
+  registerAnonymousInstance: () => Promise<void>;
   verifyAuth: () => Promise<boolean>;
   clearAuth: () => Promise<void>;
   isPro: () => boolean;
@@ -129,6 +136,40 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch (error) {
       console.error('Failed to load auth from storage:', error);
       set({ isLoading: false });
+    }
+  },
+
+  // Register instance anonymously on first launch (for tracking installs before login)
+  registerAnonymousInstance: async () => {
+    try {
+      const instanceId = await getOrCreateInstanceId();
+      const deviceType = getDeviceType();
+      const deviceName = getDeviceName();
+      const version = getAppVersion();
+
+      // Call the anonymous register endpoint
+      const response = await fetch(`${API_BASE}/instances/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          instanceId,
+          deviceType,
+          deviceName,
+          version,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Instance registered:', data.isNew ? 'new install' : 'existing');
+      }
+
+      // Store instanceId locally
+      await SecureStore.setItemAsync('instanceId', instanceId);
+      set({ instanceId });
+    } catch (error) {
+      console.error('Failed to register anonymous instance:', error);
+      // Non-blocking - don't prevent app from working
     }
   },
 

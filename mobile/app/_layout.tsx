@@ -23,6 +23,7 @@ export default function RootLayout() {
   // Load stores from storage on app start
   const loadAuth = useAuthStore(state => state.loadFromStorage);
   const verifyAuth = useAuthStore(state => state.verifyAuth);
+  const registerAnonymousInstance = useAuthStore(state => state.registerAnonymousInstance);
   const loadSettings = useSettingsStore(state => state.loadFromStorage);
   const loadWallets = useWalletStore(state => state.loadFromStorage);
   const liteMode = useSettingsStore(state => state.liteMode);
@@ -37,6 +38,10 @@ export default function RootLayout() {
           loadSettings(),
           loadWallets(),
         ]);
+
+        // Register this instance anonymously (for install tracking)
+        // This is non-blocking and runs in background
+        registerAnonymousInstance();
 
         // Verify auth is still valid with server (non-blocking)
         verifyAuth();

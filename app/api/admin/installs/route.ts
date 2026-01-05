@@ -39,6 +39,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const period = searchParams.get('period') || '30'
     const isPro = searchParams.get('isPro')
+    const platform = searchParams.get('platform') // 'extension', 'mobile_ios', 'mobile_android', 'all'
+    const search = searchParams.get('search') || ''
+    const sortBy = searchParams.get('sortBy') || 'last_seen'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
 
     const offset = (page - 1) * limit
     const now = new Date()
@@ -63,7 +67,7 @@ export async function GET(request: NextRequest) {
       plan: inst.user?.plan || 'free',
       license_key: inst.user?.license_key,
       isPro: inst.user?.plan === 'pro',
-      device_type: inst.device_type,
+      device_type: inst.device_type || 'extension',
       device_name: inst.device_name,
       browser: inst.browser || inst.device_type,
       version: inst.version,
@@ -71,15 +75,90 @@ export async function GET(request: NextRequest) {
       last_seen: inst.last_seen
     }))
 
-    // Filter by pro status if requested
-    let filteredInstalls = allInstalls
-    if (isPro === 'true') {
-      filteredInstalls = allInstalls.filter(i => i.isPro)
-    } else if (isPro === 'false') {
-      filteredInstalls = allInstalls.filter(i => !i.isPro)
+    // Platform-specific counts
+    const extensionInstalls = allInstalls.filter(i => i.device_type === 'extension')
+    const iosInstalls = allInstalls.filter(i => i.device_type === 'mobile_ios')
+    const androidInstalls = allInstalls.filter(i => i.device_type === 'mobile_android')
+
+    // Calculate platform stats
+    const platformStats = {
+      total: allInstalls.length,
+      extension: {
+        total: extensionInstalls.length,
+        pro: extensionInstalls.filter(i => i.isPro).length,
+        free: extensionInstalls.filter(i => !i.isPro).length,
+        active: extensionInstalls.filter(i => new Date(i.last_seen) >= sevenDaysAgo).length
+      },
+      ios: {
+        total: iosInstalls.length,
+        pro: iosInstalls.filter(i => i.isPro).length,
+        free: iosInstalls.filter(i => !i.isPro).length,
+        active: iosInstalls.filter(i => new Date(i.last_seen) >= sevenDaysAgo).length
+      },
+      android: {
+        total: androidInstalls.length,
+        pro: androidInstalls.filter(i => i.isPro).length,
+        free: androidInstalls.filter(i => !i.isPro).length,
+        active: androidInstalls.filter(i => new Date(i.last_seen) >= sevenDaysAgo).length
+      }
     }
 
-    // Calculate totals
+    // Filter by platform
+    let filteredInstalls = allInstalls
+    if (platform && platform !== 'all') {
+      filteredInstalls = allInstalls.filter(i => i.device_type === platform)
+    }
+
+    // Filter by pro status
+    if (isPro === 'true') {
+      filteredInstalls = filteredInstalls.filter(i => i.isPro)
+    } else if (isPro === 'false') {
+      filteredInstalls = filteredInstalls.filter(i => !i.isPro)
+    }
+
+    // Filter by search (instance_id or email)
+    if (search) {
+      const searchLower = search.toLowerCase()
+      filteredInstalls = filteredInstalls.filter(i =>
+        (i.instance_id && i.instance_id.toLowerCase().includes(searchLower)) ||
+        (i.email && i.email.toLowerCase().includes(searchLower))
+      )
+    }
+
+    // Sort
+    filteredInstalls.sort((a, b) => {
+      let aVal: any, bVal: any
+      switch (sortBy) {
+        case 'instance_id':
+          aVal = a.instance_id || ''
+          bVal = b.instance_id || ''
+          break
+        case 'email':
+          aVal = a.email || ''
+          bVal = b.email || ''
+          break
+        case 'device_type':
+          aVal = a.device_type || ''
+          bVal = b.device_type || ''
+          break
+        case 'created_at':
+          aVal = new Date(a.created_at).getTime()
+          bVal = new Date(b.created_at).getTime()
+          break
+        case 'last_seen':
+        default:
+          aVal = new Date(a.last_seen).getTime()
+          bVal = new Date(b.last_seen).getTime()
+          break
+      }
+      if (sortOrder === 'asc') {
+        return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+      } else {
+        return aVal > bVal ? -1 : aVal < bVal ? 1 : 0
+      }
+    })
+
+    // Calculate totals from filtered set
     const total = allInstalls.length
     const proUsers = allInstalls.filter(i => i.isPro).length
     const freeUsers = total - proUsers
@@ -91,26 +170,40 @@ export async function GET(request: NextRequest) {
     // Paginate
     const paginatedInstalls = filteredInstalls.slice(offset, offset + limit)
 
-    // Generate chart data (new installs per day)
-    const chartData: Array<{ date: string; installs: number; active: number }> = []
+    // Generate chart data per platform (new installs per day)
+    const chartData: Array<{
+      date: string
+      extension: number
+      ios: number
+      android: number
+      total: number
+    }> = []
+
     for (let i = periodDays - 1; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
       const dateStr = date.toISOString().split('T')[0]
 
-      const dayInstalls = allInstalls.filter(inst => {
+      const dayExtension = extensionInstalls.filter(inst => {
         const instDate = new Date(inst.created_at).toISOString().split('T')[0]
         return instDate === dateStr
       }).length
 
-      const dayActive = allInstalls.filter(inst => {
-        const lastSeenDate = new Date(inst.last_seen).toISOString().split('T')[0]
-        return lastSeenDate === dateStr
+      const dayIos = iosInstalls.filter(inst => {
+        const instDate = new Date(inst.created_at).toISOString().split('T')[0]
+        return instDate === dateStr
+      }).length
+
+      const dayAndroid = androidInstalls.filter(inst => {
+        const instDate = new Date(inst.created_at).toISOString().split('T')[0]
+        return instDate === dateStr
       }).length
 
       chartData.push({
         date: dateStr,
-        installs: dayInstalls,
-        active: dayActive
+        extension: dayExtension,
+        ios: dayIos,
+        android: dayAndroid,
+        total: dayExtension + dayIos + dayAndroid
       })
     }
 
@@ -123,8 +216,10 @@ export async function GET(request: NextRequest) {
       instance_id: i.instance_id || i.id,
       email: i.email,
       license_key: i.license_key,
+      device_type: i.device_type,
+      device_name: i.device_name,
       browser: i.browser || i.device_type || 'Unknown',
-      extension_version: i.version || '-',
+      version: i.version || '-',
       first_seen: i.created_at,
       last_seen: i.last_seen,
       isPro: i.isPro,
@@ -144,6 +239,7 @@ export async function GET(request: NextRequest) {
         activeUsers,
         conversionRate
       },
+      platformStats,
       chartData
     })
 
@@ -156,6 +252,12 @@ export async function GET(request: NextRequest) {
       limit: 50,
       totalPages: 0,
       summary: { total: 0, proUsers: 0, freeUsers: 0, activeUsers: 0, conversionRate: '0' },
+      platformStats: {
+        total: 0,
+        extension: { total: 0, pro: 0, free: 0, active: 0 },
+        ios: { total: 0, pro: 0, free: 0, active: 0 },
+        android: { total: 0, pro: 0, free: 0, active: 0 }
+      },
       chartData: []
     })
   }

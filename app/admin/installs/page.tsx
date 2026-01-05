@@ -5,14 +5,30 @@ import { useState, useEffect, useCallback } from 'react'
 interface Installation {
   id: string
   instance_id: string
+  email?: string
   license_key?: string
+  device_type: string
+  device_name?: string
   browser?: string
-  os?: string
-  extension_version?: string
+  version?: string
   first_seen: string
   last_seen: string
   isPro?: boolean
-  isOrphan?: boolean
+  plan?: string
+}
+
+interface PlatformStat {
+  total: number
+  pro: number
+  free: number
+  active: number
+}
+
+interface PlatformStats {
+  total: number
+  extension: PlatformStat
+  ios: PlatformStat
+  android: PlatformStat
 }
 
 interface InstallSummary {
@@ -25,13 +41,16 @@ interface InstallSummary {
 
 interface ChartData {
   date: string
-  installs: number
-  active: number
+  extension: number
+  ios: number
+  android: number
+  total: number
 }
 
 export default function InstallsPage() {
   const [installations, setInstallations] = useState<Installation[]>([])
   const [summary, setSummary] = useState<InstallSummary | null>(null)
+  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null)
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -39,6 +58,10 @@ export default function InstallsPage() {
   const [total, setTotal] = useState(0)
   const [period, setPeriod] = useState('30')
   const [isPro, setIsPro] = useState<string>('all')
+  const [platform, setPlatform] = useState<string>('all')
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState('last_seen')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const fetchInstalls = useCallback(async () => {
     setLoading(true)
@@ -47,12 +70,14 @@ export default function InstallsPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '50',
-        period
+        period,
+        sortBy,
+        sortOrder
       })
 
-      if (isPro !== 'all') {
-        params.set('isPro', isPro)
-      }
+      if (isPro !== 'all') params.set('isPro', isPro)
+      if (platform !== 'all') params.set('platform', platform)
+      if (search) params.set('search', search)
 
       const response = await fetch(`/api/admin/installs?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -61,6 +86,7 @@ export default function InstallsPage() {
       const data = await response.json()
       setInstallations(data.installations || [])
       setSummary(data.summary)
+      setPlatformStats(data.platformStats)
       setChartData(data.chartData || [])
       setTotalPages(data.totalPages || 1)
       setTotal(data.total || 0)
@@ -69,7 +95,7 @@ export default function InstallsPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, period, isPro])
+  }, [page, period, isPro, platform, search, sortBy, sortOrder])
 
   useEffect(() => {
     fetchInstalls()
@@ -102,16 +128,61 @@ export default function InstallsPage() {
     return new Date(lastSeen) >= sevenDaysAgo
   }
 
-  const maxInstalls = Math.max(...chartData.map(d => d.installs), 1)
+  const getPlatformIcon = (deviceType: string) => {
+    switch (deviceType) {
+      case 'mobile_ios': return '📱'
+      case 'mobile_android': return '🤖'
+      case 'extension': return '🧩'
+      default: return '❓'
+    }
+  }
+
+  const getPlatformLabel = (deviceType: string) => {
+    switch (deviceType) {
+      case 'mobile_ios': return 'iOS'
+      case 'mobile_android': return 'Android'
+      case 'extension': return 'Extension'
+      default: return 'Unknown'
+    }
+  }
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(field)
+      setSortOrder('desc')
+    }
+    setPage(1)
+  }
+
+  const maxInstalls = Math.max(...chartData.map(d => d.total), 1)
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-dark-text">Installations</h1>
-          <p className="text-dark-text-muted">Track extension installations and activity</p>
+          <p className="text-dark-text-muted">Track extension and app installations across platforms</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <input
+            type="text"
+            placeholder="Search instance/email..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            className="px-4 py-2 bg-dark-card border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary w-48"
+          />
+          <select
+            value={platform}
+            onChange={(e) => { setPlatform(e.target.value); setPage(1) }}
+            className="px-4 py-2 bg-dark-card border border-dark-border text-dark-text rounded-lg focus:ring-2 focus:ring-primary"
+          >
+            <option value="all">All Platforms</option>
+            <option value="extension">Extension</option>
+            <option value="mobile_ios">iOS</option>
+            <option value="mobile_android">Android</option>
+          </select>
           <select
             value={isPro}
             onChange={(e) => { setIsPro(e.target.value); setPage(1) }}
@@ -133,25 +204,59 @@ export default function InstallsPage() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        <div className="glass-card rounded-xl border border-dark-border p-6">
+      {/* Platform Cards - Top Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="glass-card rounded-xl border border-dark-border p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-dark-text-muted text-sm">Total Installs</span>
+            <span className="text-dark-text-muted text-sm">Total</span>
             <span className="text-blue-400 text-xl">📦</span>
           </div>
-          <p className="text-3xl font-bold text-dark-text">{summary?.total || 0}</p>
+          <p className="text-3xl font-bold text-dark-text">{platformStats?.total || 0}</p>
         </div>
 
-        <div className="glass-card rounded-xl border border-dark-border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-dark-text-muted text-sm">Extension</span>
+            <span className="text-purple-400 text-xl">🧩</span>
+          </div>
+          <p className="text-3xl font-bold text-dark-text">{platformStats?.extension.total || 0}</p>
+          <p className="text-xs text-dark-text-dim mt-1">
+            {platformStats?.extension.active || 0} active
+          </p>
+        </div>
+
+        <div className="glass-card rounded-xl border border-dark-border p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-dark-text-muted text-sm">iOS</span>
+            <span className="text-blue-400 text-xl">📱</span>
+          </div>
+          <p className="text-3xl font-bold text-dark-text">{platformStats?.ios.total || 0}</p>
+          <p className="text-xs text-dark-text-dim mt-1">
+            {platformStats?.ios.active || 0} active
+          </p>
+        </div>
+
+        <div className="glass-card rounded-xl border border-dark-border p-5 opacity-60">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-dark-text-muted text-sm">Android</span>
+            <span className="text-green-400 text-xl">🤖</span>
+          </div>
+          <p className="text-3xl font-bold text-dark-text">{platformStats?.android.total || 0}</p>
+          <p className="text-xs text-amber-400 mt-1">Coming Soon</p>
+        </div>
+      </div>
+
+      {/* Stats Cards - Second Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="glass-card rounded-xl border border-dark-border p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-dark-text-muted text-sm">Pro Users</span>
-            <span className="text-purple-400 text-xl">⭐</span>
+            <span className="text-primary text-xl">⭐</span>
           </div>
           <p className="text-3xl font-bold text-dark-text">{summary?.proUsers || 0}</p>
         </div>
 
-        <div className="glass-card rounded-xl border border-dark-border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-dark-text-muted text-sm">Free Users</span>
             <span className="text-dark-text-muted text-xl">👤</span>
@@ -159,7 +264,7 @@ export default function InstallsPage() {
           <p className="text-3xl font-bold text-dark-text">{summary?.freeUsers || 0}</p>
         </div>
 
-        <div className="glass-card rounded-xl border border-dark-border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-dark-text-muted text-sm">Active (7d)</span>
             <span className="text-primary text-xl">✓</span>
@@ -167,7 +272,7 @@ export default function InstallsPage() {
           <p className="text-3xl font-bold text-dark-text">{summary?.activeUsers || 0}</p>
         </div>
 
-        <div className="glass-card rounded-xl border border-dark-border p-6">
+        <div className="glass-card rounded-xl border border-dark-border p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-dark-text-muted text-sm">Conversion</span>
             <span className="text-amber-400 text-xl">📈</span>
@@ -176,44 +281,82 @@ export default function InstallsPage() {
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="glass-card rounded-xl border border-dark-border p-6 mb-8">
-        <h3 className="text-lg font-semibold text-dark-text mb-4">Daily New Installs</h3>
-        <div className="h-32">
-          {chartData.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-dark-text-dim">
-              No data available
-            </div>
-          ) : (
-            <div className="flex items-end h-full gap-1">
-              {chartData.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex-1 group relative"
-                  title={`${item.date}: ${item.installs} new installs, ${item.active} active`}
-                >
-                  <div
-                    className="bg-primary/50 hover:bg-primary rounded-t transition-colors"
-                    style={{
-                      height: `${Math.max((item.installs / maxInstalls) * 100, 2)}%`,
-                      minHeight: item.installs > 0 ? '8px' : '2px'
-                    }}
-                  />
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                    <div className="bg-dark-card border border-dark-border text-dark-text text-xs rounded px-2 py-1 whitespace-nowrap">
-                      {new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      <br />
-                      New: {item.installs} | Active: {item.active}
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Extension Chart */}
+        <div className="glass-card rounded-xl border border-dark-border p-6">
+          <h3 className="text-lg font-semibold text-dark-text mb-4 flex items-center gap-2">
+            <span>🧩</span> Extension Installs
+          </h3>
+          <div className="h-24">
+            {chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-dark-text-dim">No data</div>
+            ) : (
+              <div className="flex items-end h-full gap-0.5">
+                {chartData.map((item, index) => {
+                  const maxExt = Math.max(...chartData.map(d => d.extension), 1)
+                  return (
+                    <div
+                      key={index}
+                      className="flex-1 group relative"
+                      title={`${item.date}: ${item.extension}`}
+                    >
+                      <div
+                        className="bg-purple-500/50 hover:bg-purple-500 rounded-t transition-colors"
+                        style={{
+                          height: `${Math.max((item.extension / maxExt) * 100, 2)}%`,
+                          minHeight: item.extension > 0 ? '4px' : '2px'
+                        }}
+                      />
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex justify-between text-xs text-dark-text-dim mt-2">
-          <span>{chartData[0]?.date ? new Date(chartData[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
-          <span>{chartData[chartData.length - 1]?.date ? new Date(chartData[chartData.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
+
+        {/* iOS Chart */}
+        <div className="glass-card rounded-xl border border-dark-border p-6">
+          <h3 className="text-lg font-semibold text-dark-text mb-4 flex items-center gap-2">
+            <span>📱</span> iOS Installs
+          </h3>
+          <div className="h-24">
+            {chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-dark-text-dim">No data</div>
+            ) : (
+              <div className="flex items-end h-full gap-0.5">
+                {chartData.map((item, index) => {
+                  const maxIos = Math.max(...chartData.map(d => d.ios), 1)
+                  return (
+                    <div
+                      key={index}
+                      className="flex-1 group relative"
+                      title={`${item.date}: ${item.ios}`}
+                    >
+                      <div
+                        className="bg-blue-500/50 hover:bg-blue-500 rounded-t transition-colors"
+                        style={{
+                          height: `${Math.max((item.ios / maxIos) * 100, 2)}%`,
+                          minHeight: item.ios > 0 ? '4px' : '2px'
+                        }}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Android Chart (Placeholder) */}
+        <div className="glass-card rounded-xl border border-dark-border p-6 opacity-60">
+          <h3 className="text-lg font-semibold text-dark-text mb-4 flex items-center gap-2">
+            <span>🤖</span> Android Installs
+          </h3>
+          <div className="h-24 flex items-center justify-center">
+            <span className="text-amber-400 text-sm">Coming Soon</span>
+          </div>
         </div>
       </div>
 
@@ -234,69 +377,108 @@ export default function InstallsPage() {
             No installations found
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-dark-card-hover border-b border-dark-border">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Instance ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">License</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Browser</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Version</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">First Seen</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Last Active</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dark-border">
-              {installations.map((install) => (
-                <tr key={install.id} className={`hover:bg-dark-card-hover ${install.isOrphan ? 'bg-amber-900/20' : ''}`}>
-                  <td className="px-4 py-3">
-                    <code
-                      className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded cursor-pointer hover:bg-dark-card-hover"
-                      title={install.instance_id || 'N/A'}
-                      onClick={() => {
-                        if (install.instance_id) {
-                          navigator.clipboard.writeText(install.instance_id)
-                          alert('Copied: ' + install.instance_id)
-                        }
-                      }}
-                    >
-                      {install.instance_id ? `${install.instance_id.substring(0, 12)}...` : 'N/A'}
-                    </code>
-                  </td>
-                  <td className="px-4 py-3">
-                    {isActive(install.last_seen) ? (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/20 text-primary">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-dark-card-hover text-dark-text-muted">
-                        Inactive
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {install.license_key ? (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/20 text-primary">
-                        Pro
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-dark-card-hover text-dark-text-muted">
-                        Free
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-dark-text-muted">{install.browser || '-'}</td>
-                  <td className="px-4 py-3 text-dark-text-muted">{install.extension_version || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-dark-text-dim">{formatDate(install.first_seen)}</td>
-                  <td className="px-4 py-3">
-                    <span className={isActive(install.last_seen) ? 'text-primary' : 'text-dark-text-dim'}>
-                      {getTimeSince(install.last_seen)}
-                    </span>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-dark-card-hover border-b border-dark-border">
+                <tr>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                    onClick={() => handleSort('instance_id')}
+                  >
+                    Instance ID {sortBy === 'instance_id' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                    onClick={() => handleSort('device_type')}
+                  >
+                    Platform {sortBy === 'device_type' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                    onClick={() => handleSort('email')}
+                  >
+                    User {sortBy === 'email' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Plan</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Version</th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                    onClick={() => handleSort('created_at')}
+                  >
+                    First Seen {sortBy === 'created_at' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                    onClick={() => handleSort('last_seen')}
+                  >
+                    Last Active {sortBy === 'last_seen' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-dark-border">
+                {installations.map((install) => (
+                  <tr key={install.id} className="hover:bg-dark-card-hover">
+                    <td className="px-4 py-3">
+                      <code
+                        className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded cursor-pointer hover:bg-dark-card-hover"
+                        title={install.instance_id || 'N/A'}
+                        onClick={() => {
+                          if (install.instance_id) {
+                            navigator.clipboard.writeText(install.instance_id)
+                          }
+                        }}
+                      >
+                        {install.instance_id ? `${install.instance_id.substring(0, 16)}...` : 'N/A'}
+                      </code>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="flex items-center gap-2">
+                        <span>{getPlatformIcon(install.device_type)}</span>
+                        <span className="text-dark-text">{getPlatformLabel(install.device_type)}</span>
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {install.email ? (
+                        <span className="text-dark-text">{install.email}</span>
+                      ) : (
+                        <span className="text-dark-text-dim italic">Anonymous</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {isActive(install.last_seen) ? (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/20 text-primary">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-dark-card-hover text-dark-text-muted">
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {install.isPro ? (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/20 text-primary">
+                          Pro
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-dark-card-hover text-dark-text-muted">
+                          Free
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-dark-text-muted">{install.version || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-dark-text-dim">{formatDate(install.first_seen)}</td>
+                    <td className="px-4 py-3">
+                      <span className={isActive(install.last_seen) ? 'text-primary' : 'text-dark-text-dim'}>
+                        {getTimeSince(install.last_seen)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Pagination */}

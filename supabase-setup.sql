@@ -351,18 +351,23 @@ DROP POLICY IF EXISTS "Allow service role full access to user_settings" ON user_
 CREATE POLICY "Allow service role full access to user_settings" ON user_settings FOR ALL USING (true);
 
 -- User instances/devices (track connected devices)
+-- user_id is NULL for anonymous installs (before user login)
 CREATE TABLE IF NOT EXISTS user_instances (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  instance_id TEXT NOT NULL,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  instance_id TEXT NOT NULL UNIQUE,
   device_type TEXT NOT NULL CHECK (device_type IN ('extension', 'mobile_ios', 'mobile_android')),
   device_name TEXT,
   browser TEXT,
   version TEXT,
   last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, instance_id)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Migration for existing databases:
+-- ALTER TABLE user_instances ALTER COLUMN user_id DROP NOT NULL;
+-- ALTER TABLE user_instances DROP CONSTRAINT IF EXISTS user_instances_user_id_instance_id_key;
+-- ALTER TABLE user_instances ADD CONSTRAINT user_instances_instance_id_key UNIQUE (instance_id);
 
 CREATE INDEX IF NOT EXISTS idx_user_instances_user_id ON user_instances(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_instances_instance ON user_instances(instance_id);
