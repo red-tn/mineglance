@@ -43,7 +43,9 @@ export default function DevicesPage() {
     }
   }
 
-  async function handleRemove(instanceId: string) {
+  async function handleRemove(instanceId: string | undefined) {
+    if (!instanceId) return
+
     if (!confirm('Are you sure you want to remove this device? It will be signed out.')) {
       return
     }
@@ -291,7 +293,7 @@ export default function DevicesPage() {
                         <p className="text-xs text-dark-text-dim mt-1">Last seen: {recentActivity}</p>
                       )}
                       <p className="text-xs text-dark-text-dim mt-1 font-mono">
-                        ID: {device.instanceId.substring(0, 20)}...
+                        ID: {device.instanceId ? `${device.instanceId.substring(0, 20)}...` : 'N/A'}
                       </p>
                     </div>
 

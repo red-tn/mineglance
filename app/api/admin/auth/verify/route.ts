@@ -30,7 +30,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         valid: true,
         user: {
+          id: session.admin_users.id,
           email: session.admin_users.email,
+          fullName: session.admin_users.full_name,
+          role: session.admin_users.role,
           isAdmin: true
         }
       })

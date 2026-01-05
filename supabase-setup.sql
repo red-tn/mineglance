@@ -376,3 +376,71 @@ CREATE INDEX IF NOT EXISTS idx_user_instances_last_seen ON user_instances(last_s
 ALTER TABLE user_instances ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow service role full access to user_instances" ON user_instances;
 CREATE POLICY "Allow service role full access to user_instances" ON user_instances FOR ALL USING (true);
+
+-- =====================================================
+-- Admin Users Schema
+-- =====================================================
+
+-- Admin users table
+CREATE TABLE IF NOT EXISTS admin_users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  full_name TEXT,
+  phone TEXT,
+  profile_photo_url TEXT,
+  role TEXT DEFAULT 'admin' CHECK (role IN ('admin', 'super_admin')),
+  is_active BOOLEAN DEFAULT TRUE,
+  invited_by UUID REFERENCES admin_users(id),
+  invite_token TEXT UNIQUE,
+  invite_expires_at TIMESTAMP WITH TIME ZONE,
+  last_login TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
+CREATE INDEX IF NOT EXISTS idx_admin_users_invite_token ON admin_users(invite_token);
+CREATE INDEX IF NOT EXISTS idx_admin_users_is_active ON admin_users(is_active);
+
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to admin_users" ON admin_users;
+CREATE POLICY "Allow service role full access to admin_users" ON admin_users FOR ALL USING (true);
+
+-- Admin sessions table
+CREATE TABLE IF NOT EXISTS admin_sessions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  admin_id UUID NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+  token TEXT UNIQUE NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_sessions_token ON admin_sessions(token);
+CREATE INDEX IF NOT EXISTS idx_admin_sessions_admin_id ON admin_sessions(admin_id);
+CREATE INDEX IF NOT EXISTS idx_admin_sessions_expires ON admin_sessions(expires_at);
+
+ALTER TABLE admin_sessions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to admin_sessions" ON admin_sessions;
+CREATE POLICY "Allow service role full access to admin_sessions" ON admin_sessions FOR ALL USING (true);
+
+-- Admin audit log table
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  admin_email TEXT NOT NULL,
+  action TEXT NOT NULL,
+  details JSONB,
+  target_email TEXT,
+  ip_address TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_admin ON admin_audit_log(admin_email);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_action ON admin_audit_log(action);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_created ON admin_audit_log(created_at DESC);
+
+ALTER TABLE admin_audit_log ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow service role full access to admin_audit_log" ON admin_audit_log;
+CREATE POLICY "Allow service role full access to admin_audit_log" ON admin_audit_log FOR ALL USING (true);
