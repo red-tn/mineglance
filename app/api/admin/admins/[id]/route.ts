@@ -8,14 +8,26 @@ const supabase = createClient(
 )
 
 async function getAdminFromToken(token: string) {
-  const { data: session } = await supabase
+  // First get the session
+  const { data: session, error: sessionError } = await supabase
     .from('admin_sessions')
-    .select('*, admin_users(*)')
+    .select('*')
     .eq('token', token)
     .gt('expires_at', new Date().toISOString())
     .single()
 
-  return session?.admin_users || null
+  if (sessionError || !session || !session.admin_id) {
+    return null
+  }
+
+  // Then get the admin user
+  const { data: admin } = await supabase
+    .from('admin_users')
+    .select('*')
+    .eq('id', session.admin_id)
+    .single()
+
+  return admin || null
 }
 
 // PUT - Update admin

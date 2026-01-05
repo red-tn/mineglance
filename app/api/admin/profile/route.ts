@@ -8,14 +8,37 @@ const supabase = createClient(
 )
 
 async function getAdminFromToken(token: string) {
-  const { data: session } = await supabase
+  // First get the session
+  const { data: session, error: sessionError } = await supabase
     .from('admin_sessions')
-    .select('*, admin_users(*)')
+    .select('*')
     .eq('token', token)
     .gt('expires_at', new Date().toISOString())
     .single()
 
-  return session?.admin_users || null
+  if (sessionError || !session) {
+    console.log('Session not found or expired:', sessionError?.message)
+    return null
+  }
+
+  // Then get the admin user
+  if (!session.admin_id) {
+    console.log('Session has no admin_id')
+    return null
+  }
+
+  const { data: admin, error: adminError } = await supabase
+    .from('admin_users')
+    .select('*')
+    .eq('id', session.admin_id)
+    .single()
+
+  if (adminError || !admin) {
+    console.log('Admin not found:', adminError?.message)
+    return null
+  }
+
+  return admin
 }
 
 export async function GET(request: NextRequest) {

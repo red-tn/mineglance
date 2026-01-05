@@ -65,6 +65,18 @@ export default function AdminProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
 
+  // Phone formatting function
+  function formatPhoneNumber(value: string): string {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 3) return numbers
+    if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`
+    return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`
+  }
+
+  function handlePhoneChange(value: string, setter: (v: string) => void) {
+    setter(formatPhoneNumber(value))
+  }
+
   useEffect(() => {
     loadData()
   }, [])
@@ -157,36 +169,75 @@ export default function AdminProfilePage() {
     setUploadingPhoto(true)
     setError('')
 
-    // Convert to base64 data URL for simple storage
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const dataUrl = reader.result as string
+    try {
+      // Compress and resize image
+      const compressedDataUrl = await compressImage(file, 200, 0.8)
 
       const token = localStorage.getItem('admin_token')
-      if (!token) return
-
-      try {
-        const res = await fetch('/api/admin/profile', {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ profilePhotoUrl: dataUrl })
-        })
-
-        if (res.ok) {
-          loadData()
-        } else {
-          setError('Failed to upload photo')
-        }
-      } catch {
-        setError('Upload failed')
-      } finally {
+      if (!token) {
+        setError('Not authenticated')
         setUploadingPhoto(false)
+        return
       }
+
+      const res = await fetch('/api/admin/profile', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ profilePhotoUrl: compressedDataUrl })
+      })
+
+      if (res.ok) {
+        setSuccess('Photo updated!')
+        loadData()
+      } else {
+        const data = await res.json()
+        setError(data.error || 'Failed to upload photo')
+      }
+    } catch (err) {
+      console.error('Upload error:', err)
+      setError('Upload failed - try a smaller image')
+    } finally {
+      setUploadingPhoto(false)
     }
-    reader.readAsDataURL(file)
+  }
+
+  // Compress image to reduce size
+  function compressImage(file: File, maxSize: number, quality: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+
+      img.onload = () => {
+        // Calculate new dimensions
+        let width = img.width
+        let height = img.height
+
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width
+            width = maxSize
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height
+            height = maxSize
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        ctx?.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
   }
 
   async function handleInviteAdmin() {
@@ -467,9 +518,9 @@ export default function AdminProfilePage() {
                       <input
                         type="tel"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => handlePhoneChange(e.target.value, setPhone)}
                         className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:border-primary"
-                        placeholder="+1 (555) 000-0000"
+                        placeholder="(555) 000-0000"
                       />
                     </div>
                   </div>
@@ -830,8 +881,9 @@ export default function AdminProfilePage() {
                 <input
                   type="tel"
                   value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
+                  onChange={(e) => handlePhoneChange(e.target.value, setEditPhone)}
                   className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:border-primary"
+                  placeholder="(555) 000-0000"
                 />
               </div>
               <div>
