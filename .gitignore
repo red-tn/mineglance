@@ -44,9 +44,11 @@ mobile/dist/
 mobile/node_modules/
 screenshots/
 scripts/
+images and videos/
 *.docx
 *.zip
 nul
 *.bat
 workflow_logs/
 *.log
+*.txt
