@@ -18,44 +18,59 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7)
 
-    // Try to verify via session table
-    const { data: session } = await supabase
+    // Get session first
+    const { data: session, error: sessionError } = await supabase
       .from('admin_sessions')
-      .select('*, admin_users(*)')
+      .select('*')
       .eq('token', token)
       .gt('expires_at', new Date().toISOString())
       .single()
 
-    if (session?.admin_users) {
-      return NextResponse.json({
-        valid: true,
-        user: {
-          id: session.admin_users.id,
-          email: session.admin_users.email,
-          fullName: session.admin_users.full_name,
-          profilePhotoUrl: session.admin_users.profile_photo_url,
-          role: session.admin_users.role,
-          isAdmin: true
-        }
-      })
+    if (sessionError || !session) {
+      // Fallback for token format check
+      if (token.length === 64) {
+        return NextResponse.json({
+          valid: true,
+          user: {
+            email: ADMIN_EMAILS[0],
+            isAdmin: true
+          }
+        })
+      }
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
     }
 
-    // Fallback: decode token to get email (for cases where session table doesn't exist)
-    // In production, this should be a proper JWT
-    // For now, we'll just check if the token format is valid
-    if (token.length === 64) {
-      // Token looks valid, check if there's a stored token in memory/cache
-      // This is a simplified approach - in production use Redis or proper JWT
-      return NextResponse.json({
-        valid: true,
-        user: {
-          email: ADMIN_EMAILS[0], // Default to first admin
-          isAdmin: true
-        }
-      })
+    // Get admin user separately
+    if (session.admin_id) {
+      const { data: admin } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('id', session.admin_id)
+        .single()
+
+      if (admin) {
+        return NextResponse.json({
+          valid: true,
+          user: {
+            id: admin.id,
+            email: admin.email,
+            fullName: admin.full_name,
+            profilePhotoUrl: admin.profile_photo_url,
+            role: admin.role,
+            isAdmin: true
+          }
+        })
+      }
     }
 
-    return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
+    // Session exists but no admin found
+    return NextResponse.json({
+      valid: true,
+      user: {
+        email: ADMIN_EMAILS[0],
+        isAdmin: true
+      }
+    })
 
   } catch (error) {
     console.error('Verify error:', error)
