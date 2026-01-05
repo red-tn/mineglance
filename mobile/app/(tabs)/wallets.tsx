@@ -67,7 +67,7 @@ export default function WalletsScreen() {
         />
       }
     >
-      {/* Header with Add and Reorder buttons */}
+      {/* Header with Reorder button */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
           {wallets.length} Wallet{wallets.length !== 1 ? 's' : ''}
@@ -83,12 +83,6 @@ export default function WalletsScreen() {
               </Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/scan')}
-          >
-            <Text style={styles.addButtonText}>+ Scan QR</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -97,14 +91,8 @@ export default function WalletsScreen() {
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>No Wallets Yet</Text>
           <Text style={styles.emptyText}>
-            Scan the QR code from your MineGlance extension settings to sync your wallets.
+            Add wallets in the MineGlance extension - they sync automatically to this app.
           </Text>
-          <TouchableOpacity
-            style={styles.emptyButton}
-            onPress={() => router.push('/scan')}
-          >
-            <Text style={styles.emptyButtonText}>Scan QR Code</Text>
-          </TouchableOpacity>
         </View>
       ) : (
         sortedWallets.map((wallet, index) => {
@@ -257,17 +245,6 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
   reorderButtonTextActive: {
     color: '#fff',
   },
-  addButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
   walletRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -400,19 +377,7 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
     fontSize: fontSize.sm,
     color: colors.textMuted,
     textAlign: 'center',
-    marginBottom: spacing.lg,
     lineHeight: 20,
-  },
-  emptyButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.sm,
-  },
-  emptyButtonText: {
-    color: '#fff',
-    fontSize: fontSize.md,
-    fontWeight: '600',
   },
   upgradeCard: {
     backgroundColor: colors.primaryLight,

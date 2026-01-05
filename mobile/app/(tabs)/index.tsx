@@ -141,20 +141,12 @@ export default function DashboardScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Wallets</Text>
-          <TouchableOpacity onPress={() => router.push('/scan')}>
-            <Text style={styles.sectionAction}>+ Add</Text>
-          </TouchableOpacity>
         </View>
 
         {enabledWallets.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No wallets configured</Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={() => router.push('/scan')}
-            >
-              <Text style={styles.emptyButtonText}>Scan QR Code</Text>
-            </TouchableOpacity>
+            <Text style={styles.emptyText}>No wallets yet</Text>
+            <Text style={styles.emptySubtext}>Add wallets in the extension - they sync automatically</Text>
           </View>
         ) : (
           enabledWallets.slice(0, 3).map((wallet) => {
@@ -357,19 +349,13 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
   },
   emptyText: {
     fontSize: fontSize.md,
-    color: colors.textMuted,
-    marginBottom: spacing.md,
+    color: colors.text,
+    marginBottom: spacing.xs,
   },
-  emptyButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-  },
-  emptyButtonText: {
-    color: '#fff',
+  emptySubtext: {
     fontSize: fontSize.sm,
-    fontWeight: '600',
+    color: colors.textMuted,
+    textAlign: 'center',
   },
   viewAllButton: {
     paddingVertical: spacing.sm,
