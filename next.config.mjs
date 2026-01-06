@@ -3,6 +3,17 @@ const nextConfig = {
   // Prevent 307 redirects for API routes (fixes Stripe webhook)
   skipTrailingSlashRedirect: true,
 
+  // Allow external images from Supabase storage
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'zbytbrcumxgfeqvhmzsf.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
+
   // Security and CORS headers
   async headers() {
     return [
