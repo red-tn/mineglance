@@ -52,7 +52,7 @@ export async function GET(
       parent_id: comment.parent_id,
       admin_response: comment.admin_response,
       created_at: comment.created_at,
-      user_email: (comment.users as { email: string })?.email?.split('@')[0] + '***' // Mask email
+      user_email: ((comment.users as unknown as { email: string }) || {})?.email?.split('@')[0] + '***' // Mask email
     }))
 
     // Fetch related posts (same author or most recent)
