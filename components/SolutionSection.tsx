@@ -26,22 +26,22 @@ export default function SolutionSection() {
               {/* Net Profit Display */}
               <div className="text-center mb-4">
                 <p className="text-sm text-dark-text-muted uppercase tracking-wide">Net Profit Today</p>
-                <p className="text-5xl font-bold text-primary font-mono">+$2.47</p>
+                <p className="text-5xl font-bold text-primary font-mono">+$47.82</p>
               </div>
 
               {/* Breakdown */}
               <div className="bg-dark-card-hover rounded-lg p-4 mb-4">
                 <div className="flex justify-between text-sm text-dark-text-muted mb-2">
                   <span>Gross Revenue</span>
-                  <span className="font-mono text-dark-text">$4.12</span>
+                  <span className="font-mono text-dark-text">$58.50</span>
                 </div>
                 <div className="flex justify-between text-sm text-dark-text-muted mb-2">
                   <span>Electricity Cost</span>
-                  <span className="font-mono text-red-400">-$1.65</span>
+                  <span className="font-mono text-red-400">-$10.68</span>
                 </div>
                 <div className="border-t border-dark-border pt-2 flex justify-between font-semibold">
                   <span className="text-dark-text">Net Profit</span>
-                  <span className="font-mono text-primary">$2.47</span>
+                  <span className="font-mono text-primary">$47.82</span>
                 </div>
               </div>
 
@@ -49,10 +49,10 @@ export default function SolutionSection() {
               <div className="flex gap-2">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary">
                   <span className="w-2 h-2 bg-primary rounded-full mr-2 animate-pulse"></span>
-                  2 Workers Online
+                  4 Workers Online
                 </span>
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-dark-border text-dark-text-muted">
-                  52.3 MH/s
+                  842 TH/s
                 </span>
               </div>
             </div>

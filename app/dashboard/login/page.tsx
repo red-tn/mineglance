@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 
 export default function DashboardLogin() {
@@ -12,6 +12,8 @@ export default function DashboardLogin() {
   const [step, setStep] = useState<'email' | 'password'>('email')
   const [isNewUser, setIsNewUser] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get('redirect') || '/dashboard'
 
   useEffect(() => {
     // Check if already logged in
@@ -28,7 +30,7 @@ export default function DashboardLogin() {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
-        router.push('/dashboard')
+        router.push(redirectUrl)
       } else {
         localStorage.removeItem('user_token')
       }
@@ -63,7 +65,7 @@ export default function DashboardLogin() {
       } else if (res.ok && data.token) {
         // Logged in (shouldn't happen without password)
         localStorage.setItem('user_token', data.token)
-        router.push('/dashboard')
+        router.push(redirectUrl)
       } else {
         setError(data.error || 'Something went wrong')
       }
@@ -97,7 +99,7 @@ export default function DashboardLogin() {
         }
 
         localStorage.setItem('user_token', data.token)
-        router.push('/dashboard')
+        router.push(redirectUrl)
       } else {
         // Login existing user
         const res = await fetch('/api/auth/login', {
@@ -114,7 +116,7 @@ export default function DashboardLogin() {
         }
 
         localStorage.setItem('user_token', data.token)
-        router.push('/dashboard')
+        router.push(redirectUrl)
       }
 
     } catch {

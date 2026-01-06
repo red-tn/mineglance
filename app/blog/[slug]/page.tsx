@@ -57,8 +57,8 @@ export default function BlogPostPage() {
   const [commentError, setCommentError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check for auth token in localStorage
-    const token = localStorage.getItem('dashboardToken')
+    // Check for auth token in localStorage (user dashboard token)
+    const token = localStorage.getItem('user_token')
     setAuthToken(token)
   }, [])
 
@@ -315,7 +315,7 @@ export default function BlogPostPage() {
                   Sign in to your MineGlance account to leave a comment
                 </p>
                 <Link
-                  href="/dashboard/login"
+                  href={`/dashboard/login?redirect=/blog/${slug}`}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-light text-white rounded-lg transition-colors"
                 >
                   Sign In to Comment

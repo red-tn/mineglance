@@ -45,7 +45,7 @@ export default function Hero() {
               {/* Net Profit */}
               <div className="text-center mb-6">
                 <p className="text-sm text-dark-text-muted uppercase tracking-wide">Today&apos;s Net Profit</p>
-                <p className="text-4xl font-bold text-primary font-mono">+$2.47</p>
+                <p className="text-4xl font-bold text-primary font-mono">+$47.82</p>
                 <p className="text-sm text-dark-text-dim mt-1">After electricity</p>
               </div>
 
@@ -53,11 +53,11 @@ export default function Hero() {
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-dark-card rounded-lg p-3 text-center border border-dark-border">
                   <p className="text-xs text-dark-text-muted">Hashrate</p>
-                  <p className="font-semibold font-mono text-dark-text">1.07 TH/s</p>
+                  <p className="font-semibold font-mono text-dark-text">842 TH/s</p>
                 </div>
                 <div className="bg-dark-card rounded-lg p-3 text-center border border-dark-border">
                   <p className="text-xs text-dark-text-muted">Workers</p>
-                  <p className="font-semibold font-mono text-primary">2/2 Online</p>
+                  <p className="font-semibold font-mono text-primary">4/4 Online</p>
                 </div>
               </div>
 

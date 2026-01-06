@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 
 interface BlogPost {
   id: string
@@ -53,6 +54,8 @@ export default function AdminBlogPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Form state
   const [form, setForm] = useState({
@@ -270,6 +273,46 @@ export default function AdminBlogPage() {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .substring(0, 100)
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const res = await fetch('/api/admin/blog/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setForm({ ...form, featured_image_url: data.url })
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to upload image')
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Failed to upload image')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  function handleRemoveImage() {
+    setForm({ ...form, featured_image_url: '' })
   }
 
   return (
@@ -579,26 +622,136 @@ export default function AdminBlogPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-dark-text-muted text-sm mb-1">Featured Image URL</label>
-                  <input
-                    type="text"
-                    value={form.featured_image_url}
-                    onChange={(e) => setForm({ ...form, featured_image_url: e.target.value })}
-                    className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
+              <div>
+                <label className="block text-dark-text-muted text-sm mb-2">Featured Image</label>
 
-                <div>
-                  <label className="block text-dark-text-muted text-sm mb-1">Author</label>
-                  <input
-                    type="text"
-                    value={form.author_name}
-                    onChange={(e) => setForm({ ...form, author_name: e.target.value })}
-                    className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
+                {form.featured_image_url ? (
+                  <div className="space-y-3">
+                    {/* Image Preview */}
+                    <div className="relative w-full h-48 bg-dark-bg rounded-lg overflow-hidden border border-dark-border">
+                      <Image
+                        src={form.featured_image_url}
+                        alt="Featured image preview"
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
+
+                    {/* Image URL (readonly) */}
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={form.featured_image_url}
+                        readOnly
+                        className="flex-1 px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text-muted text-sm focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(form.featured_image_url)}
+                        className="px-3 py-2 bg-dark-border text-white rounded-lg hover:bg-dark-border/80 text-sm"
+                        title="Copy URL"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Replace/Remove Buttons */}
+                    <div className="flex gap-2">
+                      <label className="flex-1 cursor-pointer">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                        <span className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 font-medium">
+                          {uploading ? (
+                            <>
+                              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                              </svg>
+                              Replace Image
+                            </>
+                          )}
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Upload Area */}
+                    <label className="flex flex-col items-center justify-center w-full h-48 bg-dark-bg border-2 border-dashed border-dark-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      {uploading ? (
+                        <div className="flex flex-col items-center">
+                          <svg className="w-10 h-10 text-primary animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          <span className="mt-2 text-dark-text-muted">Uploading...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <svg className="w-10 h-10 text-dark-text-muted mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <span className="text-dark-text-muted">Click to upload image</span>
+                          <span className="text-dark-text-dim text-sm mt-1">JPG, PNG, GIF, WebP (max 5MB)</span>
+                        </>
+                      )}
+                    </label>
+
+                    {/* Or enter URL manually */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-px bg-dark-border"></div>
+                      <span className="text-dark-text-dim text-sm">or enter URL</span>
+                      <div className="flex-1 h-px bg-dark-border"></div>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="https://example.com/image.jpg"
+                      value={form.featured_image_url}
+                      onChange={(e) => setForm({ ...form, featured_image_url: e.target.value })}
+                      className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-dark-text-dim focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-dark-text-muted text-sm mb-1">Author</label>
+                <input
+                  type="text"
+                  value={form.author_name}
+                  onChange={(e) => setForm({ ...form, author_name: e.target.value })}
+                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                />
               </div>
 
               <div>
