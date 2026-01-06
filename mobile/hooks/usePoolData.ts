@@ -4,7 +4,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useWalletStore } from '@/stores/walletStore';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { fetchPoolData } from '@/services/pools';
+import { useAuthStore } from '@/stores/authStore';
+import { fetchPoolData, isWalletAllowed } from '@/services/pools';
 import { WalletData, Worker } from '@/types';
 
 // Global state to prevent multiple intervals and duplicate fetches
@@ -16,7 +17,9 @@ let globalLastRefreshInterval = 30;
 export function usePoolData() {
   const { wallets, setWalletData, setLoading, setLastRefresh, isLoading } = useWalletStore();
   const { refreshInterval } = useSettingsStore();
+  const { plan } = useAuthStore();
   const mountedRef = useRef(true);
+  const isPro = plan === 'pro' || plan === 'bundle';
 
   /**
    * Fetch data for a single wallet
@@ -67,7 +70,7 @@ export function usePoolData() {
   }, [wallets, setWalletData]);
 
   /**
-   * Fetch data for all enabled wallets
+   * Fetch data for all enabled wallets (with free tier restrictions)
    */
   const fetchAllWallets = useCallback(async () => {
     const enabledWallets = wallets.filter(w => w.enabled);
@@ -87,8 +90,28 @@ export function usePoolData() {
 
     try {
       console.log(`Fetching data for ${enabledWallets.length} wallets...`);
-      // Fetch all wallets in parallel
-      await Promise.all(enabledWallets.map(w => fetchWallet(w.id)));
+
+      // Apply free tier restrictions
+      const fetchPromises = enabledWallets.map((wallet, index) => {
+        const restriction = isWalletAllowed(wallet, isPro, index);
+        if (!restriction.allowed) {
+          // Set restriction error instead of fetching
+          const restrictedData: WalletData = {
+            walletId: wallet.id,
+            hashrate: 0,
+            balance: 0,
+            workers: [],
+            lastUpdated: Date.now(),
+            error: restriction.reason,
+            restricted: true,
+          };
+          setWalletData(wallet.id, restrictedData);
+          return Promise.resolve(restrictedData);
+        }
+        return fetchWallet(wallet.id);
+      });
+
+      await Promise.all(fetchPromises);
       setLastRefresh(Date.now());
       console.log('All wallets fetched successfully');
     } catch (error) {
@@ -97,7 +120,7 @@ export function usePoolData() {
       globalIsFetching = false;
       setLoading(false);
     }
-  }, [wallets, fetchWallet, setLoading, setLastRefresh]);
+  }, [wallets, fetchWallet, setLoading, setLastRefresh, setWalletData, isPro]);
 
   // Initial fetch on first mount (global, not per-component)
   useEffect(() => {

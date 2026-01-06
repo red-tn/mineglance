@@ -78,6 +78,17 @@
         </div>
       </div>
 
+      <!-- Renewal Alert Banner -->
+      <div id="renewalBanner" class="renewal-banner hidden">
+        <div class="renewal-icon">⏰</div>
+        <div class="renewal-text">
+          <span id="renewalMessage">Your subscription expires soon</span>
+          <span class="renewal-action">Use <strong>MINE26</strong> for 10% off!</span>
+        </div>
+        <a href="https://www.mineglance.com/#pricing" target="_blank" class="btn btn-small btn-warning">Renew</a>
+        <button id="dismissRenewal" class="renewal-dismiss" title="Dismiss">&times;</button>
+      </div>
+
       <!-- Wallet List -->
       <div id="walletList" class="wallet-list">
         <!-- Wallet cards inserted here by JS -->
@@ -109,6 +120,17 @@
 
       <!-- Resize Handle -->
       <div id="resizeHandle" class="resize-handle" title="Drag to resize"></div>
+
+      <!-- Blog Section -->
+      <div id="blogSection" class="blog-section hidden">
+        <a id="blogLink" href="#" target="_blank" class="blog-card">
+          <div id="blogImage" class="blog-image"></div>
+          <div class="blog-content">
+            <span id="blogDate" class="blog-date"></span>
+            <h4 id="blogTitle" class="blog-title"></h4>
+          </div>
+        </a>
+      </div>
 
       <!-- Last Updated -->
       <div class="footer-info">

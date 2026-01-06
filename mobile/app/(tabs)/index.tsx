@@ -6,6 +6,8 @@ import {
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
+  Image,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getColors, spacing, borderRadius, fontSize } from '@/constants/theme';
@@ -17,9 +19,20 @@ import { usePrices } from '@/hooks/usePrices';
 import { formatHashrate, formatCurrency } from '@/utils/format';
 import { calculateDailyProfit } from '@/utils/profit';
 
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featured_image_url: string | null;
+  published_at: string;
+  read_time: number;
+}
+
 export default function DashboardScreen() {
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const {
     wallets,
     walletData,
@@ -31,6 +44,18 @@ export default function DashboardScreen() {
   const { electricityRate, powerConsumption, liteMode } = useSettingsStore();
   const { fetchAllWallets } = usePoolData();
   const { getPrice, calculateUsdValue, fetchPrices } = usePrices();
+
+  const fetchBlogPosts = useCallback(async () => {
+    try {
+      const res = await fetch('https://www.mineglance.com/api/blog?limit=2');
+      if (res.ok) {
+        const data = await res.json();
+        setBlogPosts(data.posts || []);
+      }
+    } catch (e) {
+      console.log('Blog fetch error:', e);
+    }
+  }, []);
 
   // Dynamic colors based on theme
   const colors = getColors(liteMode);
@@ -59,6 +84,11 @@ export default function DashboardScreen() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Fetch blog posts on mount
+  useEffect(() => {
+    fetchBlogPosts();
+  }, [fetchBlogPosts]);
+
   useEffect(() => {
     // Only redirect to onboarding if:
     // 1. Layout is ready
@@ -71,8 +101,12 @@ export default function DashboardScreen() {
   }, [isReady, authLoading, onboardingCompleted, wallets.length]);
 
   const onRefresh = useCallback(async () => {
-    await Promise.all([fetchAllWallets(), fetchPrices()]);
-  }, [fetchAllWallets, fetchPrices]);
+    await Promise.all([fetchAllWallets(), fetchPrices(), fetchBlogPosts()]);
+  }, [fetchAllWallets, fetchPrices, fetchBlogPosts]);
+
+  const openBlogPost = (slug: string) => {
+    Linking.openURL(`https://www.mineglance.com/blog/${slug}`);
+  };
 
   return (
     <ScrollView
@@ -206,6 +240,46 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Blog Section */}
+      {blogPosts.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Mining News</Text>
+            <TouchableOpacity onPress={() => Linking.openURL('https://www.mineglance.com/blog')}>
+              <Text style={styles.sectionAction}>View All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {blogPosts.map((post) => (
+            <TouchableOpacity
+              key={post.id}
+              style={styles.blogCard}
+              onPress={() => openBlogPost(post.slug)}
+            >
+              {post.featured_image_url ? (
+                <Image
+                  source={{ uri: post.featured_image_url }}
+                  style={styles.blogImage}
+                />
+              ) : (
+                <View style={[styles.blogImage, styles.blogImagePlaceholder]}>
+                  <Text style={styles.blogImageIcon}>📰</Text>
+                </View>
+              )}
+              <View style={styles.blogContent}>
+                <Text style={styles.blogDate}>
+                  {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {' • '}{post.read_time || 3} min read
+                </Text>
+                <Text style={styles.blogTitle} numberOfLines={2}>
+                  {post.title}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -363,5 +437,44 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+  },
+  blogCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.cardBackground,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.sm,
+  },
+  blogImage: {
+    width: 70,
+    height: 70,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.cardBackground,
+  },
+  blogImagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.border,
+  },
+  blogImageIcon: {
+    fontSize: 24,
+  },
+  blogContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  blogDate: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
+  },
+  blogTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.text,
+    lineHeight: fontSize.sm * 1.4,
   },
 });

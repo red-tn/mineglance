@@ -4,7 +4,7 @@ import WireframeBackground from '@/components/WireframeBackground'
 
 export const metadata: Metadata = {
   title: 'MineGlance - Net Profit Dashboard for GPU Miners',
-  description: 'Are you actually making money mining? Find out in 2 clicks. Free Chrome extension for hobbyist miners.',
+  description: 'Are you actually making money mining? Find out in 2 clicks. Free Chrome extension for GPU miners.',
   keywords: 'crypto mining dashboard, GPU mining profit, 2miners monitor, mining calculator, net profit mining',
   icons: {
     icon: '/logo-icon.svg',
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'MineGlance - Are You Actually Making Money Mining?',
-    description: 'Net profit dashboard for hobbyist miners. No monthly fees.',
+    description: 'Net profit dashboard for GPU miners. No monthly fees.',
     url: 'https://mineglance.com',
     siteName: 'MineGlance',
     images: [{ url: 'https://mineglance.com/og-image.png', width: 1200, height: 630 }],

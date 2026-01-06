@@ -21,7 +21,7 @@ const faqs = [
   },
   {
     question: 'Is my wallet address safe?',
-    answer: 'Your wallet address is stored locally in your browser extension. We only use it to fetch public pool data—the same data anyone can see on the pool website. We never have access to your private keys or funds.'
+    answer: 'Absolutely. Your wallet address is stored locally in your browser extension and encrypted with AES-256 when synced to our servers. We only use it to fetch public pool data—the same data anyone can see on the pool website. We never have access to your private keys or funds, and all wallet data is encrypted at rest.'
   },
   {
     question: 'How accurate is the electricity cost calculation?',

@@ -1051,3 +1051,149 @@ body.lite-mode .icon-btn:hover {
   border: 1px solid rgba(245, 101, 101, 0.3);
   color: var(--danger);
 }
+
+/* Renewal Alert Banner */
+.renewal-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(236, 201, 75, 0.15), rgba(236, 201, 75, 0.05));
+  border: 1px solid rgba(236, 201, 75, 0.3);
+  border-radius: 8px;
+  margin: 0 14px 10px;
+}
+
+.renewal-banner.urgent {
+  background: linear-gradient(135deg, rgba(245, 101, 101, 0.15), rgba(245, 101, 101, 0.05));
+  border-color: rgba(245, 101, 101, 0.3);
+}
+
+.renewal-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.renewal-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.renewal-text span:first-child {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--warning);
+}
+
+.renewal-banner.urgent .renewal-text span:first-child {
+  color: var(--danger);
+}
+
+.renewal-action {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.renewal-action strong {
+  color: var(--primary);
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: #1a1a1a;
+  font-weight: 600;
+  padding: 6px 12px;
+  font-size: 11px;
+}
+
+.btn-warning:hover {
+  background: #d69e2e;
+}
+
+.renewal-dismiss {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.renewal-dismiss:hover {
+  opacity: 1;
+  color: var(--text);
+}
+
+/* Blog Section */
+.blog-section {
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+}
+
+.blog-card {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.blog-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.blog-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(56, 161, 105, 0.2), var(--card-bg));
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 20px;
+}
+
+.blog-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.blog-date {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.blog-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.blog-card:hover .blog-title {
+  color: var(--primary);
+}

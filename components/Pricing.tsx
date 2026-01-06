@@ -17,11 +17,11 @@ export default function Pricing() {
       period: 'forever',
       description: 'Perfect for getting started',
       features: [
-        '1 wallet connection',
-        'Manual refresh only',
-        'Chrome extension only',
+        'Up to 2 wallets',
+        'Popular pools (2Miners, Nanopool, HeroMiners)',
+        'Popular coins (BTC, ETC, RVN, ERGO, KAS)',
         'Net profit calculation',
-        'Basic pool support'
+        'Chrome extension + Mobile app'
       ],
       cta: 'Install Free',
       href: 'https://chrome.google.com/webstore/detail/mineglance',
@@ -36,12 +36,12 @@ export default function Pricing() {
       description: 'Unlimited mining monitoring',
       features: [
         'Unlimited wallets',
-        'Auto-refresh (15-180 min)',
-        'Mobile app (iOS + Android)',
+        'All 12+ pools supported',
+        'All coins supported',
         'Cloud sync across devices',
         'Desktop + Email alerts',
         'Real-time coin comparison',
-        'All pools supported',
+        'User dashboard',
         'Priority support'
       ],
       cta: 'Get Pro Now',

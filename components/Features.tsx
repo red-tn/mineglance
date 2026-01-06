@@ -64,7 +64,7 @@ export default function Features() {
             <span className="text-gradient">Everything You Need, Nothing You Don&apos;t</span>
           </h2>
           <p className="mt-4 text-lg text-dark-text-muted max-w-2xl mx-auto">
-            Built by hobbyist miners who got tired of juggling 10 tabs.
+            Built by miners who got tired of juggling 10 tabs.
           </p>
         </div>
 

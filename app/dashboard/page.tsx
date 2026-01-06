@@ -12,16 +12,48 @@ interface DashboardStats {
   memberSince: string
 }
 
+interface BlogPost {
+  id: string
+  title: string
+  slug: string
+  excerpt: string
+  featured_image_url: string | null
+  published_at: string
+  read_time: number
+}
+
 export default function DashboardOverview() {
   const { user } = useAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [showLicenseKey, setShowLicenseKey] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
+  const [renewalIgnored, setRenewalIgnored] = useState(false)
+
+  // Calculate days until subscription expires
+  const daysUntilExpiry = user?.subscriptionEndDate
+    ? Math.ceil((new Date(user.subscriptionEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null
+
+  const showRenewalAlert = user?.plan === 'pro' && daysUntilExpiry !== null && daysUntilExpiry <= 30 && !renewalIgnored && !user?.renewalIgnored
 
   useEffect(() => {
     loadStats()
+    loadBlogPosts()
   }, [])
+
+  async function loadBlogPosts() {
+    try {
+      const res = await fetch('/api/blog?limit=5&pinned=dashboard')
+      if (res.ok) {
+        const data = await res.json()
+        setBlogPosts(data.posts || [])
+      }
+    } catch (e) {
+      console.error('Failed to load blog posts:', e)
+    }
+  }
 
   async function loadStats() {
     const token = localStorage.getItem('user_token')
@@ -122,6 +154,54 @@ export default function DashboardOverview() {
           </div>
         </div>
       </div>
+
+      {/* Renewal Alert Banner */}
+      {showRenewalAlert && (
+        <div className={`glass-card rounded-xl p-4 border ${
+          daysUntilExpiry !== null && daysUntilExpiry <= 7
+            ? 'border-red-500/50 bg-red-500/10'
+            : 'border-yellow-500/50 bg-yellow-500/10'
+        }`}>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                daysUntilExpiry !== null && daysUntilExpiry <= 7 ? 'bg-red-500/20' : 'bg-yellow-500/20'
+              }`}>
+                <svg className={`w-5 h-5 ${daysUntilExpiry !== null && daysUntilExpiry <= 7 ? 'text-red-400' : 'text-yellow-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className={`font-medium ${daysUntilExpiry !== null && daysUntilExpiry <= 7 ? 'text-red-400' : 'text-yellow-400'}`}>
+                  {daysUntilExpiry !== null && daysUntilExpiry <= 0
+                    ? 'Your subscription has expired'
+                    : `Your subscription expires in ${daysUntilExpiry} days`}
+                </p>
+                <p className="text-sm text-dark-text-muted">
+                  Renew now to keep Pro features. Use code <span className="font-bold text-primary">MINE26</span> for 10% off!
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <a
+                href="/#pricing"
+                className="px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Renew Now
+              </a>
+              <button
+                onClick={() => setRenewalIgnored(true)}
+                className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
+                title="Dismiss"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -332,6 +412,53 @@ export default function DashboardOverview() {
           </a>
         </div>
       </div>
+
+      {/* Blog Feed */}
+      {blogPosts.length > 0 && (
+        <div className="glass-card rounded-xl p-6 border border-dark-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-dark-text">Mining News</h2>
+            <Link href="/blog" className="text-sm text-primary hover:text-primary-light transition-colors">
+              View All →
+            </Link>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin scrollbar-thumb-dark-border scrollbar-track-transparent">
+            {blogPosts.map((post) => (
+              <Link
+                key={post.id}
+                href={`/blog/${post.slug}`}
+                className="flex-shrink-0 w-64 glass-card rounded-lg overflow-hidden hover:border-primary/50 transition-all group"
+              >
+                {post.featured_image_url ? (
+                  <div className="relative h-28 overflow-hidden">
+                    <Image
+                      src={post.featured_image_url}
+                      alt={post.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-28 bg-gradient-to-br from-primary/20 to-dark-card flex items-center justify-center">
+                    <svg className="w-8 h-8 text-primary/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                  </div>
+                )}
+                <div className="p-3">
+                  <p className="text-xs text-dark-text-dim mb-1">
+                    {new Date(post.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {' • '}{post.read_time} min
+                  </p>
+                  <h3 className="text-sm font-medium text-dark-text group-hover:text-primary transition-colors line-clamp-2">
+                    {post.title}
+                  </h3>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Upgrade Modal */}
       <CheckoutModal

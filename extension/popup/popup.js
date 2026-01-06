@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const discoveryContent = document.getElementById('discoveryContent');
   const discoveryList = document.getElementById('discoveryList');
   const toggleDiscovery = document.getElementById('toggleDiscovery');
+  const renewalBanner = document.getElementById('renewalBanner');
+  const renewalMessage = document.getElementById('renewalMessage');
+  const dismissRenewal = document.getElementById('dismissRenewal');
 
   // Auth Modal Elements
   const authModal = document.getElementById('authModal');
@@ -94,6 +97,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   upgradeBtn.addEventListener('click', () => {
     chrome.tabs.create({ url: 'https://mineglance.com/#pricing' });
+  });
+
+  dismissRenewal.addEventListener('click', () => {
+    renewalBanner.classList.add('hidden');
+    chrome.storage.local.set({ renewalDismissed: true });
   });
 
   // Auth Modal Event Handlers
@@ -303,6 +311,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     await chrome.storage.local.set({ discoveryCollapsed: isCollapsed });
   });
 
+  // Blog Elements
+  const blogSection = document.getElementById('blogSection');
+  const blogLink = document.getElementById('blogLink');
+  const blogImage = document.getElementById('blogImage');
+  const blogTitle = document.getElementById('blogTitle');
+  const blogDate = document.getElementById('blogDate');
+
+  // Fetch and display blog post
+  async function fetchBlogPost() {
+    try {
+      const res = await fetch(`${API_BASE}/blog?limit=1`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (data.posts && data.posts.length > 0) {
+        const post = data.posts[0];
+
+        blogLink.href = `https://www.mineglance.com/blog/${post.slug}`;
+        blogTitle.textContent = post.title;
+
+        const date = new Date(post.published_at);
+        blogDate.textContent = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' • ' + (post.read_time || 3) + ' min read';
+
+        if (post.featured_image_url) {
+          blogImage.style.backgroundImage = `url(${post.featured_image_url})`;
+          blogImage.innerHTML = '';
+        } else {
+          blogImage.innerHTML = '📰';
+        }
+
+        blogSection.classList.remove('hidden');
+      }
+    } catch (err) {
+      console.log('Blog fetch error:', err);
+    }
+  }
+
   // Resize handle for wallet list
   const resizeHandle = document.getElementById('resizeHandle');
   let isResizing = false;
@@ -390,7 +435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Verify license with server (non-blocking, runs in background)
       if (isPaid) {
-        chrome.runtime.sendMessage({ action: 'checkLicenseStatus' }, (response) => {
+        chrome.runtime.sendMessage({ action: 'checkLicenseStatus' }, async (response) => {
           if (response && !response.isPro) {
             // License revoked - update UI
             proBadge.classList.add('hidden');
@@ -399,6 +444,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Update badge text based on plan
             proBadge.textContent = response.plan === 'pro' ? 'PRO' : 'PRO';
             chrome.storage.local.set({ plan: response.plan });
+
+            // Check subscription expiry and show renewal banner if needed
+            if (response.subscriptionEndDate) {
+              const { renewalDismissed } = await chrome.storage.local.get(['renewalDismissed']);
+              const endDate = new Date(response.subscriptionEndDate);
+              const daysUntilExpiry = Math.ceil((endDate - Date.now()) / (1000 * 60 * 60 * 24));
+
+              if (daysUntilExpiry <= 30 && !renewalDismissed) {
+                if (daysUntilExpiry <= 0) {
+                  renewalMessage.textContent = 'Your subscription has expired';
+                  renewalBanner.classList.add('urgent');
+                } else if (daysUntilExpiry <= 7) {
+                  renewalMessage.textContent = `Subscription expires in ${daysUntilExpiry} days`;
+                  renewalBanner.classList.add('urgent');
+                } else {
+                  renewalMessage.textContent = `Subscription expires in ${daysUntilExpiry} days`;
+                }
+                renewalBanner.classList.remove('hidden');
+              }
+            }
           }
         });
       }
@@ -423,6 +488,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Fetch discovery data
         fetchDiscoveryData();
       }
+
+      // Fetch latest blog post
+      fetchBlogPost();
 
       // Apply Lite Mode if enabled (dark is default)
       if (settings?.liteMode === true) {

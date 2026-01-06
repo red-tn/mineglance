@@ -4,17 +4,14 @@ export default function SocialProof() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="glass-card rounded-2xl p-8">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-center">
-            {/* Placeholder stats - update with real data when available */}
             <div className="flex items-center gap-3">
-              <span className="text-4xl font-bold text-primary font-mono">500+</span>
-              <span className="text-dark-text-muted text-left">Active<br/>Miners</span>
+              <span className="text-4xl font-bold text-primary font-mono">12+</span>
+              <span className="text-dark-text-muted text-left">Mining<br/>Pools</span>
             </div>
             <div className="hidden sm:block w-px h-12 bg-dark-border"></div>
             <div className="flex items-center gap-3">
-              <div className="flex text-yellow-400 text-2xl">
-                {'★'.repeat(5)}
-              </div>
-              <span className="text-dark-text-muted text-left">Chrome<br/>Web Store</span>
+              <span className="text-4xl font-bold text-primary font-mono">10+</span>
+              <span className="text-dark-text-muted text-left">Supported<br/>Coins</span>
             </div>
             <div className="hidden sm:block w-px h-12 bg-dark-border"></div>
             <div className="flex items-center gap-3">

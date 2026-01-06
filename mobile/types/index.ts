@@ -19,6 +19,7 @@ export interface WalletData {
   workers: Worker[];
   lastUpdated: number;
   error?: string;
+  restricted?: boolean; // Wallet restricted due to free tier limitations
 }
 
 export interface Worker {

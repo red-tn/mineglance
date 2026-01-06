@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
 
     const { data: user } = await supabase
       .from('users')
-      .select('plan, is_revoked')
+      .select('plan, is_revoked, subscription_end_date')
       .eq('license_key', normalizedKey)
       .single()
 
@@ -102,7 +102,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       isPro: true,
-      plan: user.plan
+      plan: user.plan,
+      subscriptionEndDate: user.subscription_end_date
     }, { headers: corsHeaders })
 
   } catch (error) {

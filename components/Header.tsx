@@ -35,6 +35,9 @@ export default function Header() {
             <Link href="/#pricing" className="text-dark-text-muted hover:text-primary transition-colors">
               Pricing
             </Link>
+            <Link href="/blog" className="text-dark-text-muted hover:text-primary transition-colors">
+              Blog
+            </Link>
             <Link href="/support" className="text-dark-text-muted hover:text-primary transition-colors">
               Support
             </Link>
@@ -83,6 +86,13 @@ export default function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
+              </Link>
+              <Link
+                href="/blog"
+                className="text-dark-text-muted hover:text-primary transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Blog
               </Link>
               <Link
                 href="/support"

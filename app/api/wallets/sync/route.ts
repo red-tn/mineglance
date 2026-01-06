@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { encryptWalletAddress, decryptWalletAddress } from '@/lib/encryption'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,13 +50,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch wallets' }, { status: 500 })
     }
 
-    // Transform to client format
+    // Transform to client format (decrypt addresses)
     const clientWallets = (wallets || []).map(w => ({
       id: w.id,
       name: w.name,
       pool: w.pool,
       coin: w.coin,
-      address: w.address,
+      address: w.address_encrypted ? decryptWalletAddress(w.address) : w.address,
       power: w.power,
       enabled: w.enabled,
       order: w.display_order
@@ -102,13 +103,16 @@ export async function POST(request: NextRequest) {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
 
-      if ((count || 0) >= 1) {
+      if ((count || 0) >= 2) {
         return NextResponse.json({
-          error: 'Free accounts are limited to 1 wallet. Upgrade to Pro for unlimited wallets.',
+          error: 'Free accounts are limited to 2 wallets. Upgrade to Pro for unlimited wallets.',
           limitReached: true
         }, { status: 403 })
       }
     }
+
+    // Encrypt wallet address before storing
+    const encryptedAddress = encryptWalletAddress(wallet.address)
 
     const { data: newWallet, error } = await supabase
       .from('user_wallets')
@@ -117,7 +121,8 @@ export async function POST(request: NextRequest) {
         name: wallet.name,
         pool: wallet.pool,
         coin: wallet.coin,
-        address: wallet.address,
+        address: encryptedAddress,
+        address_encrypted: true,
         power: wallet.power || 200,
         enabled: wallet.enabled !== false,
         display_order: newOrder
@@ -137,7 +142,7 @@ export async function POST(request: NextRequest) {
         name: newWallet.name,
         pool: newWallet.pool,
         coin: newWallet.coin,
-        address: newWallet.address,
+        address: wallet.address, // Return original (decrypted) address
         power: newWallet.power,
         enabled: newWallet.enabled,
         order: newWallet.display_order
@@ -184,7 +189,10 @@ export async function PUT(request: NextRequest) {
     if (wallet.name !== undefined) updateData.name = wallet.name
     if (wallet.pool !== undefined) updateData.pool = wallet.pool
     if (wallet.coin !== undefined) updateData.coin = wallet.coin
-    if (wallet.address !== undefined) updateData.address = wallet.address
+    if (wallet.address !== undefined) {
+      updateData.address = encryptWalletAddress(wallet.address)
+      updateData.address_encrypted = true
+    }
     if (wallet.power !== undefined) updateData.power = wallet.power
     if (wallet.enabled !== undefined) updateData.enabled = wallet.enabled
     if (wallet.order !== undefined) updateData.display_order = wallet.order
@@ -209,7 +217,9 @@ export async function PUT(request: NextRequest) {
         name: updatedWallet.name,
         pool: updatedWallet.pool,
         coin: updatedWallet.coin,
-        address: updatedWallet.address,
+        address: updatedWallet.address_encrypted
+          ? decryptWalletAddress(updatedWallet.address)
+          : updatedWallet.address,
         power: updatedWallet.power,
         enabled: updatedWallet.enabled,
         order: updatedWallet.display_order

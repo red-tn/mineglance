@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
       profile_photo_url: string | null
       is_revoked: boolean
       license_key: string
+      subscription_end_date: string | null
+      renewal_reminder_sent: boolean
+      renewal_ignored: boolean
     }
 
     // Check if user is still valid
@@ -57,7 +60,10 @@ export async function POST(request: NextRequest) {
         fullName: user.full_name,
         plan: user.plan,
         profilePhoto: user.profile_photo_url,
-        licenseKey: user.license_key
+        licenseKey: user.license_key,
+        subscriptionEndDate: user.subscription_end_date,
+        renewalReminderSent: user.renewal_reminder_sent || false,
+        renewalIgnored: user.renewal_ignored || false
       }
     })
 

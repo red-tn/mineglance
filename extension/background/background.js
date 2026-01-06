@@ -2,6 +2,43 @@
 
 const API_BASE = 'https://www.mineglance.com/api';
 
+// Free tier restrictions
+const FREE_TIER_POOLS = ['2miners', 'nanopool', 'herominers'];
+const FREE_TIER_COINS = ['btc', 'etc', 'rvn', 'ergo', 'kas'];
+const FREE_TIER_MAX_WALLETS = 2;
+
+// Check if a pool is allowed for free tier
+function isPoolAllowedForFree(pool) {
+  return FREE_TIER_POOLS.includes(pool?.toLowerCase());
+}
+
+// Check if a coin is allowed for free tier
+function isCoinAllowedForFree(coin) {
+  return FREE_TIER_COINS.includes(coin?.toLowerCase());
+}
+
+// Check if wallet is allowed for user's plan
+function isWalletAllowed(wallet, isPaid, walletIndex) {
+  if (isPaid) return { allowed: true };
+
+  // Free tier: max 2 wallets
+  if (walletIndex >= FREE_TIER_MAX_WALLETS) {
+    return { allowed: false, reason: 'Free tier is limited to 2 wallets. Upgrade to Pro for unlimited.' };
+  }
+
+  // Check pool restriction
+  if (!isPoolAllowedForFree(wallet.pool)) {
+    return { allowed: false, reason: `${wallet.pool} requires Pro. Free tier supports: 2Miners, Nanopool, HeroMiners.` };
+  }
+
+  // Check coin restriction
+  if (!isCoinAllowedForFree(wallet.coin)) {
+    return { allowed: false, reason: `${wallet.coin.toUpperCase()} requires Pro. Free tier supports: BTC, ETC, RVN, ERGO, KAS.` };
+  }
+
+  return { allowed: true };
+}
+
 // Send email alert for Pro users
 async function sendEmailAlert(alertType, walletName, message) {
   const { settings, licenseKey, isPaid } = await chrome.storage.local.get([
@@ -1053,8 +1090,26 @@ async function refreshAllData() {
 
   if (!wallets || wallets.length === 0) return;
 
-  for (const wallet of wallets.filter(w => w.enabled)) {
+  const enabledWallets = wallets.filter(w => w.enabled);
+  for (let i = 0; i < enabledWallets.length; i++) {
+    const wallet = enabledWallets[i];
     try {
+      // Check wallet restrictions for free tier
+      const restriction = isWalletAllowed(wallet, isPaid, i);
+      if (!restriction.allowed) {
+        // Store restriction message instead of fetching data
+        await chrome.storage.local.set({
+          [`poolData_${wallet.id}`]: {
+            error: restriction.reason,
+            restricted: true,
+            hashrate: 0,
+            workers: [],
+            earnings24h: 0
+          }
+        });
+        continue;
+      }
+
       const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address);
       const price = await fetchCoinPrice(wallet.coin);
       const previousData = await chrome.storage.local.get([

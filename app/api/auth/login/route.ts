@@ -52,6 +52,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Account has been suspended' }, { status: 403 })
     }
 
+    // Check if email is verified
+    if (user.email_verified === false) {
+      return NextResponse.json({
+        error: 'Please verify your email address before logging in',
+        requiresVerification: true,
+        email: normalizedEmail
+      }, { status: 403 })
+    }
+
     // All users authenticate with password
     if (!password) {
       return NextResponse.json({

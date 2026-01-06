@@ -12,7 +12,7 @@ export default function Hero() {
               <span className="text-gradient">Are You Actually Making Money Mining?</span>
             </h1>
             <p className="mt-6 text-xl text-dark-text-muted max-w-xl mx-auto lg:mx-0">
-              Find out in 2 clicks. Net profit dashboard for hobbyist miners—no monthly fees, no OS replacement.
+              Find out in 2 clicks. Net profit dashboard for GPU miners—no monthly fees, no OS replacement.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <CTAButton href="#" variant="primary" className="text-lg px-8 py-4">

@@ -5,6 +5,7 @@ import SolutionSection from '@/components/SolutionSection'
 import Features from '@/components/Features'
 import Pricing from '@/components/Pricing'
 import SocialProof from '@/components/SocialProof'
+import MiningNews from '@/components/MiningNews'
 import FAQ from '@/components/FAQ'
 import FinalCTA from '@/components/FinalCTA'
 import Footer from '@/components/Footer'
@@ -19,6 +20,7 @@ export default function Home() {
       <Features />
       <SocialProof />
       <Pricing />
+      <MiningNews />
       <FAQ />
       <FinalCTA />
       <Footer />

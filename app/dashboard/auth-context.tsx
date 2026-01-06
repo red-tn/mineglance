@@ -9,6 +9,9 @@ interface User {
   plan: string
   profilePhoto: string | null
   licenseKey: string
+  subscriptionEndDate: string | null
+  renewalReminderSent: boolean
+  renewalIgnored: boolean
 }
 
 interface AuthContextType {

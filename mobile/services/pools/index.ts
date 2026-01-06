@@ -4,6 +4,49 @@
 import { POOLS, PoolStats, PoolWorker } from '@/constants/pools';
 import { getCoinDivisor } from '@/constants/coins';
 
+// Free tier restrictions (must match extension)
+export const FREE_TIER_POOLS = ['2miners', 'nanopool', 'herominers'];
+export const FREE_TIER_COINS = ['btc', 'etc', 'rvn', 'ergo', 'kas'];
+export const FREE_TIER_MAX_WALLETS = 2;
+
+export function isPoolAllowedForFree(pool: string): boolean {
+  return FREE_TIER_POOLS.includes(pool?.toLowerCase());
+}
+
+export function isCoinAllowedForFree(coin: string): boolean {
+  return FREE_TIER_COINS.includes(coin?.toLowerCase());
+}
+
+export interface WalletRestriction {
+  allowed: boolean;
+  reason?: string;
+}
+
+export function isWalletAllowed(
+  wallet: { pool: string; coin: string },
+  isPro: boolean,
+  walletIndex: number
+): WalletRestriction {
+  if (isPro) return { allowed: true };
+
+  // Free tier: max 2 wallets
+  if (walletIndex >= FREE_TIER_MAX_WALLETS) {
+    return { allowed: false, reason: 'Free tier is limited to 2 wallets. Upgrade to Pro for unlimited.' };
+  }
+
+  // Check pool restriction
+  if (!isPoolAllowedForFree(wallet.pool)) {
+    return { allowed: false, reason: `${wallet.pool} requires Pro. Free tier supports: 2Miners, Nanopool, HeroMiners.` };
+  }
+
+  // Check coin restriction
+  if (!isCoinAllowedForFree(wallet.coin)) {
+    return { allowed: false, reason: `${wallet.coin.toUpperCase()} requires Pro. Free tier supports: BTC, ETC, RVN, ERGO, KAS.` };
+  }
+
+  return { allowed: true };
+}
+
 /**
  * Parse hashrate string like "100 GH/s" to number
  */

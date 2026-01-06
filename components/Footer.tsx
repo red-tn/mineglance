@@ -55,6 +55,11 @@ export default function Footer() {
             <h3 className="font-semibold text-dark-text mb-4">Resources</h3>
             <ul className="space-y-2 text-sm">
               <li>
+                <Link href="/blog" className="text-dark-text-muted hover:text-primary transition-colors">
+                  Blog
+                </Link>
+              </li>
+              <li>
                 <Link href="/support" className="text-dark-text-muted hover:text-primary transition-colors">
                   Support & Help
                 </Link>

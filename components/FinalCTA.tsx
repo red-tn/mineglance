@@ -9,7 +9,7 @@ export default function FinalCTA() {
             <span className="text-gradient">Stop Guessing. Start Knowing.</span>
           </h2>
           <p className="mt-4 text-xl text-dark-text-muted max-w-2xl mx-auto">
-            Join thousands of hobbyist miners who finally know if they&apos;re actually making money.
+            Join thousands of miners who finally know if they&apos;re actually making money.
           </p>
           <div className="mt-8">
             <CTAButton href="#" variant="primary" className="text-lg px-8 py-4">
