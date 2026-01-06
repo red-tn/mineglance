@@ -76,7 +76,7 @@ export async function POST(
 ) {
   try {
     // Verify user is authenticated
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyUser(token)
 
     if (!session) {
@@ -155,7 +155,7 @@ export async function DELETE(
   { params }: { params: { slug: string } }
 ) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyUser(token)
 
     if (!session) {

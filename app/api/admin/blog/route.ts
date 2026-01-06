@@ -38,7 +38,7 @@ function generateExcerpt(content: string, maxLength: number = 160): string {
 // GET - List all blog posts
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyAdmin(token)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 // POST - Create new blog post
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyAdmin(token)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

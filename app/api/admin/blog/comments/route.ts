@@ -20,7 +20,7 @@ async function verifyAdmin(token: string | null) {
 // GET - List all comments with filters
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyAdmin(token)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 // PATCH - Update comment (approve, flag, respond)
 export async function PATCH(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyAdmin(token)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -119,7 +119,7 @@ export async function PATCH(request: NextRequest) {
 // DELETE - Delete comment
 export async function DELETE(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyAdmin(token)
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
