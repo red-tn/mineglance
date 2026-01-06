@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from './auth-context'
 import Link from 'next/link'
 import Image from 'next/image'
-import CheckoutModal from '@/components/CheckoutModal'
+import UpgradeModal from '@/components/UpgradeModal'
 
 interface DashboardStats {
   activeDevices: number
@@ -183,12 +183,12 @@ export default function DashboardOverview() {
               </div>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <a
-                href="/#pricing"
+              <button
+                onClick={() => setShowUpgradeModal(true)}
                 className="px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors"
               >
                 Renew Now
-              </a>
+              </button>
               <button
                 onClick={() => setRenewalIgnored(true)}
                 className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
@@ -298,9 +298,12 @@ export default function DashboardOverview() {
             </div>
           ) : (
             <div className="mt-4">
-              <a href="/#pricing" className="text-sm text-primary hover:underline">
+              <button
+                onClick={() => setShowUpgradeModal(true)}
+                className="text-sm text-primary hover:underline"
+              >
                 Upgrade to Pro →
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -461,10 +464,9 @@ export default function DashboardOverview() {
       )}
 
       {/* Upgrade Modal */}
-      <CheckoutModal
+      <UpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
-        plan="pro"
         userEmail={user?.email}
       />
     </div>
