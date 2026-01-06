@@ -140,8 +140,6 @@ export async function GET(request: NextRequest) {
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
     // Calculate stats and filter
-    let filteredUsers = users || []
-
     const stats = {
       dueSoon7Days: 0,
       dueSoon30Days: 0,
@@ -150,7 +148,7 @@ export async function GET(request: NextRequest) {
       totalPro: users?.length || 0
     }
 
-    filteredUsers = filteredUsers.map(user => {
+    let filteredUsers = (users || []).map(user => {
       const endDate = user.subscription_end_date ? new Date(user.subscription_end_date) : null
       const daysUntilExpiry = endDate ? Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null
 
