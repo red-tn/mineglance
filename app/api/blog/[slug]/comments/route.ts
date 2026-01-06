@@ -44,7 +44,7 @@ export async function GET(
         parent_id,
         admin_response,
         created_at,
-        users!inner(id, email)
+        users!inner(id, email, blog_display_name)
       `)
       .eq('post_id', post.id)
       .eq('is_approved', true)
@@ -52,15 +52,37 @@ export async function GET(
 
     if (error) throw error
 
-    // Format comments with masked emails
-    const formattedComments = (comments || []).map(comment => ({
-      id: comment.id,
-      content: comment.content,
-      parent_id: comment.parent_id,
-      admin_response: comment.admin_response,
-      created_at: comment.created_at,
-      user_name: ((comment.users as unknown as { email: string }) || {})?.email?.split('@')[0] + '***'
-    }))
+    // Helper to generate display name from email
+    const generateDisplayName = (email: string): string => {
+      const adjectives = ['Swift', 'Crypto', 'Mining', 'Hash', 'Block', 'Golden', 'Lucky', 'Pro', 'Elite', 'Mega']
+      const nouns = ['Miner', 'Hodler', 'Digger', 'Hasher', 'Rig', 'Node', 'Shark', 'Bull', 'King', 'Guru']
+      // Use email hash for consistent name
+      let hash = 0
+      for (let i = 0; i < email.length; i++) {
+        hash = ((hash << 5) - hash) + email.charCodeAt(i)
+        hash |= 0
+      }
+      const adj = adjectives[Math.abs(hash) % adjectives.length]
+      const noun = nouns[Math.abs(hash >> 8) % nouns.length]
+      const num = Math.abs(hash % 1000)
+      return `${adj}${noun}${num}`
+    }
+
+    // Format comments with display names
+    const formattedComments = (comments || []).map(comment => {
+      const user = comment.users as unknown as { email: string; blog_display_name: string | null }
+      const email = user?.email || 'anonymous@example.com'
+      const displayName = user?.blog_display_name || generateDisplayName(email)
+      return {
+        id: comment.id,
+        content: comment.content,
+        parent_id: comment.parent_id,
+        admin_response: comment.admin_response,
+        created_at: comment.created_at,
+        user_name: email.split('@')[0] + '***',
+        display_name: displayName
+      }
+    })
 
     return NextResponse.json({ comments: formattedComments })
   } catch (error) {

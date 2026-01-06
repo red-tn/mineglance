@@ -60,6 +60,7 @@ interface Profile {
   profilePhoto: string | null
   plan: string
   createdAt: string
+  blogDisplayName: string | null
 }
 
 export default function ProfilePage() {
@@ -80,7 +81,8 @@ export default function ProfilePage() {
     city: '',
     state: '',
     zip: '',
-    country: ''
+    country: '',
+    blogDisplayName: ''
   })
 
   // Password change state
@@ -117,7 +119,8 @@ export default function ProfilePage() {
           city: data.profile.city || '',
           state: data.profile.state || '',
           zip: data.profile.zip || '',
-          country: data.profile.country || ''
+          country: data.profile.country || '',
+          blogDisplayName: data.profile.blogDisplayName || ''
         })
       }
     } catch (e) {
@@ -387,6 +390,28 @@ export default function ProfilePage() {
               {success}
             </div>
           )}
+
+          {/* Blog Display Name */}
+          <div>
+            <h3 className="text-lg font-semibold text-dark-text mb-4">Blog Display Name</h3>
+            <p className="text-sm text-dark-text-muted mb-4">
+              This name will be shown on your blog comments. Choose something unique!
+            </p>
+            <div>
+              <label className="block text-sm font-medium text-dark-text mb-1">Display Name</label>
+              <input
+                type="text"
+                value={formData.blogDisplayName}
+                onChange={(e) => setFormData(prev => ({ ...prev, blogDisplayName: e.target.value.replace(/[^a-zA-Z0-9_]/g, '') }))}
+                className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="CryptoMiner42"
+                maxLength={30}
+              />
+              <p className="text-xs text-dark-text-dim mt-1">
+                3-30 characters, letters, numbers and underscores only
+              </p>
+            </div>
+          </div>
 
           {/* Personal Info */}
           <div>

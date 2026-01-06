@@ -27,7 +27,8 @@ interface Comment {
   parent_id: string | null
   admin_response: string | null
   created_at: string
-  user_email: string
+  user_name: string
+  display_name: string
 }
 
 interface RelatedPost {
@@ -375,11 +376,11 @@ export default function BlogPostPage() {
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                         <span className="text-primary font-semibold text-sm">
-                          {comment.user_email.charAt(0).toUpperCase()}
+                          {(comment.display_name || comment.user_name || 'A').charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <span className="text-dark-text font-medium">{comment.user_email}</span>
+                        <span className="text-dark-text font-medium">{comment.display_name || comment.user_name}</span>
                         <span className="text-dark-text-dim text-sm ml-2">
                           {new Date(comment.created_at).toLocaleDateString('en-US', {
                             month: 'short',
@@ -420,10 +421,10 @@ export default function BlogPostPage() {
                           <div className="flex items-center gap-2 mb-2">
                             <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
                               <span className="text-primary font-semibold text-xs">
-                                {reply.user_email.charAt(0).toUpperCase()}
+                                {(reply.display_name || reply.user_name || 'A').charAt(0).toUpperCase()}
                               </span>
                             </div>
-                            <span className="text-dark-text font-medium text-sm">{reply.user_email}</span>
+                            <span className="text-dark-text font-medium text-sm">{reply.display_name || reply.user_name}</span>
                             <span className="text-dark-text-dim text-xs">
                               {new Date(reply.created_at).toLocaleDateString('en-US', {
                                 month: 'short',
