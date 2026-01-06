@@ -59,7 +59,7 @@ export async function GET(
       parent_id: comment.parent_id,
       admin_response: comment.admin_response,
       created_at: comment.created_at,
-      user_name: (comment.users as { email: string })?.email?.split('@')[0] + '***'
+      user_name: ((comment.users as unknown as { email: string }) || {})?.email?.split('@')[0] + '***'
     }))
 
     return NextResponse.json({ comments: formattedComments })
