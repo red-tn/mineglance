@@ -377,72 +377,126 @@ export default function AdminBlogPage() {
             </select>
           </div>
 
-          {/* Posts Table */}
+          {/* Posts Table/Cards */}
           {loading ? (
             <div className="text-center py-12 text-dark-text-muted">Loading...</div>
           ) : posts.length === 0 ? (
             <div className="text-center py-12 text-dark-text-muted">No posts found</div>
           ) : (
-            <div className="glass-card rounded-xl overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-dark-border">
-                    <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Title</th>
-                    <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Status</th>
-                    <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Views</th>
-                    <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Comments</th>
-                    <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Date</th>
-                    <th className="px-4 py-3 text-right text-dark-text-muted font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {posts.map((post) => (
-                    <tr key={post.id} className="border-b border-dark-border/50 hover:bg-dark-card/50">
-                      <td className="px-4 py-3">
-                        <div>
-                          <div className="text-white font-medium">{post.title}</div>
-                          <div className="text-dark-text-muted text-sm">/blog/{post.slug}</div>
-                          <div className="flex gap-2 mt-1">
-                            {post.is_pinned_homepage && (
-                              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">Homepage</span>
-                            )}
-                            {post.is_pinned_dashboard && (
-                              <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Dashboard</span>
-                            )}
+            <>
+              {/* Desktop Table */}
+              <div className="hidden lg:block glass-card rounded-xl overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-dark-border">
+                      <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Title</th>
+                      <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Status</th>
+                      <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Views</th>
+                      <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Comments</th>
+                      <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Date</th>
+                      <th className="px-4 py-3 text-right text-dark-text-muted font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {posts.map((post) => (
+                      <tr key={post.id} className="border-b border-dark-border/50 hover:bg-dark-card/50">
+                        <td className="px-4 py-3">
+                          <div>
+                            <div className="text-white font-medium">{post.title}</div>
+                            <div className="text-dark-text-muted text-sm">/blog/{post.slug}</div>
+                            <div className="flex gap-2 mt-1">
+                              {post.is_pinned_homepage && (
+                                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">Homepage</span>
+                              )}
+                              {post.is_pinned_dashboard && (
+                                <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Dashboard</span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_COLORS[post.status]}`}>
-                          {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-dark-text-muted">{post.view_count || 0}</td>
-                      <td className="px-4 py-3 text-dark-text-muted">{post.comment_count || 0}</td>
-                      <td className="px-4 py-3 text-dark-text-muted text-sm">
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_COLORS[post.status]}`}>
+                            {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-dark-text-muted">{post.view_count || 0}</td>
+                        <td className="px-4 py-3 text-dark-text-muted">{post.comment_count || 0}</td>
+                        <td className="px-4 py-3 text-dark-text-muted text-sm">
+                          {post.published_at
+                            ? new Date(post.published_at).toLocaleDateString()
+                            : new Date(post.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => openEditPost(post)}
+                            className="text-primary hover:text-primary-light mr-3"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Cards */}
+              <div className="lg:hidden space-y-3">
+                {posts.map((post) => (
+                  <div key={post.id} className="glass-card rounded-xl p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1 min-w-0 mr-3">
+                        <div className="text-white font-medium truncate">{post.title}</div>
+                        <div className="text-dark-text-dim text-xs truncate">/blog/{post.slug}</div>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${STATUS_COLORS[post.status]}`}>
+                        {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {post.is_pinned_homepage && (
+                        <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">Homepage</span>
+                      )}
+                      {post.is_pinned_dashboard && (
+                        <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Dashboard</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-dark-text-muted mb-3">
+                      <span>{post.view_count || 0} views</span>
+                      <span>{post.comment_count || 0} comments</span>
+                      <span>
                         {post.published_at
                           ? new Date(post.published_at).toLocaleDateString()
                           : new Date(post.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => openEditPost(post)}
-                          className="text-primary hover:text-primary-light mr-3"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeletePost(post.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </span>
+                    </div>
+
+                    <div className="flex gap-3 pt-3 border-t border-dark-border">
+                      <button
+                        onClick={() => openEditPost(post)}
+                        className="flex-1 px-4 py-2 bg-primary/20 text-primary rounded-lg font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePost(post.id)}
+                        className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg font-medium"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </>
       )}
@@ -570,8 +624,9 @@ export default function AdminBlogPage() {
 
       {/* Post Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-dark-card rounded-xl p-6 max-w-3xl w-full my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/70 z-50 overflow-y-auto">
+          <div className="min-h-full flex items-start sm:items-center justify-center p-2 sm:p-4">
+            <div className="bg-dark-card rounded-xl p-4 sm:p-6 max-w-3xl w-full my-4 sm:my-8">
             <h2 className="text-xl font-bold text-white mb-6">
               {editingPost ? 'Edit Post' : 'New Post'}
             </h2>
@@ -764,7 +819,7 @@ export default function AdminBlogPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-dark-text-muted text-sm mb-1">Status</label>
                   <select
@@ -791,7 +846,7 @@ export default function AdminBlogPage() {
                 )}
               </div>
 
-              <div className="flex gap-6">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -814,20 +869,21 @@ export default function AdminBlogPage() {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex gap-3 mt-6 sticky bottom-0 bg-dark-card pt-4 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 sm:pb-6 -mb-4 sm:-mb-6 border-t border-dark-border">
               <button
                 onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2 bg-dark-border text-white rounded-lg hover:bg-dark-border/80"
+                className="flex-1 px-4 py-3 bg-dark-border text-white rounded-lg hover:bg-dark-border/80"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSavePost}
                 disabled={saving}
-                className="flex-1 btn-primary px-4 py-2 rounded-lg font-medium disabled:opacity-50"
+                className="flex-1 btn-primary px-4 py-3 rounded-lg font-medium disabled:opacity-50"
               >
                 {saving ? 'Saving...' : editingPost ? 'Update Post' : 'Create Post'}
               </button>
+            </div>
             </div>
           </div>
         </div>
