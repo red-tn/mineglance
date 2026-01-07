@@ -209,8 +209,11 @@ export async function DELETE(request: NextRequest) {
     // Delete all related data in order (respecting foreign key constraints)
     const userEmail = user.email.toLowerCase()
 
-    // 1. Delete user instances
-    await supabase.from('user_instances').delete().eq('user_id', userId)
+    // 1. Reset user instances to anonymous (don't delete - device still installed)
+    await supabase
+      .from('user_instances')
+      .update({ user_id: null })
+      .eq('user_id', userId)
 
     // 2. Delete user sessions
     await supabase.from('user_sessions').delete().eq('user_id', userId)
