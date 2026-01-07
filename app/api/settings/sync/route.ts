@@ -92,15 +92,36 @@ export async function GET(request: NextRequest) {
       liteMode: false
     }
 
-    return NextResponse.json({
+    // Log for debugging
+    console.log('GET /api/settings/sync - user_id:', user.id)
+    console.log('GET /api/settings/sync - settings found:', !!settings)
+    console.log('GET /api/settings/sync - raw values:', {
+      notify_worker_offline: settings?.notify_worker_offline,
+      notify_profit_drop: settings?.notify_profit_drop,
+      typeofWorker: typeof settings?.notify_worker_offline,
+      typeofProfit: typeof settings?.notify_profit_drop
+    })
+    console.log('GET /api/settings/sync - parsed values:', {
+      notifyWorkerOffline: clientSettings.notifyWorkerOffline,
+      notifyProfitDrop: clientSettings.notifyProfitDrop
+    })
+
+    const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v2',
+        apiVersion: '2026-01-07-v3',
         settingsFound: !!settings,
+        userId: user.id,
         rawNotifyWorkerOffline: settings?.notify_worker_offline,
-        rawNotifyProfitDrop: settings?.notify_profit_drop
+        rawNotifyProfitDrop: settings?.notify_profit_drop,
+        typeofWorker: typeof settings?.notify_worker_offline,
+        typeofProfit: typeof settings?.notify_profit_drop
       }
     })
+
+    // Prevent caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+    return response
 
   } catch (error) {
     console.error('GET settings error:', error)
