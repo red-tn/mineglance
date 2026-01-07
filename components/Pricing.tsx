@@ -24,7 +24,7 @@ export default function Pricing() {
         'Chrome extension + Mobile app'
       ],
       cta: 'Install Free',
-      href: 'https://chrome.google.com/webstore/detail/mineglance',
+      href: 'https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl',
       popular: false,
       isPaid: false
     },

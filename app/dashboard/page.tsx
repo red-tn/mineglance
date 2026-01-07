@@ -420,7 +420,7 @@ export default function DashboardOverview() {
         <div className="grid gap-4 sm:grid-cols-3">
           {/* Chrome Extension */}
           <a
-            href="https://chrome.google.com/webstore/detail/mineglance"
+            href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group"

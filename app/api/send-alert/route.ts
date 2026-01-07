@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       <a href="https://mineglance.com/dashboard" style="display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px; margin-right: 12px;">
         View Dashboard
       </a>
-      <a href="https://chrome.google.com/webstore/detail/mineglance" style="display: inline-block; background: #e2e8f0; color: #4a5568; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+      <a href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" style="display: inline-block; background: #e2e8f0; color: #4a5568; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px;">
         Open Extension
       </a>
     </div>
