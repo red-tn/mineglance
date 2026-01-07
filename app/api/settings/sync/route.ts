@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v7-GET',
+        apiVersion: '2026-01-07-v8-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -198,17 +198,30 @@ export async function PUT(request: NextRequest) {
     let error
 
     if (existingSettings) {
-      // UPDATE existing row
-      console.log('PUT /api/settings/sync - Updating existing row:', existingSettings.id)
+      // UPDATE existing row - use ID for precision
+      console.log('PUT /api/settings/sync - Updating existing row ID:', existingSettings.id, 'for user:', user.id)
+      console.log('PUT /api/settings/sync - Update payload:', JSON.stringify(updateData))
+
       const result = await supabase
         .from('user_settings')
         .update(updateData)
-        .eq('user_id', user.id)
+        .eq('id', existingSettings.id)  // Use ID instead of user_id for precision
         .select()
-        .single()
-      updatedSettings = result.data
-      error = result.error
+
       console.log('PUT /api/settings/sync - Update result:', JSON.stringify(result))
+      console.log('PUT /api/settings/sync - Rows returned:', result.data?.length || 0)
+
+      if (result.data && result.data.length > 0) {
+        updatedSettings = result.data[0]
+      } else {
+        // Update returned no rows - RLS might be blocking!
+        console.error('PUT /api/settings/sync - UPDATE RETURNED NO ROWS! RLS policy may be blocking.')
+        return NextResponse.json({
+          error: 'Update failed - no rows returned. Check RLS policies.',
+          _debug: { existingId: existingSettings.id, userId: user.id, updateData }
+        }, { status: 500 })
+      }
+      error = result.error
     } else {
       // INSERT new row
       console.log('PUT /api/settings/sync - Inserting new row for user:', user.id)
@@ -248,7 +261,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v7-PUT',
+        apiVersion: '2026-01-07-v8-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
