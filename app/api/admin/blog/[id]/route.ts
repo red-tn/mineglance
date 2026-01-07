@@ -91,14 +91,14 @@ export async function PUT(
       slug: body.slug,
       content: body.content,
       excerpt: body.excerpt,
-      featured_image_url: body.featured_image_url,
-      seo_description: body.seo_description,
+      featured_image_url: body.featured_image_url || null,
+      seo_description: body.seo_description || null,
       status: body.status,
       is_pinned_homepage: body.is_pinned_homepage,
       is_pinned_dashboard: body.is_pinned_dashboard,
       author_name: body.author_name,
       published_at,
-      scheduled_at: body.scheduled_at,
+      scheduled_at: body.scheduled_at || null,
       updated_at: new Date().toISOString()
     }
 
@@ -113,12 +113,15 @@ export async function PUT(
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json({ error: error.message || 'Database error' }, { status: 500 })
+    }
 
     return NextResponse.json({ post })
   } catch (error) {
     console.error('Error updating blog post:', error)
-    return NextResponse.json({ error: 'Failed to update blog post' }, { status: 500 })
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to update blog post' }, { status: 500 })
   }
 }
 
