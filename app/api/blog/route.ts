@@ -13,16 +13,21 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '12')
     const search = searchParams.get('search')
+    const tag = searchParams.get('tag') // Filter by tag
     const pinned = searchParams.get('pinned') // 'homepage' or 'dashboard'
     const offset = (page - 1) * limit
 
     let query = supabase
       .from('blog_posts')
-      .select('id, title, slug, excerpt, featured_image_url, author_name, published_at, view_count, created_at', { count: 'exact' })
+      .select('id, title, slug, excerpt, featured_image_url, author_name, published_at, view_count, created_at, tags', { count: 'exact' })
       .eq('status', 'published')
 
     if (search) {
       query = query.ilike('title', `%${search}%`)
+    }
+
+    if (tag) {
+      query = query.contains('tags', [tag.toLowerCase()])
     }
 
     if (pinned === 'homepage') {
@@ -43,11 +48,33 @@ export async function GET(request: NextRequest) {
       read_time: Math.max(1, Math.ceil((post.excerpt?.length || 0) / 200))
     }))
 
+    // Get popular tags (top 10) - aggregate from all published posts
+    const { data: allPosts } = await supabase
+      .from('blog_posts')
+      .select('tags')
+      .eq('status', 'published')
+
+    const tagCounts: Record<string, number> = {}
+    ;(allPosts || []).forEach(post => {
+      const postTags = post.tags as string[] | null
+      if (postTags && Array.isArray(postTags)) {
+        postTags.forEach(t => {
+          tagCounts[t] = (tagCounts[t] || 0) + 1
+        })
+      }
+    })
+
+    const popularTags = Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([name, count]) => ({ name, count }))
+
     return NextResponse.json({
       posts: postsWithReadTime,
       total: count || 0,
       page,
-      totalPages: Math.ceil((count || 0) / limit)
+      totalPages: Math.ceil((count || 0) / limit),
+      popularTags
     })
   } catch (error) {
     console.error('Error fetching blog posts:', error)

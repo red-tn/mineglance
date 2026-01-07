@@ -74,23 +74,39 @@ export async function PUT(
       published_at = new Date().toISOString()
     }
 
+    // Parse tags - accept both string (comma-separated) and array
+    let tags: string[] | undefined = undefined
+    if (body.tags !== undefined) {
+      if (typeof body.tags === 'string') {
+        tags = body.tags.split(',').map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+      } else if (Array.isArray(body.tags)) {
+        tags = body.tags.map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+      }
+    }
+
+    const updateData: Record<string, unknown> = {
+      title: body.title,
+      slug: body.slug,
+      content: body.content,
+      excerpt: body.excerpt,
+      featured_image_url: body.featured_image_url,
+      seo_description: body.seo_description,
+      status: body.status,
+      is_pinned_homepage: body.is_pinned_homepage,
+      is_pinned_dashboard: body.is_pinned_dashboard,
+      author_name: body.author_name,
+      published_at,
+      scheduled_at: body.scheduled_at,
+      updated_at: new Date().toISOString()
+    }
+
+    if (tags !== undefined) {
+      updateData.tags = tags
+    }
+
     const { data: post, error } = await supabase
       .from('blog_posts')
-      .update({
-        title: body.title,
-        slug: body.slug,
-        content: body.content,
-        excerpt: body.excerpt,
-        featured_image_url: body.featured_image_url,
-        seo_description: body.seo_description,
-        status: body.status,
-        is_pinned_homepage: body.is_pinned_homepage,
-        is_pinned_dashboard: body.is_pinned_dashboard,
-        author_name: body.author_name,
-        published_at,
-        scheduled_at: body.scheduled_at,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', params.id)
       .select()
       .single()

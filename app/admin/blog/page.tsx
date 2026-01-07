@@ -20,6 +20,7 @@ interface BlogPost {
   scheduled_at: string | null
   created_at: string
   comment_count?: number
+  tags?: string[]
 }
 
 interface BlogComment {
@@ -69,7 +70,8 @@ export default function AdminBlogPage() {
     is_pinned_homepage: false,
     is_pinned_dashboard: false,
     author_name: 'MineGlance Team',
-    scheduled_at: ''
+    scheduled_at: '',
+    tags: ''
   })
 
   useEffect(() => {
@@ -146,7 +148,8 @@ export default function AdminBlogPage() {
       is_pinned_homepage: false,
       is_pinned_dashboard: false,
       author_name: 'MineGlance Team',
-      scheduled_at: ''
+      scheduled_at: '',
+      tags: ''
     })
     setShowModal(true)
   }
@@ -164,7 +167,8 @@ export default function AdminBlogPage() {
       is_pinned_homepage: post.is_pinned_homepage,
       is_pinned_dashboard: post.is_pinned_dashboard,
       author_name: post.author_name || 'MineGlance Team',
-      scheduled_at: post.scheduled_at || ''
+      scheduled_at: post.scheduled_at || '',
+      tags: (post.tags || []).join(', ')
     })
     setShowModal(true)
   }
@@ -845,6 +849,18 @@ export default function AdminBlogPage() {
                   onChange={(e) => setForm({ ...form, seo_description: e.target.value })}
                   className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
                 />
+              </div>
+
+              <div>
+                <label className="block text-dark-text-muted text-sm mb-1">Tags</label>
+                <input
+                  type="text"
+                  value={form.tags}
+                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                  placeholder="bitcoin, mining, crypto, news"
+                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-dark-text-dim focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <p className="text-xs text-dark-text-dim mt-1">Comma-separated tags for categorization and search</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

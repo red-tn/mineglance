@@ -392,17 +392,15 @@ export default function DashboardOverview() {
             <span className="text-sm font-medium text-dark-text">Manage Devices</span>
           </Link>
 
-          <a
-            href="https://chrome.google.com/webstore/detail/mineglance"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/dashboard/alerts"
             className="flex items-center gap-3 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors"
           >
             <svg className="w-5 h-5 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
-            <span className="text-sm font-medium text-dark-text">Install Extension</span>
-          </a>
+            <span className="text-sm font-medium text-dark-text">Alert Settings</span>
+          </Link>
 
           <a
             href="mailto:control@mineglance.com"
@@ -412,6 +410,66 @@ export default function DashboardOverview() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
             <span className="text-sm font-medium text-dark-text">Get Support</span>
+          </a>
+        </div>
+      </div>
+
+      {/* Download Apps */}
+      <div className="glass-card rounded-xl p-6 border border-dark-border">
+        <h2 className="text-lg font-semibold text-dark-text mb-4">Download MineGlance</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* Chrome Extension */}
+          <a
+            href="https://chrome.google.com/webstore/detail/mineglance"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm13.412 2.514l-3.766 6.522a5.45 5.45 0 0 1 3.768 5.167A5.454 5.454 0 0 1 12 21.818l-.391.001h10.073A11.944 11.944 0 0 0 24 12c0-1.387-.236-2.721-.669-3.962H15.343z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-dark-text group-hover:text-primary transition-colors">Chrome Extension</p>
+              <p className="text-xs text-dark-text-muted">Also works on Edge, Brave</p>
+            </div>
+          </a>
+
+          {/* iOS App */}
+          <a
+            href="https://apps.apple.com/app/mineglance"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-lg bg-gray-500/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-dark-text group-hover:text-primary transition-colors">iOS App</p>
+              <p className="text-xs text-dark-text-muted">iPhone &amp; iPad</p>
+            </div>
+          </a>
+
+          {/* Android App */}
+          <a
+            href="https://play.google.com/store/apps/details?id=com.mineglance"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-green-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.523 2.047a.5.5 0 0 0-.508.016L3.894 10.5l3.075 3.074 10.554-10.554a.5.5 0 0 0-.016-.508zM2.406 11.152a.5.5 0 0 0-.156.363v.969a.5.5 0 0 0 .156.363l8.032 8.031a.5.5 0 0 0 .363.156h.969a.5.5 0 0 0 .363-.156l.015-.015-9.742-9.711zM3.516 21.078l13.125 7.594a.5.5 0 0 0 .75-.438v-.469a.5.5 0 0 0-.219-.406L7.938 21.89l-4.422 4.438zm17.578-7.828l-3.516 2.031 3.141 3.141a.5.5 0 0 0 .688-.016l2.156-2.156a.5.5 0 0 0-.016-.688l-2.453-2.312z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-medium text-dark-text group-hover:text-primary transition-colors">Android App</p>
+              <p className="text-xs text-dark-text-muted">Coming Soon</p>
+            </div>
           </a>
         </div>
       </div>

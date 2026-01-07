@@ -120,6 +120,16 @@ export async function POST(request: NextRequest) {
     // Generate excerpt if not provided
     const excerpt = body.excerpt || generateExcerpt(body.content || '')
 
+    // Parse tags - accept both string (comma-separated) and array
+    let tags: string[] = []
+    if (body.tags) {
+      if (typeof body.tags === 'string') {
+        tags = body.tags.split(',').map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+      } else if (Array.isArray(body.tags)) {
+        tags = body.tags.map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+      }
+    }
+
     const { data: post, error } = await supabase
       .from('blog_posts')
       .insert({
@@ -134,7 +144,8 @@ export async function POST(request: NextRequest) {
         is_pinned_dashboard: body.is_pinned_dashboard || false,
         author_name: body.author_name || 'MineGlance Team',
         published_at: body.status === 'published' ? new Date().toISOString() : null,
-        scheduled_at: body.scheduled_at
+        scheduled_at: body.scheduled_at,
+        tags
       })
       .select()
       .single()

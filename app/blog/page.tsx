@@ -16,15 +16,23 @@ interface BlogPost {
   published_at: string
   view_count: number
   read_time: number
+  tags?: string[]
+}
+
+interface PopularTag {
+  name: string
+  count: number
 }
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
+  const [popularTags, setPopularTags] = useState<PopularTag[]>([])
 
   const fetchPosts = useCallback(async () => {
     setLoading(true)
@@ -34,6 +42,7 @@ export default function BlogPage() {
         limit: '12'
       })
       if (search) params.set('search', search)
+      if (selectedTag) params.set('tag', selectedTag)
 
       const res = await fetch(`/api/blog?${params}`)
       if (res.ok) {
@@ -41,13 +50,14 @@ export default function BlogPage() {
         setPosts(data.posts || [])
         setTotalPages(data.totalPages || 1)
         setTotal(data.total || 0)
+        setPopularTags(data.popularTags || [])
       }
     } catch (error) {
       console.error('Error fetching posts:', error)
     } finally {
       setLoading(false)
     }
-  }, [page, search])
+  }, [page, search, selectedTag])
 
   useEffect(() => {
     fetchPosts()
@@ -75,7 +85,7 @@ export default function BlogPage() {
         </div>
 
         {/* Search */}
-        <div className="max-w-xl mx-auto mb-10">
+        <div className="max-w-xl mx-auto mb-6">
           <form onSubmit={handleSearch} className="relative">
             <input
               type="text"
@@ -106,11 +116,44 @@ export default function BlogPage() {
           </form>
         </div>
 
+        {/* Popular Tags */}
+        {popularTags.length > 0 && (
+          <div className="max-w-3xl mx-auto mb-10">
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="text-sm text-dark-text-muted mr-2">Popular:</span>
+              {selectedTag && (
+                <button
+                  onClick={() => { setSelectedTag(null); setPage(1); }}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-primary text-white flex items-center gap-1"
+                >
+                  {selectedTag}
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+              {popularTags
+                .filter(tag => tag.name !== selectedTag)
+                .map((tag) => (
+                <button
+                  key={tag.name}
+                  onClick={() => { setSelectedTag(tag.name); setPage(1); }}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-dark-card border border-dark-border text-dark-text-muted hover:border-primary hover:text-primary transition-colors"
+                >
+                  {tag.name}
+                  <span className="ml-1 text-xs text-dark-text-dim">({tag.count})</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Results Count */}
         {!loading && (
           <p className="text-center text-dark-text-muted mb-8">
             {total} {total === 1 ? 'article' : 'articles'} found
             {search && ` for "${search}"`}
+            {selectedTag && ` tagged "${selectedTag}"`}
           </p>
         )}
 
