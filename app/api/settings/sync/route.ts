@@ -3,14 +3,23 @@ import { createClient } from '@supabase/supabase-js'
 
 // Force dynamic rendering for this API route
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Create fresh Supabase client per request to avoid caching issues
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      db: { schema: 'public' },
+      auth: { persistSession: false }
+    }
+  )
+}
 
 // Helper to get authenticated user from token
 async function getAuthenticatedUser(request: NextRequest) {
+  const supabase = getSupabase()
   const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
     return null
@@ -35,6 +44,7 @@ async function getAuthenticatedUser(request: NextRequest) {
 
 // GET - Fetch user settings
 export async function GET(request: NextRequest) {
+  const supabase = getSupabase()
   try {
     const user = await getAuthenticatedUser(request)
     if (!user) {
@@ -122,7 +132,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v17-GET',
+        apiVersion: '2026-01-07-v18-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -151,6 +161,7 @@ export async function GET(request: NextRequest) {
 
 // PUT - Update user settings
 export async function PUT(request: NextRequest) {
+  const supabase = getSupabase()
   try {
     const user = await getAuthenticatedUser(request)
     if (!user) {
@@ -230,7 +241,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v17-PUT',
+        apiVersion: '2026-01-07-v18-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
