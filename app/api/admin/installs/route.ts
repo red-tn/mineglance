@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
     const periodDays = parseInt(period)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    // Get all user instances with their user data
+    // Get all user instances with their user data (logged-in users)
     const { data: instances } = await supabase
       .from('user_instances')
       .select(`
@@ -180,22 +180,55 @@ export async function GET(request: NextRequest) {
       `)
       .order('last_seen', { ascending: false })
 
-    // Map to installation format
-    const allInstalls = (instances || []).map(inst => ({
+    // Get anonymous extension installs (not yet logged in)
+    const { data: anonInstalls } = await supabase
+      .from('extension_installs')
+      .select('*')
+      .order('last_seen', { ascending: false })
+
+    // Map user instances to installation format
+    const userInstalls = (instances || []).map(inst => ({
       id: inst.id,
       instance_id: inst.instance_id || inst.id,
       user_id: inst.user_id,
       email: inst.user?.email,
       plan: inst.user?.plan || 'free',
       license_key: inst.user?.license_key,
-      isPro: inst.user?.plan === 'pro',
+      isPro: inst.user?.plan === 'pro' || inst.user?.plan === 'bundle',
       device_type: inst.device_type || 'extension',
       device_name: inst.device_name,
       browser: inst.browser || inst.device_type,
       version: inst.version,
       created_at: inst.created_at,
-      last_seen: inst.last_seen
+      last_seen: inst.last_seen,
+      isAnonymous: false
     }))
+
+    // Get instance IDs from user_instances to filter out duplicates
+    const userInstanceIds = new Set(userInstalls.map(i => i.instance_id))
+
+    // Map anonymous installs (exclude any that are also in user_instances)
+    const anonInstallsMapped = (anonInstalls || [])
+      .filter(inst => !userInstanceIds.has(inst.install_id))
+      .map(inst => ({
+        id: inst.id,
+        instance_id: inst.install_id,
+        user_id: null,
+        email: inst.email || null,
+        plan: 'free',
+        license_key: null,
+        isPro: false,
+        device_type: 'extension',
+        device_name: null,
+        browser: inst.browser || 'chrome',
+        version: inst.version,
+        created_at: inst.created_at,
+        last_seen: inst.last_seen,
+        isAnonymous: true
+      }))
+
+    // Combine both lists
+    const allInstalls = [...userInstalls, ...anonInstallsMapped]
 
     // Platform-specific counts
     const extensionInstalls = allInstalls.filter(i => i.device_type === 'extension')
@@ -345,7 +378,8 @@ export async function GET(request: NextRequest) {
       first_seen: i.created_at,
       last_seen: i.last_seen,
       isPro: i.isPro,
-      plan: i.plan
+      plan: i.plan,
+      isAnonymous: i.isAnonymous || false
     }))
 
     return NextResponse.json({
