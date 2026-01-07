@@ -393,7 +393,7 @@ export default function AdminBlogPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-dark-border">
-                      <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Title</th>
+                      <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Post</th>
                       <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Status</th>
                       <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Views</th>
                       <th className="px-4 py-3 text-left text-dark-text-muted font-medium">Comments</th>
@@ -405,26 +405,48 @@ export default function AdminBlogPage() {
                     {posts.map((post) => (
                       <tr key={post.id} className="border-b border-dark-border/50 hover:bg-dark-card/50">
                         <td className="px-4 py-3">
-                          <div>
-                            <a
-                              href={`/blog/${post.slug}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-white font-medium hover:text-primary transition-colors"
-                            >
-                              {post.title}
-                              <svg className="inline-block w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                            </a>
-                            <div className="text-dark-text-muted text-sm">/blog/{post.slug}</div>
-                            <div className="flex gap-2 mt-1">
-                              {post.is_pinned_homepage && (
-                                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">Homepage</span>
+                          <div className="flex items-center gap-3">
+                            {/* Thumbnail */}
+                            <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden border-2 border-white/20">
+                              {post.featured_image_url ? (
+                                <Image
+                                  src={post.featured_image_url}
+                                  alt={post.title}
+                                  width={48}
+                                  height={48}
+                                  className="w-full h-full object-cover"
+                                  unoptimized
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-dark-border flex items-center justify-center">
+                                  <svg className="w-5 h-5 text-dark-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
                               )}
-                              {post.is_pinned_dashboard && (
-                                <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Dashboard</span>
-                              )}
+                            </div>
+                            {/* Title & Info */}
+                            <div className="min-w-0">
+                              <a
+                                href={`/blog/${post.slug}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-white font-medium hover:text-primary transition-colors line-clamp-1"
+                              >
+                                {post.title}
+                                <svg className="inline-block w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                              </a>
+                              <div className="text-dark-text-muted text-sm truncate">/blog/{post.slug}</div>
+                              <div className="flex gap-2 mt-1">
+                                {post.is_pinned_homepage && (
+                                  <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">Homepage</span>
+                                )}
+                                {post.is_pinned_dashboard && (
+                                  <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Dashboard</span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -464,18 +486,35 @@ export default function AdminBlogPage() {
               <div className="lg:hidden space-y-3">
                 {posts.map((post) => (
                   <div key={post.id} className="glass-card rounded-xl p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1 min-w-0 mr-3">
+                    <div className="flex gap-3 mb-2">
+                      {/* Thumbnail */}
+                      <div className="w-14 h-14 flex-shrink-0 rounded overflow-hidden border-2 border-white/20">
+                        {post.featured_image_url ? (
+                          <Image
+                            src={post.featured_image_url}
+                            alt={post.title}
+                            width={56}
+                            height={56}
+                            className="w-full h-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-dark-border flex items-center justify-center">
+                            <svg className="w-6 h-6 text-dark-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      {/* Title & Status */}
+                      <div className="flex-1 min-w-0">
                         <a
                           href={`/blog/${post.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-white font-medium hover:text-primary transition-colors block truncate"
+                          className="text-white font-medium hover:text-primary transition-colors block line-clamp-2"
                         >
                           {post.title}
-                          <svg className="inline-block w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
                         </a>
                         <div className="text-dark-text-dim text-xs truncate">/blog/{post.slug}</div>
                       </div>
