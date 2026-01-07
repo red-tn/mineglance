@@ -409,27 +409,33 @@ document.addEventListener('DOMContentLoaded', async () => {
           const settingsData = await settingsRes.json();
           if (settingsData.settings) {
             const s = settingsData.settings;
-            // Merge server settings with local (API returns proper booleans now)
-            await chrome.storage.local.set({
-              electricity: {
-                rate: s.electricityRate || 0.12,
-                currency: s.electricityCurrency || 'USD'
-              },
-              settings: {
-                refreshInterval: s.refreshInterval || 30,
-                showDiscovery: s.showDiscoveryCoins,
-                liteMode: s.liteMode,
-                notifications: {
-                  workerOffline: s.notifyWorkerOffline,
-                  profitDrop: s.notifyProfitDrop,
-                  profitDropThreshold: s.profitDropThreshold || 20,
-                  betterCoin: s.notifyBetterCoin,
-                  emailEnabled: s.emailAlertsEnabled,
-                  alertEmail: s.emailAlertsAddress || '',
-                  emailFrequency: s.emailFrequency || 'daily'
-                }
+            // Update local storage AND the data variable so UI shows server values
+            const serverElectricity = {
+              rate: s.electricityRate || 0.12,
+              currency: s.electricityCurrency || 'USD'
+            };
+            const serverSettings = {
+              refreshInterval: s.refreshInterval || 30,
+              showDiscovery: s.showDiscoveryCoins,
+              liteMode: s.liteMode,
+              notifications: {
+                workerOffline: s.notifyWorkerOffline,
+                profitDrop: s.notifyProfitDrop,
+                profitDropThreshold: s.profitDropThreshold || 20,
+                betterCoin: s.notifyBetterCoin,
+                emailEnabled: s.emailAlertsEnabled,
+                alertEmail: s.emailAlertsAddress || '',
+                emailFrequency: s.emailFrequency || 'daily'
               }
+            };
+            await chrome.storage.local.set({
+              electricity: serverElectricity,
+              settings: serverSettings
             });
+            // Update data variable so UI uses server values
+            data.electricity = serverElectricity;
+            data.settings = serverSettings;
+            console.log('Settings loaded from server:', s);
           }
         }
       } catch (err) {
