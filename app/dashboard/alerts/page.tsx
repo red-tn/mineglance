@@ -8,6 +8,7 @@ interface AlertSettings {
   notifyWorkerOffline: boolean
   notifyProfitDrop: boolean
   profitDropThreshold: number
+  notifyBetterCoin: boolean
   emailAlertsEnabled: boolean
   emailAlertsAddress: string
   emailFrequency: string
@@ -26,6 +27,7 @@ export default function AlertsPage() {
     notifyWorkerOffline: true,
     notifyProfitDrop: true,
     profitDropThreshold: 20,
+    notifyBetterCoin: false,
     emailAlertsEnabled: false,
     emailAlertsAddress: '',
     emailFrequency: 'immediate'
@@ -260,7 +262,7 @@ export default function AlertsPage() {
           </div>
 
           {/* Profit Drop */}
-          <div className="flex items-center justify-between py-3">
+          <div className="flex items-center justify-between py-3 border-b border-dark-border">
             <div>
               <p className="font-medium text-dark-text">Profit Drop Alert</p>
               <p className="text-sm text-dark-text-muted">Alert when profit drops significantly</p>
@@ -290,6 +292,23 @@ export default function AlertsPage() {
                 <div className="w-11 h-6 bg-dark-border peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-dark-text-muted after:border-dark-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-white"></div>
               </label>
             </div>
+          </div>
+
+          {/* Better Coin Available */}
+          <div className="flex items-center justify-between py-3">
+            <div>
+              <p className="font-medium text-dark-text">More Profitable Coin Available</p>
+              <p className="text-sm text-dark-text-muted">Alert when a more profitable coin is detected</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.notifyBetterCoin}
+                onChange={(e) => saveSettings({ notifyBetterCoin: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-dark-border peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-dark-text-muted after:border-dark-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary peer-checked:after:bg-white"></div>
+            </label>
           </div>
         </div>
       </div>

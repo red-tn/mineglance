@@ -8,14 +8,13 @@ import { getColors, spacing, borderRadius, fontSize } from '@/constants/theme';
 
 const API_BASE = 'https://www.mineglance.com/api';
 
-interface Device {
-  id: string;
-  installId: string;
-  deviceName: string;
-  deviceType: string;
-  browser?: string;
-  version?: string;
-  lastSeen: string;
+interface Profile {
+  email: string;
+  fullName: string | null;
+  phone: string | null;
+  plan: string;
+  createdAt: string;
+  blogDisplayName: string | null;
 }
 
 export default function ProfileScreen() {
@@ -24,63 +23,81 @@ export default function ProfileScreen() {
   const colors = getColors(liteMode);
 
   const { email, plan, authToken, clearAuth, isPro, activateLicense } = useAuthStore();
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [isLoadingDevices, setIsLoadingDevices] = useState(true);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   // License activation state
   const [licenseKey, setLicenseKey] = useState('');
   const [isActivating, setIsActivating] = useState(false);
   const [activationError, setActivationError] = useState('');
 
+  // Profile editing state
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    blogDisplayName: ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   useEffect(() => {
-    loadDevices();
+    loadProfile();
   }, []);
 
-  const loadDevices = async () => {
-    if (!authToken) return;
+  const loadProfile = async () => {
+    if (!authToken) {
+      setIsLoadingProfile(false);
+      return;
+    }
 
-    setIsLoadingDevices(true);
     try {
-      const response = await fetch(`${API_BASE}/dashboard/devices`, {
+      const response = await fetch(`${API_BASE}/dashboard/profile`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
 
       if (response.ok) {
         const data = await response.json();
-        setDevices(data.devices || []);
+        setProfile(data.profile);
+        setFormData({
+          fullName: data.profile.fullName || '',
+          phone: data.profile.phone || '',
+          blogDisplayName: data.profile.blogDisplayName || ''
+        });
       }
     } catch (error) {
-      console.error('Failed to load devices:', error);
+      console.error('Failed to load profile:', error);
     }
-    setIsLoadingDevices(false);
+    setIsLoadingProfile(false);
   };
 
-  const handleRemoveDevice = async (instanceId: string) => {
-    Alert.alert(
-      'Remove Device',
-      'Are you sure you want to remove this device?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const response = await fetch(`${API_BASE}/dashboard/devices?instanceId=${instanceId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${authToken}` }
-              });
+  const handleSaveProfile = async () => {
+    if (!authToken) return;
 
-              if (response.ok) {
-                setDevices(devices.filter(d => d.installId !== instanceId));
-              }
-            } catch (error) {
-              console.error('Failed to remove device:', error);
-            }
-          }
-        }
-      ]
-    );
+    setIsSaving(true);
+    setSaveSuccess(false);
+
+    try {
+      const response = await fetch(`${API_BASE}/dashboard/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        setSaveSuccess(true);
+        loadProfile();
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.error || 'Failed to save profile');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save profile');
+    }
+    setIsSaving(false);
   };
 
   const handleSignOut = () => {
@@ -99,24 +116,6 @@ export default function ProfileScreen() {
         }
       ]
     );
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getDeviceIcon = (deviceType: string) => {
-    switch (deviceType) {
-      case 'extension':
-        return 'desktop-outline';
-      case 'mobile_ios':
-        return 'phone-portrait-outline';
-      case 'mobile_android':
-        return 'phone-portrait-outline';
-      default:
-        return 'hardware-chip-outline';
-    }
   };
 
   const handleActivateLicense = async () => {
@@ -153,10 +152,11 @@ export default function ProfileScreen() {
             <Ionicons name="person" size={32} color={colors.primary} />
           </View>
           <View style={styles.userInfo}>
-            <Text style={[styles.email, { color: colors.text }]}>{email}</Text>
+            <Text style={[styles.email, { color: colors.text }]}>{profile?.fullName || email}</Text>
+            <Text style={[styles.emailSmall, { color: colors.textMuted }]}>{email}</Text>
             <View style={[styles.planBadge, { backgroundColor: isPro() ? colors.primary : colors.border }]}>
               <Text style={styles.planBadgeText}>
-                {isPro() ? 'PRO' : 'FREE'}
+                {plan === 'bundle' ? 'PRO+' : isPro() ? 'PRO' : 'FREE'}
               </Text>
             </View>
           </View>
@@ -169,6 +169,74 @@ export default function ProfileScreen() {
           >
             <Text style={styles.upgradeButtonText}>Upgrade to Pro - $59/year</Text>
           </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Profile Edit Card */}
+      <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Profile Information</Text>
+
+        {isLoadingProfile ? (
+          <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+        ) : (
+          <>
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                placeholder="Enter your name"
+                placeholderTextColor={colors.textMuted}
+                value={formData.fullName}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, fullName: text }))}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Phone Number</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                placeholder="+1 (555) 123-4567"
+                placeholderTextColor={colors.textMuted}
+                value={formData.phone}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Blog Display Name</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+                placeholder="CryptoMiner42"
+                placeholderTextColor={colors.textMuted}
+                value={formData.blogDisplayName}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, blogDisplayName: text.replace(/[^a-zA-Z0-9_]/g, '') }))}
+                autoCapitalize="none"
+                maxLength={30}
+              />
+              <Text style={[styles.inputHint, { color: colors.textMuted }]}>
+                Letters, numbers and underscores only
+              </Text>
+            </View>
+
+            {saveSuccess && (
+              <View style={[styles.successBanner, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]}>
+                <Text style={[styles.successText, { color: colors.primary }]}>Profile saved successfully!</Text>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.saveButton, { backgroundColor: colors.primary }, isSaving && styles.buttonDisabled]}
+              onPress={handleSaveProfile}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              )}
+            </TouchableOpacity>
+          </>
         )}
       </View>
 
@@ -227,14 +295,14 @@ export default function ProfileScreen() {
         <View style={styles.infoRow}>
           <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Plan</Text>
           <Text style={[styles.infoValue, { color: colors.text }]}>
-            {isPro() ? 'Pro (Annual)' : 'Free'}
+            {plan === 'bundle' ? 'Pro Plus' : isPro() ? 'Pro (Annual)' : 'Free'}
           </Text>
         </View>
 
         <View style={styles.infoRow}>
           <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Wallets</Text>
           <Text style={[styles.infoValue, { color: colors.text }]}>
-            {isPro() ? 'Unlimited' : '1 wallet'}
+            {isPro() ? 'Unlimited' : '2 wallets'}
           </Text>
         </View>
 
@@ -244,45 +312,14 @@ export default function ProfileScreen() {
             {isPro() ? 'Enabled' : 'Limited'}
           </Text>
         </View>
-      </View>
 
-      {/* Connected Devices */}
-      <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>Connected Devices</Text>
-
-        {isLoadingDevices ? (
-          <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
-        ) : devices.length === 0 ? (
-          <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-            No devices connected
-          </Text>
-        ) : (
-          devices.map((device) => (
-            <View key={device.id} style={[styles.deviceRow, { borderBottomColor: colors.border }]}>
-              <View style={styles.deviceInfo}>
-                <Ionicons
-                  name={getDeviceIcon(device.deviceType) as any}
-                  size={20}
-                  color={colors.textMuted}
-                  style={{ marginRight: 12 }}
-                />
-                <View>
-                  <Text style={[styles.deviceName, { color: colors.text }]}>
-                    {device.deviceName}
-                  </Text>
-                  <Text style={[styles.deviceMeta, { color: colors.textMuted }]}>
-                    Last seen: {formatDate(device.lastSeen)}
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                onPress={() => handleRemoveDevice(device.installId)}
-                style={styles.removeButton}
-              >
-                <Ionicons name="close-circle-outline" size={24} color={colors.danger} />
-              </TouchableOpacity>
-            </View>
-          ))
+        {profile?.createdAt && (
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Member Since</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>
+              {new Date(profile.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
         )}
       </View>
 
@@ -330,6 +367,10 @@ const styles = StyleSheet.create({
   email: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    marginBottom: 2,
+  },
+  emailSmall: {
+    fontSize: fontSize.sm,
     marginBottom: 4,
   },
   planBadge: {
@@ -370,34 +411,6 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: fontSize.md,
     fontWeight: '500',
-  },
-  emptyText: {
-    textAlign: 'center',
-    paddingVertical: spacing.lg,
-    fontSize: fontSize.sm,
-  },
-  deviceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  deviceInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  deviceName: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
-  },
-  deviceMeta: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  removeButton: {
-    padding: spacing.xs,
   },
   signOutButton: {
     flexDirection: 'row',
@@ -450,5 +463,43 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     textAlign: 'center',
     marginTop: spacing.md,
+  },
+  inputGroup: {
+    marginBottom: spacing.md,
+  },
+  inputLabel: {
+    fontSize: fontSize.sm,
+    marginBottom: spacing.xs,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    fontSize: fontSize.md,
+  },
+  inputHint: {
+    fontSize: fontSize.xs,
+    marginTop: spacing.xs,
+  },
+  saveButton: {
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  successBanner: {
+    borderWidth: 1,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  successText: {
+    fontSize: fontSize.sm,
+    textAlign: 'center',
   },
 });

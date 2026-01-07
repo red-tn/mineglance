@@ -63,6 +63,9 @@ export async function GET(request: NextRequest) {
       notifyProfitDrop: settings.notify_profit_drop,
       profitDropThreshold: settings.profit_drop_threshold,
       notifyBetterCoin: settings.notify_better_coin,
+      emailAlertsEnabled: settings.email_alerts_enabled,
+      emailAlertsAddress: settings.email_alerts_address || user.email,
+      emailFrequency: settings.email_frequency,
       showDiscoveryCoins: settings.show_discovery_coins,
       liteMode: settings.lite_mode
     } : {
@@ -75,6 +78,9 @@ export async function GET(request: NextRequest) {
       notifyProfitDrop: true,
       profitDropThreshold: 20,
       notifyBetterCoin: false,
+      emailAlertsEnabled: false,
+      emailAlertsAddress: user.email || '',
+      emailFrequency: 'immediate',
       showDiscoveryCoins: true,
       liteMode: false
     }
@@ -111,6 +117,9 @@ export async function PUT(request: NextRequest) {
     if (settings.notifyProfitDrop !== undefined) updateData.notify_profit_drop = settings.notifyProfitDrop
     if (settings.profitDropThreshold !== undefined) updateData.profit_drop_threshold = settings.profitDropThreshold
     if (settings.notifyBetterCoin !== undefined) updateData.notify_better_coin = settings.notifyBetterCoin
+    if (settings.emailAlertsEnabled !== undefined) updateData.email_alerts_enabled = settings.emailAlertsEnabled
+    if (settings.emailAlertsAddress !== undefined) updateData.email_alerts_address = settings.emailAlertsAddress
+    if (settings.emailFrequency !== undefined) updateData.email_frequency = settings.emailFrequency
     if (settings.showDiscoveryCoins !== undefined) updateData.show_discovery_coins = settings.showDiscoveryCoins
     if (settings.liteMode !== undefined) updateData.lite_mode = settings.liteMode
 
@@ -143,6 +152,9 @@ export async function PUT(request: NextRequest) {
         notifyProfitDrop: updatedSettings.notify_profit_drop,
         profitDropThreshold: updatedSettings.profit_drop_threshold,
         notifyBetterCoin: updatedSettings.notify_better_coin,
+        emailAlertsEnabled: updatedSettings.email_alerts_enabled,
+        emailAlertsAddress: updatedSettings.email_alerts_address,
+        emailFrequency: updatedSettings.email_frequency,
         showDiscoveryCoins: updatedSettings.show_discovery_coins,
         liteMode: updatedSettings.lite_mode
       }

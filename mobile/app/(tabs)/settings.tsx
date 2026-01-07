@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,26 +9,112 @@ import {
   TextInput,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 
 const WEBSITE_URL = 'https://www.mineglance.com';
+const API_BASE = 'https://www.mineglance.com/api';
 const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 const BUILD_NUMBER = Constants.expoConfig?.ios?.buildNumber || '1';
 import { getColors, spacing, borderRadius, fontSize } from '@/constants/theme';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useAuthStore } from '@/stores/authStore';
 
+interface Device {
+  id: string;
+  installId: string;
+  deviceName: string;
+  deviceType: string;
+  browser?: string;
+  version?: string;
+  lastSeen: string;
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
   const settings = useSettingsStore();
-  const { licenseKey, plan, clearAuth, isPro } = useAuthStore();
+  const { licenseKey, plan, authToken, clearAuth, isPro } = useAuthStore();
   const [showLicenseKey, setShowLicenseKey] = useState(false);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [isLoadingDevices, setIsLoadingDevices] = useState(true);
 
   // Dynamic colors based on theme
   const colors = getColors(settings.liteMode);
   const styles = useMemo(() => createStyles(colors), [settings.liteMode]);
+
+  useEffect(() => {
+    loadDevices();
+  }, []);
+
+  const loadDevices = async () => {
+    if (!authToken) {
+      setIsLoadingDevices(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/dashboard/devices`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDevices(data.devices || []);
+      }
+    } catch (error) {
+      console.error('Failed to load devices:', error);
+    }
+    setIsLoadingDevices(false);
+  };
+
+  const handleRemoveDevice = async (instanceId: string) => {
+    Alert.alert(
+      'Remove Device',
+      'Are you sure you want to remove this device?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await fetch(`${API_BASE}/dashboard/devices?instanceId=${instanceId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+              });
+
+              if (response.ok) {
+                setDevices(devices.filter(d => d.installId !== instanceId));
+              }
+            } catch (error) {
+              console.error('Failed to remove device:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const getDeviceIcon = (deviceType: string): any => {
+    switch (deviceType) {
+      case 'extension':
+        return 'desktop-outline';
+      case 'mobile_ios':
+        return 'phone-portrait-outline';
+      case 'mobile_android':
+        return 'phone-portrait-outline';
+      default:
+        return 'hardware-chip-outline';
+    }
+  };
 
   const handleDeactivate = () => {
     Alert.alert(
@@ -94,6 +180,55 @@ export default function SettingsScreen() {
                 <Text style={styles.upgradeButtonText}>Upgrade to Pro - $59/year</Text>
               </TouchableOpacity>
             </>
+          )}
+        </View>
+      </View>
+
+      {/* Connected Devices Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Connected Devices</Text>
+
+        <View style={styles.card}>
+          {isLoadingDevices ? (
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+          ) : devices.length === 0 ? (
+            <Text style={styles.noDevicesText}>No devices connected</Text>
+          ) : (
+            devices.map((device, index) => (
+              <View
+                key={device.id}
+                style={[
+                  styles.deviceRow,
+                  index === devices.length - 1 && { borderBottomWidth: 0 }
+                ]}
+              >
+                <View style={styles.deviceIcon}>
+                  <Ionicons
+                    name={getDeviceIcon(device.deviceType)}
+                    size={24}
+                    color={colors.primary}
+                  />
+                </View>
+                <View style={styles.deviceInfo}>
+                  <Text style={styles.deviceName}>{device.deviceName}</Text>
+                  <Text style={styles.deviceMeta}>
+                    {device.deviceType === 'extension' ? 'Chrome Extension' :
+                     device.deviceType === 'mobile_ios' ? 'iOS App' :
+                     device.deviceType === 'mobile_android' ? 'Android App' : device.deviceType}
+                    {device.version ? ` v${device.version}` : ''}
+                  </Text>
+                  <Text style={styles.deviceLastSeen}>
+                    Last seen: {formatDate(device.lastSeen)}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.removeDeviceButton}
+                  onPress={() => handleRemoveDevice(device.installId)}
+                >
+                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                </TouchableOpacity>
+              </View>
+            ))
           )}
         </View>
       </View>
@@ -497,5 +632,48 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
   linkText: {
     fontSize: fontSize.md,
     color: colors.primary,
+  },
+  noDevicesText: {
+    fontSize: fontSize.md,
+    color: colors.textMuted,
+    textAlign: 'center',
+    paddingVertical: spacing.md,
+  },
+  deviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  deviceIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  deviceInfo: {
+    flex: 1,
+  },
+  deviceName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  deviceMeta: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  deviceLastSeen: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  removeDeviceButton: {
+    padding: spacing.sm,
   },
 });

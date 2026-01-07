@@ -26,35 +26,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
     }
 
-    // Get user settings and plan
-    const { data: user, error } = await supabase
+    // Get user plan and email
+    const { data: user, error: userError } = await supabase
       .from('users')
-      .select(`
-        plan,
-        notify_worker_offline,
-        notify_profit_drop,
-        profit_drop_threshold,
-        email_alerts_enabled,
-        email_alerts_address,
-        email_frequency,
-        email
-      `)
+      .select('plan, email')
       .eq('id', session.user_id)
       .single()
 
-    if (error) throw error
+    if (userError) throw userError
+
+    // Get settings from user_settings table (same as extension uses)
+    const { data: settings, error: settingsError } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', session.user_id)
+      .single()
 
     const isPro = user.plan === 'pro' || user.plan === 'bundle'
 
+    // Return settings with defaults if not found
     return NextResponse.json({
       isPro,
       settings: {
-        notifyWorkerOffline: user.notify_worker_offline ?? true,
-        notifyProfitDrop: user.notify_profit_drop ?? true,
-        profitDropThreshold: user.profit_drop_threshold ?? 20,
-        emailAlertsEnabled: user.email_alerts_enabled ?? false,
-        emailAlertsAddress: user.email_alerts_address || user.email,
-        emailFrequency: user.email_frequency || 'immediate'
+        notifyWorkerOffline: settings?.notify_worker_offline ?? true,
+        notifyProfitDrop: settings?.notify_profit_drop ?? true,
+        profitDropThreshold: settings?.profit_drop_threshold ?? 20,
+        notifyBetterCoin: settings?.notify_better_coin ?? false,
+        emailAlertsEnabled: settings?.email_alerts_enabled ?? false,
+        emailAlertsAddress: settings?.email_alerts_address || user.email,
+        emailFrequency: settings?.email_frequency || 'immediate'
       }
     })
   } catch (error) {
@@ -96,19 +96,28 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json()
 
-    // Update user settings
+    // Build update object for user_settings table
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    }
+
+    if (body.notifyWorkerOffline !== undefined) updateData.notify_worker_offline = body.notifyWorkerOffline
+    if (body.notifyProfitDrop !== undefined) updateData.notify_profit_drop = body.notifyProfitDrop
+    if (body.profitDropThreshold !== undefined) updateData.profit_drop_threshold = body.profitDropThreshold
+    if (body.notifyBetterCoin !== undefined) updateData.notify_better_coin = body.notifyBetterCoin
+    if (body.emailAlertsEnabled !== undefined) updateData.email_alerts_enabled = body.emailAlertsEnabled
+    if (body.emailAlertsAddress !== undefined) updateData.email_alerts_address = body.emailAlertsAddress
+    if (body.emailFrequency !== undefined) updateData.email_frequency = body.emailFrequency
+
+    // Upsert settings to user_settings table (same table extension uses)
     const { error } = await supabase
-      .from('users')
-      .update({
-        notify_worker_offline: body.notifyWorkerOffline,
-        notify_profit_drop: body.notifyProfitDrop,
-        profit_drop_threshold: body.profitDropThreshold,
-        email_alerts_enabled: body.emailAlertsEnabled,
-        email_alerts_address: body.emailAlertsAddress,
-        email_frequency: body.emailFrequency,
-        updated_at: new Date().toISOString()
+      .from('user_settings')
+      .upsert({
+        user_id: session.user_id,
+        ...updateData
+      }, {
+        onConflict: 'user_id'
       })
-      .eq('id', session.user_id)
 
     if (error) throw error
 

@@ -408,24 +408,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (settingsRes.ok) {
           const settingsData = await settingsRes.json();
           if (settingsData.settings) {
-            // Merge server settings with local
+            const s = settingsData.settings;
+            // Merge server settings with local (API returns camelCase)
             await chrome.storage.local.set({
               electricity: {
-                rate: settingsData.settings.electricity_rate || 0.12,
-                currency: settingsData.settings.electricity_currency || 'USD'
+                rate: s.electricityRate || 0.12,
+                currency: s.electricityCurrency || 'USD'
               },
               settings: {
-                refreshInterval: settingsData.settings.refresh_interval || 30,
-                showDiscovery: settingsData.settings.show_discovery_coins !== false,
-                liteMode: settingsData.settings.lite_mode === true,
+                refreshInterval: s.refreshInterval || 30,
+                showDiscovery: s.showDiscoveryCoins !== false,
+                liteMode: s.liteMode === true,
                 notifications: {
-                  workerOffline: settingsData.settings.notify_worker_offline,
-                  profitDrop: settingsData.settings.notify_profit_drop,
-                  profitDropThreshold: settingsData.settings.profit_drop_threshold || 20,
-                  betterCoin: settingsData.settings.notify_better_coin,
-                  emailEnabled: false,
-                  alertEmail: '',
-                  emailFrequency: 'daily'
+                  workerOffline: s.notifyWorkerOffline !== false,
+                  profitDrop: s.notifyProfitDrop !== false,
+                  profitDropThreshold: s.profitDropThreshold || 20,
+                  betterCoin: s.notifyBetterCoin === true,
+                  emailEnabled: s.emailAlertsEnabled === true,
+                  alertEmail: s.emailAlertsAddress || '',
+                  emailFrequency: s.emailFrequency || 'daily'
                 }
               }
             });
@@ -1091,16 +1092,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            refresh_interval: settingsToSave.settings.refreshInterval,
-            electricity_rate: settingsToSave.electricity.rate,
-            electricity_currency: settingsToSave.electricity.currency,
+            refreshInterval: settingsToSave.settings.refreshInterval,
+            electricityRate: settingsToSave.electricity.rate,
+            electricityCurrency: settingsToSave.electricity.currency,
             currency: settingsToSave.electricity.currency,
-            notify_worker_offline: settingsToSave.settings.notifications.workerOffline,
-            notify_profit_drop: settingsToSave.settings.notifications.profitDrop,
-            profit_drop_threshold: settingsToSave.settings.notifications.profitDropThreshold,
-            notify_better_coin: settingsToSave.settings.notifications.betterCoin,
-            show_discovery_coins: settingsToSave.settings.showDiscovery,
-            lite_mode: settingsToSave.settings.liteMode
+            notifyWorkerOffline: settingsToSave.settings.notifications.workerOffline,
+            notifyProfitDrop: settingsToSave.settings.notifications.profitDrop,
+            profitDropThreshold: settingsToSave.settings.notifications.profitDropThreshold,
+            notifyBetterCoin: settingsToSave.settings.notifications.betterCoin,
+            emailAlertsEnabled: settingsToSave.settings.notifications.emailEnabled,
+            emailAlertsAddress: settingsToSave.settings.notifications.alertEmail,
+            emailFrequency: settingsToSave.settings.notifications.emailFrequency,
+            showDiscoveryCoins: settingsToSave.settings.showDiscovery,
+            liteMode: settingsToSave.settings.liteMode
           })
         });
       } catch (err) {

@@ -33,7 +33,7 @@ function getDeviceType(): string {
 // Get app version
 function getAppVersion(): string {
   // This will be set from app.json at build time
-  return '1.1.8';
+  return '1.2.0';
 }
 
 interface AuthStore extends AuthState {
@@ -237,6 +237,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
       // Store instanceId
       await get().setInstanceId(instanceId);
+
+      // Sync wallets from server after login
+      // Import dynamically to avoid circular dependency
+      const { useWalletStore } = await import('./walletStore');
+      await useWalletStore.getState().loadFromServer();
 
       return { success: true };
     } catch (error) {
