@@ -80,6 +80,39 @@ export default function UsersPage() {
     }
   }
 
+  const handleDeleteUser = async (userId: string, email: string) => {
+    if (!confirm(`Are you sure you want to PERMANENTLY DELETE the account for ${email}?\n\nThis will delete:\n- User account\n- All wallets\n- All settings\n- All devices\n- All comments\n\nThis action cannot be undone!`)) return
+
+    setActionLoading(true)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/users', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.error || 'Failed to delete user')
+        return
+      }
+
+      alert('User account deleted successfully')
+      fetchUsers()
+      setSelectedUser(null)
+    } catch (error) {
+      console.error('Delete failed:', error)
+      alert('Failed to delete user')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -336,7 +369,7 @@ export default function UsersPage() {
               )}
             </div>
 
-            <div className="p-6 border-t border-dark-border bg-dark-card-hover flex gap-3">
+            <div className="p-6 border-t border-dark-border bg-dark-card-hover flex gap-3 flex-wrap">
               {selectedUser.status === 'active' ? (
                 <button
                   onClick={() => handleAction(selectedUser.key, 'revoke')}
@@ -352,6 +385,15 @@ export default function UsersPage() {
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                 >
                   {actionLoading ? 'Processing...' : 'Reactivate License'}
+                </button>
+              )}
+              {selectedUser.plan === 'free' && (
+                <button
+                  onClick={() => handleDeleteUser(selectedUser.id, selectedUser.email)}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-red-900 text-red-200 rounded-lg hover:bg-red-800 disabled:opacity-50 border border-red-700"
+                >
+                  {actionLoading ? 'Processing...' : 'Delete Account'}
                 </button>
               )}
               <button
