@@ -1187,28 +1187,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { authToken } = await chrome.storage.local.get('authToken');
     if (authToken) {
       try {
-        console.log('Syncing settings to server...');
+        const dataToSync = {
+          refreshInterval: settingsToSave.settings.refreshInterval,
+          electricityRate: settingsToSave.electricity.rate,
+          electricityCurrency: settingsToSave.electricity.currency,
+          currency: settingsToSave.electricity.currency,
+          notifyWorkerOffline: settingsToSave.settings.notifications.workerOffline,
+          notifyProfitDrop: settingsToSave.settings.notifications.profitDrop,
+          profitDropThreshold: settingsToSave.settings.notifications.profitDropThreshold,
+          notifyBetterCoin: settingsToSave.settings.notifications.betterCoin,
+          emailAlertsEnabled: settingsToSave.settings.notifications.emailEnabled,
+          emailAlertsAddress: settingsToSave.settings.notifications.alertEmail,
+          emailFrequency: settingsToSave.settings.notifications.emailFrequency,
+          showDiscoveryCoins: settingsToSave.settings.showDiscovery,
+          liteMode: settingsToSave.settings.liteMode
+        };
+        console.log('Syncing settings to server - DATA BEING SENT:', JSON.stringify(dataToSync));
+        console.log('Checkbox states - workerOffline:', notifyWorkerOffline.checked, 'profitDrop:', notifyProfitDrop.checked);
         const syncResponse = await fetch(`${API_BASE}/settings/sync`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${authToken}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            refreshInterval: settingsToSave.settings.refreshInterval,
-            electricityRate: settingsToSave.electricity.rate,
-            electricityCurrency: settingsToSave.electricity.currency,
-            currency: settingsToSave.electricity.currency,
-            notifyWorkerOffline: settingsToSave.settings.notifications.workerOffline,
-            notifyProfitDrop: settingsToSave.settings.notifications.profitDrop,
-            profitDropThreshold: settingsToSave.settings.notifications.profitDropThreshold,
-            notifyBetterCoin: settingsToSave.settings.notifications.betterCoin,
-            emailAlertsEnabled: settingsToSave.settings.notifications.emailEnabled,
-            emailAlertsAddress: settingsToSave.settings.notifications.alertEmail,
-            emailFrequency: settingsToSave.settings.notifications.emailFrequency,
-            showDiscoveryCoins: settingsToSave.settings.showDiscovery,
-            liteMode: settingsToSave.settings.liteMode
-          })
+          body: JSON.stringify(dataToSync)
         });
         if (syncResponse.ok) {
           console.log('Settings synced to server successfully');
