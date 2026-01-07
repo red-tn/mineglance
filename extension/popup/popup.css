@@ -901,15 +901,19 @@ body.lite-mode .icon-btn:hover {
   background: var(--bg);
   z-index: 1000;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .auth-modal-content {
   width: 100%;
   max-width: 340px;
   text-align: center;
+  margin: auto;
+  padding-bottom: 20px;
 }
 
 .auth-logo {
