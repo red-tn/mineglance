@@ -1085,7 +1085,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { authToken } = await chrome.storage.local.get('authToken');
     if (authToken) {
       try {
-        await fetch(`${API_BASE}/settings/sync`, {
+        console.log('Syncing settings to server...');
+        const syncResponse = await fetch(`${API_BASE}/settings/sync`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${authToken}`,
@@ -1107,9 +1108,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             liteMode: settingsToSave.settings.liteMode
           })
         });
+        if (syncResponse.ok) {
+          console.log('Settings synced to server successfully');
+        } else {
+          const errorData = await syncResponse.json().catch(() => ({}));
+          console.error('Settings sync failed:', syncResponse.status, errorData);
+        }
       } catch (err) {
-        console.log('Settings sync failed:', err);
+        console.error('Settings sync error:', err);
       }
+    } else {
+      console.log('No authToken, skipping server sync');
     }
 
     // Update auto-refresh
