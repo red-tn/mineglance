@@ -211,12 +211,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const updatedSettings = upsertResult.data
-    const error = null
-
-    if (error) {
-      console.error('Error updating settings:', error)
-      return NextResponse.json({ error: 'Failed to update settings', details: error.message }, { status: 500 })
-    }
 
     // Debug: Log what DB returned after upsert
     console.log('PUT /api/settings/sync - DB returned after upsert:', JSON.stringify(updatedSettings))
