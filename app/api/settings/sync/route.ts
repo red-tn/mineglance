@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v13-GET',
+        apiVersion: '2026-01-07-v14-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -205,10 +205,11 @@ export async function PUT(request: NextRequest) {
       console.log('PUT /api/settings/sync - Simple UPDATE for row ID:', existingSettings.id)
       console.log('PUT /api/settings/sync - Update data:', JSON.stringify(updateData))
 
+      // Update by user_id (not row id) - more reliable with RLS
       const updateResult = await supabase
         .from('user_settings')
         .update(updateData)
-        .eq('id', existingSettings.id)
+        .eq('user_id', user.id)
         .select()
 
       console.log('PUT /api/settings/sync - Update result:', JSON.stringify(updateResult))
@@ -270,7 +271,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v13-PUT',
+        apiVersion: '2026-01-07-v14-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
