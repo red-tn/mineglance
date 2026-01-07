@@ -20,9 +20,10 @@ async function verifyAdmin(token: string | null) {
 // GET - Get single blog post
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyAdmin(token)
     if (!session) {
@@ -32,7 +33,7 @@ export async function GET(
     const { data: post, error } = await supabase
       .from('blog_posts')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error) throw error
@@ -50,9 +51,10 @@ export async function GET(
 // PUT - Update blog post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyAdmin(token)
     if (!session) {
@@ -65,7 +67,7 @@ export async function PUT(
     const { data: currentPost } = await supabase
       .from('blog_posts')
       .select('status, published_at')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     // Set published_at if status changes to published
@@ -107,7 +109,7 @@ export async function PUT(
     const { data: post, error } = await supabase
       .from('blog_posts')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
@@ -123,9 +125,10 @@ export async function PUT(
 // DELETE - Delete blog post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const token = request.headers.get('authorization')?.replace('Bearer ', '') ?? null
     const session = await verifyAdmin(token)
     if (!session) {
@@ -136,13 +139,13 @@ export async function DELETE(
     await supabase
       .from('blog_comments')
       .delete()
-      .eq('post_id', params.id)
+      .eq('post_id', id)
 
     // Delete post
     const { error } = await supabase
       .from('blog_posts')
       .delete()
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) throw error
 
