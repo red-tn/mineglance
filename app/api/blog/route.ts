@@ -17,33 +17,84 @@ export async function GET(request: NextRequest) {
     const pinned = searchParams.get('pinned') // 'homepage' or 'dashboard'
     const offset = (page - 1) * limit
 
-    let query = supabase
-      .from('blog_posts')
-      .select('id, title, slug, excerpt, featured_image_url, author_name, published_at, view_count, created_at, tags', { count: 'exact' })
-      .eq('status', 'published')
+    let posts: Array<{
+      id: string
+      title: string
+      slug: string
+      excerpt: string | null
+      featured_image_url: string | null
+      author_name: string | null
+      published_at: string
+      view_count: number
+      created_at: string
+      tags: string[] | null
+    }> = []
+    let count = 0
 
-    if (search) {
-      query = query.ilike('title', `%${search}%`)
+    // Special handling for pinned requests - fill remaining slots with high-view posts
+    if (pinned === 'homepage' || pinned === 'dashboard') {
+      const pinnedColumn = pinned === 'homepage' ? 'is_pinned_homepage' : 'is_pinned_dashboard'
+
+      // First, get pinned posts
+      const { data: pinnedPosts, error: pinnedError } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, featured_image_url, author_name, published_at, view_count, created_at, tags')
+        .eq('status', 'published')
+        .eq(pinnedColumn, true)
+        .order('published_at', { ascending: false })
+        .limit(limit)
+
+      if (pinnedError) throw pinnedError
+
+      posts = pinnedPosts || []
+
+      // If we don't have enough pinned posts, fill with most viewed posts
+      if (posts.length < limit) {
+        const remaining = limit - posts.length
+        const pinnedIds = posts.map(p => p.id)
+
+        // Get additional posts by view count, excluding already included ones
+        const { data: additionalPosts, error: additionalError } = await supabase
+          .from('blog_posts')
+          .select('id, title, slug, excerpt, featured_image_url, author_name, published_at, view_count, created_at, tags')
+          .eq('status', 'published')
+          .not('id', 'in', pinnedIds.length > 0 ? `(${pinnedIds.join(',')})` : '(00000000-0000-0000-0000-000000000000)')
+          .order('view_count', { ascending: false })
+          .limit(remaining)
+
+        if (additionalError) throw additionalError
+
+        posts = [...posts, ...(additionalPosts || [])]
+      }
+
+      count = posts.length
+    } else {
+      // Standard query for non-pinned requests
+      let query = supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, featured_image_url, author_name, published_at, view_count, created_at, tags', { count: 'exact' })
+        .eq('status', 'published')
+
+      if (search) {
+        query = query.ilike('title', `%${search}%`)
+      }
+
+      if (tag) {
+        query = query.contains('tags', [tag.toLowerCase()])
+      }
+
+      const { data, error, count: totalCount } = await query
+        .order('published_at', { ascending: false })
+        .range(offset, offset + limit - 1)
+
+      if (error) throw error
+
+      posts = data || []
+      count = totalCount || 0
     }
-
-    if (tag) {
-      query = query.contains('tags', [tag.toLowerCase()])
-    }
-
-    if (pinned === 'homepage') {
-      query = query.eq('is_pinned_homepage', true)
-    } else if (pinned === 'dashboard') {
-      query = query.eq('is_pinned_dashboard', true)
-    }
-
-    const { data: posts, error, count } = await query
-      .order('published_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (error) throw error
 
     // Calculate read time for each post (rough estimate: 200 words per minute)
-    const postsWithReadTime = (posts || []).map(post => ({
+    const postsWithReadTime = posts.map(post => ({
       ...post,
       read_time: Math.max(1, Math.ceil((post.excerpt?.length || 0) / 200))
     }))

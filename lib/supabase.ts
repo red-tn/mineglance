@@ -13,12 +13,12 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 // Check if email has Pro license
 export async function checkProStatus(email: string): Promise<boolean> {
   const { data, error } = await supabase
-    .from('paid_users')
-    .select('id')
+    .from('users')
+    .select('id, plan')
     .eq('email', email.toLowerCase())
     .single()
 
-  return !error && !!data
+  return !error && !!data && data.plan === 'pro'
 }
 
 // Add paid user (called from Stripe webhook)
@@ -28,12 +28,13 @@ export async function addPaidUser(
   stripePaymentId: string
 ): Promise<boolean> {
   const { error } = await supabaseAdmin
-    .from('paid_users')
-    .insert({
+    .from('users')
+    .upsert({
       email: email.toLowerCase(),
       stripe_customer_id: stripeCustomerId,
-      stripe_payment_id: stripePaymentId
-    })
+      stripe_payment_id: stripePaymentId,
+      plan: 'pro'
+    }, { onConflict: 'email' })
 
   return !error
 }

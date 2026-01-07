@@ -42,53 +42,24 @@ export async function POST(request: NextRequest) {
 
     const normalizedKey = licenseKey.toUpperCase().trim()
 
-    // Check if this license key exists and is valid
-    // First check in paid_users table (legacy) then users table
-    let licenseOwner = null
-
-    // Check paid_users table first (for legacy licenses)
-    const { data: paidUser } = await supabase
-      .from('paid_users')
+    // Check if this license key exists and is valid in users table
+    const { data: licenseOwner } = await supabase
+      .from('users')
       .select('*')
       .eq('license_key', normalizedKey)
       .single()
 
-    if (paidUser) {
-      // Verify the license belongs to this user's email
-      if (paidUser.email.toLowerCase() !== user.email.toLowerCase()) {
-        return NextResponse.json({ error: 'This license key belongs to a different email address' }, { status: 400 })
-      }
-
-      if (paidUser.is_revoked) {
-        return NextResponse.json({ error: 'This license has been revoked' }, { status: 400 })
-      }
-
-      licenseOwner = paidUser
-    }
-
-    // Also check users table for license keys
-    if (!licenseOwner) {
-      const { data: userWithLicense } = await supabase
-        .from('users')
-        .select('*')
-        .eq('license_key', normalizedKey)
-        .single()
-
-      if (userWithLicense) {
-        if (userWithLicense.email.toLowerCase() !== user.email.toLowerCase()) {
-          return NextResponse.json({ error: 'This license key belongs to a different email address' }, { status: 400 })
-        }
-
-        if (userWithLicense.is_revoked) {
-          return NextResponse.json({ error: 'This license has been revoked' }, { status: 400 })
-        }
-
-        licenseOwner = userWithLicense
-      }
-    }
-
     if (!licenseOwner) {
       return NextResponse.json({ error: 'Invalid license key' }, { status: 400 })
+    }
+
+    // Verify the license belongs to this user's email
+    if (licenseOwner.email.toLowerCase() !== user.email.toLowerCase()) {
+      return NextResponse.json({ error: 'This license key belongs to a different email address' }, { status: 400 })
+    }
+
+    if (licenseOwner.is_revoked) {
+      return NextResponse.json({ error: 'This license has been revoked' }, { status: 400 })
     }
 
     // Update the user's plan to Pro and store the license key
