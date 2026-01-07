@@ -12,6 +12,8 @@ interface License {
   stripe_customer_id?: string
   stripe_payment_id?: string
   installCount: number
+  walletCount: number
+  rigCount: number
 }
 
 export default function UsersPage() {
@@ -249,6 +251,8 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Plan</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Installs</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Wallets</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Rigs</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Created</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
               </tr>
@@ -280,6 +284,12 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3 text-dark-text">
                     {user.installCount}
+                  </td>
+                  <td className="px-4 py-3 text-dark-text">
+                    {user.walletCount}
+                  </td>
+                  <td className="px-4 py-3 text-dark-text">
+                    {user.rigCount}
                   </td>
                   <td className="px-4 py-3 text-sm text-dark-text">
                     {formatDate(user.created_at)}
@@ -378,6 +388,17 @@ export default function UsersPage() {
                 <div>
                   <label className="text-sm font-medium text-dark-text-muted">Created</label>
                   <p className="text-dark-text">{formatDate(selectedUser.created_at)}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-dark-text-muted">Wallets</label>
+                  <p className="text-dark-text">{selectedUser.walletCount}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-dark-text-muted">Mining Rigs</label>
+                  <p className="text-dark-text">{selectedUser.rigCount}</p>
                 </div>
               </div>
 

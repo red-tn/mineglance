@@ -15,6 +15,14 @@ interface Wallet {
   order: number
 }
 
+interface Rig {
+  id: string
+  name: string
+  gpu: string
+  power: number
+  quantity: number
+}
+
 const POOLS = [
   { value: '2miners', label: '2Miners' },
   { value: 'nanopool', label: 'Nanopool' },
@@ -63,12 +71,15 @@ const FREE_WALLET_LIMIT = 2
 export default function WalletsPage() {
   const auth = useContext(AuthContext)
   const [wallets, setWallets] = useState<Wallet[]>([])
+  const [rigs, setRigs] = useState<Rig[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [showRigModal, setShowRigModal] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [upgradeTrigger, setUpgradeTrigger] = useState<string>('')
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null)
+  const [editingRig, setEditingRig] = useState<Rig | null>(null)
   const [saving, setSaving] = useState(false)
 
   // Form state
@@ -80,26 +91,46 @@ export default function WalletsPage() {
     power: 200
   })
 
+  // Rig form state
+  const [rigFormData, setRigFormData] = useState({
+    name: '',
+    gpu: '',
+    power: 200,
+    quantity: 1
+  })
+
   const isPro = auth?.user?.plan === 'pro' || auth?.user?.plan === 'bundle'
 
   useEffect(() => {
-    fetchWallets()
+    fetchData()
   }, [])
 
-  async function fetchWallets() {
+  async function fetchData() {
     try {
       const token = localStorage.getItem('user_token')
-      const res = await fetch('/api/wallets/sync', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
 
-      if (!res.ok) throw new Error('Failed to fetch wallets')
+      // Fetch both wallets and rigs in parallel
+      const [walletsRes, rigsRes] = await Promise.all([
+        fetch('/api/wallets/sync', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('/api/rigs/sync', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ])
 
-      const data = await res.json()
-      setWallets(data.wallets || [])
+      if (walletsRes.ok) {
+        const data = await walletsRes.json()
+        setWallets(data.wallets || [])
+      }
+
+      if (rigsRes.ok) {
+        const data = await rigsRes.json()
+        setRigs(data.rigs || [])
+      }
     } catch (err) {
-      console.error('Error fetching wallets:', err)
-      setError('Failed to load wallets')
+      console.error('Error fetching data:', err)
+      setError('Failed to load data')
     } finally {
       setLoading(false)
     }
@@ -242,6 +273,106 @@ export default function WalletsPage() {
     }
   }
 
+  // Rig handlers
+  function handleAddRig() {
+    setEditingRig(null)
+    setRigFormData({
+      name: '',
+      gpu: '',
+      power: 200,
+      quantity: 1
+    })
+    setShowRigModal(true)
+  }
+
+  function handleEditRig(rig: Rig) {
+    setEditingRig(rig)
+    setRigFormData({
+      name: rig.name,
+      gpu: rig.gpu,
+      power: rig.power,
+      quantity: rig.quantity
+    })
+    setShowRigModal(true)
+  }
+
+  async function handleSaveRig(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+
+    try {
+      const token = localStorage.getItem('user_token')
+
+      if (editingRig) {
+        // Update existing rig
+        const res = await fetch('/api/rigs/sync', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            id: editingRig.id,
+            ...rigFormData
+          })
+        })
+
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Failed to update rig')
+        }
+
+        const data = await res.json()
+        setRigs(rigs.map(r => r.id === editingRig.id ? data.rig : r))
+      } else {
+        // Create new rig
+        const res = await fetch('/api/rigs/sync', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(rigFormData)
+        })
+
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Failed to create rig')
+        }
+
+        const data = await res.json()
+        setRigs([...rigs, data.rig])
+      }
+
+      setShowRigModal(false)
+    } catch (err) {
+      console.error('Error saving rig:', err)
+      setError(err instanceof Error ? err.message : 'Failed to save rig')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDeleteRig(rigId: string) {
+    if (!confirm('Are you sure you want to delete this rig?')) return
+
+    try {
+      const token = localStorage.getItem('user_token')
+      const res = await fetch(`/api/rigs/sync?id=${rigId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (!res.ok) throw new Error('Failed to delete rig')
+
+      setRigs(rigs.filter(r => r.id !== rigId))
+    } catch (err) {
+      console.error('Error deleting rig:', err)
+      setError('Failed to delete rig')
+    }
+  }
+
   function getPoolLabel(value: string) {
     return POOLS.find(p => p.value === value)?.label || value
   }
@@ -254,7 +385,9 @@ export default function WalletsPage() {
   const availablePools = isPro ? POOLS : POOLS.filter(p => FREE_POOLS.includes(p.value))
   const availableCoins = isPro ? COINS : COINS.filter(c => FREE_COINS.includes(c.value))
 
-  const totalPower = wallets.reduce((sum, w) => w.enabled ? sum + (w.power || 0) : sum, 0)
+  const totalWalletPower = wallets.reduce((sum, w) => w.enabled ? sum + (w.power || 0) : sum, 0)
+  const totalRigPower = rigs.reduce((sum, r) => sum + ((r.power || 0) * (r.quantity || 1)), 0)
+  const totalPower = totalWalletPower + totalRigPower
 
   if (loading) {
     return (
@@ -273,7 +406,7 @@ export default function WalletsPage() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="glass-card rounded-xl p-5 border border-dark-border">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
@@ -282,11 +415,25 @@ export default function WalletsPage() {
               </svg>
             </div>
             <div>
-              <p className="text-sm text-dark-text-muted">Total Wallets</p>
+              <p className="text-sm text-dark-text-muted">Wallets</p>
               <p className="text-2xl font-bold text-dark-text">
                 {wallets.length}
                 {!isPro && <span className="text-sm font-normal text-dark-text-dim"> / {FREE_WALLET_LIMIT}</span>}
               </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-card rounded-xl p-5 border border-dark-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+              <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-dark-text-muted">Mining Rigs</p>
+              <p className="text-2xl font-bold text-dark-text">{rigs.length}</p>
             </div>
           </div>
         </div>
@@ -407,6 +554,103 @@ export default function WalletsPage() {
                     </button>
                     <button
                       onClick={() => handleDeleteWallet(wallet.id)}
+                      className="p-2 text-dark-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                      title="Delete"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Mining Rigs Section */}
+      <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-dark-border">
+          <div>
+            <h2 className="text-lg font-semibold text-dark-text">Mining Rigs</h2>
+            <p className="text-sm text-dark-text-muted">Configure your mining hardware for profit calculations</p>
+          </div>
+          <button
+            onClick={handleAddRig}
+            className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add Rig
+          </button>
+        </div>
+
+        {rigs.length === 0 ? (
+          <div className="p-10 text-center">
+            <div className="w-16 h-16 rounded-full bg-dark-card-hover flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-dark-text-dim" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-dark-text mb-1">No rigs configured</h3>
+            <p className="text-dark-text-muted mb-4">Add your mining rigs for accurate power cost calculations</p>
+            <button
+              onClick={handleAddRig}
+              className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Add Your First Rig
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-dark-border">
+            {rigs.map((rig) => (
+              <div
+                key={rig.id}
+                className="p-5 hover:bg-dark-card-hover/50 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
+                    {/* Rig Icon */}
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                      </svg>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-dark-text">{rig.name}</h3>
+                        {rig.quantity > 1 && (
+                          <span className="px-2 py-0.5 text-xs font-medium bg-blue-500/20 text-blue-400 rounded">
+                            x{rig.quantity}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-dark-text-muted mb-1">
+                        {rig.gpu}
+                      </p>
+                      <p className="text-xs text-dark-text-dim">
+                        {rig.power}W per unit • {rig.power * rig.quantity}W total
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditRig(rig)}
+                      className="p-2 text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded-lg transition-colors"
+                      title="Edit"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteRig(rig.id)}
                       className="p-2 text-dark-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                       title="Delete"
                     >
@@ -562,6 +806,108 @@ export default function WalletsPage() {
                     className="flex-1 px-4 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
                   >
                     {saving ? 'Saving...' : editingWallet ? 'Update Wallet' : 'Add Wallet'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Rig Modal */}
+      {showRigModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowRigModal(false)} />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative bg-dark-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-dark-border">
+              <div className="flex items-center justify-between p-5 border-b border-dark-border">
+                <h2 className="text-lg font-semibold text-dark-text">
+                  {editingRig ? 'Edit Rig' : 'Add Rig'}
+                </h2>
+                <button
+                  onClick={() => setShowRigModal(false)}
+                  className="p-2 rounded-full hover:bg-dark-card-hover transition-colors text-dark-text-muted"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveRig} className="p-5 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-dark-text mb-1">Rig Name</label>
+                  <input
+                    type="text"
+                    value={rigFormData.name}
+                    onChange={(e) => setRigFormData({ ...rigFormData, name: e.target.value })}
+                    placeholder="e.g., Main Mining Rig"
+                    required
+                    className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-dark-text mb-1">GPU Model</label>
+                  <input
+                    type="text"
+                    value={rigFormData.gpu}
+                    onChange={(e) => setRigFormData({ ...rigFormData, gpu: e.target.value })}
+                    placeholder="e.g., RTX 3080, RX 6800 XT"
+                    required
+                    className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-dark-text mb-1">Power (Watts)</label>
+                    <input
+                      type="number"
+                      value={rigFormData.power}
+                      onChange={(e) => setRigFormData({ ...rigFormData, power: parseInt(e.target.value) || 0 })}
+                      placeholder="e.g., 320"
+                      min="0"
+                      required
+                      className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="text-xs text-dark-text-dim mt-1">Per GPU</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-dark-text mb-1">Quantity</label>
+                    <input
+                      type="number"
+                      value={rigFormData.quantity}
+                      onChange={(e) => setRigFormData({ ...rigFormData, quantity: parseInt(e.target.value) || 1 })}
+                      min="1"
+                      required
+                      className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="text-xs text-dark-text-dim mt-1">GPUs in rig</p>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <p className="text-red-400 text-sm">{error}</p>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowRigModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-dark-card-hover text-dark-text font-medium rounded-lg hover:bg-dark-border transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    {saving ? 'Saving...' : editingRig ? 'Update Rig' : 'Add Rig'}
                   </button>
                 </div>
               </form>

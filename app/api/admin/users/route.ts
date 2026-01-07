@@ -94,19 +94,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [], total: 0, page, limit })
     }
 
-    // Get installation counts for each user from user_instances
+    // Get stats for each user: installs, wallets, rigs
     const usersWithStats = await Promise.all(
       (licenses || []).map(async (license) => {
-        const { count: installCount } = await supabase
-          .from('user_instances')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', license.id)
+        const [
+          { count: installCount },
+          { count: walletCount },
+          { count: rigCount }
+        ] = await Promise.all([
+          supabase
+            .from('user_instances')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', license.id),
+          supabase
+            .from('user_wallets')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', license.id),
+          supabase
+            .from('user_rigs')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', license.id)
+        ])
 
         return {
           ...license,
           key: license.license_key,
           status: license.is_revoked ? 'revoked' : 'active',
-          installCount: installCount || 0
+          installCount: installCount || 0,
+          walletCount: walletCount || 0,
+          rigCount: rigCount || 0
         }
       })
     )
