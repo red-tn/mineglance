@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useContext } from 'react'
 import { AuthContext } from '../auth-context'
+import Link from 'next/link'
 
 interface AlertSettings {
   notifyWorkerOffline: boolean
@@ -33,6 +34,7 @@ export default function AlertsPage() {
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [testingEmail, setTestingEmail] = useState(false)
+  const [isPro, setIsPro] = useState(false)
 
   useEffect(() => {
     fetchSettings()
@@ -47,6 +49,7 @@ export default function AlertsPage() {
 
       if (res.ok) {
         const data = await res.json()
+        setIsPro(data.isPro)
         setSettings({
           ...data.settings,
           emailAlertsAddress: data.settings.emailAlertsAddress || user?.email || ''
@@ -133,6 +136,82 @@ export default function AlertsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Show upgrade prompt for free users
+  if (!isPro) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-dark-text">Alert Settings</h1>
+          <p className="text-dark-text-muted mt-1">Configure notifications for your mining operations</p>
+        </div>
+
+        <div className="glass-card rounded-xl p-8 border border-primary/30 bg-gradient-to-r from-primary/10 to-green-500/10 text-center">
+          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-dark-text mb-2">Upgrade to Pro</h2>
+          <p className="text-dark-text-muted mb-6 max-w-md mx-auto">
+            Alert settings are a Pro feature. Get notified when your miners go offline or profits drop,
+            with browser and email notifications.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/#pricing"
+              className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-light transition shadow-glow"
+            >
+              View Pro Plans
+            </Link>
+          </div>
+        </div>
+
+        {/* Preview of features */}
+        <div className="glass-card rounded-xl p-6 border border-dark-border opacity-60">
+          <h3 className="text-lg font-semibold text-dark-text mb-4">Pro Alert Features</h3>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-primary mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <div>
+                <p className="font-medium text-dark-text">Worker Offline Alerts</p>
+                <p className="text-sm text-dark-text-muted">Know immediately when a miner stops working</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-primary mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <div>
+                <p className="font-medium text-dark-text">Profit Drop Alerts</p>
+                <p className="text-sm text-dark-text-muted">Get notified when profits fall significantly</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-primary mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <div>
+                <p className="font-medium text-dark-text">Email Notifications</p>
+                <p className="text-sm text-dark-text-muted">Alerts even when browser is closed</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-primary mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <div>
+                <p className="font-medium text-dark-text">Cross-Device Sync</p>
+                <p className="text-sm text-dark-text-muted">Settings sync across all your devices</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

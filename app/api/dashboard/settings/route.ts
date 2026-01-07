@@ -26,10 +26,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
     }
 
-    // Get user settings
+    // Get user settings and plan
     const { data: user, error } = await supabase
       .from('users')
       .select(`
+        plan,
         notify_worker_offline,
         notify_profit_drop,
         profit_drop_threshold,
@@ -43,7 +44,10 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
+    const isPro = user.plan === 'pro' || user.plan === 'bundle'
+
     return NextResponse.json({
+      isPro,
       settings: {
         notifyWorkerOffline: user.notify_worker_offline ?? true,
         notifyProfitDrop: user.notify_profit_drop ?? true,
@@ -59,7 +63,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PUT - Update user notification settings
+// PUT - Update user notification settings (Pro only)
 export async function PUT(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '')
@@ -77,6 +81,17 @@ export async function PUT(request: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+    }
+
+    // Check if user is Pro
+    const { data: user } = await supabase
+      .from('users')
+      .select('plan')
+      .eq('id', session.user_id)
+      .single()
+
+    if (!user || (user.plan !== 'pro' && user.plan !== 'bundle')) {
+      return NextResponse.json({ error: 'Pro subscription required' }, { status: 403 })
     }
 
     const body = await request.json()
