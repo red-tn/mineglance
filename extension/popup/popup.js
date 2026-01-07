@@ -243,7 +243,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           instanceId: await getInstallId(),
           deviceType: 'extension',
           deviceName: navigator.userAgent.includes('Chrome') ? 'Chrome Extension' : 'Browser Extension',
-          browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other'
+          browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other',
+          version: chrome.runtime.getManifest().version
         })
       });
       const data = await response.json();

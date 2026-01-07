@@ -210,6 +210,33 @@ export async function POST(request: NextRequest) {
         currency: 'USD'
       })
 
+    // Link the device instance to the user if provided
+    if (instanceId && deviceType) {
+      // Create user_instances record
+      await supabase
+        .from('user_instances')
+        .upsert({
+          user_id: userId,
+          instance_id: instanceId,
+          device_type: deviceType,
+          device_name: deviceName || null,
+          browser: browser || null,
+          version: version || null,
+          created_at: new Date().toISOString(),
+          last_seen: new Date().toISOString()
+        }, {
+          onConflict: 'user_id,instance_id'
+        })
+
+      // Remove from anonymous extension_installs if exists
+      if (deviceType === 'extension') {
+        await supabase
+          .from('extension_installs')
+          .delete()
+          .eq('install_id', instanceId)
+      }
+    }
+
     // Send verification email (async, don't block response)
     sendVerificationEmail(normalizedEmail, verificationToken)
 

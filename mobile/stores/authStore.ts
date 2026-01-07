@@ -54,7 +54,7 @@ interface AuthStore extends AuthState {
   isPro: () => boolean;
   login: (email: string, password?: string) => Promise<{ success: boolean; error?: string; requiresPassword?: boolean; exists?: boolean }>;
   activateLicense: (licenseKey: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresVerification?: boolean; message?: string }>;
   resendKey: (email: string) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -284,6 +284,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const instanceId = await getOrCreateInstanceId();
       const deviceType = getDeviceType();
       const deviceName = getDeviceName();
+      const version = getAppVersion();
 
       const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
@@ -294,6 +295,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           instanceId,
           deviceType,
           deviceName,
+          version,
         }),
       });
 
@@ -303,15 +305,27 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         return { success: false, error: data.error || 'Registration failed' };
       }
 
-      await get().setAuthData({
-        email: data.email,
-        authToken: data.token,
-        userId: data.userId,
-        plan: 'free',
-      });
+      // Check if email verification is required
+      if (data.requiresVerification) {
+        // Store instanceId locally
+        await get().setInstanceId(instanceId);
+        return {
+          success: true,
+          requiresVerification: true,
+          message: data.message || 'Please check your email to verify your account'
+        };
+      }
 
-      // Store instanceId
-      await get().setInstanceId(instanceId);
+      // If we get a token (legacy flow or no verification needed)
+      if (data.token) {
+        await get().setAuthData({
+          email: data.email,
+          authToken: data.token,
+          userId: data.userId,
+          plan: 'free',
+        });
+        await get().setInstanceId(instanceId);
+      }
 
       return { success: true };
     } catch (error) {

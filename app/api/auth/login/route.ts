@@ -108,6 +108,14 @@ export async function POST(request: NextRequest) {
         }, {
           onConflict: 'user_id,instance_id'
         })
+
+      // Remove from anonymous extension_installs if exists
+      if (deviceType === 'extension') {
+        await supabase
+          .from('extension_installs')
+          .delete()
+          .eq('install_id', instanceId)
+      }
     }
 
     // Update last login
