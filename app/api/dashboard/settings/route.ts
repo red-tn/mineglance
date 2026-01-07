@@ -44,15 +44,23 @@ export async function GET(request: NextRequest) {
 
     const isPro = user.plan === 'pro' || user.plan === 'bundle'
 
+    // Helper to parse boolean (handles string 'true'/'false' from DB)
+    const parseBool = (val: any, defaultVal: boolean = false): boolean => {
+      if (val === null || val === undefined) return defaultVal
+      if (typeof val === 'boolean') return val
+      if (typeof val === 'string') return val.toLowerCase() === 'true'
+      return defaultVal
+    }
+
     // Return settings with defaults if not found
     return NextResponse.json({
       isPro,
       settings: {
-        notifyWorkerOffline: settings?.notify_worker_offline ?? true,
-        notifyProfitDrop: settings?.notify_profit_drop ?? true,
-        profitDropThreshold: settings?.profit_drop_threshold ?? 20,
-        notifyBetterCoin: settings?.notify_better_coin ?? false,
-        emailAlertsEnabled: settings?.email_alerts_enabled ?? false,
+        notifyWorkerOffline: parseBool(settings?.notify_worker_offline, true),
+        notifyProfitDrop: parseBool(settings?.notify_profit_drop, true),
+        profitDropThreshold: parseInt(settings?.profit_drop_threshold) || 20,
+        notifyBetterCoin: parseBool(settings?.notify_better_coin, false),
+        emailAlertsEnabled: parseBool(settings?.email_alerts_enabled, false),
         emailAlertsAddress: settings?.email_alerts_address || user.email,
         emailFrequency: settings?.email_frequency || 'immediate'
       }

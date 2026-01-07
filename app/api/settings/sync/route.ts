@@ -52,22 +52,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 })
     }
 
+    // Helper to parse boolean (handles string 'true'/'false' from DB)
+    const parseBool = (val: any, defaultVal: boolean = false): boolean => {
+      if (typeof val === 'boolean') return val
+      if (typeof val === 'string') return val.toLowerCase() === 'true'
+      return defaultVal
+    }
+
     // Return default settings if none exist
     const clientSettings = settings ? {
-      refreshInterval: settings.refresh_interval,
+      refreshInterval: parseInt(settings.refresh_interval) || 30,
       electricityRate: parseFloat(settings.electricity_rate) || 0.12,
-      electricityCurrency: settings.electricity_currency,
-      powerConsumption: settings.power_consumption,
-      currency: settings.currency,
-      notifyWorkerOffline: settings.notify_worker_offline,
-      notifyProfitDrop: settings.notify_profit_drop,
-      profitDropThreshold: settings.profit_drop_threshold,
-      notifyBetterCoin: settings.notify_better_coin,
-      emailAlertsEnabled: settings.email_alerts_enabled,
+      electricityCurrency: settings.electricity_currency || 'USD',
+      powerConsumption: parseInt(settings.power_consumption) || 0,
+      currency: settings.currency || 'USD',
+      notifyWorkerOffline: parseBool(settings.notify_worker_offline, true),
+      notifyProfitDrop: parseBool(settings.notify_profit_drop, true),
+      profitDropThreshold: parseInt(settings.profit_drop_threshold) || 20,
+      notifyBetterCoin: parseBool(settings.notify_better_coin, false),
+      emailAlertsEnabled: parseBool(settings.email_alerts_enabled, false),
       emailAlertsAddress: settings.email_alerts_address || user.email,
-      emailFrequency: settings.email_frequency,
-      showDiscoveryCoins: settings.show_discovery_coins,
-      liteMode: settings.lite_mode
+      emailFrequency: settings.email_frequency || 'immediate',
+      showDiscoveryCoins: parseBool(settings.show_discovery_coins, true),
+      liteMode: parseBool(settings.lite_mode, false)
     } : {
       refreshInterval: 30,
       electricityRate: 0.12,
