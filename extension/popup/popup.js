@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (data.exists === false) {
         // New user - needs to create password
         isNewUser = true;
-        authPasswordInfo.textContent = 'Create a password for your account';
+        authPasswordInfo.textContent = 'This is a new account, create a password.';
         authPasswordBtn.textContent = 'Create Account';
         authEmailStep.classList.add('hidden');
         authPasswordStep.classList.remove('hidden');
@@ -254,6 +254,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (data.requiresVerification) {
         // Registration succeeded - user needs to verify email
         showAuthMessage(data.message || 'Please check your email to verify your account', 'success');
+        // Return to login screen after 10 seconds
+        setTimeout(() => {
+          hideAuthMessage();
+          authPasswordStep.classList.add('hidden');
+          authEmailStep.classList.remove('hidden');
+          authEmail.value = '';
+          authPassword.value = '';
+          isNewUser = false;
+        }, 10000);
       } else {
         showAuthMessage(data.error || 'Registration failed', 'error');
       }

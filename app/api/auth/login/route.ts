@@ -95,19 +95,41 @@ export async function POST(request: NextRequest) {
 
     // Register device instance if provided
     if (instanceId && deviceType) {
-      await supabase
+      // First, check if there's an existing instance with this instance_id
+      const { data: existingInstance } = await supabase
         .from('user_instances')
-        .upsert({
-          user_id: user.id,
-          instance_id: instanceId,
-          device_type: deviceType,
-          device_name: deviceName || null,
-          browser: browser || null,
-          version: version || null,
-          last_seen: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,instance_id'
-        })
+        .select('id')
+        .eq('instance_id', instanceId)
+        .single()
+
+      if (existingInstance) {
+        // Update the existing instance to link it to this user
+        await supabase
+          .from('user_instances')
+          .update({
+            user_id: user.id,
+            device_type: deviceType,
+            device_name: deviceName || null,
+            browser: browser || null,
+            version: version || null,
+            last_seen: new Date().toISOString()
+          })
+          .eq('id', existingInstance.id)
+      } else {
+        // Insert new instance record
+        await supabase
+          .from('user_instances')
+          .insert({
+            user_id: user.id,
+            instance_id: instanceId,
+            device_type: deviceType,
+            device_name: deviceName || null,
+            browser: browser || null,
+            version: version || null,
+            created_at: new Date().toISOString(),
+            last_seen: new Date().toISOString()
+          })
+      }
 
       // Remove from anonymous extension_installs if exists
       if (deviceType === 'extension') {
