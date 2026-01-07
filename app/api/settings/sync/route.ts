@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v15-GET',
+        apiVersion: '2026-01-07-v16-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -187,74 +187,38 @@ export async function PUT(request: NextRequest) {
     console.log('PUT /api/settings/sync - updateData to write:', JSON.stringify(updateData))
     console.log('PUT /api/settings/sync - notify_worker_offline value:', updateData.notify_worker_offline, 'type:', typeof updateData.notify_worker_offline)
 
-    // Get ALL settings rows for this user (there may be duplicates)
-    const { data: allSettings } = await supabase
+    // Nuclear option: DELETE all rows for this user, then INSERT fresh
+    console.log('PUT /api/settings/sync - Deleting ALL rows for user:', user.id)
+    const deleteResult = await supabase
       .from('user_settings')
-      .select('id')
+      .delete()
       .eq('user_id', user.id)
-      .order('updated_at', { ascending: false })
 
-    let updatedSettings
-    let error
+    console.log('PUT /api/settings/sync - Delete result:', JSON.stringify(deleteResult))
 
-    if (allSettings && allSettings.length > 0) {
-      // Keep the first (most recent) row, delete all others
-      if (allSettings.length > 1) {
-        const idsToDelete = allSettings.slice(1).map(s => s.id)
-        console.log('PUT /api/settings/sync - Deleting duplicate rows:', idsToDelete)
-        await supabase
-          .from('user_settings')
-          .delete()
-          .in('id', idsToDelete)
-      }
+    // Now INSERT a fresh row
+    console.log('PUT /api/settings/sync - Inserting fresh row with data:', JSON.stringify(updateData))
+    const insertResult = await supabase
+      .from('user_settings')
+      .insert({
+        user_id: user.id,
+        ...updateData
+      })
+      .select()
+      .single()
 
-      const existingSettings = allSettings[0]
-      // Simple UPDATE - RLS is now disabled so this should work
-      console.log('PUT /api/settings/sync - Simple UPDATE for row ID:', existingSettings.id)
-      console.log('PUT /api/settings/sync - Update data:', JSON.stringify(updateData))
+    console.log('PUT /api/settings/sync - Insert result:', JSON.stringify(insertResult))
 
-      // Update the single remaining row by its ID
-      const updateResult = await supabase
-        .from('user_settings')
-        .update(updateData)
-        .eq('id', existingSettings.id)
-        .select()
-
-      console.log('PUT /api/settings/sync - Update result:', JSON.stringify(updateResult))
-
-      if (updateResult.error) {
-        console.error('PUT /api/settings/sync - UPDATE FAILED:', updateResult.error)
-        return NextResponse.json({
-          error: 'Update failed',
-          _debug: { updateError: updateResult.error, existingId: existingSettings.id, updateData }
-        }, { status: 500 })
-      }
-
-      if (!updateResult.data || updateResult.data.length === 0) {
-        console.error('PUT /api/settings/sync - UPDATE returned no rows')
-        return NextResponse.json({
-          error: 'Update returned no rows',
-          _debug: { existingId: existingSettings.id, updateData }
-        }, { status: 500 })
-      }
-
-      updatedSettings = updateResult.data[0]
-      error = null
-    } else {
-      // INSERT new row
-      console.log('PUT /api/settings/sync - Inserting new row for user:', user.id)
-      const result = await supabase
-        .from('user_settings')
-        .insert({
-          user_id: user.id,
-          ...updateData
-        })
-        .select()
-        .single()
-      updatedSettings = result.data
-      error = result.error
-      console.log('PUT /api/settings/sync - Insert result:', JSON.stringify(result))
+    if (insertResult.error) {
+      console.error('PUT /api/settings/sync - INSERT FAILED:', insertResult.error)
+      return NextResponse.json({
+        error: 'Insert failed',
+        _debug: { insertError: insertResult.error, updateData }
+      }, { status: 500 })
     }
+
+    const updatedSettings = insertResult.data
+    const error = null
 
     if (error) {
       console.error('Error updating settings:', error)
@@ -279,7 +243,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v15-PUT',
+        apiVersion: '2026-01-07-v16-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
