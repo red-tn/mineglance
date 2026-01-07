@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Settings, NotificationSettings } from '@/types';
 import { defaults } from '@/constants/theme';
 
+const API_BASE = 'https://www.mineglance.com/api';
+
 interface SettingsStore extends Settings {
   setRefreshInterval: (interval: number) => void;
   setElectricityRate: (rate: number) => void;
@@ -13,7 +15,9 @@ interface SettingsStore extends Settings {
   setShowDiscoveryCoins: (show: boolean) => void;
   setLiteMode: (enabled: boolean) => void;
   loadFromStorage: () => Promise<void>;
+  loadFromServer: (authToken: string) => Promise<void>;
   saveToStorage: () => Promise<void>;
+  saveToServer: (authToken: string) => Promise<void>;
   importSettings: (settings: Partial<Settings>) => void;
 }
 
@@ -93,6 +97,71 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
+    }
+  },
+
+  loadFromServer: async (authToken: string) => {
+    try {
+      const response = await fetch(`${API_BASE}/settings/sync`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.settings) {
+          const s = data.settings;
+          const serverSettings: Settings = {
+            refreshInterval: s.refreshInterval || 30,
+            electricityRate: s.electricityRate || 0.12,
+            electricityCurrency: s.electricityCurrency || 'USD',
+            powerConsumption: s.powerConsumption || 0,
+            currency: s.currency || 'USD',
+            notifications: {
+              enabled: true,
+              workerOffline: s.notifyWorkerOffline !== false,
+              profitDrop: s.notifyProfitDrop !== false,
+              profitDropThreshold: s.profitDropThreshold || 10,
+              betterCoin: s.notifyBetterCoin === true,
+            },
+            showDiscoveryCoins: s.showDiscoveryCoins !== false,
+            liteMode: s.liteMode === true,
+          };
+          set(serverSettings);
+          await get().saveToStorage();
+          console.log('Settings synced from server');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load settings from server:', error);
+    }
+  },
+
+  saveToServer: async (authToken: string) => {
+    try {
+      const state = get();
+      await fetch(`${API_BASE}/settings/sync`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          refreshInterval: state.refreshInterval,
+          electricityRate: state.electricityRate,
+          electricityCurrency: state.electricityCurrency,
+          powerConsumption: state.powerConsumption,
+          currency: state.currency,
+          notifyWorkerOffline: state.notifications.workerOffline,
+          notifyProfitDrop: state.notifications.profitDrop,
+          profitDropThreshold: state.notifications.profitDropThreshold,
+          notifyBetterCoin: state.notifications.betterCoin,
+          showDiscoveryCoins: state.showDiscoveryCoins,
+          liteMode: state.liteMode,
+        })
+      });
+      console.log('Settings synced to server');
+    } catch (error) {
+      console.error('Failed to save settings to server:', error);
     }
   },
 

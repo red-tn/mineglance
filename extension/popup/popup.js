@@ -90,8 +90,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   refreshBtn.addEventListener('click', async () => {
     refreshBtn.disabled = true;
     refreshBtn.textContent = '...';
-    // Sync wallets from database first, then fetch pool data
-    await syncWalletsFromDatabase();
+    // Sync wallets and settings from database first, then fetch pool data
+    await Promise.all([
+      syncWalletsFromDatabase(),
+      syncSettingsFromDatabase()
+    ]);
     await fetchAllWalletData();
     refreshBtn.disabled = false;
     refreshBtn.textContent = 'Refresh';
@@ -319,6 +322,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  // Sync settings from database to ensure parity across all devices
+  async function syncSettingsFromDatabase() {
+    try {
+      const { authToken } = await chrome.storage.local.get(['authToken']);
+      if (!authToken) return;
+
+      const response = await fetch(`${API_BASE}/settings/sync`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.settings) {
+          const s = data.settings;
+          // Update local storage with server settings
+          await chrome.storage.local.set({
+            electricity: {
+              rate: s.electricityRate || 0.12,
+              currency: s.electricityCurrency || 'USD'
+            },
+            settings: {
+              refreshInterval: s.refreshInterval || 30,
+              showDiscovery: s.showDiscoveryCoins !== false,
+              liteMode: s.liteMode === true,
+              notifications: {
+                workerOffline: s.notifyWorkerOffline !== false,
+                profitDrop: s.notifyProfitDrop !== false,
+                profitDropThreshold: s.profitDropThreshold || 20,
+                betterCoin: s.notifyBetterCoin === true,
+                emailEnabled: s.emailAlertsEnabled === true,
+                alertEmail: s.emailAlertsAddress || '',
+                emailFrequency: s.emailFrequency || 'daily'
+              }
+            }
+          });
+          console.log('Settings synced from database');
+        }
+      } else {
+        console.log('Settings sync failed:', response.status);
+      }
+    } catch (err) {
+      console.log('Settings sync error:', err);
+    }
+  }
+
   async function verifyAuthToken(token) {
     try {
       const response = await fetch(`${API_BASE}/auth/login`, {
@@ -475,9 +527,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Verify token is still valid (non-blocking)
       verifyAuthToken(authToken);
 
-      // Sync wallets from database before displaying (blocking with timeout)
+      // Sync wallets and settings from database before displaying (blocking with timeout)
       await Promise.race([
-        syncWalletsFromDatabase(),
+        Promise.all([syncWalletsFromDatabase(), syncSettingsFromDatabase()]),
         new Promise(resolve => setTimeout(resolve, 3000)) // 3 second timeout
       ]);
 

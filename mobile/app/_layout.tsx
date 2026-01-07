@@ -25,6 +25,7 @@ export default function RootLayout() {
   const verifyAuth = useAuthStore(state => state.verifyAuth);
   const registerAnonymousInstance = useAuthStore(state => state.registerAnonymousInstance);
   const loadSettings = useSettingsStore(state => state.loadFromStorage);
+  const loadSettingsFromServer = useSettingsStore(state => state.loadFromServer);
   const loadWallets = useWalletStore(state => state.loadFromStorage);
   const loadWalletsFromServer = useWalletStore(state => state.loadFromServer);
   const liteMode = useSettingsStore(state => state.liteMode);
@@ -44,11 +45,18 @@ export default function RootLayout() {
         // This is non-blocking and runs in background
         registerAnonymousInstance();
 
-        // Verify auth is still valid with server, then sync wallets from database
+        // Verify auth is still valid with server, then sync wallets and settings from database
         verifyAuth().then(async (isValid) => {
           if (isValid) {
-            // Sync wallets from server after successful auth verification
-            await loadWalletsFromServer();
+            // Get authToken from store after verification
+            const token = useAuthStore.getState().authToken;
+            if (token) {
+              // Sync wallets and settings from server after successful auth verification
+              await Promise.all([
+                loadWalletsFromServer(),
+                loadSettingsFromServer(token)
+              ]);
+            }
           }
         });
 
