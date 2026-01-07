@@ -29,6 +29,7 @@ interface Comment {
   created_at: string
   user_name: string
   display_name: string
+  profile_photo_url: string | null
 }
 
 interface RelatedPost {
@@ -374,11 +375,21 @@ export default function BlogPostPage() {
                 <div key={comment.id} className="glass-card rounded-xl p-5">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                        <span className="text-primary font-semibold text-sm">
-                          {(comment.display_name || comment.user_name || 'A').charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      {comment.profile_photo_url ? (
+                        <Image
+                          src={comment.profile_photo_url}
+                          alt={comment.display_name || 'User'}
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                          <span className="text-primary font-semibold text-sm">
+                            {(comment.display_name || comment.user_name || 'A').charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <div>
                         <span className="text-dark-text font-medium">{comment.display_name || comment.user_name}</span>
                         <span className="text-dark-text-dim text-sm ml-2">
@@ -419,11 +430,21 @@ export default function BlogPostPage() {
                       {getReplies(comment.id).map((reply) => (
                         <div key={reply.id} className="pt-4">
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                              <span className="text-primary font-semibold text-xs">
-                                {(reply.display_name || reply.user_name || 'A').charAt(0).toUpperCase()}
-                              </span>
-                            </div>
+                            {reply.profile_photo_url ? (
+                              <Image
+                                src={reply.profile_photo_url}
+                                alt={reply.display_name || 'User'}
+                                width={24}
+                                height={24}
+                                className="w-6 h-6 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                                <span className="text-primary font-semibold text-xs">
+                                  {(reply.display_name || reply.user_name || 'A').charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
                             <span className="text-dark-text font-medium text-sm">{reply.display_name || reply.user_name}</span>
                             <span className="text-dark-text-dim text-xs">
                               {new Date(reply.created_at).toLocaleDateString('en-US', {

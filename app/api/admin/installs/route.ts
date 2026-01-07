@@ -27,6 +27,71 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
   return !!session
 }
 
+// DELETE - Purge stale installations (>120 days inactive, free users only)
+export async function DELETE(request: NextRequest) {
+  try {
+    const isAdmin = await verifyAdmin(request)
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const staleDays = 120
+    const staleDate = new Date(Date.now() - staleDays * 24 * 60 * 60 * 1000).toISOString()
+
+    // Get all stale instances (last_seen > 120 days ago)
+    const { data: staleInstances, error: fetchError } = await supabase
+      .from('user_instances')
+      .select(`
+        id,
+        user_id,
+        last_seen,
+        user:users(id, plan)
+      `)
+      .lt('last_seen', staleDate)
+
+    if (fetchError) {
+      console.error('Error fetching stale instances:', fetchError)
+      return NextResponse.json({ error: 'Failed to fetch stale instances' }, { status: 500 })
+    }
+
+    // Filter to only free users
+    const freeStaleInstances = (staleInstances || []).filter(inst => {
+      const user = inst.user as { id: string; plan: string } | null
+      return !user || user.plan === 'free'
+    })
+
+    if (freeStaleInstances.length === 0) {
+      return NextResponse.json({
+        success: true,
+        purged: 0,
+        message: 'No stale free user installations found'
+      })
+    }
+
+    // Delete stale instances
+    const instanceIds = freeStaleInstances.map(i => i.id)
+    const { error: deleteError } = await supabase
+      .from('user_instances')
+      .delete()
+      .in('id', instanceIds)
+
+    if (deleteError) {
+      console.error('Error deleting stale instances:', deleteError)
+      return NextResponse.json({ error: 'Failed to delete stale instances' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      success: true,
+      purged: freeStaleInstances.length,
+      message: `Purged ${freeStaleInstances.length} stale installations (>120 days inactive, free users)`
+    })
+
+  } catch (error) {
+    console.error('Purge stale installs error:', error)
+    return NextResponse.json({ error: 'Failed to purge stale installations' }, { status: 500 })
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const isAdmin = await verifyAdmin(request)

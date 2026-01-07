@@ -44,7 +44,7 @@ export async function GET(
         parent_id,
         admin_response,
         created_at,
-        users!inner(id, email, blog_display_name)
+        users!inner(id, email, blog_display_name, profile_photo_url)
       `)
       .eq('post_id', post.id)
       .eq('is_approved', true)
@@ -68,9 +68,9 @@ export async function GET(
       return `${adj}${noun}${num}`
     }
 
-    // Format comments with display names
+    // Format comments with display names and profile photos
     const formattedComments = (comments || []).map(comment => {
-      const user = comment.users as unknown as { email: string; blog_display_name: string | null }
+      const user = comment.users as unknown as { email: string; blog_display_name: string | null; profile_photo_url: string | null }
       const email = user?.email || 'anonymous@example.com'
       const displayName = user?.blog_display_name || generateDisplayName(email)
       return {
@@ -80,7 +80,8 @@ export async function GET(
         admin_response: comment.admin_response,
         created_at: comment.created_at,
         user_name: email.split('@')[0] + '***',
-        display_name: displayName
+        display_name: displayName,
+        profile_photo_url: user?.profile_photo_url || null
       }
     })
 

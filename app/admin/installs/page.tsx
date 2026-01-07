@@ -53,6 +53,8 @@ export default function InstallsPage() {
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null)
   const [chartData, setChartData] = useState<ChartData[]>([])
   const [loading, setLoading] = useState(true)
+  const [purging, setPurging] = useState(false)
+  const [purgeResult, setPurgeResult] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -158,6 +160,39 @@ export default function InstallsPage() {
 
   const maxInstalls = Math.max(...chartData.map(d => d.total), 1)
 
+  const handlePurgeStale = async () => {
+    if (!confirm('Are you sure you want to purge all stale installations?\n\nThis will delete all installations from FREE users that have been inactive for more than 120 days.\n\nThis action cannot be undone.')) {
+      return
+    }
+
+    setPurging(true)
+    setPurgeResult(null)
+
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/installs', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setPurgeResult(`Success: ${data.message}`)
+        fetchInstalls() // Refresh the list
+      } else {
+        setPurgeResult(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Purge error:', error)
+      setPurgeResult('Error: Failed to purge stale installations')
+    } finally {
+      setPurging(false)
+      // Clear result after 5 seconds
+      setTimeout(() => setPurgeResult(null), 5000)
+    }
+  }
+
   return (
     <div>
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -165,7 +200,7 @@ export default function InstallsPage() {
           <h1 className="text-2xl font-bold text-dark-text">Installations</h1>
           <p className="text-dark-text-muted">Track extension and app installations across platforms</p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 items-center">
           <input
             type="text"
             placeholder="Search instance/email..."
@@ -201,7 +236,38 @@ export default function InstallsPage() {
             <option value="30">Last 30 days</option>
             <option value="90">Last 90 days</option>
           </select>
+          <button
+            onClick={handlePurgeStale}
+            disabled={purging}
+            className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {purging ? (
+              <>
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Purging...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Purge Stale (120d+)
+              </>
+            )}
+          </button>
         </div>
+        {purgeResult && (
+          <div className={`mt-2 px-4 py-2 rounded-lg text-sm ${
+            purgeResult.startsWith('Success')
+              ? 'bg-primary/20 text-primary border border-primary/30'
+              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+          }`}>
+            {purgeResult}
+          </div>
+        )}
       </div>
 
       {/* Platform Cards - Top Row */}
