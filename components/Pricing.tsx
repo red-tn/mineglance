@@ -154,6 +154,57 @@ export default function Pricing() {
             </p>
           </div>
 
+          {/* Download Section */}
+          <div className="mt-12 sm:mt-16">
+            <h3 className="text-center text-lg sm:text-xl font-semibold text-dark-text mb-6">
+              Available On
+            </h3>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+              {/* Chrome Extension */}
+              <a
+                href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card hover:border-primary transition-all group"
+              >
+                <svg className="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.001h-.002l-3.952 6.848a12.014 12.014 0 0 0 9.26-5.382H17.31a5.458 5.458 0 0 1-2.037-8.557zm-2.818 2.817a3.272 3.272 0 1 0 0 6.545 3.272 3.272 0 0 0 0-6.545z"/>
+                </svg>
+                <div className="text-left">
+                  <p className="text-xs text-dark-text-muted">Get it on</p>
+                  <p className="font-semibold text-dark-text group-hover:text-primary transition-colors">Chrome Web Store</p>
+                </div>
+              </a>
+
+              {/* iOS App Store */}
+              <a
+                href="https://apps.apple.com/app/mineglance/id6740092270"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card hover:border-primary transition-all group"
+              >
+                <svg className="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                <div className="text-left">
+                  <p className="text-xs text-dark-text-muted">Download on the</p>
+                  <p className="font-semibold text-dark-text group-hover:text-primary transition-colors">App Store</p>
+                </div>
+              </a>
+
+              {/* Android - Coming Soon */}
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card opacity-60 cursor-not-allowed">
+                <svg className="w-8 h-8 text-dark-text-muted" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.523 15.341a.5.5 0 0 0 0-.682l-.932-.937a.497.497 0 0 0-.34-.141.503.503 0 0 0-.34.141l-.93.937a.5.5 0 0 0 0 .682l.93.937a.5.5 0 0 0 .68 0zM6.75 15.341a.5.5 0 0 1 0-.682l.932-.937a.5.5 0 0 1 .68 0l.93.937a.5.5 0 0 1 0 .682l-.93.937a.5.5 0 0 1-.68 0zM3.016 10.73l1.89-3.31a.75.75 0 0 1 1.3.74l-1.5 2.64h14.588l-1.5-2.64a.75.75 0 0 1 1.3-.74l1.89 3.31a5.25 5.25 0 0 1-2.984 7.52v2.5a.75.75 0 0 1-1.5 0v-2.08a5.234 5.234 0 0 1-1.25.15h-6.5c-.43 0-.85-.05-1.25-.15v2.08a.75.75 0 0 1-1.5 0v-2.5a5.25 5.25 0 0 1-2.984-7.52zM12 3.75a.75.75 0 0 1 .75.75v1.75a.75.75 0 0 1-1.5 0V4.5a.75.75 0 0 1 .75-.75z"/>
+                </svg>
+                <div className="text-left">
+                  <p className="text-xs text-dark-text-dim">Coming Soon</p>
+                  <p className="font-semibold text-dark-text-muted">Google Play</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
