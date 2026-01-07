@@ -41,7 +41,7 @@ export default function Header() {
             <Link href="/support" className="text-dark-text-muted hover:text-primary transition-colors">
               Support
             </Link>
-            <CTAButton href="#" variant="primary">
+            <CTAButton href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" variant="primary">
               Add to Chrome
             </CTAButton>
           </div>
@@ -101,7 +101,7 @@ export default function Header() {
               >
                 Support
               </Link>
-              <CTAButton href="#" variant="primary" className="w-full">
+              <CTAButton href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" variant="primary" className="w-full">
                 Add to Chrome
               </CTAButton>
             </div>

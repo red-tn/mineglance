@@ -15,7 +15,7 @@ export default function Hero() {
               Find out in 2 clicks. Net profit dashboard for GPU miners—no monthly fees, no OS replacement.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <CTAButton href="#" variant="primary" className="text-lg px-8 py-4">
+              <CTAButton href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" variant="primary" className="text-lg px-8 py-4">
                 Add to Chrome — It&apos;s Free
               </CTAButton>
             </div>

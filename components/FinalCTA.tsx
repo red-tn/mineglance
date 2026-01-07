@@ -12,7 +12,7 @@ export default function FinalCTA() {
             Join thousands of miners who finally know if they&apos;re actually making money.
           </p>
           <div className="mt-8">
-            <CTAButton href="#" variant="primary" className="text-lg px-8 py-4">
+            <CTAButton href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" variant="primary" className="text-lg px-8 py-4">
               Add to Chrome — It&apos;s Free
             </CTAButton>
           </div>
