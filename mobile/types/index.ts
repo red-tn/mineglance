@@ -84,6 +84,9 @@ export interface NotificationSettings {
   profitDrop: boolean;
   profitDropThreshold: number; // percentage
   betterCoin: boolean;
+  emailEnabled: boolean;
+  emailAddress: string;
+  emailFrequency: 'immediate' | 'hourly' | 'daily' | 'weekly';
 }
 
 // Auth types

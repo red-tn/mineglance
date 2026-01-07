@@ -33,10 +33,23 @@ const defaultSettings: Settings = {
     profitDrop: false,
     profitDropThreshold: 10,
     betterCoin: false,
+    emailEnabled: false,
+    emailAddress: '',
+    emailFrequency: 'immediate',
   },
   showDiscoveryCoins: true,
   liteMode: false, // Dark mode by default
 };
+
+// Helper to get auth token for syncing
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const { useAuthStore } = await import('./authStore');
+    return useAuthStore.getState().authToken;
+  } catch {
+    return null;
+  }
+}
 
 export const useSettingsStore = create<SettingsStore>((set, get) => ({
   ...defaultSettings,
@@ -122,12 +135,26 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
               profitDrop: s.notifyProfitDrop !== false,
               profitDropThreshold: s.profitDropThreshold || 10,
               betterCoin: s.notifyBetterCoin === true,
+              emailEnabled: s.emailAlertsEnabled === true,
+              emailAddress: s.emailAlertsAddress || '',
+              emailFrequency: s.emailFrequency || 'immediate',
             },
             showDiscoveryCoins: s.showDiscoveryCoins !== false,
             liteMode: s.liteMode === true,
           };
           set(serverSettings);
-          await get().saveToStorage();
+          // Only save to local storage, don't sync back to server
+          const toSave: Settings = {
+            refreshInterval: serverSettings.refreshInterval,
+            electricityRate: serverSettings.electricityRate,
+            electricityCurrency: serverSettings.electricityCurrency,
+            powerConsumption: serverSettings.powerConsumption,
+            currency: serverSettings.currency,
+            notifications: serverSettings.notifications,
+            showDiscoveryCoins: serverSettings.showDiscoveryCoins,
+            liteMode: serverSettings.liteMode,
+          };
+          await AsyncStorage.setItem('settings', JSON.stringify(toSave));
           console.log('Settings synced from server');
         }
       }
@@ -155,6 +182,9 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
           notifyProfitDrop: state.notifications.profitDrop,
           profitDropThreshold: state.notifications.profitDropThreshold,
           notifyBetterCoin: state.notifications.betterCoin,
+          emailAlertsEnabled: state.notifications.emailEnabled,
+          emailAlertsAddress: state.notifications.emailAddress,
+          emailFrequency: state.notifications.emailFrequency,
           showDiscoveryCoins: state.showDiscoveryCoins,
           liteMode: state.liteMode,
         })
@@ -179,6 +209,12 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         liteMode: state.liteMode,
       };
       await AsyncStorage.setItem('settings', JSON.stringify(toSave));
+
+      // Also sync to server if authenticated
+      const authToken = await getAuthToken();
+      if (authToken) {
+        get().saveToServer(authToken);
+      }
     } catch (error) {
       console.error('Failed to save settings:', error);
     }

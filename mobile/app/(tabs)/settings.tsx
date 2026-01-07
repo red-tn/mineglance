@@ -379,10 +379,87 @@ export default function SettingsScreen() {
                   thumbColor={settings.notifications.profitDrop ? colors.accent : '#f4f3f4'}
                 />
               </View>
+
+              <View style={[styles.switchRow, { borderBottomWidth: 0 }]}>
+                <Text style={styles.label}>More Profitable Coin</Text>
+                <Switch
+                  value={settings.notifications.betterCoin}
+                  onValueChange={(value) =>
+                    settings.setNotifications({ betterCoin: value })
+                  }
+                  trackColor={{ false: colors.border, true: colors.accentLight }}
+                  thumbColor={settings.notifications.betterCoin ? colors.accent : '#f4f3f4'}
+                />
+              </View>
             </>
           )}
         </View>
       </View>
+
+      {/* Email Alerts Section (Pro only) */}
+      {isPro && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Email Alerts</Text>
+
+          <View style={styles.card}>
+            <View style={styles.switchRow}>
+              <Text style={styles.label}>Enable Email Alerts</Text>
+              <Switch
+                value={settings.notifications.emailEnabled}
+                onValueChange={(value) =>
+                  settings.setNotifications({ emailEnabled: value })
+                }
+                trackColor={{ false: colors.border, true: colors.accentLight }}
+                thumbColor={settings.notifications.emailEnabled ? colors.accent : '#f4f3f4'}
+              />
+            </View>
+
+            {settings.notifications.emailEnabled && (
+              <>
+                <View style={styles.inputRow}>
+                  <Text style={styles.label}>Email Address</Text>
+                  <TextInput
+                    style={[styles.input, { minWidth: 180 }]}
+                    value={settings.notifications.emailAddress}
+                    onChangeText={(text) =>
+                      settings.setNotifications({ emailAddress: text })
+                    }
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholder="your@email.com"
+                    placeholderTextColor={colors.textMuted}
+                  />
+                </View>
+
+                <View style={styles.inputRow}>
+                  <Text style={styles.label}>Frequency</Text>
+                  <View style={styles.frequencyButtons}>
+                    {(['immediate', 'hourly', 'daily', 'weekly'] as const).map((freq) => (
+                      <TouchableOpacity
+                        key={freq}
+                        style={[
+                          styles.frequencyButton,
+                          settings.notifications.emailFrequency === freq && styles.frequencyButtonActive,
+                        ]}
+                        onPress={() => settings.setNotifications({ emailFrequency: freq })}
+                      >
+                        <Text
+                          style={[
+                            styles.frequencyButtonText,
+                            settings.notifications.emailFrequency === freq && styles.frequencyButtonTextActive,
+                          ]}
+                        >
+                          {freq.charAt(0).toUpperCase() + freq.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* Display Section */}
       <View style={styles.section}>
@@ -675,5 +752,29 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
   },
   removeDeviceButton: {
     padding: spacing.sm,
+  },
+  frequencyButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  frequencyButton: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  frequencyButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  frequencyButtonText: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  frequencyButtonTextActive: {
+    color: '#fff',
   },
 });
