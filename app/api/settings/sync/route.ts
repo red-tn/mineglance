@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v8-GET',
+        apiVersion: '2026-01-07-v9-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -198,30 +198,48 @@ export async function PUT(request: NextRequest) {
     let error
 
     if (existingSettings) {
-      // UPDATE existing row - use ID for precision
-      console.log('PUT /api/settings/sync - Updating existing row ID:', existingSettings.id, 'for user:', user.id)
-      console.log('PUT /api/settings/sync - Update payload:', JSON.stringify(updateData))
+      // DELETE and INSERT - nuclear option to bypass any UPDATE issues
+      console.log('PUT /api/settings/sync - DELETE+INSERT for row ID:', existingSettings.id)
+      console.log('PUT /api/settings/sync - New data:', JSON.stringify(updateData))
 
-      const result = await supabase
+      // First DELETE the existing row
+      const deleteResult = await supabase
         .from('user_settings')
-        .update(updateData)
-        .eq('id', existingSettings.id)  // Use ID instead of user_id for precision
-        .select()
+        .delete()
+        .eq('id', existingSettings.id)
 
-      console.log('PUT /api/settings/sync - Update result:', JSON.stringify(result))
-      console.log('PUT /api/settings/sync - Rows returned:', result.data?.length || 0)
+      console.log('PUT /api/settings/sync - Delete result:', JSON.stringify(deleteResult))
 
-      if (result.data && result.data.length > 0) {
-        updatedSettings = result.data[0]
-      } else {
-        // Update returned no rows - RLS might be blocking!
-        console.error('PUT /api/settings/sync - UPDATE RETURNED NO ROWS! RLS policy may be blocking.')
+      if (deleteResult.error) {
+        console.error('PUT /api/settings/sync - DELETE FAILED:', deleteResult.error)
         return NextResponse.json({
-          error: 'Update failed - no rows returned. Check RLS policies.',
-          _debug: { existingId: existingSettings.id, userId: user.id, updateData }
+          error: 'Delete failed',
+          _debug: { deleteError: deleteResult.error, existingId: existingSettings.id }
         }, { status: 500 })
       }
-      error = result.error
+
+      // Then INSERT a new row with the updated data
+      const insertResult = await supabase
+        .from('user_settings')
+        .insert({
+          user_id: user.id,
+          ...updateData
+        })
+        .select()
+        .single()
+
+      console.log('PUT /api/settings/sync - Insert result:', JSON.stringify(insertResult))
+
+      if (insertResult.error) {
+        console.error('PUT /api/settings/sync - INSERT FAILED:', insertResult.error)
+        return NextResponse.json({
+          error: 'Insert failed after delete',
+          _debug: { insertError: insertResult.error, userId: user.id }
+        }, { status: 500 })
+      }
+
+      updatedSettings = insertResult.data
+      error = null
     } else {
       // INSERT new row
       console.log('PUT /api/settings/sync - Inserting new row for user:', user.id)
@@ -261,7 +279,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v8-PUT',
+        apiVersion: '2026-01-07-v9-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
