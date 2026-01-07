@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v6-GET',
+        apiVersion: '2026-01-07-v7-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -135,8 +135,12 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Prevent caching
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+    // Prevent ALL caching - Vercel, CDN, browser
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, s-maxage=0')
+    response.headers.set('CDN-Cache-Control', 'no-store')
+    response.headers.set('Vercel-CDN-Cache-Control', 'no-store')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
     return response
 
   } catch (error) {
@@ -244,7 +248,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v6-PUT',
+        apiVersion: '2026-01-07-v7-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
