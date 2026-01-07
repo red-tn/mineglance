@@ -582,7 +582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Show/hide discovery section based on settings
-      const showDiscoverySetting = settings?.showDiscovery !== false; // Default to true
+      const showDiscoverySetting = settings?.showDiscovery ?? true;
       if (showDiscoverySetting) {
         coinDiscovery.classList.remove('hidden');
         if (discoveryCollapsed) {
@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       fetchBlogPost();
 
       // Apply Lite Mode if enabled (dark is default)
-      if (settings?.liteMode === true) {
+      if (settings?.liteMode) {
         document.body.classList.add('lite-mode');
       }
 

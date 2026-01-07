@@ -516,9 +516,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     refreshInterval.value = data.settings?.refreshInterval || 30;
 
-    // Load display settings (default to true/enabled)
-    showDiscovery.checked = data.settings?.showDiscovery !== false;
-    liteMode.checked = data.settings?.liteMode === true; // Default to dark (false)
+    // Load display settings - use values directly
+    showDiscovery.checked = data.settings?.showDiscovery ?? true;
+    liteMode.checked = data.settings?.liteMode ?? false;
 
     // Apply lite mode immediately on load
     if (liteMode.checked) {
