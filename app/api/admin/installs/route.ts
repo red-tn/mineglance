@@ -40,55 +40,74 @@ export async function DELETE(request: NextRequest) {
 
     // If specific instance ID provided, delete just that one
     if (instanceId) {
-      // First get the instance to find its user_id
-      const { data: instance, error: fetchError } = await supabase
+      // First try to find in user_instances (logged-in users)
+      const { data: userInstance } = await supabase
         .from('user_instances')
         .select('id, user_id, instance_id')
         .eq('id', instanceId)
         .single()
 
-      if (fetchError || !instance) {
-        return NextResponse.json({ error: 'Instance not found' }, { status: 404 })
-      }
-
-      // Delete the instance
-      const { error: deleteError } = await supabase
-        .from('user_instances')
-        .delete()
-        .eq('id', instanceId)
-
-      if (deleteError) {
-        console.error('Error deleting instance:', deleteError)
-        return NextResponse.json({ error: 'Failed to delete instance' }, { status: 500 })
-      }
-
-      // Check if this was the user's last instance - if so, clean up related data
-      if (instance.user_id) {
-        const { data: remainingInstances } = await supabase
+      if (userInstance) {
+        // Delete from user_instances
+        const { error: deleteError } = await supabase
           .from('user_instances')
-          .select('id')
-          .eq('user_id', instance.user_id)
+          .delete()
+          .eq('id', instanceId)
 
-        // If no more instances for this user, clean up their sessions and wallets
-        if (!remainingInstances || remainingInstances.length === 0) {
-          // Delete user sessions
-          await supabase
-            .from('user_sessions')
-            .delete()
-            .eq('user_id', instance.user_id)
-
-          // Optionally delete user wallets (keeping user record for re-login)
-          // await supabase
-          //   .from('user_wallets')
-          //   .delete()
-          //   .eq('user_id', instance.user_id)
+        if (deleteError) {
+          console.error('Error deleting user instance:', deleteError)
+          return NextResponse.json({ error: 'Failed to delete instance' }, { status: 500 })
         }
+
+        // Check if this was the user's last instance - if so, clean up related data
+        if (userInstance.user_id) {
+          const { data: remainingInstances } = await supabase
+            .from('user_instances')
+            .select('id')
+            .eq('user_id', userInstance.user_id)
+
+          // If no more instances for this user, clean up their sessions
+          if (!remainingInstances || remainingInstances.length === 0) {
+            await supabase
+              .from('user_sessions')
+              .delete()
+              .eq('user_id', userInstance.user_id)
+          }
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: `Deleted instance ${userInstance.instance_id || instanceId}`
+        })
       }
 
-      return NextResponse.json({
-        success: true,
-        message: `Deleted instance ${instance.instance_id || instanceId}`
-      })
+      // If not found in user_instances, try extension_installs (anonymous)
+      const { data: anonInstance } = await supabase
+        .from('extension_installs')
+        .select('id, install_id')
+        .eq('id', instanceId)
+        .single()
+
+      if (anonInstance) {
+        // Delete from extension_installs
+        const { error: deleteError } = await supabase
+          .from('extension_installs')
+          .delete()
+          .eq('id', instanceId)
+
+        if (deleteError) {
+          console.error('Error deleting anonymous install:', deleteError)
+          return NextResponse.json({ error: 'Failed to delete instance' }, { status: 500 })
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: `Deleted anonymous install ${anonInstance.install_id || instanceId}`
+        })
+      }
+
+      // Not found in either table
+      return NextResponse.json({ error: 'Instance not found' }, { status: 404 })
     }
 
     // Bulk purge stale installations (>120 days inactive, free users only)
