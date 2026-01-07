@@ -408,8 +408,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('Settings API response status:', settingsRes.status);
         if (settingsRes.ok) {
           const settingsData = await settingsRes.json();
-          console.log('Settings API raw response:', JSON.stringify(settingsData));
-          console.log('API DEBUG INFO:', settingsData._debug);
+          console.log('===== GET SETTINGS DEBUG =====');
+          console.log('Full response:', JSON.stringify(settingsData, null, 2));
+          console.log('API Version:', settingsData._debug?.apiVersion);
+          console.log('Row Count:', settingsData._debug?.rowCount);
+          console.log('Settings ID:', settingsData._debug?.settingsId);
+          console.log('Updated At:', settingsData._debug?.settingsUpdatedAt);
+          console.log('Raw notify_worker_offline:', settingsData._debug?.rawNotifyWorkerOffline, '(type:', settingsData._debug?.typeofWorker + ')');
+          console.log('Raw notify_profit_drop:', settingsData._debug?.rawNotifyProfitDrop, '(type:', settingsData._debug?.typeofProfit + ')');
+          console.log('=============================');
           if (settingsData.settings) {
             const s = settingsData.settings;
             console.log('Parsed settings - workerOffline:', s.notifyWorkerOffline, 'profitDrop:', s.notifyProfitDrop, 'betterCoin:', s.notifyBetterCoin, 'emailEnabled:', s.emailAlertsEnabled);
@@ -580,7 +587,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Settings from server:', data.settings);
+        console.log('===== SYNC FROM SERVER DEBUG =====');
+        console.log('Full response:', JSON.stringify(data, null, 2));
+        console.log('API Version:', data._debug?.apiVersion);
+        console.log('Row Count:', data._debug?.rowCount);
+        console.log('Settings ID:', data._debug?.settingsId);
+        console.log('Updated At:', data._debug?.settingsUpdatedAt);
+        console.log('Raw notify_worker_offline:', data._debug?.rawNotifyWorkerOffline, '(type:', data._debug?.typeofWorker + ')');
+        console.log('Raw notify_profit_drop:', data._debug?.rawNotifyProfitDrop, '(type:', data._debug?.typeofProfit + ')');
+        console.log('===================================');
+        console.log('Parsed settings:', data.settings);
 
         if (data.settings) {
           const s = data.settings;
@@ -1212,11 +1228,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           },
           body: JSON.stringify(dataToSync)
         });
+        const responseData = await syncResponse.json().catch(() => ({}));
         if (syncResponse.ok) {
-          console.log('Settings synced to server successfully');
+          console.log('Settings synced to server - RESPONSE:', JSON.stringify(responseData));
+          console.log('PUT DEBUG:', responseData._debug);
         } else {
-          const errorData = await syncResponse.json().catch(() => ({}));
-          console.error('Settings sync failed:', syncResponse.status, errorData);
+          console.error('Settings sync failed:', syncResponse.status, responseData);
         }
       } catch (err) {
         console.error('Settings sync error:', err);

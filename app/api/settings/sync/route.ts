@@ -41,10 +41,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // First, check how many rows exist for this user
+    const { data: countData } = await supabase
+      .from('user_settings')
+      .select('id, created_at, updated_at, notify_worker_offline, notify_profit_drop')
+      .eq('user_id', user.id)
+
+    console.log('GET /api/settings/sync - Found', countData?.length || 0, 'rows for user_id:', user.id)
+    if (countData && countData.length > 0) {
+      console.log('GET /api/settings/sync - All rows:', JSON.stringify(countData))
+    }
+
     const { data: settings, error } = await supabase
       .from('user_settings')
       .select('*')
       .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .single()
 
     if (error && error.code !== 'PGRST116') { // Not found is ok
@@ -109,9 +122,12 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v3',
+        apiVersion: '2026-01-07-v5-GET',
         settingsFound: !!settings,
+        rowCount: countData?.length || 0,
         userId: user.id,
+        settingsId: settings?.id,
+        settingsUpdatedAt: settings?.updated_at,
         rawNotifyWorkerOffline: settings?.notify_worker_offline,
         rawNotifyProfitDrop: settings?.notify_profit_drop,
         typeofWorker: typeof settings?.notify_worker_offline,
@@ -139,6 +155,10 @@ export async function PUT(request: NextRequest) {
 
     const settings = await request.json()
 
+    // Debug: Log what we received from client
+    console.log('PUT /api/settings/sync - RECEIVED from client:', JSON.stringify(settings))
+    console.log('PUT /api/settings/sync - user_id:', user.id)
+
     // Build update object
     const updateData: any = {
       updated_at: new Date().toISOString()
@@ -159,6 +179,10 @@ export async function PUT(request: NextRequest) {
     if (settings.showDiscoveryCoins !== undefined) updateData.show_discovery_coins = settings.showDiscoveryCoins
     if (settings.liteMode !== undefined) updateData.lite_mode = settings.liteMode
 
+    // Debug: Log what we're writing to DB
+    console.log('PUT /api/settings/sync - updateData to write:', JSON.stringify(updateData))
+    console.log('PUT /api/settings/sync - notify_worker_offline value:', updateData.notify_worker_offline, 'type:', typeof updateData.notify_worker_offline)
+
     // Upsert settings (create if not exists)
     const { data: updatedSettings, error } = await supabase
       .from('user_settings')
@@ -173,11 +197,40 @@ export async function PUT(request: NextRequest) {
 
     if (error) {
       console.error('Error updating settings:', error)
-      return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to update settings', details: error.message }, { status: 500 })
     }
+
+    // Debug: Log what DB returned after upsert
+    console.log('PUT /api/settings/sync - DB returned after upsert:', JSON.stringify(updatedSettings))
+    console.log('PUT /api/settings/sync - DB notify_worker_offline:', updatedSettings.notify_worker_offline, 'type:', typeof updatedSettings.notify_worker_offline)
+
+    // Verify by reading back immediately
+    const { data: verifyData } = await supabase
+      .from('user_settings')
+      .select('id, notify_worker_offline, notify_profit_drop, updated_at')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    console.log('PUT /api/settings/sync - VERIFY READ BACK:', JSON.stringify(verifyData))
 
     return NextResponse.json({
       success: true,
+      _debug: {
+        apiVersion: '2026-01-07-v5-PUT',
+        userId: user.id,
+        upsertedId: updatedSettings.id,
+        receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
+        wroteNotifyWorkerOffline: updateData.notify_worker_offline,
+        dbReturnedNotifyWorkerOffline: updatedSettings.notify_worker_offline,
+        verifyReadBack: verifyData ? {
+          id: verifyData.id,
+          notify_worker_offline: verifyData.notify_worker_offline,
+          notify_profit_drop: verifyData.notify_profit_drop,
+          updated_at: verifyData.updated_at
+        } : null
+      },
       settings: {
         refreshInterval: updatedSettings.refresh_interval,
         electricityRate: parseFloat(updatedSettings.electricity_rate) || 0.12,
