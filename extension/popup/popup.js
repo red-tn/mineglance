@@ -90,6 +90,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   refreshBtn.addEventListener('click', async () => {
     refreshBtn.disabled = true;
     refreshBtn.textContent = '...';
+    // Sync wallets from database first, then fetch pool data
+    await syncWalletsFromDatabase();
     await fetchAllWalletData();
     refreshBtn.disabled = false;
     refreshBtn.textContent = 'Refresh';
@@ -290,6 +292,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     authMessage.classList.add('hidden');
   }
 
+  async function syncWalletsFromDatabase() {
+    try {
+      const { authToken } = await chrome.storage.local.get(['authToken']);
+      if (!authToken) return;
+
+      const response = await fetch(`${API_BASE}/wallets/sync`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.wallets) {
+          await chrome.storage.local.set({ wallets: data.wallets });
+          console.log('Wallets synced from database:', data.wallets.length);
+        }
+      } else {
+        console.log('Wallet sync failed:', response.status);
+      }
+    } catch (err) {
+      console.log('Wallet sync error:', err);
+    }
+  }
+
   async function verifyAuthToken(token) {
     try {
       const response = await fetch(`${API_BASE}/auth/login`, {
@@ -445,6 +474,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Verify token is still valid (non-blocking)
       verifyAuthToken(authToken);
+
+      // Sync wallets from database before displaying (blocking with timeout)
+      await Promise.race([
+        syncWalletsFromDatabase(),
+        new Promise(resolve => setTimeout(resolve, 3000)) // 3 second timeout
+      ]);
+
+      // Re-read wallets after sync
+      const syncResult = await chrome.storage.local.get(['wallets']);
+      wallets = syncResult.wallets || wallets;
 
       // Verify license with server (non-blocking, runs in background)
       if (isPaid) {

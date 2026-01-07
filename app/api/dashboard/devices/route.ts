@@ -60,7 +60,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       devices,
-      deviceCount: devices.length
+      deviceCount: devices.length,
+      activeCount: devices.length // Total connected devices
     })
 
   } catch (error) {

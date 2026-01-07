@@ -80,6 +80,33 @@ export default function UsersPage() {
     }
   }
 
+  const handleResendLicense = async (email: string) => {
+    if (!confirm(`Resend license key email to ${email}?`)) return
+
+    setActionLoading(true)
+    try {
+      const response = await fetch('/api/resend-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(data.error || 'Failed to resend email')
+        return
+      }
+
+      alert('License key email sent successfully!')
+    } catch (error) {
+      console.error('Resend failed:', error)
+      alert('Failed to resend email')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const handleDeleteUser = async (userId: string, email: string) => {
     if (!confirm(`Are you sure you want to PERMANENTLY DELETE the account for ${email}?\n\nThis will delete:\n- User account\n- All wallets\n- All settings\n- All devices\n- All comments\n\nThis action cannot be undone!`)) return
 
@@ -370,6 +397,15 @@ export default function UsersPage() {
             </div>
 
             <div className="p-6 border-t border-dark-border bg-dark-card-hover flex gap-3 flex-wrap">
+              {selectedUser.plan !== 'free' && selectedUser.key && (
+                <button
+                  onClick={() => handleResendLicense(selectedUser.email)}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {actionLoading ? 'Sending...' : 'Resend License Email'}
+                </button>
+              )}
               {selectedUser.status === 'active' ? (
                 <button
                   onClick={() => handleAction(selectedUser.key, 'revoke')}
