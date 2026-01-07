@@ -21,7 +21,7 @@ VALUES
   ('00000000-0000-0000-0000-000000000006', 'rvnminer@demo.local', 'DEMO_USER_NO_LOGIN', 'free', 'RavenMiner', NOW(), NOW()),
   ('00000000-0000-0000-0000-000000000007', 'solominer@demo.local', 'DEMO_USER_NO_LOGIN', 'pro', 'SoloMiningPro', NOW(), NOW()),
   ('00000000-0000-0000-0000-000000000008', 'poolhopper@demo.local', 'DEMO_USER_NO_LOGIN', 'free', 'PoolHopper2024', NOW(), NOW()),
-  ('00000000-0000-0000-0000-000000000009', 'asicfarm@demo.local', 'DEMO_USER_NO_LOGIN', 'bundle', 'ASICFarmOp', NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000009', 'asicfarm@demo.local', 'DEMO_USER_NO_LOGIN', 'pro', 'ASICFarmOp', NOW(), NOW()),
   ('00000000-0000-0000-0000-000000000010', 'profitseeker@demo.local', 'DEMO_USER_NO_LOGIN', 'free', 'ProfitSeeker', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE SET blog_display_name = EXCLUDED.blog_display_name;
 
