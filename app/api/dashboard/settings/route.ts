@@ -117,15 +117,32 @@ export async function PUT(request: NextRequest) {
     if (body.emailAlertsAddress !== undefined) updateData.email_alerts_address = body.emailAlertsAddress
     if (body.emailFrequency !== undefined) updateData.email_frequency = body.emailFrequency
 
-    // Upsert settings to user_settings table (same table extension uses)
-    const { error } = await supabase
+    // Check if settings row exists for this user
+    const { data: existingSettings } = await supabase
       .from('user_settings')
-      .upsert({
-        user_id: session.user_id,
-        ...updateData
-      }, {
-        onConflict: 'user_id'
-      })
+      .select('id')
+      .eq('user_id', session.user_id)
+      .single()
+
+    let error
+
+    if (existingSettings) {
+      // UPDATE existing row
+      const result = await supabase
+        .from('user_settings')
+        .update(updateData)
+        .eq('user_id', session.user_id)
+      error = result.error
+    } else {
+      // INSERT new row
+      const result = await supabase
+        .from('user_settings')
+        .insert({
+          user_id: session.user_id,
+          ...updateData
+        })
+      error = result.error
+    }
 
     if (error) throw error
 

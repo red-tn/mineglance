@@ -183,17 +183,43 @@ export async function PUT(request: NextRequest) {
     console.log('PUT /api/settings/sync - updateData to write:', JSON.stringify(updateData))
     console.log('PUT /api/settings/sync - notify_worker_offline value:', updateData.notify_worker_offline, 'type:', typeof updateData.notify_worker_offline)
 
-    // Upsert settings (create if not exists)
-    const { data: updatedSettings, error } = await supabase
+    // Check if settings row exists for this user
+    const { data: existingSettings } = await supabase
       .from('user_settings')
-      .upsert({
-        user_id: user.id,
-        ...updateData
-      }, {
-        onConflict: 'user_id'
-      })
-      .select()
+      .select('id')
+      .eq('user_id', user.id)
       .single()
+
+    let updatedSettings
+    let error
+
+    if (existingSettings) {
+      // UPDATE existing row
+      console.log('PUT /api/settings/sync - Updating existing row:', existingSettings.id)
+      const result = await supabase
+        .from('user_settings')
+        .update(updateData)
+        .eq('user_id', user.id)
+        .select()
+        .single()
+      updatedSettings = result.data
+      error = result.error
+      console.log('PUT /api/settings/sync - Update result:', JSON.stringify(result))
+    } else {
+      // INSERT new row
+      console.log('PUT /api/settings/sync - Inserting new row for user:', user.id)
+      const result = await supabase
+        .from('user_settings')
+        .insert({
+          user_id: user.id,
+          ...updateData
+        })
+        .select()
+        .single()
+      updatedSettings = result.data
+      error = result.error
+      console.log('PUT /api/settings/sync - Insert result:', JSON.stringify(result))
+    }
 
     if (error) {
       console.error('Error updating settings:', error)
