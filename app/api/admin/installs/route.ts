@@ -27,7 +27,7 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
   return !!session
 }
 
-// DELETE - Purge stale installations (>120 days inactive, free users only)
+// DELETE - Delete specific instance or purge stale installations
 export async function DELETE(request: NextRequest) {
   try {
     const isAdmin = await verifyAdmin(request)
@@ -35,6 +35,63 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const instanceId = searchParams.get('id')
+
+    // If specific instance ID provided, delete just that one
+    if (instanceId) {
+      // First get the instance to find its user_id
+      const { data: instance, error: fetchError } = await supabase
+        .from('user_instances')
+        .select('id, user_id, instance_id')
+        .eq('id', instanceId)
+        .single()
+
+      if (fetchError || !instance) {
+        return NextResponse.json({ error: 'Instance not found' }, { status: 404 })
+      }
+
+      // Delete the instance
+      const { error: deleteError } = await supabase
+        .from('user_instances')
+        .delete()
+        .eq('id', instanceId)
+
+      if (deleteError) {
+        console.error('Error deleting instance:', deleteError)
+        return NextResponse.json({ error: 'Failed to delete instance' }, { status: 500 })
+      }
+
+      // Check if this was the user's last instance - if so, clean up related data
+      if (instance.user_id) {
+        const { data: remainingInstances } = await supabase
+          .from('user_instances')
+          .select('id')
+          .eq('user_id', instance.user_id)
+
+        // If no more instances for this user, clean up their sessions and wallets
+        if (!remainingInstances || remainingInstances.length === 0) {
+          // Delete user sessions
+          await supabase
+            .from('user_sessions')
+            .delete()
+            .eq('user_id', instance.user_id)
+
+          // Optionally delete user wallets (keeping user record for re-login)
+          // await supabase
+          //   .from('user_wallets')
+          //   .delete()
+          //   .eq('user_id', instance.user_id)
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Deleted instance ${instance.instance_id || instanceId}`
+      })
+    }
+
+    // Bulk purge stale installations (>120 days inactive, free users only)
     const staleDays = 120
     const staleDate = new Date(Date.now() - staleDays * 24 * 60 * 60 * 1000).toISOString()
 
@@ -56,7 +113,7 @@ export async function DELETE(request: NextRequest) {
 
     // Filter to only free users
     const freeStaleInstances = (staleInstances || []).filter(inst => {
-      const user = inst.user as { id: string; plan: string } | null
+      const user = inst.user as unknown as { id: string; plan: string } | null
       return !user || user.plan === 'free'
     })
 

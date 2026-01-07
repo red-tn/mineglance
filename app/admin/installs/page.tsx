@@ -55,6 +55,7 @@ export default function InstallsPage() {
   const [loading, setLoading] = useState(true)
   const [purging, setPurging] = useState(false)
   const [purgeResult, setPurgeResult] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -159,6 +160,36 @@ export default function InstallsPage() {
   }
 
   const maxInstalls = Math.max(...chartData.map(d => d.total), 1)
+
+  const handleDeleteInstance = async (install: Installation) => {
+    if (!confirm(`Delete this installation?\n\nInstance: ${install.instance_id?.substring(0, 16)}...\nEmail: ${install.email || 'Anonymous'}\nPlatform: ${getPlatformLabel(install.device_type)}\n\nThis will remove the instance and clean up related data.`)) {
+      return
+    }
+
+    setDeletingId(install.id)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch(`/api/admin/installs?id=${install.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setPurgeResult(`Deleted: ${data.message}`)
+        fetchInstalls()
+      } else {
+        setPurgeResult(`Error: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Delete error:', error)
+      setPurgeResult('Error: Failed to delete installation')
+    } finally {
+      setDeletingId(null)
+      setTimeout(() => setPurgeResult(null), 5000)
+    }
+  }
 
   const handlePurgeStale = async () => {
     if (!confirm('Are you sure you want to purge all stale installations?\n\nThis will delete all installations from FREE users that have been inactive for more than 120 days.\n\nThis action cannot be undone.')) {
@@ -480,6 +511,7 @@ export default function InstallsPage() {
                   >
                     Last Active {sortBy === 'last_seen' && (sortOrder === 'asc' ? '↑' : '↓')}
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-dark-border">
@@ -539,6 +571,25 @@ export default function InstallsPage() {
                       <span className={isActive(install.last_seen) ? 'text-primary' : 'text-dark-text-dim'}>
                         {getTimeSince(install.last_seen)}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleDeleteInstance(install)}
+                        disabled={deletingId === install.id}
+                        className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete this installation"
+                      >
+                        {deletingId === install.id ? (
+                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))}
