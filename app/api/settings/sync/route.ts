@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v9-GET',
+        apiVersion: '2026-01-07-v10-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -187,10 +187,10 @@ export async function PUT(request: NextRequest) {
     console.log('PUT /api/settings/sync - updateData to write:', JSON.stringify(updateData))
     console.log('PUT /api/settings/sync - notify_worker_offline value:', updateData.notify_worker_offline, 'type:', typeof updateData.notify_worker_offline)
 
-    // Check if settings row exists for this user
+    // Check if settings row exists for this user - get ALL fields to preserve them
     const { data: existingSettings } = await supabase
       .from('user_settings')
-      .select('id')
+      .select('*')
       .eq('user_id', user.id)
       .single()
 
@@ -218,13 +218,18 @@ export async function PUT(request: NextRequest) {
         }, { status: 500 })
       }
 
-      // Then INSERT a new row with the updated data
+      // Then INSERT a new row - MERGE existing settings with new ones to preserve any missing fields
+      const { id, created_at, ...existingFields } = existingSettings // Remove id and created_at
+      const mergedData = {
+        ...existingFields,  // Start with existing values
+        ...updateData,      // Override with new values
+        user_id: user.id,   // Ensure user_id is set
+      }
+      console.log('PUT /api/settings/sync - Merged data for insert:', JSON.stringify(mergedData))
+
       const insertResult = await supabase
         .from('user_settings')
-        .insert({
-          user_id: user.id,
-          ...updateData
-        })
+        .insert(mergedData)
         .select()
         .single()
 
@@ -279,7 +284,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v9-PUT',
+        apiVersion: '2026-01-07-v10-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
