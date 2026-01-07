@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v11-GET',
+        apiVersion: '2026-01-07-v12-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -198,64 +198,35 @@ export async function PUT(request: NextRequest) {
     let error
 
     if (existingSettings) {
-      // DELETE and INSERT - nuclear option to bypass any UPDATE issues
-      console.log('PUT /api/settings/sync - DELETE+INSERT for row ID:', existingSettings.id)
-      console.log('PUT /api/settings/sync - New data:', JSON.stringify(updateData))
+      // Simple UPDATE - RLS is now disabled so this should work
+      console.log('PUT /api/settings/sync - Simple UPDATE for row ID:', existingSettings.id)
+      console.log('PUT /api/settings/sync - Update data:', JSON.stringify(updateData))
 
-      // First DELETE the existing row
-      const deleteResult = await supabase
+      const updateResult = await supabase
         .from('user_settings')
-        .delete()
+        .update(updateData)
         .eq('id', existingSettings.id)
-
-      console.log('PUT /api/settings/sync - Delete result:', JSON.stringify(deleteResult))
-
-      if (deleteResult.error) {
-        console.error('PUT /api/settings/sync - DELETE FAILED:', deleteResult.error)
-        return NextResponse.json({
-          error: 'Delete failed',
-          _debug: { deleteError: deleteResult.error, existingId: existingSettings.id }
-        }, { status: 500 })
-      }
-
-      // Then INSERT a new row with ONLY valid columns (no spreading unknown fields)
-      const insertData = {
-        user_id: user.id,
-        refresh_interval: updateData.refresh_interval ?? existingSettings.refresh_interval ?? 30,
-        electricity_rate: updateData.electricity_rate ?? existingSettings.electricity_rate ?? 0.12,
-        electricity_currency: updateData.electricity_currency ?? existingSettings.electricity_currency ?? 'USD',
-        power_consumption: updateData.power_consumption ?? existingSettings.power_consumption ?? 0,
-        currency: updateData.currency ?? existingSettings.currency ?? 'USD',
-        notify_worker_offline: updateData.notify_worker_offline ?? existingSettings.notify_worker_offline ?? true,
-        notify_profit_drop: updateData.notify_profit_drop ?? existingSettings.notify_profit_drop ?? true,
-        profit_drop_threshold: updateData.profit_drop_threshold ?? existingSettings.profit_drop_threshold ?? 20,
-        notify_better_coin: updateData.notify_better_coin ?? existingSettings.notify_better_coin ?? false,
-        email_alerts_enabled: updateData.email_alerts_enabled ?? existingSettings.email_alerts_enabled ?? false,
-        email_alerts_address: updateData.email_alerts_address ?? existingSettings.email_alerts_address ?? '',
-        email_frequency: updateData.email_frequency ?? existingSettings.email_frequency ?? 'immediate',
-        show_discovery_coins: updateData.show_discovery_coins ?? existingSettings.show_discovery_coins ?? true,
-        lite_mode: updateData.lite_mode ?? existingSettings.lite_mode ?? false,
-        updated_at: new Date().toISOString()
-      }
-      console.log('PUT /api/settings/sync - Insert data:', JSON.stringify(insertData))
-
-      const insertResult = await supabase
-        .from('user_settings')
-        .insert(insertData)
         .select()
-        .single()
 
-      console.log('PUT /api/settings/sync - Insert result:', JSON.stringify(insertResult))
+      console.log('PUT /api/settings/sync - Update result:', JSON.stringify(updateResult))
 
-      if (insertResult.error) {
-        console.error('PUT /api/settings/sync - INSERT FAILED:', insertResult.error)
+      if (updateResult.error) {
+        console.error('PUT /api/settings/sync - UPDATE FAILED:', updateResult.error)
         return NextResponse.json({
-          error: 'Insert failed after delete',
-          _debug: { insertError: insertResult.error, userId: user.id }
+          error: 'Update failed',
+          _debug: { updateError: updateResult.error, existingId: existingSettings.id, updateData }
         }, { status: 500 })
       }
 
-      updatedSettings = insertResult.data
+      if (!updateResult.data || updateResult.data.length === 0) {
+        console.error('PUT /api/settings/sync - UPDATE returned no rows')
+        return NextResponse.json({
+          error: 'Update returned no rows',
+          _debug: { existingId: existingSettings.id, updateData }
+        }, { status: 500 })
+      }
+
+      updatedSettings = updateResult.data[0]
       error = null
     } else {
       // INSERT new row
@@ -296,7 +267,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v11-PUT',
+        apiVersion: '2026-01-07-v12-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
