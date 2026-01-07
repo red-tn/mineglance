@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v12-GET',
+        apiVersion: '2026-01-07-v13-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -187,11 +187,14 @@ export async function PUT(request: NextRequest) {
     console.log('PUT /api/settings/sync - updateData to write:', JSON.stringify(updateData))
     console.log('PUT /api/settings/sync - notify_worker_offline value:', updateData.notify_worker_offline, 'type:', typeof updateData.notify_worker_offline)
 
-    // Check if settings row exists for this user - get ALL fields to preserve them
+    // Check if settings row exists for this user - get the SAME row that GET returns
+    // CRITICAL: Must use same ordering as GET to ensure we update the correct row
     const { data: existingSettings } = await supabase
       .from('user_settings')
       .select('*')
       .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .single()
 
     let updatedSettings
@@ -267,7 +270,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v12-PUT',
+        apiVersion: '2026-01-07-v13-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
