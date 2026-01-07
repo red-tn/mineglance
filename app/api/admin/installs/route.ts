@@ -81,32 +81,7 @@ export async function DELETE(request: NextRequest) {
         })
       }
 
-      // If not found in user_instances, try extension_installs (anonymous)
-      const { data: anonInstance } = await supabase
-        .from('extension_installs')
-        .select('id, install_id')
-        .eq('id', instanceId)
-        .single()
-
-      if (anonInstance) {
-        // Delete from extension_installs
-        const { error: deleteError } = await supabase
-          .from('extension_installs')
-          .delete()
-          .eq('id', instanceId)
-
-        if (deleteError) {
-          console.error('Error deleting anonymous install:', deleteError)
-          return NextResponse.json({ error: 'Failed to delete instance' }, { status: 500 })
-        }
-
-        return NextResponse.json({
-          success: true,
-          message: `Deleted anonymous install ${anonInstance.install_id || instanceId}`
-        })
-      }
-
-      // Not found in either table
+      // Not found
       return NextResponse.json({ error: 'Instance not found' }, { status: 404 })
     }
 
@@ -190,7 +165,7 @@ export async function GET(request: NextRequest) {
     const periodDays = parseInt(period)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    // Get all user instances with their user data (logged-in users)
+    // Get all user instances with their user data
     const { data: instances } = await supabase
       .from('user_instances')
       .select(`
@@ -199,14 +174,8 @@ export async function GET(request: NextRequest) {
       `)
       .order('last_seen', { ascending: false })
 
-    // Get anonymous extension installs (not yet logged in)
-    const { data: anonInstalls } = await supabase
-      .from('extension_installs')
-      .select('*')
-      .order('last_seen', { ascending: false })
-
-    // Map user instances to installation format
-    const userInstalls = (instances || []).map(inst => ({
+    // Map instances to installation format
+    const allInstalls = (instances || []).map(inst => ({
       id: inst.id,
       instance_id: inst.instance_id || inst.id,
       user_id: inst.user_id,
@@ -220,34 +189,8 @@ export async function GET(request: NextRequest) {
       version: inst.version,
       created_at: inst.created_at,
       last_seen: inst.last_seen,
-      isAnonymous: false
+      isAnonymous: !inst.user_id
     }))
-
-    // Get instance IDs from user_instances to filter out duplicates
-    const userInstanceIds = new Set(userInstalls.map(i => i.instance_id))
-
-    // Map anonymous installs (exclude any that are also in user_instances)
-    const anonInstallsMapped = (anonInstalls || [])
-      .filter(inst => !userInstanceIds.has(inst.install_id))
-      .map(inst => ({
-        id: inst.id,
-        instance_id: inst.install_id,
-        user_id: null,
-        email: inst.email || null,
-        plan: 'free',
-        license_key: null,
-        isPro: false,
-        device_type: 'extension',
-        device_name: null,
-        browser: inst.browser || 'chrome',
-        version: inst.version,
-        created_at: inst.created_at,
-        last_seen: inst.last_seen,
-        isAnonymous: true
-      }))
-
-    // Combine both lists
-    const allInstalls = [...userInstalls, ...anonInstallsMapped]
 
     // Platform-specific counts
     const extensionInstalls = allInstalls.filter(i => i.device_type === 'extension')

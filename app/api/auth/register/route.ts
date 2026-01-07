@@ -248,13 +248,6 @@ export async function POST(request: NextRequest) {
           })
       }
 
-      // Remove from anonymous extension_installs if exists
-      if (deviceType === 'extension') {
-        await supabase
-          .from('extension_installs')
-          .delete()
-          .eq('install_id', instanceId)
-      }
     }
 
     // Send verification email (must await on serverless to ensure it completes)

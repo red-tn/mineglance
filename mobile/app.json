@@ -2,6 +2,7 @@
   "expo": {
     "name": "MineGlance",
     "slug": "mineglance",
+    "owner": "mineglance",
     "version": "1.2.0",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
@@ -28,7 +29,7 @@
       "entitlements": {
         "aps-environment": "production"
       },
-      "buildNumber": "46"
+      "buildNumber": "47"
     },
     "android": {
       "adaptiveIcon": {
@@ -68,7 +69,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "806d6110-a544-4eb1-bb6e-d3436e4d594c"
+        "projectId": "34686742-7b85-4df1-ae6e-6dff3763e061"
       }
     }
   }
