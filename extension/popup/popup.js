@@ -250,6 +250,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (data.token) {
         await handleLoginSuccess(data);
+      } else if (data.requiresVerification) {
+        // Registration succeeded - user needs to verify email
+        showAuthMessage(data.message || 'Please check your email to verify your account', 'success');
       } else {
         showAuthMessage(data.error || 'Registration failed', 'error');
       }
