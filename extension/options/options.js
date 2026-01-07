@@ -405,10 +405,13 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }
 
+        console.log('Settings API response status:', settingsRes.status);
         if (settingsRes.ok) {
           const settingsData = await settingsRes.json();
+          console.log('Settings API raw response:', JSON.stringify(settingsData));
           if (settingsData.settings) {
             const s = settingsData.settings;
+            console.log('Parsed settings - workerOffline:', s.notifyWorkerOffline, 'profitDrop:', s.notifyProfitDrop, 'betterCoin:', s.notifyBetterCoin, 'emailEnabled:', s.emailAlertsEnabled);
             // Update local storage AND the data variable so UI shows server values
             const serverElectricity = {
               rate: s.electricityRate || 0.12,
@@ -504,7 +507,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     currency.value = data.electricity?.currency || 'USD';
 
     // Load notification settings
+    console.log('Setting UI from data.settings:', JSON.stringify(data.settings));
     if (data.settings?.notifications) {
+      console.log('notifications object:', JSON.stringify(data.settings.notifications));
       notifyWorkerOffline.checked = data.settings.notifications.workerOffline;
       notifyProfitDrop.checked = data.settings.notifications.profitDrop;
       notifyBetterCoin.checked = data.settings.notifications.betterCoin;
