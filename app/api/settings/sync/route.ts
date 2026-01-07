@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v16-GET',
+        apiVersion: '2026-01-07-v17-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -187,37 +187,30 @@ export async function PUT(request: NextRequest) {
     console.log('PUT /api/settings/sync - updateData to write:', JSON.stringify(updateData))
     console.log('PUT /api/settings/sync - notify_worker_offline value:', updateData.notify_worker_offline, 'type:', typeof updateData.notify_worker_offline)
 
-    // Nuclear option: DELETE all rows for this user, then INSERT fresh
-    console.log('PUT /api/settings/sync - Deleting ALL rows for user:', user.id)
-    const deleteResult = await supabase
+    // Proper UPSERT - requires UNIQUE constraint on user_id
+    console.log('PUT /api/settings/sync - UPSERT for user:', user.id)
+    const upsertResult = await supabase
       .from('user_settings')
-      .delete()
-      .eq('user_id', user.id)
-
-    console.log('PUT /api/settings/sync - Delete result:', JSON.stringify(deleteResult))
-
-    // Now INSERT a fresh row
-    console.log('PUT /api/settings/sync - Inserting fresh row with data:', JSON.stringify(updateData))
-    const insertResult = await supabase
-      .from('user_settings')
-      .insert({
+      .upsert({
         user_id: user.id,
         ...updateData
+      }, {
+        onConflict: 'user_id'
       })
       .select()
       .single()
 
-    console.log('PUT /api/settings/sync - Insert result:', JSON.stringify(insertResult))
+    console.log('PUT /api/settings/sync - Upsert result:', JSON.stringify(upsertResult))
 
-    if (insertResult.error) {
-      console.error('PUT /api/settings/sync - INSERT FAILED:', insertResult.error)
+    if (upsertResult.error) {
+      console.error('PUT /api/settings/sync - UPSERT FAILED:', upsertResult.error)
       return NextResponse.json({
-        error: 'Insert failed',
-        _debug: { insertError: insertResult.error, updateData }
+        error: 'Upsert failed',
+        _debug: { upsertError: upsertResult.error, updateData }
       }, { status: 500 })
     }
 
-    const updatedSettings = insertResult.data
+    const updatedSettings = upsertResult.data
     const error = null
 
     if (error) {
@@ -243,7 +236,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v16-PUT',
+        apiVersion: '2026-01-07-v17-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
