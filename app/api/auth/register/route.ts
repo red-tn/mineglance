@@ -257,8 +257,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send verification email (async, don't block response)
-    sendVerificationEmail(normalizedEmail, verificationToken)
+    // Send verification email (must await on serverless to ensure it completes)
+    try {
+      await sendVerificationEmail(normalizedEmail, verificationToken)
+      console.log('Verification email sent to:', normalizedEmail)
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError)
+      // Don't fail registration if email fails - user can request resend
+    }
 
     // Return success but NO token - user must verify email first
     return NextResponse.json({
