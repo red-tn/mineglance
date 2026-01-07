@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     const response = NextResponse.json({
       settings: clientSettings,
       _debug: {
-        apiVersion: '2026-01-07-v14-GET',
+        apiVersion: '2026-01-07-v15-GET',
         settingsFound: !!settings,
         rowCount: countData?.length || 0,
         userId: user.id,
@@ -187,29 +187,37 @@ export async function PUT(request: NextRequest) {
     console.log('PUT /api/settings/sync - updateData to write:', JSON.stringify(updateData))
     console.log('PUT /api/settings/sync - notify_worker_offline value:', updateData.notify_worker_offline, 'type:', typeof updateData.notify_worker_offline)
 
-    // Check if settings row exists for this user - get the SAME row that GET returns
-    // CRITICAL: Must use same ordering as GET to ensure we update the correct row
-    const { data: existingSettings } = await supabase
+    // Get ALL settings rows for this user (there may be duplicates)
+    const { data: allSettings } = await supabase
       .from('user_settings')
-      .select('*')
+      .select('id')
       .eq('user_id', user.id)
       .order('updated_at', { ascending: false })
-      .limit(1)
-      .single()
 
     let updatedSettings
     let error
 
-    if (existingSettings) {
+    if (allSettings && allSettings.length > 0) {
+      // Keep the first (most recent) row, delete all others
+      if (allSettings.length > 1) {
+        const idsToDelete = allSettings.slice(1).map(s => s.id)
+        console.log('PUT /api/settings/sync - Deleting duplicate rows:', idsToDelete)
+        await supabase
+          .from('user_settings')
+          .delete()
+          .in('id', idsToDelete)
+      }
+
+      const existingSettings = allSettings[0]
       // Simple UPDATE - RLS is now disabled so this should work
       console.log('PUT /api/settings/sync - Simple UPDATE for row ID:', existingSettings.id)
       console.log('PUT /api/settings/sync - Update data:', JSON.stringify(updateData))
 
-      // Update by user_id (not row id) - more reliable with RLS
+      // Update the single remaining row by its ID
       const updateResult = await supabase
         .from('user_settings')
         .update(updateData)
-        .eq('user_id', user.id)
+        .eq('id', existingSettings.id)
         .select()
 
       console.log('PUT /api/settings/sync - Update result:', JSON.stringify(updateResult))
@@ -271,7 +279,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       _debug: {
-        apiVersion: '2026-01-07-v14-PUT',
+        apiVersion: '2026-01-07-v15-PUT',
         userId: user.id,
         upsertedId: updatedSettings.id,
         receivedNotifyWorkerOffline: settings.notifyWorkerOffline,
