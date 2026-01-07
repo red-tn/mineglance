@@ -409,6 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (settingsRes.ok) {
           const settingsData = await settingsRes.json();
           console.log('Settings API raw response:', JSON.stringify(settingsData));
+          console.log('API DEBUG INFO:', settingsData._debug);
           if (settingsData.settings) {
             const s = settingsData.settings;
             console.log('Parsed settings - workerOffline:', s.notifyWorkerOffline, 'profitDrop:', s.notifyProfitDrop, 'betterCoin:', s.notifyBetterCoin, 'emailEnabled:', s.emailAlertsEnabled);

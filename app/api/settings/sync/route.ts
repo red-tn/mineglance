@@ -92,7 +92,15 @@ export async function GET(request: NextRequest) {
       liteMode: false
     }
 
-    return NextResponse.json({ settings: clientSettings })
+    return NextResponse.json({
+      settings: clientSettings,
+      _debug: {
+        apiVersion: '2026-01-07-v2',
+        settingsFound: !!settings,
+        rawNotifyWorkerOffline: settings?.notify_worker_offline,
+        rawNotifyProfitDrop: settings?.notify_profit_drop
+      }
+    })
 
   } catch (error) {
     console.error('GET settings error:', error)
