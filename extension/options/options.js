@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const settingsData = await settingsRes.json();
           if (settingsData.settings) {
             const s = settingsData.settings;
-            // Merge server settings with local (API returns camelCase)
+            // Merge server settings with local (API returns proper booleans now)
             await chrome.storage.local.set({
               electricity: {
                 rate: s.electricityRate || 0.12,
@@ -417,14 +417,14 @@ document.addEventListener('DOMContentLoaded', async () => {
               },
               settings: {
                 refreshInterval: s.refreshInterval || 30,
-                showDiscovery: s.showDiscoveryCoins !== false,
-                liteMode: s.liteMode === true,
+                showDiscovery: s.showDiscoveryCoins,
+                liteMode: s.liteMode,
                 notifications: {
-                  workerOffline: s.notifyWorkerOffline !== false,
-                  profitDrop: s.notifyProfitDrop !== false,
+                  workerOffline: s.notifyWorkerOffline,
+                  profitDrop: s.notifyProfitDrop,
                   profitDropThreshold: s.profitDropThreshold || 20,
-                  betterCoin: s.notifyBetterCoin === true,
-                  emailEnabled: s.emailAlertsEnabled === true,
+                  betterCoin: s.notifyBetterCoin,
+                  emailEnabled: s.emailAlertsEnabled,
                   alertEmail: s.emailAlertsAddress || '',
                   emailFrequency: s.emailFrequency || 'daily'
                 }
@@ -572,7 +572,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (data.settings) {
           const s = data.settings;
-          // Update local storage
+          // Update local storage (API returns proper booleans now)
           await chrome.storage.local.set({
             electricity: {
               rate: s.electricityRate || 0.12,
@@ -580,31 +580,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             settings: {
               refreshInterval: s.refreshInterval || 30,
-              showDiscovery: s.showDiscoveryCoins !== false,
-              liteMode: s.liteMode === true,
+              showDiscovery: s.showDiscoveryCoins,
+              liteMode: s.liteMode,
               notifications: {
-                workerOffline: s.notifyWorkerOffline !== false,
-                profitDrop: s.notifyProfitDrop !== false,
+                workerOffline: s.notifyWorkerOffline,
+                profitDrop: s.notifyProfitDrop,
                 profitDropThreshold: s.profitDropThreshold || 20,
-                betterCoin: s.notifyBetterCoin === true,
-                emailEnabled: s.emailAlertsEnabled === true,
+                betterCoin: s.notifyBetterCoin,
+                emailEnabled: s.emailAlertsEnabled,
                 alertEmail: s.emailAlertsAddress || '',
                 emailFrequency: s.emailFrequency || 'daily'
               }
             }
           });
 
-          // Update UI
+          // Update UI - use values directly (API returns proper booleans now)
           electricityRate.value = s.electricityRate || 0.12;
           currency.value = s.electricityCurrency || 'USD';
           refreshInterval.value = s.refreshInterval || 30;
-          showDiscovery.checked = s.showDiscoveryCoins !== false;
-          liteMode.checked = s.liteMode === true;
-          notifyWorkerOffline.checked = s.notifyWorkerOffline !== false;
-          notifyProfitDrop.checked = s.notifyProfitDrop !== false;
-          notifyBetterCoin.checked = s.notifyBetterCoin === true;
+          showDiscovery.checked = s.showDiscoveryCoins;
+          liteMode.checked = s.liteMode;
+          notifyWorkerOffline.checked = s.notifyWorkerOffline;
+          notifyProfitDrop.checked = s.notifyProfitDrop;
+          notifyBetterCoin.checked = s.notifyBetterCoin;
           profitDropThreshold.value = s.profitDropThreshold || 20;
-          emailAlertsEnabled.checked = s.emailAlertsEnabled === true;
+          emailAlertsEnabled.checked = s.emailAlertsEnabled;
           alertEmail.value = s.emailAlertsAddress || '';
           emailFrequency.value = s.emailFrequency || 'daily';
 

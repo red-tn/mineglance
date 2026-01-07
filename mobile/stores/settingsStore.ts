@@ -123,6 +123,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         const data = await response.json();
         if (data.settings) {
           const s = data.settings;
+          // API returns proper booleans now - use values directly
           const serverSettings: Settings = {
             refreshInterval: s.refreshInterval || 30,
             electricityRate: s.electricityRate || 0.12,
@@ -131,16 +132,16 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
             currency: s.currency || 'USD',
             notifications: {
               enabled: true,
-              workerOffline: s.notifyWorkerOffline !== false,
-              profitDrop: s.notifyProfitDrop !== false,
+              workerOffline: s.notifyWorkerOffline,
+              profitDrop: s.notifyProfitDrop,
               profitDropThreshold: s.profitDropThreshold || 10,
-              betterCoin: s.notifyBetterCoin === true,
-              emailEnabled: s.emailAlertsEnabled === true,
+              betterCoin: s.notifyBetterCoin,
+              emailEnabled: s.emailAlertsEnabled,
               emailAddress: s.emailAlertsAddress || '',
               emailFrequency: s.emailFrequency || 'immediate',
             },
-            showDiscoveryCoins: s.showDiscoveryCoins !== false,
-            liteMode: s.liteMode === true,
+            showDiscoveryCoins: s.showDiscoveryCoins,
+            liteMode: s.liteMode,
           };
           set(serverSettings);
           // Only save to local storage, don't sync back to server

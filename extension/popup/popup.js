@@ -348,14 +348,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             settings: {
               refreshInterval: s.refreshInterval || 30,
-              showDiscovery: s.showDiscoveryCoins !== false,
-              liteMode: s.liteMode === true,
+              showDiscovery: s.showDiscoveryCoins,
+              liteMode: s.liteMode,
               notifications: {
-                workerOffline: s.notifyWorkerOffline !== false,
-                profitDrop: s.notifyProfitDrop !== false,
+                workerOffline: s.notifyWorkerOffline,
+                profitDrop: s.notifyProfitDrop,
                 profitDropThreshold: s.profitDropThreshold || 20,
-                betterCoin: s.notifyBetterCoin === true,
-                emailEnabled: s.emailAlertsEnabled === true,
+                betterCoin: s.notifyBetterCoin,
+                emailEnabled: s.emailAlertsEnabled,
                 alertEmail: s.emailAlertsAddress || '',
                 emailFrequency: s.emailFrequency || 'daily'
               }
