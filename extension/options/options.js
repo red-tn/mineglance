@@ -543,6 +543,96 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Mobile app section is now always visible for all users
   }
 
+  // Sync settings from server (manual refresh)
+  const refreshSettingsBtn = document.getElementById('refreshSettingsBtn');
+  refreshSettingsBtn.addEventListener('click', async () => {
+    const originalText = refreshSettingsBtn.textContent;
+    refreshSettingsBtn.textContent = 'Syncing...';
+    refreshSettingsBtn.disabled = true;
+
+    try {
+      const { authToken } = await chrome.storage.local.get('authToken');
+      if (!authToken) {
+        refreshSettingsBtn.textContent = 'Not signed in!';
+        setTimeout(() => {
+          refreshSettingsBtn.textContent = originalText;
+          refreshSettingsBtn.disabled = false;
+        }, 2000);
+        return;
+      }
+
+      console.log('Fetching settings from server...');
+      const response = await fetch(`${API_BASE}/settings/sync`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Settings from server:', data.settings);
+
+        if (data.settings) {
+          const s = data.settings;
+          // Update local storage
+          await chrome.storage.local.set({
+            electricity: {
+              rate: s.electricityRate || 0.12,
+              currency: s.electricityCurrency || 'USD'
+            },
+            settings: {
+              refreshInterval: s.refreshInterval || 30,
+              showDiscovery: s.showDiscoveryCoins !== false,
+              liteMode: s.liteMode === true,
+              notifications: {
+                workerOffline: s.notifyWorkerOffline !== false,
+                profitDrop: s.notifyProfitDrop !== false,
+                profitDropThreshold: s.profitDropThreshold || 20,
+                betterCoin: s.notifyBetterCoin === true,
+                emailEnabled: s.emailAlertsEnabled === true,
+                alertEmail: s.emailAlertsAddress || '',
+                emailFrequency: s.emailFrequency || 'daily'
+              }
+            }
+          });
+
+          // Update UI
+          electricityRate.value = s.electricityRate || 0.12;
+          currency.value = s.electricityCurrency || 'USD';
+          refreshInterval.value = s.refreshInterval || 30;
+          showDiscovery.checked = s.showDiscoveryCoins !== false;
+          liteMode.checked = s.liteMode === true;
+          notifyWorkerOffline.checked = s.notifyWorkerOffline !== false;
+          notifyProfitDrop.checked = s.notifyProfitDrop !== false;
+          notifyBetterCoin.checked = s.notifyBetterCoin === true;
+          profitDropThreshold.value = s.profitDropThreshold || 20;
+          emailAlertsEnabled.checked = s.emailAlertsEnabled === true;
+          alertEmail.value = s.emailAlertsAddress || '';
+          emailFrequency.value = s.emailFrequency || 'daily';
+
+          // Update email fields visibility
+          const showEmailFields = emailAlertsEnabled.checked;
+          emailInputGroup.style.display = showEmailFields ? 'block' : 'none';
+          emailFrequencyGroup.style.display = showEmailFields ? 'block' : 'none';
+          testEmailGroup.style.display = showEmailFields ? 'block' : 'none';
+
+          refreshSettingsBtn.textContent = '✓ Synced!';
+          console.log('Settings synced from server successfully');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to sync settings:', response.status, errorData);
+        refreshSettingsBtn.textContent = 'Sync failed!';
+      }
+    } catch (err) {
+      console.error('Settings sync error:', err);
+      refreshSettingsBtn.textContent = 'Error!';
+    }
+
+    setTimeout(() => {
+      refreshSettingsBtn.textContent = originalText;
+      refreshSettingsBtn.disabled = false;
+    }, 2000);
+  });
+
   // Toggle email input visibility
   emailAlertsEnabled.addEventListener('change', () => {
     const show = emailAlertsEnabled.checked;
