@@ -14,6 +14,9 @@ interface License {
   installCount: number
   walletCount: number
   rigCount: number
+  blog_display_name?: string
+  profile_photo_url?: string
+  full_name?: string
 }
 
 export default function UsersPage() {
@@ -338,7 +341,7 @@ export default function UsersPage() {
           <div className="glass-card rounded-xl border border-dark-border max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-dark-border">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-dark-text">License Details</h2>
+                <h2 className="text-xl font-bold text-dark-text">User Details</h2>
                 <button
                   onClick={() => setSelectedUser(null)}
                   className="text-dark-text-muted hover:text-dark-text"
@@ -351,6 +354,40 @@ export default function UsersPage() {
             </div>
 
             <div className="p-6 space-y-4">
+              {/* Profile Photo & Name Section */}
+              <div className="flex items-center gap-4">
+                {selectedUser.profile_photo_url ? (
+                  <img
+                    src={selectedUser.profile_photo_url}
+                    alt="Profile"
+                    className="w-16 h-16 rounded-full object-cover border-2 border-dark-border"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-dark-card-hover border-2 border-dark-border flex items-center justify-center">
+                    <svg className="w-8 h-8 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
+                <div>
+                  <p className="text-lg font-semibold text-dark-text">
+                    {selectedUser.full_name || 'No name set'}
+                  </p>
+                  <p className="text-sm text-primary">@{selectedUser.blog_display_name || 'Anonymous'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-dark-text-muted">Full Name</label>
+                  <p className="text-dark-text">{selectedUser.full_name || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-dark-text-muted">Display Name</label>
+                  <p className="text-dark-text">{selectedUser.blog_display_name || '-'}</p>
+                </div>
+              </div>
+
               <div>
                 <label className="text-sm font-medium text-dark-text-muted">Email</label>
                 <p className="text-dark-text">{selectedUser.email}</p>
@@ -358,7 +395,7 @@ export default function UsersPage() {
 
               <div>
                 <label className="text-sm font-medium text-dark-text-muted">License Key</label>
-                <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded break-all">{selectedUser.key}</p>
+                <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded break-all">{selectedUser.key || '-'}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
