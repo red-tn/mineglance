@@ -41,6 +41,8 @@ export default function HealthPage() {
   const [health, setHealth] = useState<HealthData | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [purging, setPurging] = useState(false)
+  const [purgeResult, setPurgeResult] = useState<{ success: boolean; purged: number; error?: string } | null>(null)
 
   const fetchHealth = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setRefreshing(true)
@@ -64,6 +66,31 @@ export default function HealthPage() {
   useEffect(() => {
     fetchHealth()
   }, [fetchHealth])
+
+  const handlePurgeInstances = async () => {
+    if (!confirm('This will delete all device instances not seen in the last 30 days. Continue?')) return
+
+    setPurging(true)
+    setPurgeResult(null)
+
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/cron/purge-instances', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        setPurgeResult({ success: true, purged: data.purged })
+      } else {
+        setPurgeResult({ success: false, purged: 0, error: data.error || 'Purge failed' })
+      }
+    } catch (error) {
+      setPurgeResult({ success: false, purged: 0, error: 'Connection error' })
+    } finally {
+      setPurging(false)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -198,6 +225,53 @@ export default function HealthPage() {
           </div>
         </div>
       )}
+
+      {/* Maintenance Section */}
+      <div className="glass-card rounded-xl border border-dark-border p-6 mb-8">
+        <h3 className="text-lg font-semibold text-dark-text mb-4">Maintenance</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 bg-dark-card-hover rounded-lg">
+            <div>
+              <p className="font-medium text-dark-text">Purge Stale Instances</p>
+              <p className="text-sm text-dark-text-muted">
+                Delete device instances not seen in the last 30 days. Runs automatically daily at midnight UTC.
+              </p>
+            </div>
+            <button
+              onClick={handlePurgeInstances}
+              disabled={purging}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {purging ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Purging...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Purge Now
+                </>
+              )}
+            </button>
+          </div>
+          {purgeResult && (
+            <div className={`p-4 rounded-lg ${purgeResult.success ? 'bg-green-900/30 border border-green-700' : 'bg-red-900/30 border border-red-700'}`}>
+              {purgeResult.success ? (
+                <p className="text-green-400">
+                  Successfully purged {purgeResult.purged} stale instance{purgeResult.purged !== 1 ? 's' : ''}.
+                </p>
+              ) : (
+                <p className="text-red-400">
+                  Error: {purgeResult.error}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

@@ -98,8 +98,22 @@ export default function DevicesPage() {
     if (diffMins < 5) return 'Active now'
     if (diffMins < 60) return `${diffMins}m ago`
     if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return null
+    if (diffDays < 30) return `${diffDays}d ago`
+    return `${diffDays}d ago`
+  }
+
+  function getDaysUntilPurge(dateString: string | null): number | null {
+    if (!dateString) return null
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    return Math.max(0, 30 - diffDays)
+  }
+
+  function isNearPurge(dateString: string | null): boolean {
+    const daysLeft = getDaysUntilPurge(dateString)
+    return daysLeft !== null && daysLeft <= 7
   }
 
   function getPlatformIcon(deviceType: string) {
@@ -189,6 +203,19 @@ export default function DevicesPage() {
             <p className="text-xs text-dark-text-muted">total devices</p>
           </div>
         </div>
+        {/* Auto-purge notice */}
+        <div className="mt-4 p-3 bg-amber-900/20 border border-amber-700/30 rounded-lg flex items-start gap-3">
+          <svg className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div>
+            <p className="text-sm text-amber-200 font-medium">Inactive devices are automatically removed</p>
+            <p className="text-xs text-amber-300/70 mt-1">
+              Devices not seen for 30 days are purged automatically to keep your account clean.
+              Simply open the app or extension to reset the timer.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Platform Summary */}
@@ -254,9 +281,11 @@ export default function DevicesPage() {
               const recentActivity = getTimeSince(device.lastSeen)
               const isOnline = recentActivity === 'Active now'
               const colorClass = getPlatformColor(device.deviceType)
+              const nearPurge = isNearPurge(device.lastSeen)
+              const daysLeft = getDaysUntilPurge(device.lastSeen)
 
               return (
-                <li key={device.id} className="px-6 py-4">
+                <li key={device.id} className={`px-6 py-4 ${nearPurge ? 'bg-red-900/10' : ''}`}>
                   <div className="flex items-start gap-4">
                     {/* Platform Icon */}
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
@@ -276,6 +305,14 @@ export default function DevicesPage() {
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1 animate-pulse" />
                             Online
+                          </span>
+                        )}
+                        {nearPurge && daysLeft !== null && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
+                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            {daysLeft === 0 ? 'Purge imminent' : `${daysLeft}d until purge`}
                           </span>
                         )}
                       </div>
