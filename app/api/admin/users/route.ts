@@ -240,13 +240,16 @@ export async function DELETE(request: NextRequest) {
     // 4. Delete user settings
     await supabase.from('user_settings').delete().eq('user_id', userId)
 
-    // 5. Delete blog comments
+    // 5. Delete user rigs
+    await supabase.from('user_rigs').delete().eq('user_id', userId)
+
+    // 6. Delete blog comments
     await supabase.from('blog_comments').delete().eq('user_id', userId)
 
-    // 6. Delete blog views
+    // 7. Delete blog views
     await supabase.from('blog_views').delete().eq('user_id', userId)
 
-    // 7. Delete email alerts log by email
+    // 8. Delete email alerts log by email
     await supabase.from('email_alerts_log').delete().eq('email', userEmail)
 
     // 9. Delete license activations by license key (if any)
