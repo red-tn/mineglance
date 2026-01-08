@@ -98,19 +98,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
     }
 
-    // 3. Deactivate all license activations for this user's license key
-    if (user.license_key) {
-      await supabase
-        .from('license_activations')
-        .update({ is_active: false })
-        .eq('license_key', user.license_key)
-    }
-
-    // 4. Unlink all user instances (set user_id to null)
+    // 3. Unlink all user instances (set user_id to null)
     await supabase
       .from('user_instances')
       .update({ user_id: null })
       .eq('user_id', userId)
+
+    // 4. Record refund in payment_history
+    await supabase
+      .from('payment_history')
+      .insert({
+        user_id: userId,
+        stripe_payment_id: stripePaymentId,
+        amount: -(user.amount_paid || 5900), // negative for refund
+        status: 'refunded',
+        type: 'refund',
+        description: 'Full refund processed'
+      })
 
     // 5. Log the action
     try {

@@ -108,6 +108,12 @@ async function handleNewPurchase(supabase: any, data: {
   currency: string
 }) {
   const emailLower = data.email.toLowerCase()
+  const now = new Date().toISOString()
+
+  // Calculate subscription end date (1 year from now)
+  const endDate = new Date()
+  endDate.setFullYear(endDate.getFullYear() + 1)
+  const subscriptionEndDate = endDate.toISOString()
 
   // Check if user already exists
   const { data: existing } = await supabase
@@ -130,7 +136,9 @@ async function handleNewPurchase(supabase: any, data: {
           stripe_customer_id: data.customerId,
           stripe_payment_id: data.paymentId,
           amount_paid: data.amount,
-          updated_at: new Date().toISOString()
+          subscription_start_date: now,
+          subscription_end_date: subscriptionEndDate,
+          updated_at: now
         })
         .eq('email', emailLower)
 
@@ -138,11 +146,47 @@ async function handleNewPurchase(supabase: any, data: {
         console.error('Error upgrading user:', error)
       } else {
         console.log('User upgraded to Pro:', emailLower, '- License:', licenseKey)
+
+        // Record payment in payment_history
+        await supabase.from('payment_history').insert({
+          user_id: existing.id,
+          stripe_payment_id: data.paymentId,
+          stripe_payment_intent: data.paymentId,
+          amount: data.amount,
+          currency: data.currency,
+          status: 'succeeded',
+          type: 'upgrade',
+          description: 'Upgraded from Free to Pro'
+        })
+
         await sendWelcomeEmail(emailLower, licenseKey)
       }
     } else {
       console.log('User already Pro:', emailLower)
-      // Maybe send a duplicate payment notification?
+
+      // Record as renewal payment
+      await supabase.from('payment_history').insert({
+        user_id: existing.id,
+        stripe_payment_id: data.paymentId,
+        stripe_payment_intent: data.paymentId,
+        amount: data.amount,
+        currency: data.currency,
+        status: 'succeeded',
+        type: 'renewal',
+        description: 'Subscription renewal'
+      })
+
+      // Extend subscription
+      const currentEnd = new Date()
+      currentEnd.setFullYear(currentEnd.getFullYear() + 1)
+
+      await supabase
+        .from('users')
+        .update({
+          subscription_end_date: currentEnd.toISOString(),
+          updated_at: now
+        })
+        .eq('id', existing.id)
     }
     return
   }
@@ -150,7 +194,7 @@ async function handleNewPurchase(supabase: any, data: {
   // Generate new license key for new user
   const licenseKey = generateLicenseKey()
 
-  const { error } = await supabase.from('users').insert({
+  const { data: newUser, error } = await supabase.from('users').insert({
     email: emailLower,
     license_key: licenseKey,
     stripe_customer_id: data.customerId,
@@ -158,13 +202,30 @@ async function handleNewPurchase(supabase: any, data: {
     amount_paid: data.amount,
     currency: data.currency,
     plan: 'pro',
+    subscription_start_date: now,
+    subscription_end_date: subscriptionEndDate,
     blog_display_name: generateDisplayName()
-  })
+  }).select('id').single()
 
   if (error) {
     console.error('Error saving user:', error)
   } else {
     console.log('Pro user added:', emailLower, '- License:', licenseKey)
+
+    // Record payment in payment_history
+    if (newUser) {
+      await supabase.from('payment_history').insert({
+        user_id: newUser.id,
+        stripe_payment_id: data.paymentId,
+        stripe_payment_intent: data.paymentId,
+        amount: data.amount,
+        currency: data.currency,
+        status: 'succeeded',
+        type: 'subscription',
+        description: 'New Pro subscription'
+      })
+    }
+
     await sendWelcomeEmail(emailLower, licenseKey)
   }
 }

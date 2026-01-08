@@ -40,8 +40,54 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || 'all'
     const plan = searchParams.get('plan') || 'all'
+    const sortBy = searchParams.get('sortBy') || 'created_at'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
+    const userId = searchParams.get('userId') // For fetching single user with payment history
 
     const offset = (page - 1) * limit
+
+    // If requesting single user with payment history
+    if (userId) {
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (userError || !user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+
+      // Get payment history for this user
+      const { data: paymentHistory } = await supabase
+        .from('payment_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+      // Get stats
+      const [
+        { count: installCount },
+        { count: walletCount },
+        { count: rigCount }
+      ] = await Promise.all([
+        supabase.from('user_instances').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('user_wallets').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('user_rigs').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+      ])
+
+      return NextResponse.json({
+        user: {
+          ...user,
+          key: user.license_key,
+          status: user.is_revoked ? 'revoked' : 'active',
+          installCount: installCount || 0,
+          walletCount: walletCount || 0,
+          rigCount: rigCount || 0,
+          paymentHistory: paymentHistory || []
+        }
+      })
+    }
 
     // Build query for users table
     let query = supabase
@@ -66,11 +112,14 @@ export async function GET(request: NextRequest) {
     // Get total count
     const { count } = await query
 
-    // Get paginated data
+    // Map sortBy to actual column names
+    const sortColumn = sortBy === 'subscription_date' ? 'subscription_start_date' : sortBy
+
+    // Get paginated data with sorting
     let dataQuery = supabase
       .from('users')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order(sortColumn, { ascending: sortOrder === 'asc' })
       .range(offset, offset + limit - 1)
 
     if (search) {
@@ -252,15 +301,10 @@ export async function DELETE(request: NextRequest) {
     // 8. Delete email alerts log by email
     await supabase.from('email_alerts_log').delete().eq('email', userEmail)
 
-    // 9. Delete license activations by license key (if any)
-    if (user.license_key) {
-      await supabase.from('license_activations').delete().eq('license_key', user.license_key)
-    }
-
-    // 10. Delete password resets
+    // 9. Delete password resets
     await supabase.from('password_resets').delete().eq('user_id', userId)
 
-    // 11. Finally, delete the user
+    // 10. Finally, delete the user
     const { error: deleteError } = await supabase
       .from('users')
       .delete()

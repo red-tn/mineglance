@@ -2,13 +2,28 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
+interface PaymentHistoryItem {
+  id: string
+  stripe_payment_id?: string
+  stripe_payment_intent?: string
+  amount: number
+  currency: string
+  status: 'succeeded' | 'pending' | 'failed' | 'refunded'
+  type: 'subscription' | 'renewal' | 'refund' | 'upgrade'
+  description?: string
+  created_at: string
+}
+
 interface License {
   id: string
   key: string
   email: string
-  plan: 'free' | 'pro' | 'bundle'
+  plan: 'free' | 'pro'
   status: 'active' | 'revoked' | 'expired'
   created_at: string
+  subscription_start_date?: string
+  subscription_end_date?: string
+  amount_paid?: number
   stripe_customer_id?: string
   stripe_payment_id?: string
   installCount: number
@@ -17,6 +32,7 @@ interface License {
   blog_display_name?: string
   profile_photo_url?: string
   full_name?: string
+  paymentHistory?: PaymentHistoryItem[]
 }
 
 export default function UsersPage() {
@@ -28,7 +44,10 @@ export default function UsersPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [planFilter, setPlanFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('created_at')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [selectedUser, setSelectedUser] = useState<License | null>(null)
+  const [userLoading, setUserLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
 
   const fetchUsers = useCallback(async () => {
@@ -40,7 +59,9 @@ export default function UsersPage() {
         limit: '20',
         search,
         status: statusFilter,
-        plan: planFilter
+        plan: planFilter,
+        sortBy,
+        sortOrder
       })
 
       const response = await fetch(`/api/admin/users?${params}`, {
@@ -56,7 +77,45 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter, planFilter])
+  }, [page, search, statusFilter, planFilter, sortBy, sortOrder])
+
+  const fetchUserDetails = useCallback(async (userId: string) => {
+    setUserLoading(true)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch(`/api/admin/users?userId=${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await response.json()
+      if (data.user) {
+        setSelectedUser(data.user)
+      }
+    } catch (error) {
+      console.error('Failed to fetch user details:', error)
+    } finally {
+      setUserLoading(false)
+    }
+  }, [])
+
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortBy(column)
+      setSortOrder('desc')
+    }
+    setPage(1)
+  }
+
+  const SortIcon = ({ column }: { column: string }) => (
+    <span className="ml-1 inline-block">
+      {sortBy === column ? (
+        sortOrder === 'asc' ? '↑' : '↓'
+      ) : (
+        <span className="text-dark-text-dim">↕</span>
+      )}
+    </span>
+  )
 
   useEffect(() => {
     fetchUsers()
@@ -167,10 +226,35 @@ export default function UsersPage() {
   const getPlanBadge = (plan: string) => {
     const colors: Record<string, string> = {
       free: 'bg-gray-700 text-gray-200',
-      pro: 'bg-green-700 text-green-200',
-      bundle: 'bg-green-700 text-green-200'
+      pro: 'bg-green-700 text-green-200'
     }
     return colors[plan] || 'bg-gray-700 text-gray-200'
+  }
+
+  const formatAmount = (amount: number) => {
+    const dollars = Math.abs(amount) / 100
+    const sign = amount < 0 ? '-' : ''
+    return `${sign}$${dollars.toFixed(2)}`
+  }
+
+  const getPaymentStatusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      succeeded: 'bg-green-900 text-green-200',
+      pending: 'bg-yellow-900 text-yellow-200',
+      failed: 'bg-red-900 text-red-200',
+      refunded: 'bg-purple-900 text-purple-200'
+    }
+    return colors[status] || 'bg-gray-700 text-gray-200'
+  }
+
+  const getPaymentTypeBadge = (type: string) => {
+    const colors: Record<string, string> = {
+      subscription: 'bg-blue-900 text-blue-200',
+      renewal: 'bg-cyan-900 text-cyan-200',
+      refund: 'bg-purple-900 text-purple-200',
+      upgrade: 'bg-green-900 text-green-200'
+    }
+    return colors[type] || 'bg-gray-700 text-gray-200'
   }
 
   return (
@@ -249,14 +333,35 @@ export default function UsersPage() {
           <table className="w-full">
             <thead className="bg-dark-card-hover border-b border-dark-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Email</th>
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                  onClick={() => handleSort('email')}
+                >
+                  Email<SortIcon column="email" />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">License Key</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Plan</th>
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                  onClick={() => handleSort('plan')}
+                >
+                  Plan<SortIcon column="plan" />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Installs</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Wallets</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Rigs</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Created</th>
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                  onClick={() => handleSort('subscription_start_date')}
+                >
+                  Subscribed<SortIcon column="subscription_start_date" />
+                </th>
+                <th
+                  className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                  onClick={() => handleSort('created_at')}
+                >
+                  Created<SortIcon column="created_at" />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
               </tr>
             </thead>
@@ -277,7 +382,7 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(user.plan)}`}>
-                      {user.plan === 'free' ? 'FREE' : user.plan === 'bundle' ? 'PRO PLUS' : 'PRO'}
+                      {user.plan === 'free' ? 'FREE' : 'PRO'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -295,11 +400,14 @@ export default function UsersPage() {
                     {user.rigCount}
                   </td>
                   <td className="px-4 py-3 text-sm text-dark-text">
+                    {user.subscription_start_date ? formatDate(user.subscription_start_date) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-dark-text">
                     {formatDate(user.created_at)}
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => setSelectedUser(user)}
+                      onClick={() => fetchUserDetails(user.id)}
                       className="text-primary hover:text-primary-light text-sm font-medium"
                     >
                       View
@@ -338,7 +446,7 @@ export default function UsersPage() {
       {/* User Detail Modal */}
       {selectedUser && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="glass-card rounded-xl border border-dark-border max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="glass-card rounded-xl border border-dark-border max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-dark-border">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-dark-text">User Details</h2>
@@ -353,150 +461,217 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
-              {/* Profile Photo & Name Section */}
-              <div className="flex items-center gap-4">
-                {selectedUser.profile_photo_url ? (
-                  <img
-                    src={selectedUser.profile_photo_url}
-                    alt="Profile"
-                    className="w-16 h-16 rounded-full object-cover border-2 border-dark-border"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-dark-card-hover border-2 border-dark-border flex items-center justify-center">
-                    <svg className="w-8 h-8 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+            {userLoading ? (
+              <div className="p-12 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-dark-text">Loading user details...</p>
+              </div>
+            ) : (
+              <>
+                <div className="p-6 space-y-4">
+                  {/* Profile Photo & Name Section */}
+                  <div className="flex items-center gap-4">
+                    {selectedUser.profile_photo_url ? (
+                      <img
+                        src={selectedUser.profile_photo_url}
+                        alt="Profile"
+                        className="w-16 h-16 rounded-full object-cover border-2 border-dark-border"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-dark-card-hover border-2 border-dark-border flex items-center justify-center">
+                        <svg className="w-8 h-8 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-lg font-semibold text-dark-text">
+                        {selectedUser.full_name || 'No name set'}
+                      </p>
+                      <p className="text-sm text-primary">@{selectedUser.blog_display_name || 'Anonymous'}</p>
+                    </div>
                   </div>
-                )}
-                <div>
-                  <p className="text-lg font-semibold text-dark-text">
-                    {selectedUser.full_name || 'No name set'}
-                  </p>
-                  <p className="text-sm text-primary">@{selectedUser.blog_display_name || 'Anonymous'}</p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Full Name</label>
-                  <p className="text-dark-text">{selectedUser.full_name || '-'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Display Name</label>
-                  <p className="text-dark-text">{selectedUser.blog_display_name || '-'}</p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Full Name</label>
+                      <p className="text-dark-text">{selectedUser.full_name || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Display Name</label>
+                      <p className="text-dark-text">{selectedUser.blog_display_name || '-'}</p>
+                    </div>
+                  </div>
 
-              <div>
-                <label className="text-sm font-medium text-dark-text-muted">Email</label>
-                <p className="text-dark-text">{selectedUser.email}</p>
-              </div>
+                  <div>
+                    <label className="text-sm font-medium text-dark-text-muted">Email</label>
+                    <p className="text-dark-text">{selectedUser.email}</p>
+                  </div>
 
-              <div>
-                <label className="text-sm font-medium text-dark-text-muted">License Key</label>
-                <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded break-all">{selectedUser.key || '-'}</p>
-              </div>
+                  <div>
+                    <label className="text-sm font-medium text-dark-text-muted">License Key</label>
+                    <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded break-all">{selectedUser.key || '-'}</p>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Plan</label>
-                  <p>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(selectedUser.plan)}`}>
-                      {selectedUser.plan === 'free' ? 'FREE' : selectedUser.plan === 'bundle' ? 'PRO PLUS ($59)' : 'PRO ($59)'}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Status</label>
-                  <p>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(selectedUser.status)}`}>
-                      {selectedUser.status}
-                    </span>
-                  </p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Plan</label>
+                      <p>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(selectedUser.plan)}`}>
+                          {selectedUser.plan === 'free' ? 'FREE' : 'PRO ($59)'}
+                        </span>
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Status</label>
+                      <p>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(selectedUser.status)}`}>
+                          {selectedUser.status}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Installations</label>
-                  <p className="text-dark-text">{selectedUser.installCount}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Created</label>
-                  <p className="text-dark-text">{formatDate(selectedUser.created_at)}</p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Subscription Started</label>
+                      <p className="text-dark-text">{selectedUser.subscription_start_date ? formatDate(selectedUser.subscription_start_date) : '-'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Subscription Expires</label>
+                      <p className="text-dark-text">{selectedUser.subscription_end_date ? formatDate(selectedUser.subscription_end_date) : '-'}</p>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Wallets</label>
-                  <p className="text-dark-text">{selectedUser.walletCount}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Mining Rigs</label>
-                  <p className="text-dark-text">{selectedUser.rigCount}</p>
-                </div>
-              </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Installations</label>
+                      <p className="text-dark-text">{selectedUser.installCount}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Wallets</label>
+                      <p className="text-dark-text">{selectedUser.walletCount}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Mining Rigs</label>
+                      <p className="text-dark-text">{selectedUser.rigCount}</p>
+                    </div>
+                  </div>
 
-              {selectedUser.stripe_customer_id && (
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Stripe Customer</label>
-                  <p className="font-mono text-sm text-dark-text">{selectedUser.stripe_customer_id}</p>
-                </div>
-              )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Created</label>
+                      <p className="text-dark-text">{formatDate(selectedUser.created_at)}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Amount Paid</label>
+                      <p className="text-dark-text">{selectedUser.amount_paid ? formatAmount(selectedUser.amount_paid) : '-'}</p>
+                    </div>
+                  </div>
 
-              {selectedUser.stripe_payment_id && (
-                <div>
-                  <label className="text-sm font-medium text-dark-text-muted">Stripe Payment</label>
-                  <p className="font-mono text-sm text-dark-text">{selectedUser.stripe_payment_id}</p>
-                </div>
-              )}
-            </div>
+                  {selectedUser.stripe_customer_id && (
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Stripe Customer</label>
+                      <p className="font-mono text-sm text-dark-text">{selectedUser.stripe_customer_id}</p>
+                    </div>
+                  )}
 
-            <div className="p-6 border-t border-dark-border bg-dark-card-hover flex gap-3 flex-wrap">
-              {selectedUser.plan !== 'free' && selectedUser.key && (
-                <button
-                  onClick={() => handleResendLicense(selectedUser.email)}
-                  disabled={actionLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {actionLoading ? 'Sending...' : 'Resend License Email'}
-                </button>
-              )}
-              {selectedUser.status === 'active' ? (
-                <button
-                  onClick={() => handleAction(selectedUser.key, 'revoke')}
-                  disabled={actionLoading}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                >
-                  {actionLoading ? 'Processing...' : 'Revoke License'}
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleAction(selectedUser.key, 'activate')}
-                  disabled={actionLoading}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                >
-                  {actionLoading ? 'Processing...' : 'Reactivate License'}
-                </button>
-              )}
-              {selectedUser.plan === 'free' && (
-                <button
-                  onClick={() => handleDeleteUser(selectedUser.id, selectedUser.email)}
-                  disabled={actionLoading}
-                  className="px-4 py-2 bg-red-900 text-red-200 rounded-lg hover:bg-red-800 disabled:opacity-50 border border-red-700"
-                >
-                  {actionLoading ? 'Processing...' : 'Delete Account'}
-                </button>
-              )}
-              <button
-                onClick={() => setSelectedUser(null)}
-                className="px-4 py-2 border border-dark-border text-dark-text rounded-lg hover:bg-dark-card-hover"
-              >
-                Close
-              </button>
-            </div>
+                  {selectedUser.stripe_payment_id && (
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Stripe Payment</label>
+                      <p className="font-mono text-sm text-dark-text">{selectedUser.stripe_payment_id}</p>
+                    </div>
+                  )}
+
+                  {/* Payment History Section */}
+                  <div className="pt-4 border-t border-dark-border">
+                    <h3 className="text-lg font-semibold text-dark-text mb-3">Payment History</h3>
+                    {selectedUser.paymentHistory && selectedUser.paymentHistory.length > 0 ? (
+                      <div className="max-h-48 overflow-y-auto border border-dark-border rounded-lg">
+                        <table className="w-full text-sm">
+                          <thead className="bg-dark-card-hover sticky top-0">
+                            <tr>
+                              <th className="px-3 py-2 text-left text-xs text-dark-text-muted">Date</th>
+                              <th className="px-3 py-2 text-left text-xs text-dark-text-muted">Type</th>
+                              <th className="px-3 py-2 text-left text-xs text-dark-text-muted">Amount</th>
+                              <th className="px-3 py-2 text-left text-xs text-dark-text-muted">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-dark-border">
+                            {selectedUser.paymentHistory.map((payment) => (
+                              <tr key={payment.id} className="hover:bg-dark-card-hover">
+                                <td className="px-3 py-2 text-dark-text">
+                                  {new Date(payment.created_at).toLocaleDateString()}
+                                </td>
+                                <td className="px-3 py-2">
+                                  <span className={`px-2 py-0.5 text-xs rounded-full ${getPaymentTypeBadge(payment.type)}`}>
+                                    {payment.type}
+                                  </span>
+                                </td>
+                                <td className={`px-3 py-2 font-medium ${payment.amount < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                  {formatAmount(payment.amount)}
+                                </td>
+                                <td className="px-3 py-2">
+                                  <span className={`px-2 py-0.5 text-xs rounded-full ${getPaymentStatusBadge(payment.status)}`}>
+                                    {payment.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="text-dark-text-muted text-sm">No payment history found</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-6 border-t border-dark-border bg-dark-card-hover flex gap-3 flex-wrap">
+                  {selectedUser.plan !== 'free' && selectedUser.key && (
+                    <button
+                      onClick={() => handleResendLicense(selectedUser.email)}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {actionLoading ? 'Sending...' : 'Resend License Email'}
+                    </button>
+                  )}
+                  {selectedUser.status === 'active' ? (
+                    <button
+                      onClick={() => handleAction(selectedUser.key, 'revoke')}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {actionLoading ? 'Processing...' : 'Revoke License'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleAction(selectedUser.key, 'activate')}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {actionLoading ? 'Processing...' : 'Reactivate License'}
+                    </button>
+                  )}
+                  {selectedUser.plan === 'free' && (
+                    <button
+                      onClick={() => handleDeleteUser(selectedUser.id, selectedUser.email)}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-red-900 text-red-200 rounded-lg hover:bg-red-800 disabled:opacity-50 border border-red-700"
+                    >
+                      {actionLoading ? 'Processing...' : 'Delete Account'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedUser(null)}
+                    className="px-4 py-2 border border-dark-border text-dark-text rounded-lg hover:bg-dark-card-hover"
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
