@@ -223,13 +223,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function handleLoginSuccess(data) {
-    // Store auth data
+    // Store auth data - isPaid includes both 'pro' and 'bundle' plans (bundle displays as PRO PLUS)
     await chrome.storage.local.set({
       authToken: data.token,
       userId: data.userId,
       userEmail: data.email,
       plan: data.plan,
-      isPaid: data.plan === 'pro',
+      isPaid: data.plan === 'pro' || data.plan === 'bundle',
+      licenseKey: data.licenseKey || null,
       wallets: data.wallets || [],
       settings: data.settings || {}
     });
@@ -388,10 +389,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         loading.classList.add('hidden');
         dashboard.classList.add('hidden');
       } else {
-        // Update plan info
+        // Update plan info and license key - isPaid includes both 'pro' and 'bundle' plans
         await chrome.storage.local.set({
           plan: data.plan,
-          isPaid: data.plan === 'pro'
+          isPaid: data.plan === 'pro' || data.plan === 'bundle',
+          licenseKey: data.licenseKey || null
         });
       }
     } catch (err) {
