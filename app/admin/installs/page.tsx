@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react'
 interface Installation {
   id: string
   instance_id: string
+  user_id?: string
   email?: string
   license_key?: string
   device_type: string
@@ -13,6 +14,7 @@ interface Installation {
   version?: string
   first_seen: string
   last_seen: string
+  created_at?: string
   isPro?: boolean
   plan?: string
 }
@@ -56,6 +58,7 @@ export default function InstallsPage() {
   const [purging, setPurging] = useState(false)
   const [purgeResult, setPurgeResult] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [viewingInstall, setViewingInstall] = useState<Installation | null>(null)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
@@ -573,23 +576,35 @@ export default function InstallsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleDeleteInstance(install)}
-                        disabled={deletingId === install.id}
-                        className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Delete this installation"
-                      >
-                        {deletingId === install.id ? (
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        ) : (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setViewingInstall(install)}
+                          className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 rounded transition-colors"
+                          title="View installation details"
+                        >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
-                        )}
-                      </button>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteInstance(install)}
+                          disabled={deletingId === install.id}
+                          className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete this installation"
+                        >
+                          {deletingId === install.id ? (
+                            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -621,6 +636,166 @@ export default function InstallsPage() {
           </div>
         )}
       </div>
+
+      {/* Installation Details Modal */}
+      {viewingInstall && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="glass-card rounded-xl border border-dark-border max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-dark-border flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-dark-text">Installation Details</h2>
+              <button
+                onClick={() => setViewingInstall(null)}
+                className="p-2 hover:bg-dark-card-hover rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {/* Status & Plan Row */}
+              <div className="flex items-center gap-4 mb-6">
+                {isActive(viewingInstall.last_seen) ? (
+                  <span className="px-3 py-1 text-sm font-medium rounded-full bg-primary/20 text-primary">
+                    Active
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 text-sm font-medium rounded-full bg-dark-card-hover text-dark-text-muted">
+                    Inactive
+                  </span>
+                )}
+                {viewingInstall.isPro ? (
+                  <span className="px-3 py-1 text-sm font-medium rounded-full bg-primary/20 text-primary">
+                    Pro
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 text-sm font-medium rounded-full bg-dark-card-hover text-dark-text-muted">
+                    Free
+                  </span>
+                )}
+              </div>
+
+              {/* Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">Instance ID</label>
+                  <div className="flex items-center gap-2">
+                    <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded break-all flex-1">
+                      {viewingInstall.instance_id || 'N/A'}
+                    </code>
+                    {viewingInstall.instance_id && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(viewingInstall.instance_id)
+                        }}
+                        className="p-1.5 text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded transition-colors flex-shrink-0"
+                        title="Copy to clipboard"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">User ID</label>
+                  <code className="block text-sm bg-dark-bg text-dark-text px-2 py-1 rounded break-all">
+                    {viewingInstall.user_id || 'Anonymous'}
+                  </code>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">Email</label>
+                  <p className="text-dark-text">{viewingInstall.email || 'Anonymous'}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">License Key</label>
+                  {viewingInstall.license_key ? (
+                    <div className="flex items-center gap-2">
+                      <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded flex-1">
+                        {viewingInstall.license_key}
+                      </code>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(viewingInstall.license_key || '')
+                        }}
+                        className="p-1.5 text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded transition-colors flex-shrink-0"
+                        title="Copy to clipboard"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-dark-text-dim">None</p>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">Platform</label>
+                  <p className="text-dark-text flex items-center gap-2">
+                    <span>{getPlatformIcon(viewingInstall.device_type)}</span>
+                    {getPlatformLabel(viewingInstall.device_type)}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">Device Name</label>
+                  <p className="text-dark-text">{viewingInstall.device_name || 'Unknown'}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">Browser</label>
+                  <p className="text-dark-text">{viewingInstall.browser || 'N/A'}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">Version</label>
+                  <p className="text-dark-text">{viewingInstall.version || 'Unknown'}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">First Seen</label>
+                  <p className="text-dark-text">{formatDate(viewingInstall.first_seen)}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs text-dark-text-muted uppercase tracking-wide">Last Active</label>
+                  <p className="text-dark-text">
+                    {formatDate(viewingInstall.last_seen)}
+                    <span className={`ml-2 text-sm ${isActive(viewingInstall.last_seen) ? 'text-primary' : 'text-dark-text-dim'}`}>
+                      ({getTimeSince(viewingInstall.last_seen)})
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="pt-4 border-t border-dark-border flex justify-end gap-3">
+                <button
+                  onClick={() => setViewingInstall(null)}
+                  className="px-4 py-2 text-dark-text-muted hover:text-dark-text transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    handleDeleteInstance(viewingInstall)
+                    setViewingInstall(null)
+                  }}
+                  className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors"
+                >
+                  Delete Installation
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

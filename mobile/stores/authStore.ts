@@ -205,6 +205,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const instanceId = await getOrCreateInstanceId();
       const deviceType = getDeviceType();
       const deviceName = getDeviceName();
+      const version = getAppVersion();
 
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
@@ -215,6 +216,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           instanceId,
           deviceType,
           deviceName,
+          version,
         }),
       });
 
