@@ -49,6 +49,8 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<License | null>(null)
   const [userLoading, setUserLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; email: string; plan: string } | null>(null)
+  const [deleteTypedEmail, setDeleteTypedEmail] = useState('')
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -171,9 +173,13 @@ export default function UsersPage() {
     }
   }
 
-  const handleDeleteUser = async (userId: string, email: string, plan: string) => {
-    const planWarning = plan === 'pro' ? '\n\n⚠️ WARNING: This is a PAID PRO user!' : ''
-    if (!confirm(`Are you sure you want to PERMANENTLY DELETE the account for ${email}?${planWarning}\n\nThis will delete:\n- User account & license\n- All wallets & settings\n- All device links\n- All payment history\n- All blog comments\n- All roadmap submissions\n\nThis action cannot be undone!`)) return
+  const openDeleteConfirm = (userId: string, email: string, plan: string) => {
+    setDeleteConfirm({ userId, email, plan })
+    setDeleteTypedEmail('')
+  }
+
+  const handleDeleteUser = async () => {
+    if (!deleteConfirm) return
 
     setActionLoading(true)
     try {
@@ -184,7 +190,7 @@ export default function UsersPage() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId: deleteConfirm.userId })
       })
 
       const data = await response.json()
@@ -194,9 +200,10 @@ export default function UsersPage() {
         return
       }
 
-      alert('User account deleted successfully')
+      alert('User account and all data deleted successfully')
       fetchUsers()
       setSelectedUser(null)
+      setDeleteConfirm(null)
     } catch (error) {
       console.error('Delete failed:', error)
       alert('Failed to delete user')
@@ -656,11 +663,11 @@ export default function UsersPage() {
                     </button>
                   )}
                   <button
-                    onClick={() => handleDeleteUser(selectedUser.id, selectedUser.email, selectedUser.plan)}
+                    onClick={() => openDeleteConfirm(selectedUser.id, selectedUser.email, selectedUser.plan)}
                     disabled={actionLoading}
                     className="px-4 py-2 bg-red-900 text-red-200 rounded-lg hover:bg-red-800 disabled:opacity-50 border border-red-700"
                   >
-                    {actionLoading ? 'Processing...' : 'Delete & Purge All Data'}
+                    Delete & Purge All Data
                   </button>
                   <button
                     onClick={() => setSelectedUser(null)}
@@ -671,6 +678,99 @@ export default function UsersPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+          <div className="bg-dark-card rounded-xl border-2 border-red-600 max-w-md w-full mx-4 overflow-hidden">
+            {/* Warning Header */}
+            <div className="bg-red-900/50 px-6 py-4 border-b border-red-600">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-red-600 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-red-200">DANGER ZONE</h3>
+                  <p className="text-red-300 text-sm">This action is irreversible</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* Pro User Warning */}
+              {deleteConfirm.plan === 'pro' && (
+                <div className="bg-yellow-900/30 border border-yellow-600 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-yellow-200 font-semibold mb-1">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    PAID PRO USER
+                  </div>
+                  <p className="text-yellow-300 text-sm">This user has a paid subscription. Deleting will remove their license permanently.</p>
+                </div>
+              )}
+
+              {/* What will be deleted */}
+              <div>
+                <p className="text-dark-text font-medium mb-2">The following will be permanently deleted:</p>
+                <ul className="text-dark-text-muted text-sm space-y-1">
+                  <li className="flex items-center gap-2">
+                    <span className="text-red-400">✕</span> User account & license key
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-red-400">✕</span> All saved wallets & settings
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-red-400">✕</span> All device connections
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-red-400">✕</span> Payment history records
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-red-400">✕</span> Blog comments & activity
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-red-400">✕</span> Roadmap submissions
+                  </li>
+                </ul>
+              </div>
+
+              {/* Type email to confirm */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">
+                  Type <span className="text-red-400 font-mono">{deleteConfirm.email}</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  value={deleteTypedEmail}
+                  onChange={(e) => setDeleteTypedEmail(e.target.value)}
+                  placeholder="Enter email address"
+                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 py-4 bg-dark-card-hover border-t border-dark-border flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 text-dark-text-muted hover:text-dark-text transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteUser}
+                disabled={actionLoading || deleteTypedEmail.toLowerCase() !== deleteConfirm.email.toLowerCase()}
+                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+              >
+                {actionLoading ? 'Deleting...' : 'Delete Forever'}
+              </button>
+            </div>
           </div>
         </div>
       )}
