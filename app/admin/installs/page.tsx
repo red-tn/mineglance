@@ -701,9 +701,26 @@ export default function InstallsPage() {
 
                 <div className="space-y-1">
                   <label className="text-xs text-dark-text-muted uppercase tracking-wide">User ID</label>
-                  <code className="block text-sm bg-dark-bg text-dark-text px-2 py-1 rounded break-all">
-                    {viewingInstall.user_id || 'Anonymous'}
-                  </code>
+                  {viewingInstall.user_id ? (
+                    <div className="flex items-center gap-2">
+                      <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded break-all flex-1">
+                        {viewingInstall.user_id}
+                      </code>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(viewingInstall.user_id || '')
+                        }}
+                        className="p-1.5 text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded transition-colors flex-shrink-0"
+                        title="Copy to clipboard"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-dark-text-dim">None (Anonymous)</p>
+                  )}
                 </div>
 
                 <div className="space-y-1">

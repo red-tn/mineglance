@@ -331,6 +331,7 @@ export async function GET(request: NextRequest) {
     const mappedInstallations = paginatedInstalls.map(i => ({
       id: i.id,
       instance_id: i.instance_id || i.id,
+      user_id: i.user_id,
       email: i.email,
       license_key: i.license_key,
       device_type: i.device_type,
