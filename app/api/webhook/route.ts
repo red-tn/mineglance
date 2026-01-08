@@ -23,6 +23,16 @@ function generateLicenseKey(): string {
   return segments.join('-')
 }
 
+// Generate random blog display name
+function generateDisplayName(): string {
+  const adjectives = ['Swift', 'Lucky', 'Golden', 'Crypto', 'Hash', 'Block', 'Mega', 'Ultra', 'Super', 'Turbo', 'Power', 'Quick', 'Fast', 'Smart', 'Wise']
+  const nouns = ['Miner', 'Hasher', 'Digger', 'Finder', 'Seeker', 'Hunter', 'Runner', 'Worker', 'Builder', 'Crafter']
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
+  const noun = nouns[Math.floor(Math.random() * nouns.length)]
+  const num = Math.floor(Math.random() * 9000) + 1000 // 1000-9999
+  return `${adj}${noun}${num}`
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.text()
   const signature = request.headers.get('stripe-signature')
@@ -147,7 +157,8 @@ async function handleNewPurchase(supabase: any, data: {
     stripe_payment_id: data.paymentId,
     amount_paid: data.amount,
     currency: data.currency,
-    plan: 'pro'
+    plan: 'pro',
+    blog_display_name: generateDisplayName()
   })
 
   if (error) {

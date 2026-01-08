@@ -58,7 +58,7 @@ export default function PrivacyPolicy() {
 
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Alarms Permission</h3>
               <p>
-                Used to automatically refresh your mining statistics at configurable intervals (1, 5, 15, or 30 minutes).
+                Used to automatically refresh your mining statistics at configurable intervals (15 minutes to 3 hours).
                 This ensures you see up-to-date hashrate, earnings, and worker status without manually refreshing.
                 No background processes run except for these scheduled data refreshes.
               </p>

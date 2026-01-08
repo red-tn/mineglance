@@ -68,6 +68,51 @@ const FREE_POOLS = ['2miners', 'nanopool', 'herominers']
 const FREE_COINS = ['btc', 'etc', 'rvn', 'ergo', 'kas']
 const FREE_WALLET_LIMIT = 2
 
+// GPU options with power values (same as extension)
+const GPU_OPTIONS = [
+  { group: 'NVIDIA RTX 50 Series', options: [
+    { value: 'RTX 5090 (575W)', power: 575 },
+    { value: 'RTX 5080 (360W)', power: 360 },
+    { value: 'RTX 5070 Ti (300W)', power: 300 },
+    { value: 'RTX 5070 (250W)', power: 250 },
+    { value: 'RTX 5060 (150W)', power: 150 },
+  ]},
+  { group: 'NVIDIA RTX 40 Series', options: [
+    { value: 'RTX 4090 (450W)', power: 450 },
+    { value: 'RTX 4080 (320W)', power: 320 },
+    { value: 'RTX 4070 Ti (285W)', power: 285 },
+    { value: 'RTX 4070 (200W)', power: 200 },
+    { value: 'RTX 4060 Ti (165W)', power: 165 },
+    { value: 'RTX 4060 (115W)', power: 115 },
+  ]},
+  { group: 'NVIDIA RTX 30 Series', options: [
+    { value: 'RTX 3090 (350W)', power: 350 },
+    { value: 'RTX 3080 (320W)', power: 320 },
+    { value: 'RTX 3070 (220W)', power: 220 },
+    { value: 'RTX 3060 Ti (200W)', power: 200 },
+    { value: 'RTX 3060 (170W)', power: 170 },
+  ]},
+  { group: 'NVIDIA RTX 20 Series', options: [
+    { value: 'RTX 2080 Ti (250W)', power: 250 },
+    { value: 'RTX 2080 (215W)', power: 215 },
+    { value: 'RTX 2070 (175W)', power: 175 },
+    { value: 'RTX 2060 (160W)', power: 160 },
+  ]},
+  { group: 'AMD RX 7000 Series', options: [
+    { value: 'RX 7900 XTX (355W)', power: 355 },
+    { value: 'RX 7900 XT (315W)', power: 315 },
+    { value: 'RX 7800 XT (263W)', power: 263 },
+    { value: 'RX 7700 XT (245W)', power: 245 },
+    { value: 'RX 7600 (165W)', power: 165 },
+  ]},
+  { group: 'AMD RX 6000 Series', options: [
+    { value: 'RX 6900 XT (300W)', power: 300 },
+    { value: 'RX 6800 XT (300W)', power: 300 },
+    { value: 'RX 6700 XT (230W)', power: 230 },
+    { value: 'RX 6600 XT (160W)', power: 160 },
+  ]},
+]
+
 export default function WalletsPage() {
   const auth = useContext(AuthContext)
   const [wallets, setWallets] = useState<Wallet[]>([])
@@ -849,14 +894,33 @@ export default function WalletsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-dark-text mb-1">GPU Model</label>
-                  <input
-                    type="text"
+                  <select
                     value={rigFormData.gpu}
-                    onChange={(e) => setRigFormData({ ...rigFormData, gpu: e.target.value })}
-                    placeholder="e.g., RTX 3080, RX 6800 XT"
+                    onChange={(e) => {
+                      const selectedGpu = e.target.value
+                      // Find power for selected GPU
+                      let power = rigFormData.power
+                      for (const group of GPU_OPTIONS) {
+                        const found = group.options.find(opt => opt.value === selectedGpu)
+                        if (found) {
+                          power = found.power
+                          break
+                        }
+                      }
+                      setRigFormData({ ...rigFormData, gpu: selectedGpu, power })
+                    }}
                     required
-                    className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                    className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select GPU...</option>
+                    {GPU_OPTIONS.map((group) => (
+                      <optgroup key={group.group} label={group.group}>
+                        {group.options.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.value}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

@@ -18,6 +18,16 @@ function generateToken(): string {
   return crypto.randomBytes(32).toString('hex')
 }
 
+// Generate random blog display name
+function generateDisplayName(): string {
+  const adjectives = ['Swift', 'Lucky', 'Golden', 'Crypto', 'Hash', 'Block', 'Mega', 'Ultra', 'Super', 'Turbo', 'Power', 'Quick', 'Fast', 'Smart', 'Wise']
+  const nouns = ['Miner', 'Hasher', 'Digger', 'Finder', 'Seeker', 'Hunter', 'Runner', 'Worker', 'Builder', 'Crafter']
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)]
+  const noun = nouns[Math.floor(Math.random() * nouns.length)]
+  const num = Math.floor(Math.random() * 9000) + 1000 // 1000-9999
+  return `${adj}${noun}${num}`
+}
+
 // Generate verification token
 function generateVerificationToken(): string {
   return crypto.randomBytes(48).toString('base64url')
@@ -190,6 +200,7 @@ export async function POST(request: NextRequest) {
         email_verified: false,
         email_verification_token: verificationToken,
         email_verification_expires: verificationExpires.toISOString(),
+        blog_display_name: generateDisplayName(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

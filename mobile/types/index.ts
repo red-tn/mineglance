@@ -10,6 +10,15 @@ export interface Wallet {
   power?: number; // watts for this wallet/rig
 }
 
+// Mining Rig types
+export interface Rig {
+  id: string;
+  name: string;
+  gpu: string;
+  power: number;
+  quantity: number;
+}
+
 export interface WalletData {
   walletId: string;
   hashrate: number;

@@ -385,11 +385,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     rigs = data.rigs || [];
     isPaid = data.isPaid || false;
 
-    // If authenticated, load wallets and settings from server
+    // If authenticated, load wallets, rigs, and settings from server
     if (data.authToken) {
       try {
-        const [walletsRes, settingsRes] = await Promise.all([
+        const [walletsRes, rigsRes, settingsRes] = await Promise.all([
           fetch(`${API_BASE}/wallets/sync`, {
+            headers: { 'Authorization': `Bearer ${data.authToken}` }
+          }),
+          fetch(`${API_BASE}/rigs/sync`, {
             headers: { 'Authorization': `Bearer ${data.authToken}` }
           }),
           fetch(`${API_BASE}/settings/sync`, {
@@ -402,6 +405,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (walletsData.wallets) {
             wallets = walletsData.wallets;
             await chrome.storage.local.set({ wallets });
+          }
+        }
+
+        if (rigsRes.ok) {
+          const rigsData = await rigsRes.json();
+          if (rigsData.rigs) {
+            rigs = rigsData.rigs;
+            await chrome.storage.local.set({ rigs });
+            console.log('Rigs loaded from server:', rigs.length);
           }
         }
 
@@ -1138,32 +1150,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     rigModal.classList.remove('hidden');
   }
 
-  function saveRig() {
+  async function saveRig() {
     const name = document.getElementById('rigName').value.trim();
-    const gpu = document.getElementById('rigGpu').value;
+    const gpuSelect = document.getElementById('rigGpu');
+    const gpuValue = gpuSelect.value;
+    const gpuLabel = gpuSelect.options[gpuSelect.selectedIndex]?.text || gpuValue;
     const power = parseInt(document.getElementById('rigPower').value) || 200;
     const quantity = parseInt(document.getElementById('rigQuantity').value) || 1;
 
-    if (!name || !gpu) {
+    if (!name || !gpuValue) {
       alert('Please fill in rig name and select GPU');
       return;
     }
 
-    rigs.push({
+    const newRig = {
       id: Date.now().toString(),
       name,
-      gpu,
+      gpu: gpuLabel, // Store the display name (e.g., "RTX 4090 (450W)")
       power,
       quantity
-    });
+    };
 
+    // Sync to server if authenticated
+    const { authToken } = await chrome.storage.local.get('authToken');
+    if (authToken) {
+      try {
+        const response = await fetch(`${API_BASE}/rigs/sync`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newRig)
+        });
+        const data = await response.json();
+        if (data.rig?.id) {
+          newRig.id = data.rig.id; // Use server-assigned ID
+        }
+        console.log('Rig synced to server:', data);
+      } catch (err) {
+        console.log('Rig sync failed, saved locally:', err);
+      }
+    }
+
+    rigs.push(newRig);
+    await chrome.storage.local.set({ rigs });
     renderRigs();
     closeModal(rigModal);
+    showSaveStatus();
   }
 
-  function deleteRig(id) {
+  async function deleteRig(id) {
     if (confirm('Delete this rig?')) {
       rigs = rigs.filter(r => r.id !== id);
+      await chrome.storage.local.set({ rigs });
+
+      // Sync deletion to server if authenticated
+      const { authToken } = await chrome.storage.local.get('authToken');
+      if (authToken) {
+        try {
+          await fetch(`${API_BASE}/rigs/sync?id=${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          console.log('Rig deleted from server');
+        } catch (err) {
+          console.log('Rig delete sync failed:', err);
+        }
+      }
+
       renderRigs();
     }
   }

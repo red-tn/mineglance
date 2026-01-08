@@ -48,8 +48,9 @@ export default function TermsOfService() {
 
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Pro Version</h3>
               <p>
-                The Pro version is a one-time purchase that unlocks additional features. Your Pro license
-                is valid for the lifetime of the product and can be used on multiple devices.
+                The Pro version is an annual subscription ($59/year) that unlocks additional features including
+                unlimited wallets, email alerts, cloud sync, and mobile app access. Your subscription
+                automatically renews each year unless cancelled.
               </p>
             </section>
 

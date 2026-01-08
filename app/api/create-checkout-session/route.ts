@@ -4,13 +4,8 @@ import Stripe from 'stripe'
 const plans = {
   pro: {
     name: 'MineGlance Pro',
-    description: 'Lifetime access to all Pro features',
-    amount: 2900 // $29.00
-  },
-  bundle: {
-    name: 'MineGlance Pro + Mobile Bundle',
-    description: 'Lifetime access to Pro extension + upcoming mobile app',
-    amount: 5900 // $59.00
+    description: 'Annual subscription to all Pro features',
+    amount: 5900 // $59.00/year
   }
 }
 
