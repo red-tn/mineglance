@@ -28,10 +28,9 @@ const defaultSettings: Settings = {
   powerConsumption: 0,
   currency: 'USD',
   notifications: {
-    enabled: true,
     workerOffline: true,
-    profitDrop: false,
-    profitDropThreshold: 10,
+    profitDrop: true,
+    profitDropThreshold: 20, // Match dashboard default
     betterCoin: false,
     emailEnabled: false,
     emailAddress: '',
@@ -131,17 +130,16 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
             powerConsumption: s.powerConsumption || 0,
             currency: s.currency || 'USD',
             notifications: {
-              enabled: true,
-              workerOffline: s.notifyWorkerOffline,
-              profitDrop: s.notifyProfitDrop,
-              profitDropThreshold: s.profitDropThreshold || 10,
-              betterCoin: s.notifyBetterCoin,
-              emailEnabled: s.emailAlertsEnabled,
+              workerOffline: s.notifyWorkerOffline ?? true,
+              profitDrop: s.notifyProfitDrop ?? true,
+              profitDropThreshold: s.profitDropThreshold || 20,
+              betterCoin: s.notifyBetterCoin ?? false,
+              emailEnabled: s.emailAlertsEnabled ?? false,
               emailAddress: s.emailAlertsAddress || '',
               emailFrequency: s.emailFrequency || 'immediate',
             },
-            showDiscoveryCoins: s.showDiscoveryCoins,
-            liteMode: s.liteMode,
+            showDiscoveryCoins: s.showDiscoveryCoins ?? true,
+            liteMode: s.liteMode ?? false,
           };
           set(serverSettings);
           // Only save to local storage, don't sync back to server

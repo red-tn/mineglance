@@ -88,10 +88,9 @@ export interface Settings {
 }
 
 export interface NotificationSettings {
-  enabled: boolean;
   workerOffline: boolean;
   profitDrop: boolean;
-  profitDropThreshold: number; // percentage
+  profitDropThreshold: number; // percentage (10, 20, 30, 50)
   betterCoin: boolean;
   emailEnabled: boolean;
   emailAddress: string;

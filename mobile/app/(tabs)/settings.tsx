@@ -40,6 +40,7 @@ export default function SettingsScreen() {
   const [showLicenseKey, setShowLicenseKey] = useState(false);
   const [devices, setDevices] = useState<Device[]>([]);
   const [isLoadingDevices, setIsLoadingDevices] = useState(true);
+  const [testingEmail, setTestingEmail] = useState(false);
 
   // Dynamic colors based on theme
   const colors = getColors(settings.liteMode);
@@ -68,6 +69,43 @@ export default function SettingsScreen() {
       console.error('Failed to load devices:', error);
     }
     setIsLoadingDevices(false);
+  };
+
+  const sendTestEmail = async () => {
+    if (!settings.notifications.emailAddress) {
+      Alert.alert('Error', 'Please enter an email address first');
+      return;
+    }
+
+    setTestingEmail(true);
+    try {
+      const response = await fetch(`${API_BASE}/send-alert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          licenseKey,
+          email: settings.notifications.emailAddress,
+          alertType: 'test',
+          subject: 'MineGlance Test Alert',
+          message: 'This is a test alert from MineGlance. If you received this, your email alerts are working correctly!'
+        })
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', 'Test email sent! Check your inbox.');
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.error || 'Failed to send test email');
+      }
+    } catch (error) {
+      console.error('Test email error:', error);
+      Alert.alert('Error', 'Failed to send test email');
+    } finally {
+      setTestingEmail(false);
+    }
   };
 
   const handleRemoveDevice = async (instanceId: string) => {
@@ -339,60 +377,80 @@ export default function SettingsScreen() {
 
       {/* Notifications Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
+        <Text style={styles.sectionTitle}>Push Notifications</Text>
 
         <View style={styles.card}>
           <View style={styles.switchRow}>
-            <Text style={styles.label}>Enable Notifications</Text>
+            <View>
+              <Text style={styles.label}>Worker Offline</Text>
+              <Text style={styles.helpTextSmall}>Alert when a miner goes offline</Text>
+            </View>
             <Switch
-              value={settings.notifications.enabled}
+              value={settings.notifications.workerOffline}
               onValueChange={(value) =>
-                settings.setNotifications({ enabled: value })
+                settings.setNotifications({ workerOffline: value })
               }
               trackColor={{ false: colors.border, true: colors.accentLight }}
-              thumbColor={settings.notifications.enabled ? colors.accent : '#f4f3f4'}
+              thumbColor={settings.notifications.workerOffline ? colors.accent : '#f4f3f4'}
             />
           </View>
 
-          {settings.notifications.enabled && (
-            <>
-              <View style={styles.switchRow}>
-                <Text style={styles.label}>Worker Offline</Text>
-                <Switch
-                  value={settings.notifications.workerOffline}
-                  onValueChange={(value) =>
-                    settings.setNotifications({ workerOffline: value })
-                  }
-                  trackColor={{ false: colors.border, true: colors.accentLight }}
-                  thumbColor={settings.notifications.workerOffline ? colors.accent : '#f4f3f4'}
-                />
-              </View>
+          <View style={styles.switchRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Profit Drop Alert</Text>
+              <Text style={styles.helpTextSmall}>Alert when profit drops significantly</Text>
+            </View>
+            <Switch
+              value={settings.notifications.profitDrop}
+              onValueChange={(value) =>
+                settings.setNotifications({ profitDrop: value })
+              }
+              trackColor={{ false: colors.border, true: colors.accentLight }}
+              thumbColor={settings.notifications.profitDrop ? colors.accent : '#f4f3f4'}
+            />
+          </View>
 
-              <View style={styles.switchRow}>
-                <Text style={styles.label}>Profit Drop Alert</Text>
-                <Switch
-                  value={settings.notifications.profitDrop}
-                  onValueChange={(value) =>
-                    settings.setNotifications({ profitDrop: value })
-                  }
-                  trackColor={{ false: colors.border, true: colors.accentLight }}
-                  thumbColor={settings.notifications.profitDrop ? colors.accent : '#f4f3f4'}
-                />
+          {settings.notifications.profitDrop && (
+            <View style={styles.inputRow}>
+              <Text style={styles.label}>Drop Threshold</Text>
+              <View style={styles.thresholdButtons}>
+                {[10, 20, 30, 50].map((threshold) => (
+                  <TouchableOpacity
+                    key={threshold}
+                    style={[
+                      styles.thresholdButton,
+                      settings.notifications.profitDropThreshold === threshold && styles.thresholdButtonActive,
+                    ]}
+                    onPress={() => settings.setNotifications({ profitDropThreshold: threshold })}
+                  >
+                    <Text
+                      style={[
+                        styles.thresholdButtonText,
+                        settings.notifications.profitDropThreshold === threshold && styles.thresholdButtonTextActive,
+                      ]}
+                    >
+                      {threshold}%
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-
-              <View style={[styles.switchRow, { borderBottomWidth: 0 }]}>
-                <Text style={styles.label}>More Profitable Coin</Text>
-                <Switch
-                  value={settings.notifications.betterCoin}
-                  onValueChange={(value) =>
-                    settings.setNotifications({ betterCoin: value })
-                  }
-                  trackColor={{ false: colors.border, true: colors.accentLight }}
-                  thumbColor={settings.notifications.betterCoin ? colors.accent : '#f4f3f4'}
-                />
-              </View>
-            </>
+            </View>
           )}
+
+          <View style={[styles.switchRow, { borderBottomWidth: 0 }]}>
+            <View>
+              <Text style={styles.label}>More Profitable Coin</Text>
+              <Text style={styles.helpTextSmall}>Alert when a better coin is detected</Text>
+            </View>
+            <Switch
+              value={settings.notifications.betterCoin}
+              onValueChange={(value) =>
+                settings.setNotifications({ betterCoin: value })
+              }
+              trackColor={{ false: colors.border, true: colors.accentLight }}
+              thumbColor={settings.notifications.betterCoin ? colors.accent : '#f4f3f4'}
+            />
+          </View>
         </View>
       </View>
 
@@ -403,7 +461,10 @@ export default function SettingsScreen() {
 
           <View style={styles.card}>
             <View style={styles.switchRow}>
-              <Text style={styles.label}>Enable Email Alerts</Text>
+              <View>
+                <Text style={styles.label}>Enable Email Alerts</Text>
+                <Text style={styles.helpTextSmall}>Get alerts even when app is closed</Text>
+              </View>
               <Switch
                 value={settings.notifications.emailEnabled}
                 onValueChange={(value) =>
@@ -417,18 +478,32 @@ export default function SettingsScreen() {
             {settings.notifications.emailEnabled && (
               <>
                 <View style={styles.inputRow}>
-                  <Text style={styles.label}>Email Address</Text>
-                  <TextInput
-                    style={[styles.input, { minWidth: 180 }]}
-                    value={settings.notifications.emailAddress}
-                    onChangeText={(text) =>
-                      settings.setNotifications({ emailAddress: text })
-                    }
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    placeholder="your@email.com"
-                    placeholderTextColor={colors.textMuted}
-                  />
+                  <Text style={styles.label}>Email</Text>
+                  <View style={styles.emailInputRow}>
+                    <TextInput
+                      style={[styles.input, styles.emailInput]}
+                      value={settings.notifications.emailAddress}
+                      onChangeText={(text) =>
+                        settings.setNotifications({ emailAddress: text })
+                      }
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      placeholder="your@email.com"
+                      placeholderTextColor={colors.textMuted}
+                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.testButton,
+                        (testingEmail || !settings.notifications.emailAddress) && styles.testButtonDisabled
+                      ]}
+                      onPress={sendTestEmail}
+                      disabled={testingEmail || !settings.notifications.emailAddress}
+                    >
+                      <Text style={styles.testButtonText}>
+                        {testingEmail ? 'Sending...' : 'Test'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View style={styles.inputRow}>
@@ -776,5 +851,55 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
   },
   frequencyButtonTextActive: {
     color: '#fff',
+  },
+  thresholdButtons: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  thresholdButton: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: 48,
+    alignItems: 'center',
+  },
+  thresholdButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  thresholdButtonText: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  thresholdButtonTextActive: {
+    color: '#fff',
+  },
+  emailInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  emailInput: {
+    flex: 1,
+    minWidth: 140,
+  },
+  testButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    backgroundColor: colors.cardBackground,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
+  },
+  testButtonDisabled: {
+    opacity: 0.5,
+  },
+  testButtonText: {
+    fontSize: fontSize.sm,
+    color: colors.text,
+    fontWeight: '500',
   },
 });
