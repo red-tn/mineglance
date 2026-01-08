@@ -383,8 +383,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   isPro: () => {
-    // Returns true for both 'pro' and 'bundle' plans (bundle displays as PRO PLUS)
     const { plan } = get();
-    return plan === 'pro' || plan === 'bundle';
+    return plan === 'pro';
   },
 }));

@@ -36,40 +36,46 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || '30'
+    const sortBy = searchParams.get('sortBy') || 'date'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
 
     const now = new Date()
     const periodDays = parseInt(period)
     const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000)
 
-    // Get all licenses from users
-    const { data: allLicenses } = await supabase
+    // Get all users (paid users only for revenue)
+    const { data: allUsers } = await supabase
       .from('users')
       .select('*')
       .order('created_at', { ascending: false })
 
-    const { data: periodLicenses } = await supabase
+    const { data: periodUsers } = await supabase
       .from('users')
       .select('*')
       .gte('created_at', startDate.toISOString())
       .order('created_at', { ascending: false })
 
-    const licenses = allLicenses || []
-    const recentLicenses = periodLicenses || []
+    const users = allUsers || []
+    const recentUsers = periodUsers || []
 
-    // Revenue calculation (single Pro plan at $59)
-    const getRevenue = (plan: string) => {
-      if (plan === 'pro') return 5900
+    // Revenue calculation - use actual amount_paid or default to $59 for pro
+    const getRevenue = (user: any) => {
+      if (user.amount_paid && user.amount_paid > 0) return user.amount_paid
+      if (user.plan === 'pro') return 5900
       return 0
     }
 
-    // Calculate totals
-    const totalRevenue = licenses.reduce((sum, l) => sum + getRevenue(l.plan), 0)
-    const periodRevenue = recentLicenses.reduce((sum, l) => sum + getRevenue(l.plan), 0)
+    // Calculate totals (only count actual paid amounts)
+    const paidUsers = users.filter(u => u.plan === 'pro')
+    const totalRevenue = paidUsers.reduce((sum, u) => sum + getRevenue(u), 0)
+
+    const recentPaidUsers = recentUsers.filter(u => u.plan === 'pro')
+    const periodRevenue = recentPaidUsers.reduce((sum, u) => sum + getRevenue(u), 0)
 
     // Calculate by plan
-    const proCount = licenses.filter(l => l.plan === 'pro').length
-    const freeCount = licenses.filter(l => l.plan === 'free').length
-    const proRevenue = proCount * 5900
+    const proCount = paidUsers.length
+    const freeCount = users.filter(u => u.plan === 'free').length
+    const proRevenue = totalRevenue
 
     // Generate daily chart data
     const chartData: Array<{ date: string; revenue: number; sales: number }> = []
@@ -77,32 +83,68 @@ export async function GET(request: NextRequest) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
       const dateStr = date.toISOString().split('T')[0]
 
-      const dayLicenses = recentLicenses.filter(l => {
-        const licDate = new Date(l.created_at).toISOString().split('T')[0]
-        return licDate === dateStr
+      const dayUsers = recentPaidUsers.filter(u => {
+        const userDate = new Date(u.created_at).toISOString().split('T')[0]
+        return userDate === dateStr
       })
 
-      const dayRevenue = dayLicenses.reduce((sum, l) => sum + getRevenue(l.plan), 0)
+      const dayRevenue = dayUsers.reduce((sum, u) => sum + getRevenue(u), 0)
 
       chartData.push({
         date: dateStr,
         revenue: dayRevenue,
-        sales: dayLicenses.length
+        sales: dayUsers.length
       })
     }
 
-    // Recent transactions
-    const recentTransactions = recentLicenses.slice(0, 20).map(l => ({
-      id: l.id,
-      email: l.email,
-      plan: l.plan,
-      amount: getRevenue(l.plan),
-      date: l.created_at,
-      stripePaymentId: l.stripe_payment_id
+    // Recent transactions with full details
+    let transactions = recentUsers.filter(u => u.plan === 'pro' || u.amount_paid > 0).map(u => ({
+      id: u.id,
+      user_id: u.id,
+      email: u.email,
+      plan: u.plan,
+      amount: getRevenue(u),
+      date: u.created_at,
+      stripePaymentId: u.stripe_payment_id,
+      license_key: u.license_key,
+      is_refunded: u.is_revoked || false,
+      refunded_at: u.is_revoked ? u.updated_at : null
     }))
 
+    // Sort transactions
+    transactions.sort((a, b) => {
+      let aVal: any, bVal: any
+      switch (sortBy) {
+        case 'email':
+          aVal = a.email?.toLowerCase() || ''
+          bVal = b.email?.toLowerCase() || ''
+          break
+        case 'plan':
+          aVal = a.plan || ''
+          bVal = b.plan || ''
+          break
+        case 'amount':
+          aVal = a.amount
+          bVal = b.amount
+          break
+        case 'date':
+        default:
+          aVal = new Date(a.date).getTime()
+          bVal = new Date(b.date).getTime()
+          break
+      }
+      if (sortOrder === 'asc') {
+        return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
+      } else {
+        return aVal > bVal ? -1 : aVal < bVal ? 1 : 0
+      }
+    })
+
+    // Limit to 50 transactions
+    transactions = transactions.slice(0, 50)
+
     // Calculate averages
-    const avgOrderValue = licenses.length > 0 ? totalRevenue / licenses.length : 0
+    const avgOrderValue = proCount > 0 ? totalRevenue / proCount : 0
     const dailyAvgRevenue = periodDays > 0 ? periodRevenue / periodDays : 0
 
     return NextResponse.json({
@@ -110,7 +152,7 @@ export async function GET(request: NextRequest) {
         totalRevenue,
         periodRevenue,
         totalSales: proCount,
-        periodSales: recentLicenses.filter(l => l.plan === 'pro').length,
+        periodSales: recentPaidUsers.length,
         avgOrderValue: Math.round(avgOrderValue),
         dailyAvgRevenue: Math.round(dailyAvgRevenue)
       },
@@ -119,7 +161,7 @@ export async function GET(request: NextRequest) {
         free: { count: freeCount, revenue: 0 }
       },
       chartData,
-      recentTransactions
+      recentTransactions: transactions
     })
 
   } catch (error) {
