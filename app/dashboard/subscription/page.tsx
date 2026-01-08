@@ -193,9 +193,9 @@ export default function SubscriptionPage() {
               <p className="text-lg font-semibold text-dark-text">
                 {formatDate(subscription.subscriptionEndDate)}
               </p>
-              {subscription.daysUntilExpiry !== null && (
-                <p className={`text-xs ${subscription.daysUntilExpiry <= 30 ? 'text-yellow-400' : 'text-dark-text-dim'}`}>
-                  {subscription.daysUntilExpiry > 0 ? `${subscription.daysUntilExpiry} days remaining` : 'Expired'}
+              {subscription.daysUntilExpiry !== null && subscription.daysUntilExpiry !== undefined && (
+                <p className={`text-xs ${(subscription.daysUntilExpiry ?? 0) <= 30 ? 'text-yellow-400' : 'text-dark-text-dim'}`}>
+                  {(subscription.daysUntilExpiry ?? 0) > 0 ? `${subscription.daysUntilExpiry} days remaining` : 'Expired'}
                 </p>
               )}
             </div>

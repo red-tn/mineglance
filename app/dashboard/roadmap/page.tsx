@@ -15,6 +15,7 @@ interface RoadmapItem {
   admin_response: string | null
   target_version: string | null
   created_at: string
+  isOwned?: boolean
 }
 
 const CATEGORIES = {
@@ -70,12 +71,17 @@ export default function RoadmapPage() {
     if (activeTab === 'view') {
       fetchRoadmapItems()
     }
-  }, [activeTab])
+  }, [activeTab, user?.email])
 
   async function fetchRoadmapItems() {
     setLoadingItems(true)
     try {
-      const res = await fetch('/api/roadmap/public')
+      // Pass user email to get their own submissions too
+      const params = new URLSearchParams()
+      if (user?.email) {
+        params.set('email', user.email)
+      }
+      const res = await fetch(`/api/roadmap/public?${params}`)
       if (res.ok) {
         const data = await res.json()
         setItems(data.items || [])
@@ -297,7 +303,7 @@ export default function RoadmapPage() {
 
       {/* View Tab */}
       {activeTab === 'view' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {loadingItems ? (
             <div className="flex items-center justify-center py-12">
               <svg className="animate-spin h-8 w-8 text-primary" viewBox="0 0 24 24">
@@ -316,57 +322,136 @@ export default function RoadmapPage() {
               <p className="text-dark-text">Be the first to submit a feature request!</p>
             </div>
           ) : (
-            items.map(item => (
-              <div key={item.id} className="glass-card rounded-xl border border-dark-border p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <span className={`px-2 py-1 text-xs rounded-full ${STATUS_INFO[item.status]?.color || 'bg-dark-card-hover'}`}>
-                        {STATUS_INFO[item.status]?.label || item.status}
-                      </span>
-                      <span className="px-2 py-1 text-xs bg-dark-card-hover text-dark-text rounded-full">
-                        {CATEGORIES[item.category as keyof typeof CATEGORIES] || item.category}
-                      </span>
-                      {item.target_version && (
-                        <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
-                          v{item.target_version}
-                        </span>
-                      )}
+            <>
+              {/* User's Own Submissions Section */}
+              {items.filter(i => i.isOwned).length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-dark-text flex items-center gap-2">
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Your Submissions
+                  </h3>
+                  {items.filter(i => i.isOwned).map(item => (
+                    <div key={item.id} className={`glass-card rounded-xl border p-6 ${item.status === 'submitted' || item.status === 'reviewing' ? 'border-amber-500/30 bg-amber-500/5' : 'border-dark-border'}`}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-2">
+                            <span className="px-2 py-1 text-xs rounded-full bg-primary/20 text-primary font-medium">
+                              Your Submission
+                            </span>
+                            <span className={`px-2 py-1 text-xs rounded-full ${STATUS_INFO[item.status]?.color || 'bg-dark-card-hover'}`}>
+                              {STATUS_INFO[item.status]?.label || item.status}
+                            </span>
+                            <span className="px-2 py-1 text-xs bg-dark-card-hover text-dark-text rounded-full">
+                              {CATEGORIES[item.category as keyof typeof CATEGORIES] || item.category}
+                            </span>
+                            {item.target_version && (
+                              <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                                v{item.target_version}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-lg font-semibold text-dark-text">{item.title}</h3>
+                          {item.description && (
+                            <p className="text-dark-text mt-1">{item.description}</p>
+                          )}
+                          {item.platforms?.length > 0 && (
+                            <div className="flex gap-2 mt-3">
+                              {item.platforms.map(p => (
+                                <span key={p} className="text-xs text-blue-400 bg-blue-500/20 px-2 py-1 rounded">
+                                  {PLATFORMS_LIST.find(pl => pl.value === p)?.label || p}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {item.admin_response && (
+                            <div className="mt-4 p-4 bg-blue-900/30 border border-blue-800 rounded-lg">
+                              <p className="text-sm font-medium text-blue-300 mb-1">Team Response:</p>
+                              <p className="text-sm text-blue-200">{item.admin_response}</p>
+                            </div>
+                          )}
+                        </div>
+                        {item.progress > 0 && item.status === 'in_progress' && (
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-primary">{item.progress}%</div>
+                            <div className="w-24 h-2 bg-dark-border rounded-full mt-1">
+                              <div
+                                className="h-full bg-primary rounded-full"
+                                style={{ width: `${item.progress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-dark-text">{item.title}</h3>
-                    {item.description && (
-                      <p className="text-dark-text mt-1">{item.description}</p>
-                    )}
-                    {item.platforms?.length > 0 && (
-                      <div className="flex gap-2 mt-3">
-                        {item.platforms.map(p => (
-                          <span key={p} className="text-xs text-dark-text bg-dark-card-hover px-2 py-1 rounded">
-                            {PLATFORMS_LIST.find(pl => pl.value === p)?.label || p}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {item.admin_response && (
-                      <div className="mt-4 p-4 bg-blue-900/30 border border-blue-800 rounded-lg">
-                        <p className="text-sm font-medium text-blue-300 mb-1">Team Response:</p>
-                        <p className="text-sm text-blue-200">{item.admin_response}</p>
-                      </div>
-                    )}
-                  </div>
-                  {item.progress > 0 && item.status === 'in_progress' && (
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-primary">{item.progress}%</div>
-                      <div className="w-24 h-2 bg-dark-border rounded-full mt-1">
-                        <div
-                          className="h-full bg-primary rounded-full"
-                          style={{ width: `${item.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                  ))}
                 </div>
-              </div>
-            ))
+              )}
+
+              {/* Public Roadmap Section */}
+              {items.filter(i => !i.isOwned).length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-dark-text flex items-center gap-2">
+                    <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    Public Roadmap
+                  </h3>
+                  {items.filter(i => !i.isOwned).map(item => (
+                    <div key={item.id} className="glass-card rounded-xl border border-dark-border p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-2">
+                            <span className={`px-2 py-1 text-xs rounded-full ${STATUS_INFO[item.status]?.color || 'bg-dark-card-hover'}`}>
+                              {STATUS_INFO[item.status]?.label || item.status}
+                            </span>
+                            <span className="px-2 py-1 text-xs bg-dark-card-hover text-dark-text rounded-full">
+                              {CATEGORIES[item.category as keyof typeof CATEGORIES] || item.category}
+                            </span>
+                            {item.target_version && (
+                              <span className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
+                                v{item.target_version}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-lg font-semibold text-dark-text">{item.title}</h3>
+                          {item.description && (
+                            <p className="text-dark-text mt-1">{item.description}</p>
+                          )}
+                          {item.platforms?.length > 0 && (
+                            <div className="flex gap-2 mt-3">
+                              {item.platforms.map(p => (
+                                <span key={p} className="text-xs text-blue-400 bg-blue-500/20 px-2 py-1 rounded">
+                                  {PLATFORMS_LIST.find(pl => pl.value === p)?.label || p}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {item.admin_response && (
+                            <div className="mt-4 p-4 bg-blue-900/30 border border-blue-800 rounded-lg">
+                              <p className="text-sm font-medium text-blue-300 mb-1">Team Response:</p>
+                              <p className="text-sm text-blue-200">{item.admin_response}</p>
+                            </div>
+                          )}
+                        </div>
+                        {item.progress > 0 && item.status === 'in_progress' && (
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-primary">{item.progress}%</div>
+                            <div className="w-24 h-2 bg-dark-border rounded-full mt-1">
+                              <div
+                                className="h-full bg-primary rounded-full"
+                                style={{ width: `${item.progress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

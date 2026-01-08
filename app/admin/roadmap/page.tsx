@@ -37,6 +37,13 @@ const PRIORITIES = {
   really_need: 'Really Need'
 }
 
+const PLATFORMS = {
+  extension: 'Extension',
+  mobile_ios: 'iOS App',
+  mobile_android: 'Android App',
+  website: 'Website/Dashboard'
+}
+
 const STATUSES = {
   submitted: 'Submitted',
   reviewing: 'Reviewing',
@@ -276,6 +283,7 @@ export default function AdminRoadmapPage() {
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Title</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Category</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Platforms</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Priority</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Progress</th>
@@ -286,7 +294,7 @@ export default function AdminRoadmapPage() {
           <tbody className="divide-y divide-dark-border">
             {filteredItems.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-dark-text-muted">
+                <td colSpan={8} className="px-4 py-8 text-center text-dark-text-muted">
                   No roadmap items found
                 </td>
               </tr>
@@ -304,6 +312,19 @@ export default function AdminRoadmapPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-dark-text-muted">
                     {CATEGORIES[item.category as keyof typeof CATEGORIES] || item.category}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {item.platforms && item.platforms.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {item.platforms.map((p: string) => (
+                          <span key={p} className="px-2 py-0.5 rounded-full text-xs bg-blue-500/20 text-blue-400">
+                            {PLATFORMS[p as keyof typeof PLATFORMS] || p}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-dark-text-dim">All</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs ${
@@ -412,18 +433,18 @@ export default function AdminRoadmapPage() {
               <div>
                 <label className="block text-sm font-medium text-dark-text mb-1">Platforms</label>
                 <div className="flex gap-2 flex-wrap">
-                  {['Extension', 'Mobile App', 'Website', 'Dashboard'].map(platform => (
+                  {Object.entries(PLATFORMS).map(([value, label]) => (
                     <button
-                      key={platform}
+                      key={value}
                       type="button"
-                      onClick={() => togglePlatform(platform)}
+                      onClick={() => togglePlatform(value)}
                       className={`px-3 py-1 rounded-full text-sm border transition ${
-                        formData.platforms.includes(platform)
+                        formData.platforms.includes(value)
                           ? 'bg-primary text-white border-primary'
                           : 'bg-dark-bg text-dark-text-muted border-dark-border hover:bg-dark-card-hover'
                       }`}
                     >
-                      {platform}
+                      {label}
                     </button>
                   ))}
                 </div>
