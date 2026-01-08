@@ -171,8 +171,9 @@ export default function UsersPage() {
     }
   }
 
-  const handleDeleteUser = async (userId: string, email: string) => {
-    if (!confirm(`Are you sure you want to PERMANENTLY DELETE the account for ${email}?\n\nThis will delete:\n- User account\n- All wallets\n- All settings\n- All devices\n- All comments\n\nThis action cannot be undone!`)) return
+  const handleDeleteUser = async (userId: string, email: string, plan: string) => {
+    const planWarning = plan === 'pro' ? '\n\n⚠️ WARNING: This is a PAID PRO user!' : ''
+    if (!confirm(`Are you sure you want to PERMANENTLY DELETE the account for ${email}?${planWarning}\n\nThis will delete:\n- User account & license\n- All wallets & settings\n- All device links\n- All payment history\n- All blog comments\n- All roadmap submissions\n\nThis action cannot be undone!`)) return
 
     setActionLoading(true)
     try {
@@ -654,15 +655,13 @@ export default function UsersPage() {
                       {actionLoading ? 'Processing...' : 'Reactivate License'}
                     </button>
                   )}
-                  {selectedUser.plan === 'free' && (
-                    <button
-                      onClick={() => handleDeleteUser(selectedUser.id, selectedUser.email)}
-                      disabled={actionLoading}
-                      className="px-4 py-2 bg-red-900 text-red-200 rounded-lg hover:bg-red-800 disabled:opacity-50 border border-red-700"
-                    >
-                      {actionLoading ? 'Processing...' : 'Delete Account'}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleDeleteUser(selectedUser.id, selectedUser.email, selectedUser.plan)}
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-red-900 text-red-200 rounded-lg hover:bg-red-800 disabled:opacity-50 border border-red-700"
+                  >
+                    {actionLoading ? 'Processing...' : 'Delete & Purge All Data'}
+                  </button>
                   <button
                     onClick={() => setSelectedUser(null)}
                     className="px-4 py-2 border border-dark-border text-dark-text rounded-lg hover:bg-dark-card-hover"

@@ -242,7 +242,7 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-// Delete user account (free users only)
+// Delete user account and purge all data
 export async function DELETE(request: NextRequest) {
   try {
     const isAdmin = await verifyAdmin(request)
@@ -256,19 +256,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    // First, verify the user exists and is a free user
+    // First, verify the user exists
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, plan, license_key')
+      .select('id, email, plan, license_key, stripe_customer_id, stripe_payment_id')
       .eq('id', userId)
       .single()
 
     if (userError || !user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    if (user.plan !== 'free') {
-      return NextResponse.json({ error: 'Cannot delete paid users. Only free accounts can be deleted.' }, { status: 400 })
     }
 
     // Delete all related data in order (respecting foreign key constraints)
@@ -304,7 +300,13 @@ export async function DELETE(request: NextRequest) {
     // 9. Delete password resets
     await supabase.from('password_resets').delete().eq('user_id', userId)
 
-    // 10. Finally, delete the user
+    // 10. Delete payment history
+    await supabase.from('payment_history').delete().eq('user_id', userId)
+
+    // 11. Delete roadmap items submitted by this user
+    await supabase.from('roadmap_items').delete().eq('submitter_email', userEmail)
+
+    // 12. Finally, delete the user
     const { error: deleteError } = await supabase
       .from('users')
       .delete()
@@ -320,13 +322,19 @@ export async function DELETE(request: NextRequest) {
       await supabase.from('admin_audit_log').insert({
         admin_email: 'system',
         action: 'user_deleted',
-        details: { userId, email: user.email, plan: user.plan }
+        details: {
+          userId,
+          email: user.email,
+          plan: user.plan,
+          hadLicense: !!user.license_key,
+          stripeCustomerId: user.stripe_customer_id
+        }
       })
     } catch {
       // Audit log is optional
     }
 
-    return NextResponse.json({ success: true, message: 'User account deleted successfully' })
+    return NextResponse.json({ success: true, message: 'User account and all data deleted successfully' })
 
   } catch (error) {
     console.error('Delete user error:', error)
