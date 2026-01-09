@@ -62,6 +62,12 @@ const STATUS_COLORS: Record<string, string> = {
   declined: 'bg-red-500/20 text-red-400'
 }
 
+type SortField = 'title' | 'category' | 'priority' | 'status' | 'progress' | 'created_at'
+type SortDirection = 'asc' | 'desc'
+
+const PRIORITY_ORDER = { really_need: 0, would_help: 1, nice_to_have: 2 }
+const STATUS_ORDER = { submitted: 0, reviewing: 1, planned: 2, in_progress: 3, completed: 4, declined: 5 }
+
 export default function AdminRoadmapPage() {
   const [items, setItems] = useState<RoadmapItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,6 +75,8 @@ export default function AdminRoadmapPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<RoadmapItem | null>(null)
   const [saving, setSaving] = useState(false)
+  const [sortField, setSortField] = useState<SortField>('created_at')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
   // Form state for add/edit
   const [formData, setFormData] = useState({
@@ -205,9 +213,46 @@ export default function AdminRoadmapPage() {
     }))
   }
 
-  const filteredItems = filter === 'all'
+  function handleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const filteredItems = (filter === 'all'
     ? items
     : items.filter(item => item.status === filter)
+  ).sort((a, b) => {
+    let comparison = 0
+
+    switch (sortField) {
+      case 'title':
+        comparison = a.title.localeCompare(b.title)
+        break
+      case 'category':
+        comparison = a.category.localeCompare(b.category)
+        break
+      case 'priority':
+        comparison = (PRIORITY_ORDER[a.priority as keyof typeof PRIORITY_ORDER] ?? 99) -
+                     (PRIORITY_ORDER[b.priority as keyof typeof PRIORITY_ORDER] ?? 99)
+        break
+      case 'status':
+        comparison = (STATUS_ORDER[a.status as keyof typeof STATUS_ORDER] ?? 99) -
+                     (STATUS_ORDER[b.status as keyof typeof STATUS_ORDER] ?? 99)
+        break
+      case 'progress':
+        comparison = a.progress - b.progress
+        break
+      case 'created_at':
+        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        break
+    }
+
+    return sortDirection === 'asc' ? comparison : -comparison
+  })
 
   if (loading) {
     return (
@@ -281,12 +326,12 @@ export default function AdminRoadmapPage() {
         <table className="min-w-full divide-y divide-dark-border">
           <thead className="bg-dark-card-hover">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Title</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Category</th>
+              <SortableHeader field="title" label="Title" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader field="category" label="Category" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
               <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Platforms</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Priority</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Progress</th>
+              <SortableHeader field="priority" label="Priority" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader field="status" label="Status" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+              <SortableHeader field="progress" label="Progress" sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
               <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Source</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
             </tr>
@@ -553,5 +598,44 @@ export default function AdminRoadmapPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// Sortable table header component
+function SortableHeader({
+  field,
+  label,
+  sortField,
+  sortDirection,
+  onSort
+}: {
+  field: SortField
+  label: string
+  sortField: SortField
+  sortDirection: SortDirection
+  onSort: (field: SortField) => void
+}) {
+  const isActive = sortField === field
+
+  return (
+    <th
+      className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:bg-dark-card select-none group"
+      onClick={() => onSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        <span className={`transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`}>
+          {isActive && sortDirection === 'asc' ? (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          )}
+        </span>
+      </div>
+    </th>
   )
 }
