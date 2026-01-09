@@ -3,37 +3,17 @@
 const API_BASE = 'https://www.mineglance.com/api';
 
 // Free tier restrictions
-const FREE_TIER_POOLS = ['2miners', 'nanopool', 'herominers'];
-const FREE_TIER_COINS = ['btc', 'etc', 'rvn', 'ergo', 'kas'];
-const FREE_TIER_MAX_WALLETS = 2;
-
-// Check if a pool is allowed for free tier
-function isPoolAllowedForFree(pool) {
-  return FREE_TIER_POOLS.includes(pool?.toLowerCase());
-}
-
-// Check if a coin is allowed for free tier
-function isCoinAllowedForFree(coin) {
-  return FREE_TIER_COINS.includes(coin?.toLowerCase());
-}
+// Free users: 1 wallet, any pool, any coin
+// Pro users: unlimited wallets, all pools, all coins
+const FREE_TIER_MAX_WALLETS = 1;
 
 // Check if wallet is allowed for user's plan
 function isWalletAllowed(wallet, isPaid, walletIndex) {
   if (isPaid) return { allowed: true };
 
-  // Free tier: max 2 wallets
+  // Free tier: max 1 wallet
   if (walletIndex >= FREE_TIER_MAX_WALLETS) {
-    return { allowed: false, reason: 'Free tier is limited to 2 wallets. Upgrade to Pro for unlimited.' };
-  }
-
-  // Check pool restriction
-  if (!isPoolAllowedForFree(wallet.pool)) {
-    return { allowed: false, reason: `${wallet.pool} requires Pro. Free tier supports: 2Miners, Nanopool, HeroMiners.` };
-  }
-
-  // Check coin restriction
-  if (!isCoinAllowedForFree(wallet.coin)) {
-    return { allowed: false, reason: `${wallet.coin.toUpperCase()} requires Pro. Free tier supports: BTC, ETC, RVN, ERGO, KAS.` };
+    return { allowed: false, reason: 'Free tier is limited to 1 wallet. Upgrade to Pro for unlimited wallets.' };
   }
 
   return { allowed: true };

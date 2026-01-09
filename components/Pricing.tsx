@@ -17,9 +17,9 @@ export default function Pricing() {
       period: 'forever',
       description: 'Perfect for getting started',
       features: [
-        'Up to 2 wallets',
-        'Popular pools (2Miners, Nanopool, HeroMiners)',
-        'Popular coins (BTC, ETC, RVN, ERGO, KAS)',
+        '1 wallet',
+        'All 12+ pools supported',
+        'All coins supported',
         'Net profit calculation',
         'Chrome extension + Mobile app'
       ],

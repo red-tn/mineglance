@@ -42,14 +42,15 @@ export default function TermsOfService() {
               <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Free and Pro Versions</h2>
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Free Version</h3>
               <p>
-                The free version of MineGlance provides limited functionality at no cost. There is no
+                The free version of MineGlance allows you to track 1 wallet on any supported mining pool
+                and any supported coin. All 12+ pools and 16+ coins are available to free users. There is no
                 time limit on the free version.
               </p>
 
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Pro Version</h3>
               <p>
-                The Pro version is an annual subscription ($59/year) that unlocks additional features including
-                unlimited wallets, email alerts, cloud sync, and mobile app access. Your subscription
+                The Pro version is an annual subscription ($59/year) that unlocks unlimited wallets,
+                email alerts, cloud sync, mobile app access, and priority support. Your subscription
                 automatically renews each year unless cancelled.
               </p>
             </section>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import WireframeBackground from '@/components/WireframeBackground'
+import AnalyticsTracker from '@/components/AnalyticsTracker'
 
 export const metadata: Metadata = {
   title: 'MineGlance - Net Profit Dashboard for GPU Miners',
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen">
+        <AnalyticsTracker />
         <WireframeBackground />
         <div className="relative z-10">
           {children}
