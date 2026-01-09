@@ -25,10 +25,18 @@ interface DailyData {
   revenue: number
 }
 
+interface SiteAnalytics {
+  totalViews: number
+  uniqueVisitors: number
+  bounceRate: number
+  dailyViews: Array<{ date: string; views: number }>
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [chartData, setChartData] = useState<DailyData[]>([])
+  const [siteAnalytics, setSiteAnalytics] = useState<SiteAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -39,16 +47,29 @@ export default function AdminDashboard() {
   async function fetchDashboardData() {
     try {
       const token = localStorage.getItem('admin_token')
-      const res = await fetch('/api/admin/stats', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
 
-      if (!res.ok) throw new Error('Failed to fetch stats')
+      // Fetch main stats and site analytics in parallel
+      const [statsRes, analyticsRes] = await Promise.all([
+        fetch('/api/admin/stats', {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        fetch('/api/analytics/track?period=7d', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ])
 
-      const data = await res.json()
+      if (!statsRes.ok) throw new Error('Failed to fetch stats')
+
+      const data = await statsRes.json()
       setStats(data.stats)
       setRecentActivity(data.recentActivity || [])
       setChartData(data.chartData || [])
+
+      // Site analytics (don't fail if not available)
+      if (analyticsRes.ok) {
+        const analyticsData = await analyticsRes.json()
+        setSiteAnalytics(analyticsData)
+      }
     } catch (err) {
       setError('Failed to load dashboard data')
     } finally {
@@ -274,6 +295,73 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Site Traffic (7 days) */}
+      {siteAnalytics && (
+        <div className="glass-card rounded-lg p-3 sm:p-4 border border-dark-border">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm sm:text-base font-semibold text-dark-text flex items-center gap-2">
+              <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Site Traffic
+            </h3>
+            <a href="/admin/analytics" className="text-xs text-primary hover:underline">View All</a>
+          </div>
+
+          {/* Mini Stats Row */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div className="bg-dark-card-hover rounded-lg p-2 text-center">
+              <p className="text-lg sm:text-xl font-bold text-cyan-400">{siteAnalytics.totalViews.toLocaleString()}</p>
+              <p className="text-[10px] text-dark-text-muted">Views (7d)</p>
+            </div>
+            <div className="bg-dark-card-hover rounded-lg p-2 text-center">
+              <p className="text-lg sm:text-xl font-bold text-blue-400">{siteAnalytics.uniqueVisitors.toLocaleString()}</p>
+              <p className="text-[10px] text-dark-text-muted">Visitors</p>
+            </div>
+            <div className="bg-dark-card-hover rounded-lg p-2 text-center">
+              <p className={`text-lg sm:text-xl font-bold ${siteAnalytics.bounceRate > 70 ? 'text-red-400' : siteAnalytics.bounceRate > 50 ? 'text-yellow-400' : 'text-green-400'}`}>
+                {siteAnalytics.bounceRate}%
+              </p>
+              <p className="text-[10px] text-dark-text-muted">Bounce</p>
+            </div>
+          </div>
+
+          {/* Mini Sparkline Graph */}
+          <div className="h-16 flex items-end gap-1 bg-dark-card-hover rounded-lg p-2">
+            {siteAnalytics.dailyViews.length > 0 ? (
+              (() => {
+                const maxViews = Math.max(...siteAnalytics.dailyViews.map(d => d.views), 1)
+                return siteAnalytics.dailyViews.map((day, i) => {
+                  const height = (day.views / maxViews) * 100
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 bg-gradient-to-t from-cyan-500/60 to-cyan-400/40 rounded-t hover:from-cyan-500 hover:to-cyan-400 transition-colors group relative cursor-pointer"
+                      style={{ height: `${Math.max(height, 4)}%` }}
+                      title={`${day.date}: ${day.views} views`}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-dark-card text-dark-text text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none border border-dark-border z-10">
+                        {day.views}
+                      </div>
+                    </div>
+                  )
+                })
+              })()
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-dark-text-dim text-xs">
+                No traffic data yet
+              </div>
+            )}
+          </div>
+          {siteAnalytics.dailyViews.length > 0 && (
+            <div className="flex justify-between text-[9px] text-dark-text-muted mt-1 px-1">
+              <span>{formatDateShort(siteAnalytics.dailyViews[0]?.date)}</span>
+              <span>{formatDateShort(siteAnalytics.dailyViews[siteAnalytics.dailyViews.length - 1]?.date)}</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
