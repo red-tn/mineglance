@@ -14,11 +14,13 @@ const attempts = new Map<string, RateLimitRecord>()
 // Clean up old entries every 15 minutes
 setInterval(() => {
   const now = Date.now()
-  for (const [key, record] of attempts.entries()) {
-    if (now > record.resetTime) {
+  const keys = Array.from(attempts.keys())
+  keys.forEach(key => {
+    const record = attempts.get(key)
+    if (record && now > record.resetTime) {
       attempts.delete(key)
     }
-  }
+  })
 }, 15 * 60 * 1000)
 
 interface RateLimitResult {

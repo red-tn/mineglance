@@ -37,8 +37,18 @@ interface HealthData {
   checkedAt: string
 }
 
+interface CronJob {
+  id: string
+  name: string
+  schedule: string
+  last_run: string | null
+  last_status: 'success' | 'failed' | null
+  is_enabled: boolean
+}
+
 export default function HealthPage() {
   const [health, setHealth] = useState<HealthData | null>(null)
+  const [cronJobs, setCronJobs] = useState<CronJob[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [purging, setPurging] = useState(false)
@@ -50,11 +60,20 @@ export default function HealthPage() {
 
     try {
       const token = localStorage.getItem('admin_token')
+
+      // Fetch health data
       const response = await fetch('/api/admin/health', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
       setHealth(data)
+
+      // Fetch cron jobs
+      const cronResponse = await fetch('/api/admin/cron', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const cronData = await cronResponse.json()
+      setCronJobs(cronData.jobs || [])
     } catch (error) {
       console.error('Failed to fetch health:', error)
     } finally {
@@ -222,6 +241,41 @@ export default function HealthPage() {
                 style={{ width: `${Math.min(100, (health.sendgridStats.usedToday / health.sendgridStats.dailyLimit) * 100)}%` }}
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cron Jobs Status */}
+      {cronJobs.length > 0 && (
+        <div className="glass-card rounded-xl border border-dark-border p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-dark-text">Scheduled Jobs</h3>
+            <a href="/admin/cron" className="text-sm text-blue-500 hover:text-blue-400">
+              Manage Jobs →
+            </a>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {cronJobs.map(job => (
+              <div key={job.id} className="p-4 bg-dark-card-hover rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium text-dark-text">{job.name}</span>
+                  <span className={`w-2 h-2 rounded-full ${
+                    !job.is_enabled ? 'bg-gray-500' :
+                    job.last_status === 'success' ? 'bg-green-500' :
+                    job.last_status === 'failed' ? 'bg-red-500' : 'bg-gray-400'
+                  }`}></span>
+                </div>
+                <div className="text-xs text-dark-text-muted space-y-1">
+                  <p>Schedule: {job.schedule}</p>
+                  <p>Last run: {job.last_run ? new Date(job.last_run).toLocaleString() : 'Never'}</p>
+                  <p>Status: {
+                    !job.is_enabled ? 'Disabled' :
+                    job.last_status === 'success' ? 'Success' :
+                    job.last_status === 'failed' ? 'Failed' : 'Not run yet'
+                  }</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
