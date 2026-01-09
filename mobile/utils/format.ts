@@ -3,7 +3,9 @@
 /**
  * Format hashrate to human-readable string
  */
-export function formatHashrate(hashrate: number): string {
+export function formatHashrate(hashrate: number | undefined | null): string {
+  // Handle undefined, null, NaN, or 0
+  if (!hashrate || isNaN(hashrate) || hashrate === 0) return '0 H/s';
   if (hashrate >= 1e15) return `${(hashrate / 1e15).toFixed(2)} PH/s`;
   if (hashrate >= 1e12) return `${(hashrate / 1e12).toFixed(2)} TH/s`;
   if (hashrate >= 1e9) return `${(hashrate / 1e9).toFixed(2)} GH/s`;
