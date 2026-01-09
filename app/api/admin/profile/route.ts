@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import crypto from 'crypto'
+import { hashPassword, verifyPassword } from '@/lib/password'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -104,12 +104,14 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: 'Current password required' }, { status: 400 })
       }
 
-      const currentHash = hashPassword(currentPassword)
-      if (currentHash !== admin.password_hash) {
+      // Verify current password (supports both bcrypt and legacy SHA256)
+      const result = await verifyPassword(currentPassword, admin.password_hash, true)
+      if (!result.valid) {
         return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 })
       }
 
-      updates.password_hash = hashPassword(newPassword)
+      // Hash new password with bcrypt
+      updates.password_hash = await hashPassword(newPassword)
     }
 
     const { error } = await supabase
@@ -130,10 +132,6 @@ export async function PUT(request: NextRequest) {
     console.error('Profile update error:', error)
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
   }
-}
-
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password + (process.env.ADMIN_SALT || 'mineglance-salt')).digest('hex')
 }
 
 async function logAudit(email: string, action: string, details: Record<string, unknown> | null, request: NextRequest) {

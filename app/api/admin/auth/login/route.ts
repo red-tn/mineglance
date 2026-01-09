@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { hashPassword, verifyPassword } from '@/lib/password'
+import { checkRateLimit, resetRateLimit, getClientIp } from '@/lib/rateLimit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,6 +17,17 @@ const DEFAULT_PASSWORD = process.env.ADMIN_DEFAULT_PASSWORD || 'MineGlance2024!'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting check
+    const clientIp = getClientIp(request)
+    const rateCheck = checkRateLimit(clientIp, 5, 15 * 60 * 1000) // 5 attempts per 15 min
+
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: `Too many login attempts. Try again in ${rateCheck.retryAfterSeconds} seconds.` },
+        { status: 429 }
+      )
+    }
+
     const { email, password } = await request.json()
 
     if (!email || !password) {
@@ -37,9 +50,9 @@ export async function POST(request: NextRequest) {
       .eq('email', normalizedEmail)
       .single()
 
-    // If no admin user exists, create one with default password
+    // If no admin user exists, create one with default password (hashed with bcrypt)
     if (!admin) {
-      const passwordHash = hashPassword(DEFAULT_PASSWORD)
+      const passwordHash = await hashPassword(DEFAULT_PASSWORD)
       const { data: newAdmin, error } = await supabase
         .from('admin_users')
         .insert({
@@ -63,15 +76,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Verify password
-    const validPassword = admin?.password_hash
-      ? verifyPassword(password, admin.password_hash)
-      : password === DEFAULT_PASSWORD
+    // Verify password with bcrypt (supports silent migration from SHA256)
+    let validPassword = false
+    let needsRehash = false
+
+    if (admin?.password_hash) {
+      const result = await verifyPassword(password, admin.password_hash, true)
+      validPassword = result.valid
+      needsRehash = result.needsRehash
+    } else {
+      validPassword = password === DEFAULT_PASSWORD
+      needsRehash = true // Default password should be hashed
+    }
 
     if (!validPassword) {
       await logAudit(normalizedEmail, 'login_failed', 'invalid_password', request)
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
     }
+
+    // Silent migration: rehash password with bcrypt if using legacy SHA256
+    if (needsRehash && admin?.id) {
+      const newHash = await hashPassword(password)
+      await supabase
+        .from('admin_users')
+        .update({ password_hash: newHash })
+        .eq('id', admin.id)
+    }
+
+    // Reset rate limit on successful login
+    resetRateLimit(clientIp)
 
     // Generate session token
     const token = crypto.randomBytes(32).toString('hex')
@@ -119,14 +152,6 @@ export async function POST(request: NextRequest) {
     console.error('Login error:', error)
     return NextResponse.json({ error: 'Login failed' }, { status: 500 })
   }
-}
-
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password + process.env.ADMIN_SALT || 'mineglance-salt').digest('hex')
-}
-
-function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash
 }
 
 async function logAudit(email: string, action: string, detail: string | null, request: NextRequest) {

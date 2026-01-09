@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { hashPassword } from '@/lib/password'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
     // Generate invite token and initial password
     const inviteToken = crypto.randomBytes(32).toString('hex')
     const initialPassword = generatePassword()
-    const passwordHash = hashPassword(initialPassword)
+    const passwordHash = await hashPassword(initialPassword)
     const inviteExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
 
     // Create the admin user
@@ -181,10 +182,6 @@ function generatePassword(): string {
     password += chars.charAt(Math.floor(Math.random() * chars.length))
   }
   return password
-}
-
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password + (process.env.ADMIN_SALT || 'mineglance-salt')).digest('hex')
 }
 
 async function sendInviteEmail(email: string, fullName: string | null, password: string, invitedBy: string): Promise<boolean> {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { hashPassword } from '@/lib/password'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -86,7 +87,7 @@ export async function PUT(
     // Reset password
     if (resetPassword && admin.role === 'super_admin') {
       newPassword = generatePassword()
-      updates.password_hash = hashPassword(newPassword)
+      updates.password_hash = await hashPassword(newPassword)
     }
 
     const { error } = await supabase
@@ -192,10 +193,6 @@ function generatePassword(): string {
     password += chars.charAt(Math.floor(Math.random() * chars.length))
   }
   return password
-}
-
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password + (process.env.ADMIN_SALT || 'mineglance-salt')).digest('hex')
 }
 
 async function logAudit(email: string, action: string, details: Record<string, unknown> | null, targetEmail: string | null, request: NextRequest) {

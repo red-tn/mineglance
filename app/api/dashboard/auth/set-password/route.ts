@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { hashPassword } from '@/lib/password'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-const SALT = process.env.USER_SALT || 'mineglance-user-salt'
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,8 +48,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Password already set. Please login normally.' }, { status: 400 })
     }
 
-    // Hash and save password
-    const passwordHash = hashPassword(password)
+    // Hash and save password with bcrypt
+    const passwordHash = await hashPassword(password)
 
     const { error: updateError } = await supabase
       .from('users')
@@ -96,8 +95,4 @@ export async function POST(request: NextRequest) {
     console.error('Set password error:', error)
     return NextResponse.json({ error: 'Failed to set password' }, { status: 500 })
   }
-}
-
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password + SALT).digest('hex')
 }

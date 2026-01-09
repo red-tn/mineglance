@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { hashPassword, verifyPassword } from '@/lib/password'
+import { checkRateLimit, resetRateLimit, getClientIp } from '@/lib/rateLimit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const SALT = process.env.USER_SALT || 'mineglance-user-salt'
-
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting check
+    const clientIp = getClientIp(request)
+    const rateCheck = checkRateLimit(clientIp, 5, 15 * 60 * 1000) // 5 attempts per 15 min
+
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: `Too many login attempts. Try again in ${rateCheck.retryAfterSeconds} seconds.` },
+        { status: 429 }
+      )
+    }
+
     const { licenseKey, email, password } = await request.json()
 
     if (!licenseKey || !email) {
@@ -69,10 +80,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Password required' }, { status: 400 })
     }
 
-    const passwordHash = hashPassword(password)
-    if (passwordHash !== user.password_hash) {
+    // Verify password with bcrypt (supports silent migration from SHA256)
+    const result = await verifyPassword(password, user.password_hash, false)
+    if (!result.valid) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
     }
+
+    // Silent migration: rehash password with bcrypt if using legacy SHA256
+    if (result.needsRehash) {
+      const newHash = await hashPassword(password)
+      await supabase
+        .from('users')
+        .update({ password_hash: newHash })
+        .eq('id', user.id)
+    }
+
+    // Reset rate limit on successful login
+    resetRateLimit(clientIp)
 
     // Generate session token
     const token = crypto.randomBytes(32).toString('hex')
@@ -110,8 +134,4 @@ export async function POST(request: NextRequest) {
     console.error('Login error:', error)
     return NextResponse.json({ error: 'Login failed' }, { status: 500 })
   }
-}
-
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password + SALT).digest('hex')
 }

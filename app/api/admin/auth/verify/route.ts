@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7)
 
-    // Get session first
+    // Validate token against database - NO FALLBACKS
     const { data: session, error: sessionError } = await supabase
       .from('admin_sessions')
       .select('*')
@@ -27,16 +27,6 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (sessionError || !session) {
-      // Fallback for token format check
-      if (token.length === 64) {
-        return NextResponse.json({
-          valid: true,
-          user: {
-            email: ADMIN_EMAILS[0],
-            isAdmin: true
-          }
-        })
-      }
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 })
     }
 
