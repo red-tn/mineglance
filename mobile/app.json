@@ -3,7 +3,7 @@
     "name": "MineGlance",
     "slug": "mineglance",
     "owner": "mineglance",
-    "version": "1.2.5",
+    "version": "1.2.6",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -29,7 +29,7 @@
       "entitlements": {
         "aps-environment": "production"
       },
-      "buildNumber": "60"
+      "buildNumber": "61"
     },
     "android": {
       "adaptiveIcon": {
