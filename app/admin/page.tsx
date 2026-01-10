@@ -41,7 +41,11 @@ export default function AdminDashboard() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    fetchDashboardData()
+    // Only fetch if we have a token (auth is complete)
+    const token = localStorage.getItem('admin_token')
+    if (token) {
+      fetchDashboardData()
+    }
   }, [])
 
   async function fetchDashboardData() {
