@@ -1,13 +1,14 @@
 /**
  * Secure password hashing with bcrypt
  * Includes silent migration from SHA256 to bcrypt
+ * Uses bcryptjs (pure JS) for serverless compatibility
  */
 
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 
-// Cost factor for bcrypt (12 = ~250ms per hash, good balance of security/performance)
-const BCRYPT_ROUNDS = 12
+// Cost factor for bcrypt (10 = good balance for serverless)
+const BCRYPT_ROUNDS = 10
 
 // Salts for legacy SHA256 hashing (for migration only)
 const ADMIN_SALT = process.env.ADMIN_SALT || 'mineglance-salt'
