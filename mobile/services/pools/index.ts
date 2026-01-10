@@ -248,17 +248,24 @@ const POOL_PARSERS: Record<string, (data: any, coin: string) => PoolStats> = {
     };
   },
 
-  'hiveon': (data, coin) => ({
-    hashrate: data.hashrate || 0,
-    hashrate24h: data.hashrate24h || 0,
-    workers: [],
-    workersOnline: 0,
-    workersTotal: 0,
-    balance: data.balance || 0,
-    paid: data.paid || 0,
-    earnings24h: data.expectedReward24H || 0,
-    lastShare: null,
-  }),
+  'hiveon': (data, coin) => {
+    // Hiveon returns hashrates as strings, need to parse
+    const hashrate = parseFloat(data.hashrate) || 0;
+    const hashrate24h = parseFloat(data.hashrate24h) || 0;
+    const workersOnline = data.onlineWorkerCount || 0;
+
+    return {
+      hashrate: hashrate,
+      hashrate24h: hashrate24h,
+      workers: [],
+      workersOnline: workersOnline,
+      workersTotal: workersOnline,
+      balance: 0, // Not available from stats endpoint
+      paid: 0,
+      earnings24h: 0,
+      lastShare: data.sharesStatusStats?.lastShareDt || null,
+    };
+  },
 
   'herominers': (data, coin) => {
     const divisor = getCoinDivisor(coin);
@@ -283,6 +290,16 @@ const POOL_PARSERS: Record<string, (data: any, coin: string) => PoolStats> = {
   },
 
   'woolypooly': (data, coin) => {
+    // WoolyPooly returns perfomance as arrays for pplns/solo modes
+    // Get latest hashrate from perfomance.pplns array (most recent entry)
+    let hashrate = 0;
+    if (data.perfomance?.pplns && data.perfomance.pplns.length > 0) {
+      // Get most recent entry (last in array)
+      const latest = data.perfomance.pplns[data.perfomance.pplns.length - 1];
+      hashrate = latest.hashrate || 0;
+    }
+
+    // Parse workers
     const workers: PoolWorker[] = (data.workers || []).map((w: any) => ({
       name: w.worker || 'Worker',
       hashrate: w.hashrate || 0,
@@ -290,16 +307,21 @@ const POOL_PARSERS: Record<string, (data: any, coin: string) => PoolStats> = {
       offline: (Date.now() / 1000 - (w.lastshare || 0)) > 600,
     }));
 
+    // If no hashrate from perfomance, sum from workers
+    if (hashrate === 0 && workers.length > 0) {
+      hashrate = workers.reduce((sum, w) => sum + (w.hashrate || 0), 0);
+    }
+
     return {
-      hashrate: data.perfomance?.currentHashrate || 0,
-      hashrate24h: data.perfomance?.averageHashrate || 0,
+      hashrate: hashrate,
+      hashrate24h: hashrate,
       workers,
-      workersOnline: workers.filter(w => !w.offline).length,
-      workersTotal: workers.length,
+      workersOnline: data.workersOnline || workers.filter(w => !w.offline).length,
+      workersTotal: data.workersTotal || workers.length,
       balance: data.stats?.balance || 0,
       paid: data.stats?.paid || 0,
-      earnings24h: data.rewards?.day || 0,
-      lastShare: data.stats?.lastShare,
+      earnings24h: data.stats?.income?.income_Day || 0,
+      lastShare: null,
     };
   },
 

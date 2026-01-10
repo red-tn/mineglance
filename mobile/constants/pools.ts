@@ -69,7 +69,8 @@ export const POOLS: Record<string, PoolConfig> = {
   'hiveon': {
     name: 'Hiveon Pool',
     coins: ['etc', 'rvn'],
-    getStatsUrl: (coin, address) => `https://hiveon.net/api/v1/stats/miner/${address}/${coin.toUpperCase()}/billing-acc`,
+    // Stats endpoint returns hashrate; billing-acc endpoint returns balance but no hashrate
+    getStatsUrl: (coin, address) => `https://hiveon.net/api/v1/stats/miner/${address}/${coin.toUpperCase()}`,
     getPoolUrl: (coin, address) => `https://hiveon.net/pool/${coin.toUpperCase()}/${address}`,
   },
   'herominers': {
