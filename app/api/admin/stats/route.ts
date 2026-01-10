@@ -143,8 +143,13 @@ export async function GET(request: NextRequest) {
     }
 
     const activeLicenses = (licenses || []).filter(l => !l.is_revoked)
-    const proUsers = activeLicenses.filter(l => l.plan === 'pro').length
-    const freeUsers = activeLicenses.filter(l => l.plan === 'free').length
+
+    // Count unique users by email address (not by row count)
+    const proEmails = new Set(activeLicenses.filter(l => l.plan === 'pro').map(l => l.email?.toLowerCase()).filter(Boolean))
+    const freeEmails = new Set(activeLicenses.filter(l => l.plan === 'free').map(l => l.email?.toLowerCase()).filter(Boolean))
+
+    const proUsers = proEmails.size
+    const freeUsers = freeEmails.size
 
     const stats = {
       totalInstalls: (installations || []).length,
