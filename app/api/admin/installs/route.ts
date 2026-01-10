@@ -277,8 +277,21 @@ export async function GET(request: NextRequest) {
 
     // Calculate totals from filtered set
     const total = allInstalls.length
-    const proUsers = allInstalls.filter(i => i.isPro).length
-    const freeUsers = total - proUsers
+
+    // Count unique users by email (exclude anonymous installs)
+    const proEmails = new Set(
+      allInstalls
+        .filter(i => i.isPro && i.email)
+        .map(i => i.email!.toLowerCase())
+    )
+    const freeEmails = new Set(
+      allInstalls
+        .filter(i => !i.isPro && i.email)
+        .map(i => i.email!.toLowerCase())
+    )
+    const proUsers = proEmails.size
+    const freeUsers = freeEmails.size
+
     const activeUsers = allInstalls.filter(i => {
       const lastSeen = new Date(i.last_seen)
       return lastSeen >= sevenDaysAgo
@@ -324,8 +337,9 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Calculate conversion rate
-    const conversionRate = total > 0 ? (proUsers / total * 100).toFixed(1) : '0'
+    // Calculate conversion rate (pro users / total unique users)
+    const totalUniqueUsers = proUsers + freeUsers
+    const conversionRate = totalUniqueUsers > 0 ? (proUsers / totalUniqueUsers * 100).toFixed(1) : '0'
 
     // Map installations to expected format
     const mappedInstallations = paginatedInstalls.map(i => ({
