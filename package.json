@@ -13,7 +13,6 @@
     "@stripe/stripe-js": "^2.2.0",
     "@supabase/supabase-js": "^2.39.0",
     "bcryptjs": "^2.4.3",
-    "mineglance": "file:",
     "next": "14.2.21",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
