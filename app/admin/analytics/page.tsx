@@ -51,6 +51,18 @@ export default function AnalyticsPage() {
   // Calculate max for chart scaling
   const maxViews = Math.max(...(data?.dailyViews?.map(d => d.views) || [1]))
 
+  // Generate nice Y-axis labels
+  function getYAxisLabels(max: number): string[] {
+    if (max <= 0) return ['0', '1', '2', '3', '4', '5']
+    const magnitude = Math.pow(10, Math.floor(Math.log10(max)))
+    let niceMax = Math.ceil(max / magnitude) * magnitude
+    if (niceMax < 5) niceMax = 5
+    const step = niceMax / 5
+    return [0, step, step * 2, step * 3, step * 4, niceMax].map(v =>
+      v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : String(Math.round(v))
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header with period selector */}
@@ -107,19 +119,79 @@ export default function AnalyticsPage() {
           {/* Chart */}
           <div className="bg-dark-card rounded-xl p-6 border border-dark-border">
             <h3 className="text-lg font-medium text-dark-text mb-4">Traffic Over Time</h3>
-            <div className="h-64 flex items-end gap-1">
-              {data.dailyViews.map((day, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                  <div
-                    className="w-full bg-primary/80 rounded-t transition-all hover:bg-primary"
-                    style={{ height: `${(day.views / maxViews) * 100}%`, minHeight: day.views > 0 ? '4px' : '0' }}
-                    title={`${day.date}: ${day.views} views`}
-                  />
-                  <span className="text-xs text-dark-text-dim transform -rotate-45 origin-top-left whitespace-nowrap">
-                    {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
+            <div className="flex">
+              {/* Y-axis labels */}
+              <div className="flex flex-col justify-between text-xs text-dark-text-muted pr-3 py-1" style={{ height: '240px' }}>
+                {getYAxisLabels(maxViews).reverse().map((label, i) => (
+                  <span key={i} className="text-right w-8">{label}</span>
+                ))}
+              </div>
+
+              {/* Chart area */}
+              <div className="flex-1">
+                {/* Grid and bars container */}
+                <div className="relative" style={{ height: '240px' }}>
+                  {/* Grid lines */}
+                  {getYAxisLabels(maxViews).map((_, i, arr) => (
+                    <div
+                      key={i}
+                      className="absolute left-0 right-0 border-t border-dark-border/40"
+                      style={{ top: `${(i / (arr.length - 1)) * 100}%` }}
+                    />
+                  ))}
+
+                  {/* Bars */}
+                  <div className="absolute inset-0 flex items-end gap-px">
+                    {data.dailyViews.map((day, i) => {
+                      const heightPercent = maxViews > 0 ? (day.views / maxViews) * 100 : 0
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 bg-gradient-to-t from-primary/90 to-primary/60 rounded-t hover:from-primary hover:to-primary/80 transition-all cursor-pointer group relative"
+                          style={{ height: `${Math.max(heightPercent, day.views > 0 ? 2 : 0)}%` }}
+                        >
+                          {/* Tooltip */}
+                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-dark-bg text-dark-text text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-10 border border-dark-border shadow-lg pointer-events-none">
+                            <div className="font-medium">{day.views.toLocaleString()} views</div>
+                            <div className="text-dark-text-muted">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              ))}
+
+                {/* X-axis labels */}
+                <div className="flex justify-between pt-2 text-xs text-dark-text-muted">
+                  {data.dailyViews.length > 0 && (
+                    <>
+                      <span>{new Date(data.dailyViews[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      {data.dailyViews.length > 14 && (
+                        <span>{new Date(data.dailyViews[Math.floor(data.dailyViews.length / 2)].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      )}
+                      <span>{new Date(data.dailyViews[data.dailyViews.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Summary stats below chart */}
+            <div className="flex justify-around mt-4 pt-4 border-t border-dark-border/50">
+              <div className="text-center">
+                <div className="text-lg font-bold text-dark-text">{data.dailyViews.reduce((sum, d) => sum + d.views, 0).toLocaleString()}</div>
+                <div className="text-xs text-dark-text-muted">Total Views</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-dark-text">
+                  {data.dailyViews.length > 0 ? Math.round(data.dailyViews.reduce((sum, d) => sum + d.views, 0) / data.dailyViews.length).toLocaleString() : 0}
+                </div>
+                <div className="text-xs text-dark-text-muted">Avg/Day</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-primary">{Math.max(...data.dailyViews.map(d => d.views)).toLocaleString()}</div>
+                <div className="text-xs text-dark-text-muted">Peak Day</div>
+              </div>
             </div>
           </div>
 

@@ -11,6 +11,7 @@ import {
   TextInput,
   Alert,
   Pressable,
+  Platform,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
@@ -114,7 +115,7 @@ export default function WalletsScreen() {
       pool: formPool,
       coin: formCoin.toLowerCase(),
       address: formAddress.trim(),
-      name: formName.trim() || undefined,
+      name: formName.trim(),
       power: parseInt(formPower) || 200,
       enabled: editingWallet?.enabled ?? true,
       order: editingWallet?.order ?? wallets.length,
@@ -402,13 +403,16 @@ export default function WalletsScreen() {
                   onValueChange={handlePoolChange}
                   style={styles.picker}
                   dropdownIconColor={colors.text}
+                  itemStyle={styles.pickerItem}
+                  mode="dropdown"
                 >
                   {Object.entries(POOLS).map(([id, config]) => (
                     <Picker.Item
                       key={id}
                       label={config.name}
                       value={id}
-                      color={colors.text}
+                      color={Platform.OS === 'ios' ? colors.text : undefined}
+                      style={Platform.OS === 'android' ? { color: colors.text } : undefined}
                     />
                   ))}
                 </Picker>
@@ -422,13 +426,16 @@ export default function WalletsScreen() {
                   onValueChange={setFormCoin}
                   style={styles.picker}
                   dropdownIconColor={colors.text}
+                  itemStyle={styles.pickerItem}
+                  mode="dropdown"
                 >
                   {availableCoins.map((coin) => (
                     <Picker.Item
                       key={coin}
                       label={coin.toUpperCase()}
                       value={coin}
-                      color={colors.text}
+                      color={Platform.OS === 'ios' ? colors.text : undefined}
+                      style={Platform.OS === 'android' ? { color: colors.text } : undefined}
                     />
                   ))}
                 </Picker>
@@ -827,10 +834,17 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
     borderColor: colors.border,
     borderRadius: borderRadius.sm,
     overflow: 'hidden',
+    minHeight: Platform.OS === 'ios' ? 150 : 50,
   },
   picker: {
     color: colors.text,
     backgroundColor: 'transparent',
+    height: Platform.OS === 'ios' ? 150 : 50,
+  },
+  pickerItem: {
+    color: colors.text,
+    fontSize: fontSize.md,
+    height: Platform.OS === 'ios' ? 150 : 50,
   },
   cancelButton: {
     flex: 1,
