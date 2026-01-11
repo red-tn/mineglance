@@ -14,6 +14,67 @@ export interface MiningHardware {
 
 // GPU Mining Hardware
 export const GPUS: MiningHardware[] = [
+  // NVIDIA RTX 50 Series (Blackwell - 2025)
+  {
+    id: 'rtx-5090',
+    name: 'RTX 5090',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 180_000_000, // ~180 MH/s estimated
+      'kawpow': 100_000_000,
+      'autolykos2': 380_000_000,
+      'kheavyhash': 1_300_000_000,
+    },
+    power: 450,
+    msrp: 1999
+  },
+  {
+    id: 'rtx-5080',
+    name: 'RTX 5080',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 140_000_000,
+      'kawpow': 78_000_000,
+      'autolykos2': 290_000_000,
+      'kheavyhash': 1_000_000_000,
+    },
+    power: 350,
+    msrp: 999
+  },
+  {
+    id: 'rtx-5070-ti',
+    name: 'RTX 5070 Ti',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 115_000_000,
+      'kawpow': 62_000_000,
+      'autolykos2': 230_000_000,
+      'kheavyhash': 800_000_000,
+    },
+    power: 285,
+    msrp: 749
+  },
+  {
+    id: 'rtx-5070',
+    name: 'RTX 5070',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 95_000_000,
+      'kawpow': 52_000_000,
+      'autolykos2': 190_000_000,
+      'kheavyhash': 660_000_000,
+    },
+    power: 220,
+    msrp: 549
+  },
   // NVIDIA RTX 40 Series
   {
     id: 'rtx-4090',
@@ -31,6 +92,21 @@ export const GPUS: MiningHardware[] = [
     msrp: 1599
   },
   {
+    id: 'rtx-4080-super',
+    name: 'RTX 4080 Super',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 105_000_000,
+      'kawpow': 56_000_000,
+      'autolykos2': 210_000_000,
+      'kheavyhash': 720_000_000,
+    },
+    power: 320,
+    msrp: 999
+  },
+  {
     id: 'rtx-4080',
     name: 'RTX 4080',
     type: 'gpu',
@@ -44,6 +120,21 @@ export const GPUS: MiningHardware[] = [
     },
     power: 280,
     msrp: 1199
+  },
+  {
+    id: 'rtx-4070-ti-super',
+    name: 'RTX 4070 Ti Super',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 92_000_000,
+      'kawpow': 49_000_000,
+      'autolykos2': 185_000_000,
+      'kheavyhash': 640_000_000,
+    },
+    power: 240,
+    msrp: 799
   },
   {
     id: 'rtx-4070-ti',
@@ -61,6 +152,21 @@ export const GPUS: MiningHardware[] = [
     msrp: 799
   },
   {
+    id: 'rtx-4070-super',
+    name: 'RTX 4070 Super',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 72_000_000,
+      'kawpow': 40_000_000,
+      'autolykos2': 150_000_000,
+      'kheavyhash': 520_000_000,
+    },
+    power: 200,
+    msrp: 599
+  },
+  {
     id: 'rtx-4070',
     name: 'RTX 4070',
     type: 'gpu',
@@ -75,7 +181,52 @@ export const GPUS: MiningHardware[] = [
     power: 180,
     msrp: 599
   },
+  {
+    id: 'rtx-4060-ti',
+    name: 'RTX 4060 Ti',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 48_000_000,
+      'kawpow': 28_000_000,
+      'autolykos2': 100_000_000,
+      'kheavyhash': 360_000_000,
+    },
+    power: 160,
+    msrp: 399
+  },
+  {
+    id: 'rtx-4060',
+    name: 'RTX 4060',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 38_000_000,
+      'kawpow': 22_000_000,
+      'autolykos2': 78_000_000,
+      'kheavyhash': 280_000_000,
+    },
+    power: 115,
+    msrp: 299
+  },
   // NVIDIA RTX 30 Series
+  {
+    id: 'rtx-3090-ti',
+    name: 'RTX 3090 Ti',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 125_000_000,
+      'kawpow': 58_000_000,
+      'autolykos2': 250_000_000,
+      'kheavyhash': 860_000_000,
+    },
+    power: 350,
+    msrp: 1999
+  },
   {
     id: 'rtx-3090',
     name: 'RTX 3090',
@@ -90,6 +241,21 @@ export const GPUS: MiningHardware[] = [
     },
     power: 300,
     msrp: 1499
+  },
+  {
+    id: 'rtx-3080-ti',
+    name: 'RTX 3080 Ti',
+    type: 'gpu',
+    manufacturer: 'NVIDIA',
+    algorithms: ['etchash', 'kawpow', 'autolykos2', 'kheavyhash'],
+    hashrates: {
+      'etchash': 110_000_000,
+      'kawpow': 52_000_000,
+      'autolykos2': 220_000_000,
+      'kheavyhash': 760_000_000,
+    },
+    power: 320,
+    msrp: 1199
   },
   {
     id: 'rtx-3080',

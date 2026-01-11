@@ -15,7 +15,7 @@ export interface CoinData {
 }
 
 export const COINS: CoinData[] = [
-  // GPU Mineable Coins
+  // GPU Mineable Coins - Etchash
   {
     symbol: 'ETC',
     name: 'Ethereum Classic',
@@ -25,6 +25,15 @@ export const COINS: CoinData[] = [
     unitDivisor: 1_000_000,
   },
   {
+    symbol: 'CLO',
+    name: 'Callisto',
+    algorithm: 'etchash',
+    dailyEarningsPerUnit: 0.004, // $0.004 per MH/s per day
+    hashrateUnit: 'MH/s',
+    unitDivisor: 1_000_000,
+  },
+  // GPU Mineable Coins - KawPow
+  {
     symbol: 'RVN',
     name: 'Ravencoin',
     algorithm: 'kawpow',
@@ -33,6 +42,23 @@ export const COINS: CoinData[] = [
     unitDivisor: 1_000_000,
   },
   {
+    symbol: 'MEWC',
+    name: 'Meowcoin',
+    algorithm: 'kawpow',
+    dailyEarningsPerUnit: 0.008, // $0.008 per MH/s per day
+    hashrateUnit: 'MH/s',
+    unitDivisor: 1_000_000,
+  },
+  {
+    symbol: 'CLORE',
+    name: 'Clore.ai',
+    algorithm: 'kawpow',
+    dailyEarningsPerUnit: 0.015, // $0.015 per MH/s per day
+    hashrateUnit: 'MH/s',
+    unitDivisor: 1_000_000,
+  },
+  // GPU Mineable Coins - Autolykos2
+  {
     symbol: 'ERG',
     name: 'Ergo',
     algorithm: 'autolykos2',
@@ -40,6 +66,7 @@ export const COINS: CoinData[] = [
     hashrateUnit: 'MH/s',
     unitDivisor: 1_000_000,
   },
+  // GPU Mineable Coins - kHeavyHash (GPU rates)
   {
     symbol: 'KAS',
     name: 'Kaspa',
@@ -48,6 +75,7 @@ export const COINS: CoinData[] = [
     hashrateUnit: 'MH/s',
     unitDivisor: 1_000_000,
   },
+  // GPU Mineable Coins - ZelHash/Equihash
   {
     symbol: 'FLUX',
     name: 'Flux',
@@ -57,6 +85,23 @@ export const COINS: CoinData[] = [
     unitDivisor: 1_000_000,
   },
   {
+    symbol: 'ZEC',
+    name: 'Zcash',
+    algorithm: 'equihash',
+    dailyEarningsPerUnit: 0.022, // $0.022 per KSol/s per day
+    hashrateUnit: 'KSol/s',
+    unitDivisor: 1_000,
+  },
+  {
+    symbol: 'ZEN',
+    name: 'Horizen',
+    algorithm: 'equihash',
+    dailyEarningsPerUnit: 0.018, // $0.018 per KSol/s per day
+    hashrateUnit: 'KSol/s',
+    unitDivisor: 1_000,
+  },
+  // GPU Mineable Coins - FiroPow
+  {
     symbol: 'FIRO',
     name: 'Firo',
     algorithm: 'firopow',
@@ -64,6 +109,7 @@ export const COINS: CoinData[] = [
     hashrateUnit: 'MH/s',
     unitDivisor: 1_000_000,
   },
+  // GPU Mineable Coins - Other Algorithms
   {
     symbol: 'NEXA',
     name: 'Nexa',
@@ -88,12 +134,92 @@ export const COINS: CoinData[] = [
     hashrateUnit: 'MH/s',
     unitDivisor: 1_000_000,
   },
+  {
+    symbol: 'CFX',
+    name: 'Conflux',
+    algorithm: 'octopus',
+    dailyEarningsPerUnit: 0.010, // $0.010 per MH/s per day
+    hashrateUnit: 'MH/s',
+    unitDivisor: 1_000_000,
+  },
+  {
+    symbol: 'CTXC',
+    name: 'Cortex',
+    algorithm: 'cortex',
+    dailyEarningsPerUnit: 0.006, // $0.006 per MH/s per day
+    hashrateUnit: 'MH/s',
+    unitDivisor: 1_000_000,
+  },
+  {
+    symbol: 'BEAM',
+    name: 'Beam',
+    algorithm: 'beamhash',
+    dailyEarningsPerUnit: 0.012, // $0.012 per Sol/s per day
+    hashrateUnit: 'Sol/s',
+    unitDivisor: 1,
+  },
+  {
+    symbol: 'XNA',
+    name: 'Neurai',
+    algorithm: 'kawpow',
+    dailyEarningsPerUnit: 0.009, // $0.009 per MH/s per day
+    hashrateUnit: 'MH/s',
+    unitDivisor: 1_000_000,
+  },
+  {
+    symbol: 'SERO',
+    name: 'Super Zero',
+    algorithm: 'progpow',
+    dailyEarningsPerUnit: 0.007, // $0.007 per MH/s per day
+    hashrateUnit: 'MH/s',
+    unitDivisor: 1_000_000,
+  },
+  {
+    symbol: 'DNX',
+    name: 'Dynex',
+    algorithm: 'dynexsolve',
+    dailyEarningsPerUnit: 0.035, // $0.035 per MH/s per day
+    hashrateUnit: 'MH/s',
+    unitDivisor: 1_000_000,
+  },
+  {
+    symbol: 'ZEPH',
+    name: 'Zephyr',
+    algorithm: 'randomx',
+    dailyEarningsPerUnit: 0.15, // $0.15 per KH/s per day (CPU focused)
+    hashrateUnit: 'KH/s',
+    unitDivisor: 1_000,
+  },
+  {
+    symbol: 'XMR',
+    name: 'Monero',
+    algorithm: 'randomx',
+    dailyEarningsPerUnit: 0.12, // $0.12 per KH/s per day (CPU focused)
+    hashrateUnit: 'KH/s',
+    unitDivisor: 1_000,
+  },
   // ASIC Coins
   {
     symbol: 'BTC',
     name: 'Bitcoin',
     algorithm: 'sha256',
     dailyEarningsPerUnit: 0.065, // $0.065 per TH/s per day
+    hashrateUnit: 'TH/s',
+    unitDivisor: 1_000_000_000_000,
+  },
+  {
+    symbol: 'BCH',
+    name: 'Bitcoin Cash',
+    algorithm: 'sha256',
+    dailyEarningsPerUnit: 0.055, // $0.055 per TH/s per day
+    hashrateUnit: 'TH/s',
+    unitDivisor: 1_000_000_000_000,
+  },
+  {
+    symbol: 'BSV',
+    name: 'Bitcoin SV',
+    algorithm: 'sha256',
+    dailyEarningsPerUnit: 0.045, // $0.045 per TH/s per day
     hashrateUnit: 'TH/s',
     unitDivisor: 1_000_000_000_000,
   },
@@ -118,6 +244,38 @@ export const COINS: CoinData[] = [
     name: 'Kadena',
     algorithm: 'kadena',
     dailyEarningsPerUnit: 0.0008, // $0.0008 per TH/s per day
+    hashrateUnit: 'TH/s',
+    unitDivisor: 1_000_000_000_000,
+  },
+  {
+    symbol: 'CKB',
+    name: 'Nervos',
+    algorithm: 'eaglesong',
+    dailyEarningsPerUnit: 0.025, // $0.025 per TH/s per day
+    hashrateUnit: 'TH/s',
+    unitDivisor: 1_000_000_000_000,
+  },
+  {
+    symbol: 'HNS',
+    name: 'Handshake',
+    algorithm: 'blake2b',
+    dailyEarningsPerUnit: 0.018, // $0.018 per TH/s per day
+    hashrateUnit: 'TH/s',
+    unitDivisor: 1_000_000_000_000,
+  },
+  {
+    symbol: 'SC',
+    name: 'Siacoin',
+    algorithm: 'blake2b',
+    dailyEarningsPerUnit: 0.012, // $0.012 per TH/s per day
+    hashrateUnit: 'TH/s',
+    unitDivisor: 1_000_000_000_000,
+  },
+  {
+    symbol: 'DCR',
+    name: 'Decred',
+    algorithm: 'blake256r14',
+    dailyEarningsPerUnit: 0.035, // $0.035 per TH/s per day
     hashrateUnit: 'TH/s',
     unitDivisor: 1_000_000_000_000,
   },
@@ -203,9 +361,13 @@ export function calculateProfit(
  */
 export function getAlgorithmsForType(type: 'gpu' | 'asic'): string[] {
   if (type === 'gpu') {
-    return ['etchash', 'kawpow', 'autolykos2', 'kheavyhash', 'zelhash', 'firopow', 'blake3', 'ghostrider']
+    return [
+      'etchash', 'kawpow', 'autolykos2', 'kheavyhash', 'zelhash',
+      'firopow', 'blake3', 'ghostrider', 'octopus', 'equihash',
+      'cortex', 'beamhash', 'progpow', 'dynexsolve', 'randomx', 'nexapow'
+    ]
   }
-  return ['sha256', 'scrypt', 'kheavyhash', 'kadena', 'etchash']
+  return ['sha256', 'scrypt', 'kheavyhash', 'kadena', 'etchash', 'eaglesong', 'blake2b', 'blake256r14']
 }
 
 /**

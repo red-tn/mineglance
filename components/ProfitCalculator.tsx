@@ -96,9 +96,9 @@ export default function ProfitCalculator() {
           </p>
         </div>
 
-        <div className="glass-card rounded-xl p-6 sm:p-8">
+        <div className="glass-card rounded-xl p-4 sm:p-6 lg:p-8">
           {/* Input Section */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {/* Hardware Type */}
             <div>
               <label className="block text-sm font-medium text-dark-text-muted mb-2">
@@ -155,57 +155,64 @@ export default function ProfitCalculator() {
                 ))}
               </select>
             </div>
-
-            {/* ZIP Code */}
-            <div>
-              <label className="block text-sm font-medium text-dark-text-muted mb-2">
-                ZIP Code (US)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={zipCode}
-                  onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                  placeholder="90210"
-                  maxLength={5}
-                  className="flex-1 bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-dark-text focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                />
-                <button
-                  onClick={handleZipLookup}
-                  disabled={zipCode.length < 3}
-                  className="px-4 py-3 bg-primary hover:bg-primary-light disabled:bg-dark-border disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
-                >
-                  Lookup
-                </button>
-              </div>
-              {lookupResult && (
-                <p className="text-xs text-primary mt-1">{lookupResult}</p>
-              )}
-            </div>
           </div>
 
-          {/* Electricity Rate Manual Entry */}
-          <div className="mb-8 flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-dark-text-muted">
-                Electricity Rate:
-              </label>
-              <div className="flex items-center gap-1">
-                <span className="text-dark-text-muted">$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={electricityRate}
-                  onChange={(e) => handleManualRateChange(e.target.value)}
-                  className="w-20 bg-dark-card border border-dark-border rounded px-2 py-1 text-dark-text text-center focus:outline-none focus:border-primary"
-                />
-                <span className="text-dark-text-muted">/kWh</span>
+          {/* Electricity Rate Section */}
+          <div className="bg-dark-card/30 rounded-lg p-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* ZIP Code Lookup */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text-muted mb-2">
+                  ZIP Code (US) - Auto Lookup
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                    placeholder="Enter ZIP code"
+                    maxLength={5}
+                    className="flex-1 bg-dark-card border border-dark-border rounded-lg px-4 py-3 text-dark-text focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    onClick={handleZipLookup}
+                    disabled={zipCode.length < 3}
+                    className="w-full sm:w-auto px-6 py-3 bg-primary hover:bg-primary-light disabled:bg-dark-border disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    Lookup Rate
+                  </button>
+                </div>
+                {lookupResult && (
+                  <p className="text-xs text-primary mt-2">{lookupResult}</p>
+                )}
+              </div>
+
+              {/* Manual Rate Entry */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text-muted mb-2">
+                  Electricity Rate (or enter manually)
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-dark-text-muted text-lg">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={electricityRate}
+                    onChange={(e) => handleManualRateChange(e.target.value)}
+                    className="w-24 bg-dark-card border border-dark-border rounded-lg px-3 py-3 text-dark-text text-center focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  />
+                  <span className="text-dark-text-muted">/kWh</span>
+                </div>
               </div>
             </div>
+
+            {/* Hardware Stats */}
             {selectedHardware && selectedCoin && (
-              <div className="text-sm text-dark-text-dim">
-                Hashrate: {formatHashrate(selectedHardware.hashrates[selectedCoin.algorithm] || 0)} | Power: {selectedHardware.power}W
+              <div className="mt-4 pt-4 border-t border-dark-border flex flex-wrap gap-4 text-sm text-dark-text-dim">
+                <span>Hashrate: <span className="text-dark-text font-medium">{formatHashrate(selectedHardware.hashrates[selectedCoin.algorithm] || 0)}</span></span>
+                <span>Power: <span className="text-dark-text font-medium">{selectedHardware.power}W</span></span>
+                <span>Algorithm: <span className="text-dark-text font-medium">{selectedCoin.algorithm}</span></span>
               </div>
             )}
           </div>
@@ -244,29 +251,29 @@ export default function ProfitCalculator() {
               </div>
 
               {/* Monthly Projection */}
-              <div className={`rounded-xl p-6 mb-6 ${
+              <div className={`rounded-xl p-4 sm:p-6 mb-6 ${
                 result.isProfitable
                   ? 'bg-primary/10 border border-primary/30'
                   : 'bg-red-500/10 border border-red-500/30'
               }`}>
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="text-center sm:text-left">
                     <p className="text-sm text-dark-text-muted mb-1">Monthly Projection</p>
-                    <p className={`text-3xl font-bold ${
+                    <p className={`text-2xl sm:text-3xl font-bold ${
                       result.isProfitable ? 'text-primary' : 'text-red-400'
                     }`}>
                       {result.isProfitable ? '+' : ''}${result.monthlyNet.toFixed(2)}
-                      <span className="text-lg font-normal text-dark-text-muted"> /month</span>
+                      <span className="text-base sm:text-lg font-normal text-dark-text-muted"> /month</span>
                     </p>
                   </div>
                   {result.roiDays && selectedHardware && (
-                    <div className="text-right">
+                    <div className="text-center sm:text-right border-t sm:border-t-0 pt-4 sm:pt-0">
                       <p className="text-sm text-dark-text-muted mb-1">ROI at Current Rates</p>
-                      <p className="text-xl font-semibold text-dark-text">
+                      <p className="text-lg sm:text-xl font-semibold text-dark-text">
                         ~{Math.round(result.roiDays / 30)} months
-                        <span className="text-sm font-normal text-dark-text-muted ml-1">
-                          ({selectedHardware.name} ${selectedHardware.msrp.toLocaleString()})
-                        </span>
+                      </p>
+                      <p className="text-xs sm:text-sm text-dark-text-muted">
+                        {selectedHardware.name} ${selectedHardware.msrp.toLocaleString()}
                       </p>
                     </div>
                   )}
