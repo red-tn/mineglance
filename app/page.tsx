@@ -1,6 +1,7 @@
 import Header from '@/components/Header'
 import Hero from '@/components/Hero'
 import ProblemSection from '@/components/ProblemSection'
+import ProfitCalculator from '@/components/ProfitCalculator'
 import SolutionSection from '@/components/SolutionSection'
 import Features from '@/components/Features'
 import Pricing from '@/components/Pricing'
@@ -16,6 +17,7 @@ export default function Home() {
       <Header />
       <Hero />
       <ProblemSection />
+      <ProfitCalculator />
       <SolutionSection />
       <Features />
       <SocialProof />
