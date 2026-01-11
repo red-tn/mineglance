@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import ThemeToggle from '@/components/ThemeToggle'
 
 interface AdminUser {
   email: string
@@ -174,9 +175,15 @@ export default function AdminLayout({
               <p className="text-xs text-dark-text-dim truncate">{user.email}</p>
             </div>
           </div>
+
+          {/* Theme Toggle */}
+          <div className="mt-2 border-t border-dark-border pt-2">
+            <ThemeToggle storageKey="admin_theme_lite" />
+          </div>
+
           <button
             onClick={handleLogout}
-            className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 text-sm text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded-lg transition-colors"
+            className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2 text-sm text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded-lg transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

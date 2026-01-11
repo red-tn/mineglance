@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { AuthContext, User } from './auth-context'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Overview', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -177,9 +178,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <p className="text-xs text-dark-text-dim truncate">{user?.email}</p>
                 </div>
               </div>
+
+              {/* Theme Toggle */}
+              <div className="mt-2 border-t border-dark-border pt-2">
+                <ThemeToggle storageKey="dashboard_theme_lite" />
+              </div>
+
               <button
                 onClick={logout}
-                className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 text-sm text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded-lg transition-colors"
+                className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2 text-sm text-dark-text-muted hover:text-dark-text hover:bg-dark-card-hover rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
