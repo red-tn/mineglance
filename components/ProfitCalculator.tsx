@@ -283,7 +283,7 @@ export default function ProfitCalculator() {
           {/* CTA */}
           <div className="text-center">
             <a
-              href="https://chromewebstore.google.com/detail/mineglance-mining-dashboa/coogiemkdkcefjkbpmhemfakgbaboifa"
+              href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 btn-primary text-lg"
