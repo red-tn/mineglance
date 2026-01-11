@@ -28,6 +28,11 @@ export default function Footer() {
             <h3 className="font-semibold text-dark-text mb-4">Product</h3>
             <ul className="space-y-2 text-sm">
               <li>
+                <Link href="/#calculator" className="text-dark-text-muted hover:text-primary transition-colors">
+                  Profit Calculator
+                </Link>
+              </li>
+              <li>
                 <Link href="/#features" className="text-dark-text-muted hover:text-primary transition-colors">
                   Features
                 </Link>
@@ -38,7 +43,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#" className="text-dark-text-muted hover:text-primary transition-colors">
+                <Link href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" className="text-dark-text-muted hover:text-primary transition-colors">
                   Chrome Extension
                 </Link>
               </li>
