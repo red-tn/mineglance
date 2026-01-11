@@ -45,8 +45,21 @@ export default function AdminDashboard() {
     const token = localStorage.getItem('admin_token')
     if (token) {
       fetchDashboardData()
+    } else {
+      // No token yet, stop loading state
+      setLoading(false)
     }
   }, [])
+
+  // Retry fetch if we have no data after initial load (handles race conditions)
+  useEffect(() => {
+    if (!loading && !stats && !error) {
+      const token = localStorage.getItem('admin_token')
+      if (token) {
+        fetchDashboardData()
+      }
+    }
+  }, [loading, stats, error])
 
   async function fetchDashboardData() {
     try {

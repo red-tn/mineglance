@@ -30,7 +30,8 @@ export default function AdminLogin() {
       }
 
       localStorage.setItem('admin_token', data.token)
-      router.push('/admin')
+      // Use full page reload to ensure fresh state after login
+      window.location.href = '/admin'
     } catch {
       setError('Connection error. Please try again.')
     } finally {
