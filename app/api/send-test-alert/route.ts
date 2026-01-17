@@ -1,11 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY!
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'alerts@mineglance.com'
 
-// Test endpoint to send sample alert emails - REMOVE IN PRODUCTION or add auth
+// Verify admin session
+async function verifyAdmin(request: NextRequest): Promise<boolean> {
+  const authHeader = request.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) return false
+
+  const token = authHeader.substring(7)
+
+  const { data: session } = await supabase
+    .from('admin_sessions')
+    .select('id')
+    .eq('token', token)
+    .gt('expires_at', new Date().toISOString())
+    .single()
+
+  return !!session
+}
+
+// Test endpoint to send sample alert emails - Admin only
 export async function POST(request: NextRequest) {
   try {
+    // Require admin authentication
+    const isAdmin = await verifyAdmin(request)
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { email, alertType } = await request.json()
 
     if (!email) {

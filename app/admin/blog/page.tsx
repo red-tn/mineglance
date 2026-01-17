@@ -58,6 +58,20 @@ export default function AdminBlogPage() {
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Email modal states
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [emailPost, setEmailPost] = useState<BlogPost | null>(null)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailResult, setEmailResult] = useState<{ sent: number; failed: number } | null>(null)
+  const [subscriberCounts, setSubscriberCounts] = useState({ free: 0, pro: 0 })
+  const [latestExtension, setLatestExtension] = useState<{ version: string; notes: string[] } | null>(null)
+  const [emailOptions, setEmailOptions] = useState({
+    sendToFree: true,
+    sendToPro: true,
+    includeExtensionUpdate: false,
+    testEmail: ''
+  })
+
   // Form state
   const [form, setForm] = useState({
     title: '',
@@ -319,6 +333,86 @@ export default function AdminBlogPage() {
     setForm({ ...form, featured_image_url: '' })
   }
 
+  async function openEmailModal(post: BlogPost) {
+    setEmailPost(post)
+    setEmailResult(null)
+    setEmailOptions({
+      sendToFree: true,
+      sendToPro: true,
+      includeExtensionUpdate: false,
+      testEmail: ''
+    })
+    setShowEmailModal(true)
+
+    // Fetch subscriber counts and latest extension
+    try {
+      const token = localStorage.getItem('admin_token')
+      const res = await fetch('/api/admin/blog/send-email', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSubscriberCounts({
+          free: data.freeSubscribers || 0,
+          pro: data.proSubscribers || 0
+        })
+        if (data.latestExtensionVersion) {
+          setLatestExtension({
+            version: data.latestExtensionVersion,
+            notes: data.latestReleaseNotes || []
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch subscriber counts:', error)
+    }
+  }
+
+  async function handleSendEmail(isTest: boolean) {
+    if (!emailPost) return
+
+    setSendingEmail(true)
+    setEmailResult(null)
+
+    try {
+      const token = localStorage.getItem('admin_token')
+      const res = await fetch('/api/admin/blog/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          postId: emailPost.id,
+          sendToFree: emailOptions.sendToFree,
+          sendToPro: emailOptions.sendToPro,
+          includeExtensionUpdate: emailOptions.includeExtensionUpdate,
+          extensionVersion: latestExtension?.version,
+          releaseNotes: latestExtension?.notes,
+          testEmail: isTest ? emailOptions.testEmail : undefined
+        })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        alert(data.error || 'Failed to send emails')
+        return
+      }
+
+      setEmailResult({ sent: data.sent, failed: data.failed })
+
+      if (isTest) {
+        alert(`Test email sent to ${emailOptions.testEmail}`)
+      }
+    } catch (error) {
+      console.error('Failed to send email:', error)
+      alert('Failed to send emails')
+    } finally {
+      setSendingEmail(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -463,6 +557,14 @@ export default function AdminBlogPage() {
                             : new Date(post.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-right">
+                          {post.status === 'published' && (
+                            <button
+                              onClick={() => openEmailModal(post)}
+                              className="text-blue-400 hover:text-blue-300 mr-3"
+                            >
+                              Email
+                            </button>
+                          )}
                           <button
                             onClick={() => openEditPost(post)}
                             className="text-primary hover:text-primary-light mr-3"
@@ -551,6 +653,14 @@ export default function AdminBlogPage() {
                       >
                         View
                       </a>
+                      {post.status === 'published' && (
+                        <button
+                          onClick={() => openEmailModal(post)}
+                          className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg font-medium"
+                        >
+                          Email
+                        </button>
+                      )}
                       <button
                         onClick={() => openEditPost(post)}
                         className="flex-1 px-4 py-2 bg-primary/20 text-primary rounded-lg font-medium"
@@ -968,6 +1078,132 @@ export default function AdminBlogPage() {
               </button>
             </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Modal */}
+      {showEmailModal && emailPost && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-dark-card rounded-xl p-6 max-w-lg w-full">
+            <h2 className="text-xl font-bold text-white mb-4">
+              Send Blog Email
+            </h2>
+
+            <div className="mb-4 p-3 bg-dark-bg rounded-lg">
+              <p className="text-white font-medium truncate">{emailPost.title}</p>
+              <p className="text-dark-text-muted text-sm">/blog/{emailPost.slug}</p>
+            </div>
+
+            {emailResult ? (
+              <div className="mb-6">
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-center">
+                  <p className="text-green-400 font-semibold text-lg mb-1">Emails Sent!</p>
+                  <p className="text-dark-text-muted">
+                    {emailResult.sent} sent, {emailResult.failed} failed
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="w-full mt-4 px-4 py-3 bg-dark-border text-white rounded-lg hover:bg-dark-border/80"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Audience Selection */}
+                <div className="mb-4">
+                  <label className="block text-dark-text-muted text-sm mb-2">Send to:</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3 p-3 bg-dark-bg rounded-lg cursor-pointer hover:bg-dark-card-hover">
+                      <input
+                        type="checkbox"
+                        checked={emailOptions.sendToFree}
+                        onChange={(e) => setEmailOptions({ ...emailOptions, sendToFree: e.target.checked })}
+                        className="w-4 h-4 rounded"
+                      />
+                      <span className="text-white">Free users</span>
+                      <span className="ml-auto text-dark-text-muted text-sm">{subscriberCounts.free} subscribers</span>
+                    </label>
+                    <label className="flex items-center gap-3 p-3 bg-dark-bg rounded-lg cursor-pointer hover:bg-dark-card-hover">
+                      <input
+                        type="checkbox"
+                        checked={emailOptions.sendToPro}
+                        onChange={(e) => setEmailOptions({ ...emailOptions, sendToPro: e.target.checked })}
+                        className="w-4 h-4 rounded"
+                      />
+                      <span className="text-white">Pro users</span>
+                      <span className="ml-auto text-dark-text-muted text-sm">{subscriberCounts.pro} subscribers</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Extension Update Option */}
+                {latestExtension && (
+                  <div className="mb-4">
+                    <label className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={emailOptions.includeExtensionUpdate}
+                        onChange={(e) => setEmailOptions({ ...emailOptions, includeExtensionUpdate: e.target.checked })}
+                        className="w-4 h-4 rounded"
+                      />
+                      <div>
+                        <span className="text-white font-medium">Include extension update</span>
+                        <p className="text-blue-400 text-sm">Version {latestExtension.version}</p>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
+                {/* Test Email */}
+                <div className="mb-4">
+                  <label className="block text-dark-text-muted text-sm mb-2">Send test email to:</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={emailOptions.testEmail}
+                      onChange={(e) => setEmailOptions({ ...emailOptions, testEmail: e.target.value })}
+                      placeholder="your@email.com"
+                      className="flex-1 px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      onClick={() => handleSendEmail(true)}
+                      disabled={sendingEmail || !emailOptions.testEmail}
+                      className="px-4 py-2 bg-dark-border text-white rounded-lg hover:bg-dark-border/80 disabled:opacity-50"
+                    >
+                      {sendingEmail ? 'Sending...' : 'Test'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Total Recipients */}
+                <div className="mb-6 p-3 bg-dark-bg rounded-lg text-center">
+                  <p className="text-dark-text-muted text-sm">Total recipients:</p>
+                  <p className="text-white text-2xl font-bold">
+                    {(emailOptions.sendToFree ? subscriberCounts.free : 0) + (emailOptions.sendToPro ? subscriberCounts.pro : 0)}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowEmailModal(false)}
+                    className="flex-1 px-4 py-3 bg-dark-border text-white rounded-lg hover:bg-dark-border/80"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleSendEmail(false)}
+                    disabled={sendingEmail || (!emailOptions.sendToFree && !emailOptions.sendToPro)}
+                    className="flex-1 btn-primary px-4 py-3 rounded-lg font-medium disabled:opacity-50"
+                  >
+                    {sendingEmail ? 'Sending...' : 'Send to All'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

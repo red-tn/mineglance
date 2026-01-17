@@ -62,8 +62,21 @@ export async function POST(request: NextRequest) {
 
     // Get email from customer_email OR customer_details.email (Payment Links use the latter)
     const customerEmail = session.customer_email || session.customer_details?.email
+    const paymentIntentId = session.payment_intent as string
 
-    if (session.payment_status === 'paid' && customerEmail) {
+    if (session.payment_status === 'paid' && customerEmail && paymentIntentId) {
+      // Idempotency check: Skip if this payment_intent was already processed
+      const { data: existingPayment } = await supabase
+        .from('payment_history')
+        .select('id')
+        .eq('stripe_payment_intent', paymentIntentId)
+        .single()
+
+      if (existingPayment) {
+        console.log('Payment already processed, skipping:', paymentIntentId)
+        return NextResponse.json({ received: true, skipped: 'duplicate' })
+      }
+
       const amount = session.amount_total || 0
       // Get billing type from metadata (monthly, annual, lifetime)
       const billingType = session.metadata?.plan || 'annual'
@@ -71,14 +84,13 @@ export async function POST(request: NextRequest) {
       console.log('Processing checkout:', {
         email: customerEmail,
         amount,
-        billingType,
-        productId: session.metadata?.product_id
+        billingType
       })
 
       await handleNewPurchase(supabase, {
         email: customerEmail,
         customerId: session.customer as string,
-        paymentId: session.payment_intent as string,
+        paymentId: paymentIntentId,
         amount: amount,
         currency: session.currency || 'usd',
         billingType: billingType
@@ -89,12 +101,25 @@ export async function POST(request: NextRequest) {
   // Handle charge.succeeded (backup for Payment Links)
   if (event.type === 'charge.succeeded') {
     const charge = event.data.object as Stripe.Charge
+    const paymentIntentId = charge.payment_intent as string
 
-    if (charge.paid && charge.billing_details?.email) {
+    if (charge.paid && charge.billing_details?.email && paymentIntentId) {
+      // Idempotency check: Skip if this payment_intent was already processed
+      const { data: existingPayment } = await supabase
+        .from('payment_history')
+        .select('id')
+        .eq('stripe_payment_intent', paymentIntentId)
+        .single()
+
+      if (existingPayment) {
+        console.log('Payment already processed (charge), skipping:', paymentIntentId)
+        return NextResponse.json({ received: true, skipped: 'duplicate' })
+      }
+
       await handleNewPurchase(supabase, {
         email: charge.billing_details.email,
         customerId: charge.customer as string || null,
-        paymentId: charge.payment_intent as string,
+        paymentId: paymentIntentId,
         amount: charge.amount,
         currency: charge.currency
       })
@@ -167,10 +192,10 @@ async function handleNewPurchase(supabase: any, data: {
       if (error) {
         console.error('Error upgrading user:', error)
       } else {
-        console.log('User upgraded to Pro:', emailLower, '- License:', licenseKey)
+        console.log('User upgraded to Pro:', emailLower)
 
         // Record payment in payment_history
-        await supabase.from('payment_history').insert({
+        const { error: historyError } = await supabase.from('payment_history').insert({
           user_id: existing.id,
           stripe_payment_id: data.paymentId,
           stripe_payment_intent: data.paymentId,
@@ -181,13 +206,17 @@ async function handleNewPurchase(supabase: any, data: {
           description: `Upgraded to ${planDescription}`
         })
 
+        if (historyError) {
+          console.error('Error recording upgrade payment history:', historyError)
+        }
+
         await sendWelcomeEmail(emailLower, licenseKey)
       }
     } else {
-      console.log('User already Pro:', emailLower)
+      console.log('User already Pro, processing renewal:', emailLower)
 
       // Record as renewal payment
-      await supabase.from('payment_history').insert({
+      const { error: renewalHistoryError } = await supabase.from('payment_history').insert({
         user_id: existing.id,
         stripe_payment_id: data.paymentId,
         stripe_payment_intent: data.paymentId,
@@ -197,6 +226,10 @@ async function handleNewPurchase(supabase: any, data: {
         type: 'renewal',
         description: `${planDescription} renewal`
       })
+
+      if (renewalHistoryError) {
+        console.error('Error recording renewal payment history:', renewalHistoryError)
+      }
 
       // Extend subscription based on billing type
       if (billingType !== 'lifetime') {
@@ -250,11 +283,11 @@ async function handleNewPurchase(supabase: any, data: {
   if (error) {
     console.error('Error saving user:', error)
   } else {
-    console.log('Pro user added:', emailLower, '- License:', licenseKey)
+    console.log('New Pro user added:', emailLower)
 
     // Record payment in payment_history
     if (newUser) {
-      await supabase.from('payment_history').insert({
+      const { error: newUserHistoryError } = await supabase.from('payment_history').insert({
         user_id: newUser.id,
         stripe_payment_id: data.paymentId,
         stripe_payment_intent: data.paymentId,
@@ -264,6 +297,10 @@ async function handleNewPurchase(supabase: any, data: {
         type: 'subscription',
         description: `New ${planDescription}`
       })
+
+      if (newUserHistoryError) {
+        console.error('Error recording new subscription payment history:', newUserHistoryError)
+      }
     }
 
     await sendWelcomeEmail(emailLower, licenseKey)

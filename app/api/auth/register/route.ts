@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
-import { promisify } from 'util'
-
-const scrypt = promisify(crypto.scrypt)
+import { hashPassword } from '@/lib/password'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,13 +29,6 @@ function generateDisplayName(): string {
 // Generate verification token
 function generateVerificationToken(): string {
   return crypto.randomBytes(48).toString('base64url')
-}
-
-// Hash password with salt
-async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.randomBytes(16).toString('hex')
-  const derivedKey = await scrypt(password, salt, 64) as Buffer
-  return `${salt}:${derivedKey.toString('hex')}`
 }
 
 // Send verification email

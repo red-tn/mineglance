@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,8 +9,30 @@ const supabase = createClient(
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY
 
+// HTML escape to prevent XSS/injection in emails
+function escapeHtml(text: string): string {
+  const htmlEntities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }
+  return text.replace(/[&<>"']/g, char => htmlEntities[char])
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 submissions per 15 minutes per IP
+    const ip = getClientIp(request)
+    const rateLimitResult = checkRateLimit(ip, 5, 15 * 60 * 1000)
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many submissions. Please try again later.' },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
 
     const {
@@ -57,6 +80,12 @@ export async function POST(request: NextRequest) {
     // Send email notification to admin
     if (SENDGRID_API_KEY) {
       try {
+        // Escape user-provided content to prevent XSS/injection
+        const safeTitle = escapeHtml(title)
+        const safeDescription = escapeHtml(description || 'No description provided')
+        const safeEmail = escapeHtml(email || 'Not provided')
+        const safePlatforms = platforms?.map((p: string) => escapeHtml(p)).join(', ') || 'All'
+
         const emailResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
           method: 'POST',
           headers: {
@@ -66,7 +95,7 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             personalizations: [{
               to: [{ email: 'control@mineglance.com' }],
-              subject: `[MineGlance] New Roadmap Submission: ${title}`
+              subject: `[MineGlance] New Roadmap Submission: ${safeTitle.substring(0, 50)}`
             }],
             from: { email: 'alerts@mineglance.com', name: 'MineGlance' },
             content: [{
@@ -86,23 +115,23 @@ export async function POST(request: NextRequest) {
                     </tr>
                     <tr>
                       <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f7fafc; font-weight: bold;">Platforms</td>
-                      <td style="padding: 10px; border: 1px solid #e2e8f0;">${platforms?.join(', ') || 'All'}</td>
+                      <td style="padding: 10px; border: 1px solid #e2e8f0;">${safePlatforms}</td>
                     </tr>
                     <tr>
                       <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f7fafc; font-weight: bold;">Title</td>
-                      <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>${title}</strong></td>
+                      <td style="padding: 10px; border: 1px solid #e2e8f0;"><strong>${safeTitle}</strong></td>
                     </tr>
                     <tr>
                       <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f7fafc; font-weight: bold;">Description</td>
-                      <td style="padding: 10px; border: 1px solid #e2e8f0;">${description || 'No description provided'}</td>
+                      <td style="padding: 10px; border: 1px solid #e2e8f0;">${safeDescription}</td>
                     </tr>
                     <tr>
                       <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f7fafc; font-weight: bold;">Submitter Email</td>
-                      <td style="padding: 10px; border: 1px solid #e2e8f0;">${email || 'Not provided'}</td>
+                      <td style="padding: 10px; border: 1px solid #e2e8f0;">${safeEmail}</td>
                     </tr>
                     <tr>
                       <td style="padding: 10px; border: 1px solid #e2e8f0; background: #f7fafc; font-weight: bold;">License Key</td>
-                      <td style="padding: 10px; border: 1px solid #e2e8f0;">${licenseKey ? licenseKey.substring(0, 8) + '...' : 'Free user'}</td>
+                      <td style="padding: 10px; border: 1px solid #e2e8f0;">${licenseKey ? escapeHtml(licenseKey.substring(0, 8)) + '...' : 'Free user'}</td>
                     </tr>
                   </table>
 

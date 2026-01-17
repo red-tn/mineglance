@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MineGlance Blog Update</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #141414; border-radius: 16px; border: 1px solid #2d2d2d;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding: 32px 40px 24px; text-align: center; border-bottom: 1px solid #2d2d2d;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: bold;">
+                ⛏️ MineGlance
+              </h1>
+              <p style="margin: 8px 0 0; color: #9ca3af; font-size: 14px;">Mining Profitability Dashboard</p>
+            </td>
+          </tr>
+
+          <!-- Blog Post Section -->
+          <tr>
+            <td style="padding: 32px 40px;">
+              <!-- Featured Image (if available) -->
+              <div style="margin-bottom: 24px; border-radius: 12px; overflow: hidden;">
+                <img src="{{FEATURED_IMAGE_URL}}" alt="{{BLOG_TITLE}}" style="width: 100%; height: auto; display: block;" />
+              </div>
+
+              <!-- Post Title -->
+              <h2 style="margin: 0 0 16px; color: #ffffff; font-size: 22px; font-weight: bold; line-height: 1.3;">
+                {{BLOG_TITLE}}
+              </h2>
+
+              <!-- Post Excerpt -->
+              <p style="margin: 0 0 24px; color: #d1d5db; font-size: 16px; line-height: 1.6;">
+                {{BLOG_EXCERPT}}
+              </p>
+
+              <!-- Read More Button -->
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="{{BLOG_URL}}" style="display: inline-block; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                  Read Full Article
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Extension Update Section (conditional) -->
+          <tr>
+            <td style="padding: 0 40px 32px;">
+              <div style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); border-radius: 12px; padding: 24px; border: 1px solid #3182ce;">
+                <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                  <span style="font-size: 24px; margin-right: 12px;">🚀</span>
+                  <h3 style="margin: 0; color: #ffffff; font-size: 18px; font-weight: bold;">
+                    Extension Update Available!
+                  </h3>
+                </div>
+
+                <p style="margin: 0 0 8px; color: #90cdf4; font-size: 14px; font-weight: 600;">
+                  Version {{EXTENSION_VERSION}} is now available
+                </p>
+
+                <div style="margin: 16px 0; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                  <p style="margin: 0 0 8px; color: #e2e8f0; font-size: 13px; font-weight: 600;">What's New:</p>
+                  <ul style="margin: 0; padding-left: 20px; color: #cbd5e0; font-size: 13px; line-height: 1.8;">
+                    {{RELEASE_NOTES_LIST}}
+                    <!-- Example items:
+                    <li>Improved hashrate tracking accuracy</li>
+                    <li>Added support for new mining pools</li>
+                    <li>Fixed notification timing issues</li>
+                    -->
+                  </ul>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                  <a href="https://www.mineglance.com" style="display: inline-block; background: rgba(255,255,255,0.15); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.2);">
+                    Update Extension
+                  </a>
+                </div>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Pro Upgrade CTA (for free users only) -->
+          <tr>
+            <td style="padding: 0 40px 32px;">
+              <div style="background: rgba(56, 161, 105, 0.1); border: 1px solid rgba(56, 161, 105, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
+                <p style="color: #38a169; margin: 0 0 8px; font-size: 15px; font-weight: 600;">
+                  Unlock Pro Features
+                </p>
+                <p style="color: #9ca3af; margin: 0 0 16px; font-size: 13px;">
+                  Unlimited wallets, email alerts, cloud sync & more
+                </p>
+                <a href="https://www.mineglance.com/#pricing" style="display: inline-block; background: #38a169; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                  Upgrade to Pro - $59/year
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 40px; border-top: 1px solid #2d2d2d; text-align: center;">
+              <p style="color: #6b7280; font-size: 12px; margin: 0 0 12px;">
+                You're receiving this because you subscribed to MineGlance updates.
+              </p>
+              <p style="margin: 0;">
+                <a href="{{UNSUBSCRIBE_URL}}" style="color: #9ca3af; font-size: 12px; text-decoration: underline;">
+                  Unsubscribe from blog updates
+                </a>
+                <span style="color: #4b5563; margin: 0 8px;">|</span>
+                <a href="https://www.mineglance.com/dashboard/profile" style="color: #9ca3af; font-size: 12px; text-decoration: underline;">
+                  Manage preferences
+                </a>
+              </p>
+              <p style="color: #4b5563; font-size: 11px; margin: 16px 0 0;">
+                MineGlance · Mining Profitability Dashboard<br>
+                <a href="https://www.mineglance.com" style="color: #4b5563;">mineglance.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+
+<!--
+TEMPLATE VARIABLES:
+==================
+{{BLOG_TITLE}} - The blog post title
+{{BLOG_EXCERPT}} - Short excerpt/summary of the post
+{{BLOG_URL}} - Full URL to the blog post
+{{FEATURED_IMAGE_URL}} - URL to the featured image (optional, section hidden if not present)
+{{EXTENSION_VERSION}} - e.g., "1.5.2"
+{{RELEASE_NOTES_LIST}} - HTML list items for release notes
+{{UNSUBSCRIBE_URL}} - One-click unsubscribe URL with token
+
+CONDITIONAL SECTIONS:
+====================
+- Featured Image: Only shown if post has a featured image
+- Extension Update: Only shown if "Include extension update" is checked in admin
+- Pro Upgrade CTA: Only shown to FREE users (hidden for Pro subscribers)
+
+ADMIN BLOG PAGE OPTIONS:
+========================
+When creating/editing a blog post, admin will see:
+[ ] Send email to subscribers
+    [ ] Free users (X subscribers)
+    [ ] Pro users (X subscribers)
+[ ] Include extension update notification
+    Version: [dropdown of recent releases]
+
+USER DASHBOARD PROFILE:
+=======================
+Email Preferences section:
+[ ] Receive blog updates and mining news (checked by default)
+
+ADMIN USERS TABLE:
+==================
+New column: "Blog Emails" showing ✓ or ✗ for opt-in status
+-->

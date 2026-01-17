@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import crypto from 'crypto'
-import { promisify } from 'util'
-
-const scrypt = promisify(crypto.scrypt)
+import { verifyPassword, hashPassword } from '@/lib/password'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,20 +28,6 @@ async function getAuthenticatedUser(request: NextRequest) {
   return session.user
 }
 
-// Verify password against hash
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const [salt, key] = hash.split(':')
-  const derivedKey = await scrypt(password, salt, 64) as Buffer
-  return key === derivedKey.toString('hex')
-}
-
-// Hash password with salt
-async function hashPassword(password: string): Promise<string> {
-  const salt = crypto.randomBytes(16).toString('hex')
-  const derivedKey = await scrypt(password, salt, 64) as Buffer
-  return `${salt}:${derivedKey.toString('hex')}`
-}
-
 export async function PUT(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request)
@@ -64,8 +47,8 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: 'Current password is required' }, { status: 400 })
       }
 
-      const isValid = await verifyPassword(currentPassword, user.password_hash)
-      if (!isValid) {
+      const result = await verifyPassword(currentPassword, user.password_hash, false)
+      if (!result.valid) {
         return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 })
       }
     }

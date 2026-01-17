@@ -61,6 +61,7 @@ interface Profile {
   plan: string
   createdAt: string
   blogDisplayName: string | null
+  blogEmailOptIn: boolean
 }
 
 export default function ProfilePage() {
@@ -82,7 +83,8 @@ export default function ProfilePage() {
     state: '',
     zip: '',
     country: '',
-    blogDisplayName: ''
+    blogDisplayName: '',
+    blogEmailOptIn: true
   })
 
   // Password change state
@@ -120,7 +122,8 @@ export default function ProfilePage() {
           state: data.profile.state || '',
           zip: data.profile.zip || '',
           country: data.profile.country || '',
-          blogDisplayName: data.profile.blogDisplayName || ''
+          blogDisplayName: data.profile.blogDisplayName || '',
+          blogEmailOptIn: data.profile.blogEmailOptIn !== false
         })
       }
     } catch (e) {
@@ -410,6 +413,27 @@ export default function ProfilePage() {
               <p className="text-xs text-dark-text-dim mt-1">
                 3-30 characters, letters, numbers and underscores only
               </p>
+            </div>
+          </div>
+
+          {/* Email Preferences */}
+          <div>
+            <h3 className="text-lg font-semibold text-dark-text mb-4">Email Preferences</h3>
+            <div className="bg-dark-card-hover rounded-lg p-4 border border-dark-border">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.blogEmailOptIn}
+                  onChange={(e) => setFormData(prev => ({ ...prev, blogEmailOptIn: e.target.checked }))}
+                  className="mt-1 w-5 h-5 rounded border-dark-border bg-dark-bg text-primary focus:ring-primary focus:ring-offset-0"
+                />
+                <div>
+                  <span className="text-dark-text font-medium">Receive blog updates and mining news</span>
+                  <p className="text-sm text-dark-text-muted mt-1">
+                    Get notified about new blog posts, mining tips, extension updates, and industry news. We typically send 1-2 emails per month.
+                  </p>
+                </div>
+              </label>
             </div>
           </div>
 

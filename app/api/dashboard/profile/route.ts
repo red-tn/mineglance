@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
         profilePhoto: user.profile_photo_url,
         plan: user.plan,
         createdAt: user.created_at,
-        blogDisplayName: user.blog_display_name || generateDisplayName(user.email)
+        blogDisplayName: user.blog_display_name || generateDisplayName(user.email),
+        blogEmailOptIn: user.blog_email_opt_in !== false // Default true if null
       }
     })
 
@@ -90,7 +91,8 @@ export async function PUT(request: NextRequest) {
       state,
       zip,
       country,
-      blogDisplayName
+      blogDisplayName,
+      blogEmailOptIn
     } = body
 
     // Validate phone format if provided
@@ -121,20 +123,28 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    // Build update object
+    const updateData: Record<string, unknown> = {
+      full_name: fullName || null,
+      phone: phone || null,
+      address_line1: addressLine1 || null,
+      address_line2: addressLine2 || null,
+      city: city || null,
+      state: state || null,
+      zip: zip || null,
+      country: country || null,
+      blog_display_name: blogDisplayName || null,
+      updated_at: new Date().toISOString()
+    }
+
+    // Only update blog_email_opt_in if explicitly provided
+    if (typeof blogEmailOptIn === 'boolean') {
+      updateData.blog_email_opt_in = blogEmailOptIn
+    }
+
     const { error: updateError } = await supabase
       .from('users')
-      .update({
-        full_name: fullName || null,
-        phone: phone || null,
-        address_line1: addressLine1 || null,
-        address_line2: addressLine2 || null,
-        city: city || null,
-        state: state || null,
-        zip: zip || null,
-        country: country || null,
-        blog_display_name: blogDisplayName || null,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', user.id)
 
     if (updateError) {

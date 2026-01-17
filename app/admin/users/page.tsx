@@ -33,6 +33,7 @@ interface License {
   blog_display_name?: string
   profile_photo_url?: string
   full_name?: string
+  blog_email_opt_in?: boolean
   paymentHistory?: PaymentHistoryItem[]
 }
 
@@ -390,6 +391,7 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Installs</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Wallets</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Rigs</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Blog</th>
                 <th
                   className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
                   onClick={() => handleSort('subscription_start_date')}
@@ -447,6 +449,13 @@ export default function UsersPage() {
                   </td>
                   <td className="px-4 py-3 text-dark-text">
                     {user.rigCount}
+                  </td>
+                  <td className="px-4 py-3 text-dark-text">
+                    {user.blog_email_opt_in !== false ? (
+                      <span className="text-green-400" title="Subscribed to blog emails">✓</span>
+                    ) : (
+                      <span className="text-dark-text-dim" title="Unsubscribed from blog emails">✗</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm text-dark-text">
                     {user.subscription_start_date ? formatDate(user.subscription_start_date) : '-'}
@@ -604,7 +613,7 @@ export default function UsersPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-4 gap-4">
                     <div>
                       <label className="text-sm font-medium text-dark-text-muted">Installations</label>
                       <p className="text-dark-text">{selectedUser.installCount}</p>
@@ -616,6 +625,16 @@ export default function UsersPage() {
                     <div>
                       <label className="text-sm font-medium text-dark-text-muted">Mining Rigs</label>
                       <p className="text-dark-text">{selectedUser.rigCount}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Blog Emails</label>
+                      <p>
+                        {selectedUser.blog_email_opt_in !== false ? (
+                          <span className="text-green-400">Subscribed</span>
+                        ) : (
+                          <span className="text-dark-text-dim">Unsubscribed</span>
+                        )}
+                      </p>
                     </div>
                   </div>
 

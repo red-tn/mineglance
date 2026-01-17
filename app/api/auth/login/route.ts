@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
-import { promisify } from 'util'
-
-const scrypt = promisify(crypto.scrypt)
+import { verifyPassword, hashPassword } from '@/lib/password'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,13 +11,6 @@ const supabase = createClient(
 // Generate session token
 function generateToken(): string {
   return crypto.randomBytes(32).toString('hex')
-}
-
-// Verify password against hash
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const [salt, key] = hash.split(':')
-  const derivedKey = await scrypt(password, salt, 64) as Buffer
-  return key === derivedKey.toString('hex')
 }
 
 export async function POST(request: NextRequest) {
@@ -75,9 +66,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Account needs password reset. Use the reset link.' }, { status: 401 })
     }
 
-    const isValid = await verifyPassword(password, user.password_hash)
-    if (!isValid) {
+    const result = await verifyPassword(password, user.password_hash, false)
+    if (!result.valid) {
       return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
+    }
+
+    // Silent migration: rehash with bcrypt if needed
+    if (result.needsRehash) {
+      const newHash = await hashPassword(password)
+      await supabase
+        .from('users')
+        .update({ password_hash: newHash })
+        .eq('id', user.id)
     }
 
     // Generate session token
