@@ -2,10 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
 const plans = {
+  monthly: {
+    name: 'MineGlance Pro Monthly',
+    description: 'Monthly subscription to all Pro features',
+    amount: 699, // $6.99/month
+    interval: 'month' as const,
+    mode: 'subscription' as const
+  },
+  annual: {
+    name: 'MineGlance Pro Annual',
+    description: 'Annual subscription to all Pro features - Save 30%',
+    amount: 5900, // $59.00/year
+    interval: 'year' as const,
+    mode: 'subscription' as const
+  },
+  lifetime: {
+    name: 'MineGlance Pro Lifetime',
+    description: 'One-time payment, lifetime access to all Pro features',
+    amount: 9900, // $99.00 one-time
+    interval: null,
+    mode: 'payment' as const
+  },
+  // Legacy support for 'pro' plan - maps to annual
   pro: {
-    name: 'MineGlance Pro',
+    name: 'MineGlance Pro Annual',
     description: 'Annual subscription to all Pro features',
-    amount: 5900 // $59.00/year
+    amount: 5900,
+    interval: 'year' as const,
+    mode: 'subscription' as const
   }
 }
 
@@ -48,27 +72,38 @@ export async function POST(request: NextRequest) {
       ? 'Upgrade from Pro to Bundle - Add mobile app access'
       : selectedPlan.description
 
-    console.log('Creating Stripe session with amount:', chargeAmount, 'origin:', origin)
+    console.log('Creating Stripe session with amount:', chargeAmount, 'origin:', origin, 'mode:', selectedPlan.mode)
+
+    // Build price_data based on plan type
+    const priceData: Stripe.Checkout.SessionCreateParams.LineItem.PriceData = {
+      currency: 'usd',
+      product_data: {
+        name: productName,
+        description: productDescription,
+      },
+      unit_amount: chargeAmount,
+    }
+
+    // Add recurring interval for subscriptions
+    if (selectedPlan.mode === 'subscription' && selectedPlan.interval) {
+      priceData.recurring = {
+        interval: selectedPlan.interval
+      }
+    }
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
       line_items: [
         {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: productName,
-              description: productDescription,
-            },
-            unit_amount: chargeAmount,
-          },
+          price_data: priceData,
           quantity: 1,
         },
       ],
-      mode: 'payment',
+      mode: selectedPlan.mode,
       customer_email: email || undefined,
       metadata: {
         plan: plan,
+        planType: selectedPlan.mode,
         isUpgrade: isUpgrade ? 'true' : 'false',
         originalAmount: selectedPlan.amount.toString(),
         chargedAmount: chargeAmount.toString()

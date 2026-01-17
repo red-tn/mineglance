@@ -4,50 +4,56 @@ import { useState } from 'react'
 import CTAButton from './CTAButton'
 import CheckoutModal from './CheckoutModal'
 
-type PlanType = 'pro' | null
+type PlanType = 'monthly' | 'annual' | 'lifetime' | null
 
 export default function Pricing() {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>(null)
 
-  const plans = [
+  const freeFeatures = [
+    '1 wallet',
+    'All 12+ pools supported',
+    'All coins supported',
+    'Net profit calculation',
+    'Browser extension (Chrome, Edge, Brave)'
+  ]
+
+  const proFeatures = [
+    'Unlimited wallets',
+    'All 12+ pools supported',
+    'All coins supported',
+    'Cloud sync across devices',
+    'Desktop + Email alerts',
+    'Real-time coin comparison',
+    'User dashboard',
+    'Priority support'
+  ]
+
+  const paidPlans = [
     {
-      id: 'free',
-      name: 'Free',
-      price: '$0',
-      period: 'forever',
-      description: 'Perfect for getting started',
-      features: [
-        '1 wallet',
-        'All 12+ pools supported',
-        'All coins supported',
-        'Net profit calculation',
-        'Browser extension (Chrome, Edge, Brave)'
-      ],
-      cta: 'Install Free',
-      href: 'https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl',
-      popular: false,
-      isPaid: false
+      id: 'monthly',
+      name: 'Monthly',
+      price: '$6.99',
+      period: '/month',
+      description: 'Flexible month-to-month',
+      popular: false
     },
     {
-      id: 'pro',
-      name: 'Pro',
+      id: 'annual',
+      name: 'Annual',
       price: '$59',
       period: '/year',
-      description: 'Unlimited mining monitoring',
-      features: [
-        'Unlimited wallets',
-        'All 12+ pools supported',
-        'All coins supported',
-        'Cloud sync across devices',
-        'Desktop + Email alerts',
-        'Real-time coin comparison',
-        'User dashboard',
-        'Priority support'
-      ],
-      cta: 'Get Pro Now',
-      href: '#',
-      popular: true,
-      isPaid: true
+      originalPrice: '$83.88',
+      savings: 'Save 30%',
+      description: 'Best value for serious miners',
+      popular: true
+    },
+    {
+      id: 'lifetime',
+      name: 'Lifetime',
+      price: '$99',
+      period: 'once',
+      description: 'Pay once, use forever',
+      popular: false
     }
   ]
 
@@ -60,89 +66,106 @@ export default function Pricing() {
               <span className="text-gradient">Simple, Transparent Pricing</span>
             </h2>
             <p className="mt-3 sm:mt-4 text-base sm:text-lg text-dark-text-muted max-w-2xl mx-auto px-4">
-              One low annual fee. Cancel anytime.
+              Start free, upgrade when you need more. Cancel anytime.
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 max-w-3xl mx-auto">
-            {plans.map((plan) => (
-              <div
-                key={plan.name}
-                className={`relative rounded-2xl p-6 sm:p-8 ${
-                  plan.popular
-                    ? 'bg-gradient-to-b from-primary/20 to-dark-card border-2 border-primary shadow-glow'
-                    : 'glass-card'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-primary text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1 rounded-full whitespace-nowrap shadow-glow">
-                      Recommended
-                    </span>
-                  </div>
-                )}
-
-                <div className="text-center mb-6 sm:mb-8 pt-2">
-                  <h3 className="text-lg sm:text-xl font-semibold text-dark-text">
-                    {plan.name}
-                  </h3>
-                  <div className="mt-3 sm:mt-4">
-                    <span className={`text-4xl sm:text-5xl font-bold ${
-                      plan.popular ? 'text-primary' : 'text-dark-text'
-                    }`}>
-                      {plan.price}
-                    </span>
-                    <span className="text-base sm:text-lg text-dark-text-muted">
-                      {' '}{plan.period}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm sm:text-base text-dark-text-muted">
-                    {plan.description}
-                  </p>
+          <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
+            {/* Free Plan */}
+            <div className="glass-card rounded-2xl p-6 sm:p-8">
+              <div className="text-center mb-6 sm:mb-8">
+                <h3 className="text-lg sm:text-xl font-semibold text-dark-text">Free</h3>
+                <div className="mt-3 sm:mt-4">
+                  <span className="text-4xl sm:text-5xl font-bold text-dark-text">$0</span>
+                  <span className="text-base sm:text-lg text-dark-text-muted"> forever</span>
                 </div>
+                <p className="mt-2 text-sm sm:text-base text-dark-text-muted">
+                  Perfect for getting started
+                </p>
+              </div>
 
-                <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2 sm:gap-3">
-                      <svg
-                        className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                          plan.popular ? 'text-primary' : 'text-primary'
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-sm sm:text-base text-dark-text-muted">
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                {freeFeatures.map((feature, index) => (
+                  <li key={index} className="flex items-start gap-2 sm:gap-3">
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-sm sm:text-base text-dark-text-muted">{feature}</span>
+                  </li>
+                ))}
+              </ul>
 
-                {plan.isPaid ? (
+              <CTAButton
+                href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl"
+                variant="secondary"
+                className="w-full text-center justify-center"
+              >
+                Install Free
+              </CTAButton>
+            </div>
+
+            {/* Pro Plans */}
+            <div className="relative bg-gradient-to-b from-primary/20 to-dark-card border-2 border-primary shadow-glow rounded-2xl p-6 sm:p-8">
+              <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2">
+                <span className="bg-primary text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1 rounded-full whitespace-nowrap shadow-glow">
+                  Pro Features
+                </span>
+              </div>
+
+              <div className="text-center mb-6 pt-2">
+                <h3 className="text-lg sm:text-xl font-semibold text-dark-text">MineGlance Pro</h3>
+                <p className="mt-2 text-sm text-dark-text-muted">
+                  Unlimited mining monitoring
+                </p>
+              </div>
+
+              {/* Plan Options */}
+              <div className="grid grid-cols-3 gap-2 mb-6">
+                {paidPlans.map((plan) => (
                   <button
-                    onClick={() => setSelectedPlan('pro')}
-                    className={`w-full font-semibold py-3 px-6 rounded-lg transition-all ${
+                    key={plan.id}
+                    onClick={() => setSelectedPlan(plan.id as PlanType)}
+                    className={`relative p-3 rounded-lg border-2 transition-all text-center ${
                       plan.popular
-                        ? 'bg-primary hover:bg-primary-light text-white shadow-glow hover:shadow-glow-lg'
-                        : 'bg-dark-border hover:bg-dark-border-light text-dark-text'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-dark-border hover:border-primary/50 bg-dark-card/50'
                     }`}
                   >
-                    {plan.cta}
+                    {plan.popular && (
+                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] px-2 py-0.5 rounded-full">
+                        Best Value
+                      </span>
+                    )}
+                    <div className="text-xs text-dark-text-muted mb-1">{plan.name}</div>
+                    <div className="text-lg font-bold text-primary">{plan.price}</div>
+                    <div className="text-xs text-dark-text-dim">
+                      {plan.period === 'once' ? 'one-time' : plan.period}
+                    </div>
+                    {plan.savings && (
+                      <div className="text-[10px] text-green-400 mt-1">{plan.savings}</div>
+                    )}
                   </button>
-                ) : (
-                  <CTAButton
-                    href={plan.href}
-                    variant="secondary"
-                    className="w-full text-center justify-center"
-                  >
-                    {plan.cta}
-                  </CTAButton>
-                )}
+                ))}
               </div>
-            ))}
+
+              <ul className="space-y-3 mb-6">
+                {proFeatures.map((feature, index) => (
+                  <li key={index} className="flex items-start gap-2 sm:gap-3">
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-sm sm:text-base text-dark-text-muted">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => setSelectedPlan('annual')}
+                className="w-full font-semibold py-3 px-6 rounded-lg bg-primary hover:bg-primary-light text-white shadow-glow hover:shadow-glow-lg transition-all"
+              >
+                Get Pro Now
+              </button>
+            </div>
           </div>
 
           <div className="text-center mt-6 sm:mt-8 space-y-2">

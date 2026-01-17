@@ -10,17 +10,37 @@ import {
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null
 
+type PlanType = 'monthly' | 'annual' | 'lifetime' | null
+
 interface CheckoutModalProps {
   isOpen: boolean
   onClose: () => void
-  plan: 'pro' | null
+  plan: PlanType
   userEmail?: string  // Pre-fill email from dashboard
 }
 
-const planDetails = {
-  name: 'MineGlance Pro',
-  description: 'Annual subscription to all Pro features + mobile app',
-  amount: 5900  // $59/year
+const planConfigs = {
+  monthly: {
+    name: 'MineGlance Pro Monthly',
+    description: 'Monthly subscription to all Pro features',
+    amount: 699,  // $6.99/month
+    priceId: '', // Will be set by user
+    interval: 'month'
+  },
+  annual: {
+    name: 'MineGlance Pro Annual',
+    description: 'Annual subscription - save 30%',
+    amount: 5900,  // $59/year
+    priceId: '', // Will be set by user
+    interval: 'year'
+  },
+  lifetime: {
+    name: 'MineGlance Pro Lifetime',
+    description: 'One-time payment, lifetime access',
+    amount: 9900,  // $99 lifetime
+    priceId: '', // Will be set by user
+    interval: 'once'
+  }
 }
 
 type Step = 'email' | 'checkout'
@@ -75,16 +95,18 @@ export default function CheckoutModal({ isOpen, onClose, plan, userEmail }: Chec
       }
 
       // Create checkout session
-      const sessionId = `${email}-pro-${Date.now()}`
+      const planConfig = planConfigs[plan]
+      const sessionId = `${email}-${plan}-${Date.now()}`
       currentSessionRef.current = sessionId
 
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan: 'pro',
+          plan,
           email,
-          amount: planDetails.amount
+          amount: planConfig.amount,
+          interval: planConfig.interval
         }),
       })
 
@@ -154,10 +176,10 @@ export default function CheckoutModal({ isOpen, onClose, plan, userEmail }: Chec
           <div className="flex items-center justify-between p-4 border-b border-dark-border">
             <div>
               <h2 className="text-lg font-semibold text-dark-text">
-                {planDetails.name}
+                {plan ? planConfigs[plan].name : 'MineGlance Pro'}
               </h2>
               <p className="text-sm text-dark-text-muted">
-                {planDetails.description}
+                {plan ? planConfigs[plan].description : ''}
               </p>
             </div>
             <button
@@ -259,12 +281,16 @@ export default function CheckoutModal({ isOpen, onClose, plan, userEmail }: Chec
 
                 <div className="bg-dark-card-hover rounded-lg p-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-dark-text-muted">{planDetails.name}</span>
+                    <span className="text-dark-text-muted">{plan ? planConfigs[plan].name : ''}</span>
                     <span className="text-xl font-bold text-primary">
-                      ${(planDetails.amount / 100).toFixed(0)}
+                      ${plan ? (planConfigs[plan].amount / 100).toFixed(2) : '0'}
                     </span>
                   </div>
-                  <p className="text-xs text-dark-text-dim mt-1">Annual subscription, cancel anytime</p>
+                  <p className="text-xs text-dark-text-dim mt-1">
+                    {plan === 'monthly' && 'Billed monthly, cancel anytime'}
+                    {plan === 'annual' && 'Billed annually, cancel anytime'}
+                    {plan === 'lifetime' && 'One-time payment, lifetime access'}
+                  </p>
                 </div>
 
                 {/* Coupon Code Banner */}

@@ -135,22 +135,25 @@ export async function POST(request: NextRequest) {
       .insert({
         title: body.title,
         slug,
-        content: body.content,
+        content: body.content || '',
         excerpt,
-        featured_image_url: body.featured_image_url,
+        featured_image_url: body.featured_image_url || null,
         seo_description: body.seo_description || excerpt,
         status: body.status || 'draft',
         is_pinned_homepage: body.is_pinned_homepage || false,
         is_pinned_dashboard: body.is_pinned_dashboard || false,
         author_name: body.author_name || 'MineGlance Team',
         published_at: body.status === 'published' ? new Date().toISOString() : null,
-        scheduled_at: body.scheduled_at,
+        scheduled_at: body.scheduled_at || null,
         tags
       })
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase insert error:', error)
+      return NextResponse.json({ error: error.message || 'Database error' }, { status: 500 })
+    }
 
     return NextResponse.json({ post })
   } catch (error) {
