@@ -82,32 +82,32 @@ export async function GET(request: NextRequest) {
     }
 
     // Cleanup expired user sessions
-    const { count: userSessionsCount } = await supabase
+    const { data: deletedUserSessions } = await supabase
       .from('user_sessions')
       .delete()
       .lt('expires_at', now)
-      .select('*', { count: 'exact', head: true })
+      .select('id')
 
-    results.user_sessions_deleted = userSessionsCount || 0
+    results.user_sessions_deleted = deletedUserSessions?.length || 0
 
     // Cleanup expired admin sessions
-    const { count: adminSessionsCount } = await supabase
+    const { data: deletedAdminSessions } = await supabase
       .from('admin_sessions')
       .delete()
       .lt('expires_at', now)
-      .select('*', { count: 'exact', head: true })
+      .select('id')
 
-    results.admin_sessions_deleted = adminSessionsCount || 0
+    results.admin_sessions_deleted = deletedAdminSessions?.length || 0
 
     // Cleanup expired password reset tokens (older than 1 hour)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-    const { count: passwordResetsCount } = await supabase
+    const { data: deletedPasswordResets } = await supabase
       .from('password_resets')
       .delete()
       .lt('expires_at', oneHourAgo)
-      .select('*', { count: 'exact', head: true })
+      .select('id')
 
-    results.password_resets_deleted = passwordResetsCount || 0
+    results.password_resets_deleted = deletedPasswordResets?.length || 0
 
     const duration = Date.now() - startTime
     const result = {
