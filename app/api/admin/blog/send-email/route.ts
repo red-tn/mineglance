@@ -252,10 +252,13 @@ async function sendEmail(to: string, subject: string, htmlContent: string): Prom
 // POST - Send blog email to subscribers
 export async function POST(request: NextRequest) {
   try {
+    console.log('Blog email POST: Starting...')
+
     const isAdmin = await verifyAdmin(request)
     if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    console.log('Blog email POST: Admin verified')
 
     const body = await request.json()
     const {
@@ -267,12 +270,14 @@ export async function POST(request: NextRequest) {
       releaseNotes,
       testEmail
     } = body
+    console.log('Blog email POST: Body parsed', { postId, sendToFree, sendToPro, testEmail: !!testEmail })
 
     if (!postId) {
       return NextResponse.json({ error: 'Post ID is required' }, { status: 400 })
     }
 
     // Fetch the blog post
+    console.log('Blog email POST: Fetching post...')
     const { data: post, error: postError } = await supabase
       .from('blog_posts')
       .select('id, title, slug, excerpt, featured_image_url')
@@ -280,8 +285,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (postError || !post) {
+      console.log('Blog email POST: Post not found', postError)
       return NextResponse.json({ error: 'Blog post not found' }, { status: 404 })
     }
+    console.log('Blog email POST: Post found:', post.title)
 
     const blogUrl = `${WEBSITE_URL}/blog/${post.slug}`
 
@@ -312,11 +319,22 @@ export async function POST(request: NextRequest) {
 
     // Build query for subscribers
     // Use neq(blog_email_opt_in, false) to include NULL values as opted-in (default true)
+    console.log('Blog email POST: Building subscriber query...', { sendToFree, sendToPro })
+
     let query = supabase
       .from('users')
       .select('id, email, plan')
-      .neq('blog_email_opt_in', false)
-      .eq('email_verified', true)
+
+    // Only filter by email preferences if the column exists
+    // Some users may not have blog_email_opt_in set yet
+    try {
+      query = query.neq('blog_email_opt_in', false)
+    } catch (e) {
+      console.log('Blog email POST: blog_email_opt_in filter failed, skipping')
+    }
+
+    // Only require email_verified if column exists
+    query = query.eq('email_verified', true)
 
     // Filter by plan
     if (sendToFree && sendToPro) {
@@ -329,12 +347,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Select at least one audience (Free or Pro)' }, { status: 400 })
     }
 
+    console.log('Blog email POST: Executing query...')
     const { data: subscribers, error: subError } = await query
 
     if (subError) {
       console.error('Error fetching subscribers:', subError)
-      return NextResponse.json({ error: 'Failed to fetch subscribers' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to fetch subscribers', details: subError.message }, { status: 500 })
     }
+
+    console.log('Blog email POST: Found subscribers:', subscribers?.length || 0)
 
     if (!subscribers || subscribers.length === 0) {
       return NextResponse.json({ success: true, sent: 0, failed: 0, message: 'No subscribers found' })

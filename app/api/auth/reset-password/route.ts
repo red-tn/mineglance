@@ -126,16 +126,26 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
     // Store reset token in database
+    // First delete any existing token for this user
     await supabase
       .from('password_resets')
-      .upsert({
+      .delete()
+      .eq('user_id', user.id)
+
+    // Then insert the new token
+    const { error: insertError } = await supabase
+      .from('password_resets')
+      .insert({
         user_id: user.id,
         token: resetToken,
         expires_at: expiresAt.toISOString(),
         created_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id'
       })
+
+    if (insertError) {
+      console.error('Failed to store reset token:', insertError)
+      // Still return success to not reveal user existence
+    }
 
     // Send reset email
     const emailSent = await sendResetEmail(normalizedEmail, resetToken)
@@ -156,6 +166,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const { token, password } = await request.json()
+    console.log('Password reset PUT: Token received (first 8 chars):', token?.substring(0, 8))
 
     if (!token) {
       return NextResponse.json({ error: 'Reset token is required' }, { status: 400 })
@@ -166,11 +177,14 @@ export async function PUT(request: NextRequest) {
     }
 
     // Find reset token
+    console.log('Password reset PUT: Looking up token in database...')
     const { data: resetData, error: resetError } = await supabase
       .from('password_resets')
       .select('id, user_id, token, expires_at')
       .eq('token', token)
       .single()
+
+    console.log('Password reset PUT: Query result:', { found: !!resetData, error: resetError?.message })
 
     if (resetError || !resetData) {
       console.error('Reset token lookup failed:', resetError)
