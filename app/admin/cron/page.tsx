@@ -33,6 +33,10 @@ export default function CronJobsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingJob, setEditingJob] = useState<CronJob | null>(null)
   const [triggeringJob, setTriggeringJob] = useState<string | null>(null)
+  const [sortField, setSortField] = useState<'job' | 'status' | 'started_at'>('started_at')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [filterJob, setFilterJob] = useState<string>('all')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
   // Form state
   const [formName, setFormName] = useState('')
@@ -210,6 +214,9 @@ export default function CronJobsPage() {
     // Simple cron schedule descriptions
     const common: Record<string, string> = {
       '0 0 * * *': 'Daily at midnight UTC',
+      '0 6 * * *': 'Daily at midnight CST',
+      '0 14 * * *': 'Daily at 8 AM CST',
+      '0 5 * * *': 'Daily at 11 PM CST',
       '0 * * * *': 'Every hour',
       '*/15 * * * *': 'Every 15 minutes',
       '0 0 * * 0': 'Weekly on Sunday',
@@ -217,6 +224,45 @@ export default function CronJobsPage() {
     }
     return common[schedule] || schedule
   }
+
+  const handleSort = (field: 'job' | 'status' | 'started_at') => {
+    if (sortField === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDir('desc')
+    }
+  }
+
+  const filteredAndSortedExecutions = executions
+    .filter(exec => {
+      if (filterJob !== 'all' && exec.job_id !== filterJob) return false
+      if (filterStatus !== 'all' && exec.status !== filterStatus) return false
+      return true
+    })
+    .sort((a, b) => {
+      let comparison = 0
+      if (sortField === 'job') {
+        const jobA = jobs.find(j => j.id === a.job_id)?.name || ''
+        const jobB = jobs.find(j => j.id === b.job_id)?.name || ''
+        comparison = jobA.localeCompare(jobB)
+      } else if (sortField === 'status') {
+        comparison = a.status.localeCompare(b.status)
+      } else {
+        comparison = new Date(a.started_at).getTime() - new Date(b.started_at).getTime()
+      }
+      return sortDir === 'asc' ? comparison : -comparison
+    })
+
+  const SortIcon = ({ field }: { field: 'job' | 'status' | 'started_at' }) => (
+    <span className="ml-1 inline-block">
+      {sortField === field ? (
+        sortDir === 'asc' ? '↑' : '↓'
+      ) : (
+        <span className="text-dark-text-dim">↕</span>
+      )}
+    </span>
+  )
 
   if (loading) {
     return (
@@ -344,27 +390,68 @@ export default function CronJobsPage() {
       {/* Execution History */}
       <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
         <div className="p-6 border-b border-dark-border">
-          <h3 className="text-lg font-semibold text-dark-text">Execution History</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-dark-text">Execution History</h3>
+            <div className="flex items-center gap-4">
+              {/* Filter by Job */}
+              <select
+                value={filterJob}
+                onChange={(e) => setFilterJob(e.target.value)}
+                className="px-3 py-1.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text text-sm"
+              >
+                <option value="all">All Jobs</option>
+                {jobs.map(job => (
+                  <option key={job.id} value={job.id}>{job.name}</option>
+                ))}
+              </select>
+              {/* Filter by Status */}
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 py-1.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text text-sm"
+              >
+                <option value="all">All Statuses</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="running">Running</option>
+              </select>
+            </div>
+          </div>
         </div>
-        {executions.length === 0 ? (
+        {filteredAndSortedExecutions.length === 0 ? (
           <div className="p-12 text-center text-dark-text-muted">
-            <p>No executions yet</p>
+            <p>No executions {filterJob !== 'all' || filterStatus !== 'all' ? 'match filters' : 'yet'}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-dark-card-hover">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Job</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Started</th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                    onClick={() => handleSort('job')}
+                  >
+                    Job<SortIcon field="job" />
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                    onClick={() => handleSort('status')}
+                  >
+                    Status<SortIcon field="status" />
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                    onClick={() => handleSort('started_at')}
+                  >
+                    Started<SortIcon field="started_at" />
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Duration</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Triggered By</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-dark-border">
-                {executions.map(exec => {
+                {filteredAndSortedExecutions.map(exec => {
                   const job = jobs.find(j => j.id === exec.job_id)
                   return (
                     <tr key={exec.id} className="hover:bg-dark-card-hover">
@@ -383,9 +470,14 @@ export default function CronJobsPage() {
                         {exec.error ? (
                           <span className="text-red-500">{exec.error}</span>
                         ) : exec.result ? (
-                          <span className="text-dark-text-muted">
-                            {JSON.stringify(exec.result).slice(0, 50)}...
-                          </span>
+                          <details className="cursor-pointer">
+                            <summary className="text-dark-text-muted hover:text-dark-text">
+                              View result
+                            </summary>
+                            <pre className="mt-2 p-2 bg-dark-bg rounded text-xs text-dark-text-muted max-w-md overflow-auto">
+                              {JSON.stringify(exec.result, null, 2)}
+                            </pre>
+                          </details>
                         ) : '-'}
                       </td>
                     </tr>
