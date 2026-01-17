@@ -103,87 +103,25 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Job not found' }, { status: 404 })
       }
 
-      // Record execution start
-      const { data: execution, error: execError } = await supabase
-        .from('cron_executions')
-        .insert({
-          job_id: jobId,
-          status: 'running',
-          triggered_by: admin.email,
-          started_at: new Date().toISOString()
-        })
-        .select()
-        .single()
-
-      if (execError) {
-        console.error('Failed to create execution record:', execError)
-      }
-
-      // Call the cron endpoint
-      const startTime = Date.now()
+      // Call the cron endpoint with admin token (NOT CRON_SECRET)
+      // The endpoint itself will create the execution record with correct triggered_by
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.mineglance.com'}${job.endpoint}`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${process.env.CRON_SECRET || token}`
+            'Authorization': `Bearer ${token}`
           }
         })
 
         const result = await response.json()
-        const duration = Date.now() - startTime
-
-        // Update execution record
-        if (execution) {
-          await supabase
-            .from('cron_executions')
-            .update({
-              status: response.ok ? 'success' : 'failed',
-              completed_at: new Date().toISOString(),
-              duration_ms: duration,
-              result: result,
-              error: response.ok ? null : result.error
-            })
-            .eq('id', execution.id)
-        }
-
-        // Update job's last run
-        await supabase
-          .from('cron_jobs')
-          .update({
-            last_run: new Date().toISOString(),
-            last_status: response.ok ? 'success' : 'failed'
-          })
-          .eq('id', jobId)
 
         return NextResponse.json({
           success: response.ok,
           result,
-          duration
+          duration: result.duration_ms
         })
       } catch (err) {
-        const duration = Date.now() - startTime
         const errorMsg = err instanceof Error ? err.message : 'Unknown error'
-
-        if (execution) {
-          await supabase
-            .from('cron_executions')
-            .update({
-              status: 'failed',
-              completed_at: new Date().toISOString(),
-              duration_ms: duration,
-              error: errorMsg
-            })
-            .eq('id', execution.id)
-        }
-
-        await supabase
-          .from('cron_jobs')
-          .update({
-            last_run: new Date().toISOString(),
-            last_status: 'failed'
-          })
-          .eq('id', jobId)
-
         return NextResponse.json({ success: false, error: errorMsg }, { status: 500 })
       }
     }
