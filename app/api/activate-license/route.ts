@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Find the user by license key
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, plan, is_revoked')
+      .select('id, email, plan, is_revoked, subscription_end_date, billing_type')
       .eq('license_key', normalizedKey)
       .single()
 
@@ -44,6 +44,14 @@ export async function POST(request: NextRequest) {
     if (user.is_revoked) {
       return NextResponse.json(
         { success: false, error: 'This license has been revoked. Contact support.' },
+        { status: 403, headers: corsHeaders }
+      )
+    }
+
+    // Check subscription expiration (null = lifetime, never expires)
+    if (user.subscription_end_date && new Date(user.subscription_end_date) < new Date()) {
+      return NextResponse.json(
+        { success: false, error: 'Your subscription has expired. Please renew to continue using Pro features.', expired: true },
         { status: 403, headers: corsHeaders }
       )
     }
@@ -98,6 +106,18 @@ export async function GET(request: NextRequest) {
 
     if (!user || user.is_revoked) {
       return NextResponse.json({ isPro: false }, { headers: corsHeaders })
+    }
+
+    // Check subscription expiration (null = lifetime, never expires)
+    const isExpired = user.subscription_end_date && new Date(user.subscription_end_date) < new Date()
+
+    if (isExpired) {
+      return NextResponse.json({
+        isPro: false,
+        expired: true,
+        plan: user.plan,
+        subscriptionEndDate: user.subscription_end_date
+      }, { headers: corsHeaders })
     }
 
     return NextResponse.json({

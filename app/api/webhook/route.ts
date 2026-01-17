@@ -116,12 +116,31 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true, skipped: 'duplicate' })
       }
 
+      // Infer billing type from amount for Payment Links
+      // $6.99 = 699 (monthly), $59 = 5900 (annual), $99 = 9900 (lifetime)
+      let billingType = 'annual' // default
+      const amount = charge.amount
+      if (amount >= 9500 && amount <= 10500) {
+        billingType = 'lifetime' // ~$99
+      } else if (amount >= 5500 && amount <= 6500) {
+        billingType = 'annual' // ~$59
+      } else if (amount >= 600 && amount <= 800) {
+        billingType = 'monthly' // ~$6.99
+      }
+
+      console.log('Processing charge (Payment Link):', {
+        email: charge.billing_details.email,
+        amount,
+        inferredBillingType: billingType
+      })
+
       await handleNewPurchase(supabase, {
         email: charge.billing_details.email,
         customerId: charge.customer as string || null,
         paymentId: paymentIntentId,
         amount: charge.amount,
-        currency: charge.currency
+        currency: charge.currency,
+        billingType: billingType
       })
     }
   }

@@ -53,13 +53,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'License has been revoked' }, { status: 403 })
     }
 
+    // Check subscription expiration (null = lifetime, never expires)
+    const isExpired = user.subscription_end_date && new Date(user.subscription_end_date) < new Date()
+    const effectivePlan = isExpired ? 'free' : user.plan
+
     return NextResponse.json({
       valid: true,
       user: {
         id: user.id,
         email: user.email,
         fullName: user.full_name,
-        plan: user.plan,
+        plan: effectivePlan,
+        actualPlan: user.plan, // Original plan for display purposes
+        isExpired: isExpired || false,
         profilePhoto: user.profile_photo_url,
         licenseKey: user.license_key,
         subscriptionEndDate: user.subscription_end_date,
