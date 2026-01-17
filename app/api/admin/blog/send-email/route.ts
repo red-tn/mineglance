@@ -108,7 +108,7 @@ function buildEmailHtml(options: {
             <div style="margin: 16px 0; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px;">
               <p style="margin: 0 0 8px; color: #e2e8f0; font-size: 13px; font-weight: 600;">What's New:</p>
               <ul style="margin: 0; padding-left: 20px; color: #cbd5e0; font-size: 13px; line-height: 1.8;">
-                ${releaseNotes.map(note => `<li>${escapeHtml(note)}</li>`).join('')}
+                ${(Array.isArray(releaseNotes) ? releaseNotes : String(releaseNotes).split('\n').filter(line => line.trim())).map(note => `<li>${escapeHtml(String(note))}</li>`).join('')}
               </ul>
             </div>
           ` : ''}
