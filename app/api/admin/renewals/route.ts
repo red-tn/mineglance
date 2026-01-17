@@ -60,15 +60,6 @@ async function sendRenewalEmail(email: string, daysUntilExpiry: number): Promise
                 <li>Priority support</li>
               </ul>
 
-              <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
-                <p style="color: #fbbf24; margin: 0 0 10px; font-size: 14px; font-weight: 600;">
-                  Loyalty Discount: MINE26
-                </p>
-                <p style="color: #9ca3af; margin: 0; font-size: 13px;">
-                  Use code <strong style="color: #fbbf24;">MINE26</strong> for 10% off your renewal ($53/year)
-                </p>
-              </div>
-
               <div style="text-align: center; margin: 30px 0;">
                 <a href="https://www.mineglance.com/#pricing" style="display: inline-block; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
                   Renew Now

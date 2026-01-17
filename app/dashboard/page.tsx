@@ -178,7 +178,7 @@ export default function DashboardOverview() {
                     : `Your subscription expires in ${daysUntilExpiry} days`}
                 </p>
                 <p className="text-sm text-dark-text-muted">
-                  Renew now to keep Pro features. Use code <span className="font-bold text-primary">MINE26</span> for 10% off!
+                  Renew now to keep Pro features.
                 </p>
               </div>
             </div>
@@ -351,11 +351,8 @@ export default function DashboardOverview() {
                   onClick={() => setShowUpgradeModal(true)}
                   className="px-4 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition-colors"
                 >
-                  Upgrade Now - $59/year
+                  Upgrade Now
                 </button>
-                <p className="text-xs text-dark-text-muted">
-                  Use code <span className="font-bold text-primary">MINE26</span> for 10% off!
-                </p>
               </div>
             </div>
           </div>
