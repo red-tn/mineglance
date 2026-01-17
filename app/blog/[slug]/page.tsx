@@ -4,6 +4,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
@@ -141,26 +144,6 @@ export default function BlogPostPage() {
     }
   }
 
-  // Render markdown content (basic implementation)
-  const renderContent = (content: string) => {
-    // Convert markdown-like content to HTML
-    let html = content
-      // Headers
-      .replace(/^### (.*$)/gm, '<h3 class="text-xl font-semibold text-dark-text mt-6 mb-3">$1</h3>')
-      .replace(/^## (.*$)/gm, '<h2 class="text-2xl font-bold text-dark-text mt-8 mb-4">$1</h2>')
-      .replace(/^# (.*$)/gm, '<h1 class="text-3xl font-bold text-dark-text mt-8 mb-4">$1</h1>')
-      // Bold and italic
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-dark-text">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      // Links
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-primary hover:underline" target="_blank" rel="noopener noreferrer">$1</a>')
-      // Line breaks
-      .replace(/\n\n/g, '</p><p class="mb-4 text-dark-text-muted leading-relaxed">')
-      .replace(/\n/g, '<br />')
-
-    return `<p class="mb-4 text-dark-text-muted leading-relaxed">${html}</p>`
-  }
-
   // Get top-level comments and their replies
   const topLevelComments = comments.filter(c => !c.parent_id)
   const getReplies = (parentId: string) => comments.filter(c => c.parent_id === parentId)
@@ -253,10 +236,44 @@ export default function BlogPostPage() {
         </header>
 
         {/* Content */}
-        <div
-          className="prose prose-invert max-w-none mb-12"
-          dangerouslySetInnerHTML={{ __html: renderContent(post.content || '') }}
-        />
+        <div className="prose prose-invert max-w-none mb-12">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+            components={{
+              h1: ({ children }) => <h1 className="text-3xl font-bold text-dark-text mt-8 mb-4">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-2xl font-bold text-dark-text mt-8 mb-4">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-xl font-semibold text-dark-text mt-6 mb-3">{children}</h3>,
+              h4: ({ children }) => <h4 className="text-lg font-semibold text-dark-text mt-4 mb-2">{children}</h4>,
+              p: ({ children }) => <p className="mb-4 text-dark-text-muted leading-relaxed">{children}</p>,
+              a: ({ href, children }) => <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
+              strong: ({ children }) => <strong className="font-semibold text-dark-text">{children}</strong>,
+              em: ({ children }) => <em>{children}</em>,
+              ul: ({ children }) => <ul className="list-disc list-inside mb-4 text-dark-text-muted space-y-2">{children}</ul>,
+              ol: ({ children }) => <ol className="list-decimal list-inside mb-4 text-dark-text-muted space-y-2">{children}</ol>,
+              li: ({ children }) => <li>{children}</li>,
+              blockquote: ({ children }) => <blockquote className="border-l-4 border-primary pl-4 my-4 italic text-dark-text-muted">{children}</blockquote>,
+              code: ({ className, children }) => {
+                const isInline = !className
+                return isInline
+                  ? <code className="bg-dark-card px-1.5 py-0.5 rounded text-primary text-sm">{children}</code>
+                  : <code className={`block bg-dark-card p-4 rounded-lg overflow-x-auto text-sm ${className || ''}`}>{children}</code>
+              },
+              pre: ({ children }) => <pre className="bg-dark-card p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
+              table: ({ children }) => <table className="w-full border-collapse mb-4">{children}</table>,
+              th: ({ children }) => <th className="border border-dark-border px-4 py-2 bg-dark-card text-left text-dark-text font-semibold">{children}</th>,
+              td: ({ children }) => <td className="border border-dark-border px-4 py-2 text-dark-text-muted">{children}</td>,
+              img: ({ src, alt }) => (
+                <span className="block my-4">
+                  <Image src={src || ''} alt={alt || ''} width={800} height={400} className="rounded-lg max-w-full h-auto" />
+                </span>
+              ),
+              hr: () => <hr className="border-dark-border my-8" />,
+            }}
+          >
+            {post.content || ''}
+          </ReactMarkdown>
+        </div>
 
         {/* Share Buttons */}
         <div className="border-t border-b border-dark-border py-6 mb-12">
