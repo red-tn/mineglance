@@ -317,47 +317,48 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Build query for subscribers
-    // Use neq(blog_email_opt_in, false) to include NULL values as opted-in (default true)
+    // Build query for subscribers - simplified to avoid column issues
     console.log('Blog email POST: Building subscriber query...', { sendToFree, sendToPro })
 
-    let query = supabase
-      .from('users')
-      .select('id, email, plan')
-
-    // Only filter by email preferences if the column exists
-    // Some users may not have blog_email_opt_in set yet
-    try {
-      query = query.neq('blog_email_opt_in', false)
-    } catch (e) {
-      console.log('Blog email POST: blog_email_opt_in filter failed, skipping')
-    }
-
-    // Only require email_verified if column exists
-    query = query.eq('email_verified', true)
-
     // Filter by plan
-    if (sendToFree && sendToPro) {
-      // Send to both - no additional filter
-    } else if (sendToFree) {
-      query = query.eq('plan', 'free')
-    } else if (sendToPro) {
-      query = query.eq('plan', 'pro')
-    } else {
+    if (!sendToFree && !sendToPro) {
       return NextResponse.json({ error: 'Select at least one audience (Free or Pro)' }, { status: 400 })
     }
 
+    // Simple query - just get users by plan, handle opt-in/verified in code
+    let query = supabase.from('users').select('id, email, plan, email_verified, blog_email_opt_in')
+
+    if (sendToFree && !sendToPro) {
+      query = query.eq('plan', 'free')
+    } else if (sendToPro && !sendToFree) {
+      query = query.eq('plan', 'pro')
+    }
+    // If both, no plan filter needed
+
     console.log('Blog email POST: Executing query...')
-    const { data: subscribers, error: subError } = await query
+    const { data: allUsers, error: subError } = await query
 
     if (subError) {
-      console.error('Error fetching subscribers:', subError)
-      return NextResponse.json({ error: 'Failed to fetch subscribers', details: subError.message }, { status: 500 })
+      console.error('Error fetching users:', subError)
+      return NextResponse.json({ error: 'Failed to fetch users', details: subError.message }, { status: 500 })
     }
 
-    console.log('Blog email POST: Found subscribers:', subscribers?.length || 0)
+    console.log('Blog email POST: Found users:', allUsers?.length || 0)
 
-    if (!subscribers || subscribers.length === 0) {
+    // Filter in code to handle NULL values properly
+    const subscribers = (allUsers || []).filter(user => {
+      // Must have email
+      if (!user.email) return false
+      // Skip if explicitly opted out
+      if (user.blog_email_opt_in === false) return false
+      // Skip if not email verified (but allow NULL for backwards compat)
+      if (user.email_verified === false) return false
+      return true
+    })
+
+    console.log('Blog email POST: Filtered to subscribers:', subscribers.length)
+
+    if (subscribers.length === 0) {
       return NextResponse.json({ success: true, sent: 0, failed: 0, message: 'No subscribers found' })
     }
 
@@ -415,21 +416,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get counts for free and pro users who are opted in
-    // Use neq(blog_email_opt_in, false) to include NULL values as opted-in (default true)
-    const { count: freeCount } = await supabase
+    // Fetch all users and count in code to avoid column issues
+    const { data: allUsers, error: usersError } = await supabase
       .from('users')
-      .select('*', { count: 'exact', head: true })
-      .eq('plan', 'free')
-      .neq('blog_email_opt_in', false)
-      .eq('email_verified', true)
+      .select('plan, email_verified, blog_email_opt_in')
 
-    const { count: proCount } = await supabase
-      .from('users')
-      .select('*', { count: 'exact', head: true })
-      .eq('plan', 'pro')
-      .neq('blog_email_opt_in', false)
-      .eq('email_verified', true)
+    if (usersError) {
+      console.error('Error fetching users for count:', usersError)
+      return NextResponse.json({ error: 'Failed to get counts', details: usersError.message }, { status: 500 })
+    }
+
+    // Count subscribers by filtering in code
+    let freeCount = 0
+    let proCount = 0
+
+    for (const user of allUsers || []) {
+      // Skip if explicitly opted out
+      if (user.blog_email_opt_in === false) continue
+      // Skip if not email verified (but allow NULL for backwards compat)
+      if (user.email_verified === false) continue
+
+      if (user.plan === 'free') freeCount++
+      else if (user.plan === 'pro') proCount++
+    }
 
     // Get latest extension release
     const { data: latestRelease } = await supabase
