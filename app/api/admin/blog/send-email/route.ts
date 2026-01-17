@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,7 +41,6 @@ function escapeHtml(text: string): string {
 
 // Generate unsubscribe token (simple hash for one-click unsubscribe)
 function generateUnsubscribeToken(userId: string, email: string): string {
-  const crypto = require('crypto')
   const secret = process.env.INTERNAL_API_SECRET || 'default-secret'
   return crypto
     .createHmac('sha256', secret)
@@ -381,7 +381,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Send blog email error:', error)
-    return NextResponse.json({ error: 'Failed to send emails' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ error: 'Failed to send emails', details: errorMessage }, { status: 500 })
   }
 }
 
@@ -426,6 +427,7 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Get subscriber counts error:', error)
-    return NextResponse.json({ error: 'Failed to get counts' }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ error: 'Failed to get counts', details: errorMessage }, { status: 500 })
   }
 }
