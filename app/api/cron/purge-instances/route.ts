@@ -6,13 +6,15 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const JOB_ENDPOINT = '/api/cron/purge-instances'
+
 // Verify the request is from Vercel Cron or admin
-async function verifyCronRequest(request: NextRequest): Promise<boolean> {
+async function verifyCronRequest(request: NextRequest): Promise<{ valid: boolean; triggeredBy: string }> {
   const authHeader = request.headers.get('authorization')
 
-  // Allow cron secret
+  // Allow cron secret (Vercel Cron)
   if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
-    return true
+    return { valid: true, triggeredBy: 'vercel-cron' }
   }
 
   // Also allow manual trigger from admin with valid session token
@@ -22,22 +24,59 @@ async function verifyCronRequest(request: NextRequest): Promise<boolean> {
     // Verify against admin_sessions table
     const { data: session } = await supabase
       .from('admin_sessions')
-      .select('id')
+      .select('admin_id')
       .eq('token', token)
       .gt('expires_at', new Date().toISOString())
       .single()
 
-    return !!session
+    if (session) {
+      const { data: admin } = await supabase
+        .from('admin_users')
+        .select('email')
+        .eq('id', session.admin_id)
+        .single()
+      return { valid: true, triggeredBy: admin?.email || 'admin' }
+    }
   }
 
-  return false
+  return { valid: false, triggeredBy: '' }
 }
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now()
+  let executionId: string | null = null
+  let jobId: string | null = null
+
   try {
     // Verify this is a legitimate cron request
-    if (!await verifyCronRequest(request)) {
+    const { valid, triggeredBy } = await verifyCronRequest(request)
+    if (!valid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Find the cron job record
+    const { data: job } = await supabase
+      .from('cron_jobs')
+      .select('id')
+      .eq('endpoint', JOB_ENDPOINT)
+      .single()
+
+    jobId = job?.id || null
+
+    // Log execution start
+    if (jobId) {
+      const { data: execution } = await supabase
+        .from('cron_executions')
+        .insert({
+          job_id: jobId,
+          status: 'running',
+          triggered_by: triggeredBy,
+          started_at: new Date().toISOString()
+        })
+        .select('id')
+        .single()
+
+      executionId = execution?.id || null
     }
 
     // Calculate the cutoff date (30 days ago)
@@ -60,26 +99,48 @@ export async function GET(request: NextRequest) {
       .lt('last_seen', cutoffISO)
 
     if (error) {
-      console.error('Error purging instances:', error)
-      return NextResponse.json({
-        error: 'Failed to purge instances',
-        details: error.message
-      }, { status: 500 })
+      throw new Error(`Failed to purge instances: ${error.message}`)
     }
 
+    const duration = Date.now() - startTime
     const result = {
       success: true,
       purged: deletedCount || staleCount || 0,
       cutoffDate: cutoffISO,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      duration_ms: duration
     }
 
     console.log('Instance purge completed:', result)
 
-    // Log to audit if table exists
+    // Update execution record with success
+    if (executionId) {
+      await supabase
+        .from('cron_executions')
+        .update({
+          status: 'success',
+          completed_at: new Date().toISOString(),
+          duration_ms: duration,
+          result: result
+        })
+        .eq('id', executionId)
+    }
+
+    // Update job's last run status
+    if (jobId) {
+      await supabase
+        .from('cron_jobs')
+        .update({
+          last_run: new Date().toISOString(),
+          last_status: 'success'
+        })
+        .eq('id', jobId)
+    }
+
+    // Also log to audit
     try {
       await supabase.from('admin_audit_log').insert({
-        admin_email: 'system-cron',
+        admin_email: triggeredBy,
         action: 'purge_stale_instances',
         details: result
       })
@@ -90,10 +151,38 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result)
 
   } catch (error) {
+    const duration = Date.now() - startTime
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+
     console.error('Cron purge error:', error)
+
+    // Update execution record with failure
+    if (executionId) {
+      await supabase
+        .from('cron_executions')
+        .update({
+          status: 'failed',
+          completed_at: new Date().toISOString(),
+          duration_ms: duration,
+          error: errorMsg
+        })
+        .eq('id', executionId)
+    }
+
+    // Update job's last run status
+    if (jobId) {
+      await supabase
+        .from('cron_jobs')
+        .update({
+          last_run: new Date().toISOString(),
+          last_status: 'failed'
+        })
+        .eq('id', jobId)
+    }
+
     return NextResponse.json({
       error: 'Purge failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: errorMsg
     }, { status: 500 })
   }
 }
