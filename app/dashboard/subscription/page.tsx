@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import UpgradeModal from '@/components/UpgradeModal'
 
 interface PaymentHistoryItem {
   id: string
@@ -37,6 +38,7 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const fetchSubscription = useCallback(async () => {
     try {
@@ -240,12 +242,12 @@ export default function SubscriptionPage() {
         <div className="mt-6 flex flex-wrap gap-4">
           {/* Renew Button */}
           {subscription?.shouldShowRenew && (
-            <a
-              href="/#pricing"
+            <button
+              onClick={() => setShowUpgradeModal(true)}
               className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-light font-medium transition-colors"
             >
               Renew Subscription
-            </a>
+            </button>
           )}
 
           {/* Refund Button */}
@@ -261,12 +263,12 @@ export default function SubscriptionPage() {
 
           {/* Upgrade Button for Free Users */}
           {subscription?.plan === 'free' && (
-            <a
-              href="/#pricing"
+            <button
+              onClick={() => setShowUpgradeModal(true)}
               className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-light font-medium transition-colors"
             >
               Upgrade to Pro
-            </a>
+            </button>
           )}
         </div>
 
@@ -336,12 +338,12 @@ export default function SubscriptionPage() {
             </svg>
             <p className="text-dark-text-muted">No payment history found</p>
             {subscription?.plan === 'free' && (
-              <a
-                href="/#pricing"
+              <button
+                onClick={() => setShowUpgradeModal(true)}
                 className="inline-block mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light text-sm font-medium"
               >
                 Upgrade to Pro
-              </a>
+              </button>
             )}
           </div>
         )}
@@ -368,6 +370,12 @@ export default function SubscriptionPage() {
           </div>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+      />
     </div>
   )
 }

@@ -18,6 +18,13 @@ interface UpgradeModalProps {
 }
 
 type Step = 'info' | 'checkout'
+type BillingPlan = 'monthly' | 'annual' | 'lifetime'
+
+const PLAN_PRICES: Record<BillingPlan, { amount: number; label: string; description: string }> = {
+  monthly: { amount: 699, label: '$6.99/mo', description: 'Billed monthly' },
+  annual: { amount: 5900, label: '$59/yr', description: 'Save 30% vs monthly' },
+  lifetime: { amount: 9900, label: '$99', description: 'One-time payment, forever' }
+}
 
 export default function UpgradeModal({ isOpen, onClose, userEmail, trigger }: UpgradeModalProps) {
   const [step, setStep] = useState<Step>('info')
@@ -27,6 +34,7 @@ export default function UpgradeModal({ isOpen, onClose, userEmail, trigger }: Up
   const [loading, setLoading] = useState(false)
   const [alreadyOwned, setAlreadyOwned] = useState(false)
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [selectedPlan, setSelectedPlan] = useState<BillingPlan>('annual')
   const currentSessionRef = useRef<string | null>(null)
 
   // Reset when modal closes
@@ -39,6 +47,7 @@ export default function UpgradeModal({ isOpen, onClose, userEmail, trigger }: Up
       setLoading(false)
       setAlreadyOwned(false)
       setResendStatus('idle')
+      setSelectedPlan('annual')
       currentSessionRef.current = null
     } else if (userEmail && !email) {
       setEmail(userEmail)
@@ -69,16 +78,16 @@ export default function UpgradeModal({ isOpen, onClose, userEmail, trigger }: Up
       }
 
       // Create checkout session
-      const sessionId = `${email}-pro-${Date.now()}`
+      const sessionId = `${email}-${selectedPlan}-${Date.now()}`
       currentSessionRef.current = sessionId
 
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan: 'pro',
+          plan: selectedPlan,
           email,
-          amount: 5900
+          amount: PLAN_PRICES[selectedPlan].amount
         }),
       })
 
@@ -239,14 +248,41 @@ export default function UpgradeModal({ isOpen, onClose, userEmail, trigger }: Up
                   </div>
                 )}
 
-                {/* Price */}
-                <div className="text-center">
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-white">$59</span>
-                    <span className="text-gray-400">/year</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">Annual subscription, cancel anytime</p>
+                {/* Plan Selector */}
+                <div className="grid grid-cols-3 gap-2">
+                  {(['monthly', 'annual', 'lifetime'] as BillingPlan[]).map((plan) => (
+                    <button
+                      key={plan}
+                      type="button"
+                      onClick={() => setSelectedPlan(plan)}
+                      className={`relative p-3 rounded-lg border-2 transition-all ${
+                        selectedPlan === plan
+                          ? 'border-primary bg-primary/10'
+                          : 'border-[#333] bg-[#252525] hover:border-[#444]'
+                      }`}
+                    >
+                      {plan === 'annual' && (
+                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-primary text-white text-[10px] font-bold rounded">
+                          POPULAR
+                        </span>
+                      )}
+                      {plan === 'lifetime' && (
+                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded">
+                          BEST VALUE
+                        </span>
+                      )}
+                      <div className="text-center">
+                        <div className={`text-lg font-bold ${selectedPlan === plan ? 'text-primary' : 'text-white'}`}>
+                          {plan === 'monthly' && '$6.99'}
+                          {plan === 'annual' && '$59'}
+                          {plan === 'lifetime' && '$99'}
+                        </div>
+                        <div className="text-xs text-gray-400 capitalize">{plan}</div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
+                <p className="text-xs text-gray-500 text-center">{PLAN_PRICES[selectedPlan].description}</p>
 
                 {/* Features */}
                 <div className="bg-[#252525] rounded-xl p-4 space-y-3">

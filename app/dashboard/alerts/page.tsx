@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useContext } from 'react'
 import { AuthContext } from '../auth-context'
-import Link from 'next/link'
+import UpgradeModal from '@/components/UpgradeModal'
 
 interface AlertSettings {
   notifyWorkerOffline: boolean
@@ -37,6 +37,7 @@ export default function AlertsPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
   const [testingEmail, setTestingEmail] = useState(false)
   const [isPro, setIsPro] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   useEffect(() => {
     fetchSettings()
@@ -163,13 +164,19 @@ export default function AlertsPage() {
             with browser and email notifications.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/#pricing"
+            <button
+              onClick={() => setShowUpgradeModal(true)}
               className="px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-light transition shadow-glow"
             >
-              View Pro Plans
-            </Link>
+              Upgrade to Pro
+            </button>
           </div>
+
+          {/* Upgrade Modal */}
+          <UpgradeModal
+            isOpen={showUpgradeModal}
+            onClose={() => setShowUpgradeModal(false)}
+          />
         </div>
 
         {/* Preview of features */}
