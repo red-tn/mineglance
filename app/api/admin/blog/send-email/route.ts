@@ -311,10 +311,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Build query for subscribers
+    // Use neq(blog_email_opt_in, false) to include NULL values as opted-in (default true)
     let query = supabase
       .from('users')
       .select('id, email, plan')
-      .eq('blog_email_opt_in', true)
+      .neq('blog_email_opt_in', false)
       .eq('email_verified', true)
 
     // Filter by plan
@@ -393,18 +394,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Get counts for free and pro users who are opted in
-    const { data: freeCounts } = await supabase
+    // Use neq(blog_email_opt_in, false) to include NULL values as opted-in (default true)
+    const { count: freeCount } = await supabase
       .from('users')
-      .select('id', { count: 'exact' })
+      .select('*', { count: 'exact', head: true })
       .eq('plan', 'free')
-      .eq('blog_email_opt_in', true)
+      .neq('blog_email_opt_in', false)
       .eq('email_verified', true)
 
-    const { data: proCounts } = await supabase
+    const { count: proCount } = await supabase
       .from('users')
-      .select('id', { count: 'exact' })
+      .select('*', { count: 'exact', head: true })
       .eq('plan', 'pro')
-      .eq('blog_email_opt_in', true)
+      .neq('blog_email_opt_in', false)
       .eq('email_verified', true)
 
     // Get latest extension release
@@ -416,8 +418,8 @@ export async function GET(request: NextRequest) {
       .single()
 
     return NextResponse.json({
-      freeSubscribers: freeCounts?.length || 0,
-      proSubscribers: proCounts?.length || 0,
+      freeSubscribers: freeCount || 0,
+      proSubscribers: proCount || 0,
       latestExtensionVersion: latestRelease?.version || null,
       latestReleaseNotes: latestRelease?.release_notes || null
     })

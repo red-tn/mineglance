@@ -367,11 +367,29 @@ export default function Support() {
               <h3 className="font-semibold text-dark-text mb-4">Dashboard Sections</h3>
               <ul className="space-y-3 text-dark-text-muted">
                 <li><strong className="text-dark-text">Overview</strong> &mdash; License info, quick stats, device count</li>
-                <li><strong className="text-dark-text">Profile</strong> &mdash; Update name, email, phone, address, photo</li>
+                <li><strong className="text-dark-text">Profile</strong> &mdash; Update name, email, phone, address, photo, email preferences</li>
                 <li><strong className="text-dark-text">Devices</strong> &mdash; See active devices, deactivate, buy more activations</li>
+                <li><strong className="text-dark-text">Subscription</strong> &mdash; View billing type (monthly/annual/lifetime), manage plan</li>
+                <li><strong className="text-dark-text">Wallets</strong> &mdash; Manage synced wallets across all devices</li>
                 <li><strong className="text-dark-text">Alerts</strong> &mdash; Configure browser & email notifications</li>
                 <li><strong className="text-dark-text">Roadmap</strong> &mdash; Submit feature requests, see upcoming features</li>
               </ul>
+            </div>
+
+            <div className="glass-card rounded-xl p-6 border border-dark-border">
+              <h3 className="font-semibold text-dark-text mb-4">Email Preferences</h3>
+              <p className="text-dark-text-muted mb-3">
+                Manage what emails you receive from MineGlance:
+              </p>
+              <ul className="space-y-2 text-dark-text-muted">
+                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Blog updates and mining news (can be disabled)</li>
+                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Extension update announcements</li>
+                <li className="flex items-center gap-2"><span className="text-dark-text-dim">&#10003;</span> Mining alerts (Pro only, configured separately)</li>
+              </ul>
+              <p className="text-dark-text-muted mt-3">
+                Update your preferences in Dashboard &rarr; Profile &rarr; Email Preferences, or click
+                &quot;Unsubscribe&quot; in any newsletter email.
+              </p>
             </div>
           </div>
         </div>

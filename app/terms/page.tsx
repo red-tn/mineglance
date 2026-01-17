@@ -49,9 +49,34 @@ export default function TermsOfService() {
 
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Pro Version</h3>
               <p>
-                The Pro version is an annual subscription ($59/year) that unlocks unlimited wallets,
-                email alerts, cloud sync, mobile app access, and priority support. Your subscription
-                automatically renews each year unless cancelled.
+                The Pro version unlocks unlimited wallets, email alerts, cloud sync, mobile app access,
+                and priority support. Pro is available in three billing options:
+              </p>
+              <ul className="list-disc pl-6 space-y-2 mt-2">
+                <li><strong>Monthly:</strong> $6.99/month, renews automatically</li>
+                <li><strong>Annual:</strong> $59/year (save 30%), renews automatically</li>
+                <li><strong>Lifetime:</strong> $99 one-time payment, never expires</li>
+              </ul>
+              <p className="mt-4">
+                Monthly and annual subscriptions automatically renew unless cancelled before the renewal date.
+                You can cancel at any time from your dashboard.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Email Communications</h2>
+              <p>
+                By creating an account, you agree to receive:
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>Transactional emails:</strong> License delivery, password resets, subscription confirmations</li>
+                <li><strong>Blog newsletter:</strong> Mining tips, product updates, and extension announcements (opt-out available)</li>
+                <li><strong>Alert emails:</strong> Mining alerts if you enable email notifications (Pro only)</li>
+              </ul>
+              <p className="mt-4">
+                You can unsubscribe from the blog newsletter at any time via the unsubscribe link in any email
+                or in your dashboard profile settings. Transactional emails cannot be disabled as they contain
+                important account information.
               </p>
             </section>
 

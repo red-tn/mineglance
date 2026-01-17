@@ -151,6 +151,30 @@ export default function PrivacyPolicy() {
             </section>
 
             <section>
+              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Blog Newsletter</h2>
+              <p>
+                When you create a MineGlance account, you are automatically opted into our blog newsletter.
+                This includes:
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>New blog posts about mining tips and industry news</li>
+                <li>Extension update announcements with release notes</li>
+                <li>Product updates and feature announcements</li>
+              </ul>
+              <p className="mt-4">
+                <strong>You can opt out at any time</strong> by:
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>Clicking the &quot;Unsubscribe&quot; link in any newsletter email</li>
+                <li>Updating your preferences in Dashboard &rarr; Profile &rarr; Email Preferences</li>
+              </ul>
+              <p className="mt-4">
+                We typically send 1-2 emails per month. We will never share your email with third parties
+                for marketing purposes.
+              </p>
+            </section>
+
+            <section>
               <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Third-Party Services</h2>
               <p>MineGlance interacts with the following third-party services:</p>
               <ul className="list-disc pl-6 space-y-2">

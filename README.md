@@ -4,7 +4,7 @@ Mining profitability dashboard for cryptocurrency miners. Monitor your hashrate,
 
 ## Features
 
-- Real-time mining stats from 10+ popular pools
+- Real-time mining stats from 12+ popular pools
 - Multi-coin support (BTC, ETC, RVN, ERGO, KAS, FIRO, and more)
 - Net profit calculations with electricity costs
 - Chrome extension for quick popup monitoring
@@ -12,6 +12,8 @@ Mining profitability dashboard for cryptocurrency miners. Monitor your hashrate,
 - User dashboard for Pro subscribers
 - Blog with mining news and guides
 - Email alerts for offline miners
+- Blog newsletter with opt-in/opt-out preferences
+- Flexible billing options (monthly, annual, lifetime)
 
 ## Supported Pools
 
@@ -29,8 +31,11 @@ Mining profitability dashboard for cryptocurrency miners. Monitor your hashrate,
 
 ## Pricing
 
-- **Free** - 2 wallets, popular pools, basic features
-- **Pro ($59/year)** - Unlimited wallets, all pools, cloud sync, email alerts
+- **Free** - 1 wallet, all pools, all coins, basic features
+- **Pro** - Unlimited wallets, email alerts, cloud sync, mobile app
+  - Monthly: $6.99/month
+  - Annual: $59/year (save 30%)
+  - Lifetime: $99 one-time
 
 ## Tech Stack
 
@@ -43,6 +48,14 @@ Mining profitability dashboard for cryptocurrency miners. Monitor your hashrate,
 - Chrome Extension (Manifest V3)
 - React Native / Expo (Mobile)
 
+## Recent Updates
+
+### January 2025
+- Blog newsletter system with email preferences
+- Flexible billing tiers (monthly/annual/lifetime)
+- Security hardening (bcrypt password hashing, rate limiting)
+- One-click unsubscribe from blog emails
+
 ## Development
 
 ```bash
@@ -53,3 +66,11 @@ npm run dev
 ## Deployment
 
 Website and API deployed on Vercel. Extension published on Chrome Web Store. Mobile app on App Store.
+
+## Security
+
+- bcrypt password hashing with silent migration
+- Rate limiting on sensitive endpoints
+- Admin session token verification
+- Webhook idempotency checks
+- HTML escaping for email content
