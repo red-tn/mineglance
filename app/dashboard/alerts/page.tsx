@@ -171,16 +171,10 @@ export default function AlertsPage() {
               Upgrade to Pro
             </button>
           </div>
-
-          {/* Upgrade Modal */}
-          <UpgradeModal
-            isOpen={showUpgradeModal}
-            onClose={() => setShowUpgradeModal(false)}
-          />
         </div>
 
-        {/* Preview of features */}
-        <div className="glass-card rounded-xl p-6 border border-dark-border opacity-60">
+        {/* Pro Alert Features */}
+        <div className="glass-card rounded-xl p-6 border border-dark-border">
           <h3 className="text-lg font-semibold text-dark-text mb-4">Pro Alert Features</h3>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex items-start gap-3">
@@ -221,6 +215,12 @@ export default function AlertsPage() {
             </div>
           </div>
         </div>
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          isOpen={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+        />
       </div>
     )
   }

@@ -249,25 +249,25 @@ export default function UpgradeModal({ isOpen, onClose, userEmail, trigger }: Up
                 )}
 
                 {/* Plan Selector */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2 mt-2">
                   {(['monthly', 'annual', 'lifetime'] as BillingPlan[]).map((plan) => (
                     <button
                       key={plan}
                       type="button"
                       onClick={() => setSelectedPlan(plan)}
-                      className={`relative p-3 rounded-lg border-2 transition-all ${
+                      className={`relative pt-4 pb-3 px-2 rounded-lg border-2 transition-all ${
                         selectedPlan === plan
                           ? 'border-primary bg-primary/10'
                           : 'border-[#333] bg-[#252525] hover:border-[#444]'
                       }`}
                     >
                       {plan === 'annual' && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-primary text-white text-[10px] font-bold rounded">
+                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-primary text-white text-[10px] font-bold rounded whitespace-nowrap">
                           POPULAR
                         </span>
                       )}
                       {plan === 'lifetime' && (
-                        <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded">
+                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-amber-500 text-white text-[9px] font-bold rounded whitespace-nowrap">
                           BEST VALUE
                         </span>
                       )}
