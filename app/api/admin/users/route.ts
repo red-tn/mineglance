@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || 'all'
     const plan = searchParams.get('plan') || 'all'
+    const billingType = searchParams.get('billingType') || 'all'
     const sortBy = searchParams.get('sortBy') || 'created_at'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
     const userId = searchParams.get('userId') // For fetching single user with payment history
@@ -81,6 +82,7 @@ export async function GET(request: NextRequest) {
           ...user,
           key: user.license_key,
           status: user.is_revoked ? 'revoked' : 'active',
+          billingType: user.billing_type,
           installCount: installCount || 0,
           walletCount: walletCount || 0,
           rigCount: rigCount || 0,
@@ -109,6 +111,14 @@ export async function GET(request: NextRequest) {
       query = query.eq('plan', plan)
     }
 
+    if (billingType !== 'all') {
+      if (billingType === 'none') {
+        query = query.is('billing_type', null)
+      } else {
+        query = query.eq('billing_type', billingType)
+      }
+    }
+
     // Get total count
     const { count } = await query
 
@@ -134,6 +144,14 @@ export async function GET(request: NextRequest) {
 
     if (plan !== 'all') {
       dataQuery = dataQuery.eq('plan', plan)
+    }
+
+    if (billingType !== 'all') {
+      if (billingType === 'none') {
+        dataQuery = dataQuery.is('billing_type', null)
+      } else {
+        dataQuery = dataQuery.eq('billing_type', billingType)
+      }
     }
 
     const { data: licenses, error } = await dataQuery
@@ -169,6 +187,7 @@ export async function GET(request: NextRequest) {
           ...license,
           key: license.license_key,
           status: license.is_revoked ? 'revoked' : 'active',
+          billingType: license.billing_type,
           installCount: installCount || 0,
           walletCount: walletCount || 0,
           rigCount: rigCount || 0

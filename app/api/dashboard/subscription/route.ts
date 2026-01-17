@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     // Get user data
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('id, email, plan, license_key, amount_paid, subscription_start_date, subscription_end_date, stripe_payment_id, created_at, is_revoked')
+      .select('id, email, plan, billing_type, license_key, amount_paid, subscription_start_date, subscription_end_date, stripe_payment_id, created_at, is_revoked')
       .eq('id', userId)
       .single()
 
@@ -68,12 +68,14 @@ export async function GET(request: NextRequest) {
     // Check if eligible for refund (within 30 days of subscription start)
     const canRequestRefund = user.plan === 'pro' && daysSinceSubscription !== null && daysSinceSubscription <= 30 && !user.is_revoked
 
-    // Check if should show renew button (within 30 days of expiry)
-    const shouldShowRenew = user.plan === 'pro' && daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0
+    // Check if should show renew button (within 30 days of expiry, not lifetime)
+    const isLifetime = user.billing_type === 'lifetime'
+    const shouldShowRenew = user.plan === 'pro' && !isLifetime && daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0
 
     return NextResponse.json({
       subscription: {
         plan: user.plan,
+        billingType: user.billing_type,
         licenseKey: user.license_key,
         amountPaid: user.amount_paid,
         subscriptionStartDate: user.subscription_start_date,
@@ -84,7 +86,8 @@ export async function GET(request: NextRequest) {
         daysSinceSubscription,
         daysUntilExpiry,
         canRequestRefund,
-        shouldShowRenew
+        shouldShowRenew,
+        isLifetime
       },
       paymentHistory: paymentHistory || []
     })

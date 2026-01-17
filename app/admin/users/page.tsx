@@ -19,6 +19,7 @@ interface License {
   key: string
   email: string
   plan: 'free' | 'pro'
+  billingType?: 'monthly' | 'annual' | 'lifetime' | null
   status: 'active' | 'revoked' | 'expired'
   created_at: string
   subscription_start_date?: string
@@ -44,6 +45,7 @@ export default function UsersPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [planFilter, setPlanFilter] = useState('all')
+  const [billingTypeFilter, setBillingTypeFilter] = useState('all')
   const [sortBy, setSortBy] = useState('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [selectedUser, setSelectedUser] = useState<License | null>(null)
@@ -62,6 +64,7 @@ export default function UsersPage() {
         search,
         status: statusFilter,
         plan: planFilter,
+        billingType: billingTypeFilter,
         sortBy,
         sortOrder
       })
@@ -79,7 +82,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, statusFilter, planFilter, sortBy, sortOrder])
+  }, [page, search, statusFilter, planFilter, billingTypeFilter, sortBy, sortOrder])
 
   const fetchUserDetails = useCallback(async (userId: string) => {
     setUserLoading(true)
@@ -239,6 +242,21 @@ export default function UsersPage() {
     return colors[plan] || 'bg-gray-700 text-gray-200'
   }
 
+  const getBillingTypeBadge = (billingType: string | null | undefined) => {
+    const colors: Record<string, string> = {
+      monthly: 'bg-yellow-700 text-yellow-200',
+      annual: 'bg-blue-700 text-blue-200',
+      lifetime: 'bg-purple-700 text-purple-200'
+    }
+    return colors[billingType || 'annual'] || 'bg-blue-700 text-blue-200'
+  }
+
+  const getBillingTypeLabel = (billingType: string | null | undefined) => {
+    if (billingType === 'monthly') return 'Monthly'
+    if (billingType === 'lifetime') return 'Lifetime'
+    return 'Annual'
+  }
+
   const formatAmount = (amount: number) => {
     const dollars = Math.abs(amount) / 100
     const sign = amount < 0 ? '-' : ''
@@ -307,17 +325,30 @@ export default function UsersPage() {
             >
               <option value="all">All Plans</option>
               <option value="free">Free</option>
-              <option value="pro">Pro ($59)</option>
+              <option value="pro">Pro</option>
             </select>
           </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => { setSearch(''); setStatusFilter('all'); setPlanFilter('all'); setPage(1) }}
-              className="px-4 py-2 text-dark-text hover:text-primary"
+          <div>
+            <label className="block text-sm font-medium text-dark-text mb-1">Billing</label>
+            <select
+              value={billingTypeFilter}
+              onChange={(e) => { setBillingTypeFilter(e.target.value); setPage(1) }}
+              className="w-full px-3 py-2 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary"
             >
-              Clear Filters
-            </button>
+              <option value="all">All Billing</option>
+              <option value="monthly">Monthly</option>
+              <option value="annual">Annual</option>
+              <option value="lifetime">Lifetime</option>
+            </select>
           </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={() => { setSearch(''); setStatusFilter('all'); setPlanFilter('all'); setBillingTypeFilter('all'); setPage(1) }}
+            className="px-4 py-2 text-dark-text hover:text-primary"
+          >
+            Clear Filters
+          </button>
         </div>
       </div>
 
@@ -354,6 +385,7 @@ export default function UsersPage() {
                 >
                   Plan<SortIcon column="plan" />
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Billing</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Installs</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Wallets</th>
@@ -392,6 +424,15 @@ export default function UsersPage() {
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(user.plan)}`}>
                       {user.plan === 'free' ? 'FREE' : 'PRO'}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {user.plan === 'pro' ? (
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getBillingTypeBadge(user.billingType)}`}>
+                        {getBillingTypeLabel(user.billingType)}
+                      </span>
+                    ) : (
+                      <span className="text-dark-text-muted">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(user.status)}`}>
@@ -521,13 +562,25 @@ export default function UsersPage() {
                     <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded break-all">{selectedUser.key || '-'}</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <label className="text-sm font-medium text-dark-text-muted">Plan</label>
                       <p>
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(selectedUser.plan)}`}>
-                          {selectedUser.plan === 'free' ? 'FREE' : 'PRO ($59)'}
+                          {selectedUser.plan === 'free' ? 'FREE' : 'PRO'}
                         </span>
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-dark-text-muted">Billing</label>
+                      <p>
+                        {selectedUser.plan === 'pro' ? (
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getBillingTypeBadge(selectedUser.billingType)}`}>
+                            {getBillingTypeLabel(selectedUser.billingType)}
+                          </span>
+                        ) : (
+                          <span className="text-dark-text-muted">-</span>
+                        )}
                       </p>
                     </div>
                     <div>

@@ -112,11 +112,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const filter = searchParams.get('filter') || 'all'
 
-    // Get all Pro users with subscription dates
+    // Get all Pro users with subscription dates (exclude lifetime - they don't renew)
     let query = supabase
       .from('users')
-      .select('id, email, plan, subscription_start_date, subscription_end_date, renewal_reminder_sent, renewal_ignored, created_at')
+      .select('id, email, plan, billing_type, subscription_start_date, subscription_end_date, renewal_reminder_sent, renewal_ignored, created_at')
       .eq('plan', 'pro')
+      .neq('billing_type', 'lifetime') // Skip lifetime users
       .order('subscription_end_date', { ascending: true, nullsFirst: false })
 
     const { data: users, error } = await query
@@ -165,7 +166,8 @@ export async function GET(request: NextRequest) {
       return {
         ...user,
         daysUntilExpiry,
-        status
+        status,
+        billingType: user.billing_type
       }
     })
 

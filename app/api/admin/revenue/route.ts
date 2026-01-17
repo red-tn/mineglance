@@ -77,6 +77,15 @@ export async function GET(request: NextRequest) {
     const freeCount = users.filter(u => u.plan === 'free').length
     const proRevenue = totalRevenue
 
+    // Calculate by billing type
+    const monthlyUsers = paidUsers.filter(u => u.billing_type === 'monthly')
+    const annualUsers = paidUsers.filter(u => u.billing_type === 'annual' || !u.billing_type) // Default to annual
+    const lifetimeUsers = paidUsers.filter(u => u.billing_type === 'lifetime')
+
+    const monthlyRevenue = monthlyUsers.reduce((sum, u) => sum + getRevenue(u), 0)
+    const annualRevenue = annualUsers.reduce((sum, u) => sum + getRevenue(u), 0)
+    const lifetimeRevenue = lifetimeUsers.reduce((sum, u) => sum + getRevenue(u), 0)
+
     // Generate daily chart data
     const chartData: Array<{ date: string; revenue: number; sales: number }> = []
     for (let i = periodDays - 1; i >= 0; i--) {
@@ -160,6 +169,11 @@ export async function GET(request: NextRequest) {
         pro: { count: proCount, revenue: proRevenue },
         free: { count: freeCount, revenue: 0 }
       },
+      byBillingType: {
+        monthly: { count: monthlyUsers.length, revenue: monthlyRevenue },
+        annual: { count: annualUsers.length, revenue: annualRevenue },
+        lifetime: { count: lifetimeUsers.length, revenue: lifetimeRevenue }
+      },
       chartData,
       recentTransactions: transactions
     })
@@ -176,6 +190,11 @@ export async function GET(request: NextRequest) {
         dailyAvgRevenue: 0
       },
       byPlan: { pro: { count: 0, revenue: 0 }, free: { count: 0, revenue: 0 } },
+      byBillingType: {
+        monthly: { count: 0, revenue: 0 },
+        annual: { count: 0, revenue: 0 },
+        lifetime: { count: 0, revenue: 0 }
+      },
       chartData: [],
       recentTransactions: []
     })

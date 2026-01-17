@@ -157,6 +157,7 @@ async function handleNewPurchase(supabase: any, data: {
           stripe_customer_id: data.customerId,
           stripe_payment_id: data.paymentId,
           amount_paid: data.amount,
+          billing_type: billingType,
           subscription_start_date: now,
           subscription_end_date: subscriptionEndDate,
           updated_at: now
@@ -210,6 +211,7 @@ async function handleNewPurchase(supabase: any, data: {
           .from('users')
           .update({
             subscription_end_date: currentEnd.toISOString(),
+            billing_type: billingType,
             updated_at: now
           })
           .eq('id', existing.id)
@@ -219,6 +221,7 @@ async function handleNewPurchase(supabase: any, data: {
           .from('users')
           .update({
             subscription_end_date: null,
+            billing_type: billingType,
             updated_at: now
           })
           .eq('id', existing.id)
@@ -238,6 +241,7 @@ async function handleNewPurchase(supabase: any, data: {
     amount_paid: data.amount,
     currency: data.currency,
     plan: 'pro',
+    billing_type: billingType,
     subscription_start_date: now,
     subscription_end_date: subscriptionEndDate,
     blog_display_name: generateDisplayName()

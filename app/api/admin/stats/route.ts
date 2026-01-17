@@ -151,10 +151,19 @@ export async function GET(request: NextRequest) {
     const proUsers = proEmails.size
     const freeUsers = freeEmails.size
 
+    // Count by billing type
+    const proLicenses = activeLicenses.filter(l => l.plan === 'pro')
+    const monthlyUsers = proLicenses.filter(l => l.billing_type === 'monthly').length
+    const annualUsers = proLicenses.filter(l => l.billing_type === 'annual' || !l.billing_type).length // Default to annual
+    const lifetimeUsers = proLicenses.filter(l => l.billing_type === 'lifetime').length
+
     const stats = {
       totalInstalls: (installations || []).length,
       proUsers: proUsers,
       freeUsers: freeUsers,
+      monthlyUsers,
+      annualUsers,
+      lifetimeUsers,
       revenue30d,
       activeUsers: (installations || []).filter(i => {
         const lastSeen = new Date(i.last_seen)
@@ -179,6 +188,9 @@ export async function GET(request: NextRequest) {
         totalInstalls: 0,
         proUsers: 0,
         freeUsers: 0,
+        monthlyUsers: 0,
+        annualUsers: 0,
+        lifetimeUsers: 0,
         revenue30d: 0,
         activeUsers: 0,
         alertsSent24h: 0,

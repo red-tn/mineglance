@@ -12,6 +12,7 @@ interface User {
   subscriptionEndDate: string | null
   renewalReminderSent: boolean
   renewalIgnored: boolean
+  billingType: 'monthly' | 'annual' | 'lifetime' | null
 }
 
 interface AuthContextType {

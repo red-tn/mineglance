@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       subscription_end_date: string | null
       renewal_reminder_sent: boolean
       renewal_ignored: boolean
+      billing_type: 'monthly' | 'annual' | 'lifetime' | null
     }
 
     // Check if user is still valid
@@ -63,7 +64,8 @@ export async function POST(request: NextRequest) {
         licenseKey: user.license_key,
         subscriptionEndDate: user.subscription_end_date,
         renewalReminderSent: user.renewal_reminder_sent || false,
-        renewalIgnored: user.renewal_ignored || false
+        renewalIgnored: user.renewal_ignored || false,
+        billingType: user.billing_type
       }
     })
 

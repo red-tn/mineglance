@@ -5,6 +5,7 @@ import { useAuth } from './auth-context'
 import Link from 'next/link'
 import Image from 'next/image'
 import UpgradeModal from '@/components/UpgradeModal'
+import ExtensionDownloadModal from '@/components/ExtensionDownloadModal'
 
 interface DashboardStats {
   activeDevices: number
@@ -28,6 +29,7 @@ export default function DashboardOverview() {
   const [loading, setLoading] = useState(true)
   const [showLicenseKey, setShowLicenseKey] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [renewalIgnored, setRenewalIgnored] = useState(false)
 
@@ -36,7 +38,9 @@ export default function DashboardOverview() {
     ? Math.ceil((new Date(user.subscriptionEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null
 
-  const showRenewalAlert = user?.plan === 'pro' && daysUntilExpiry !== null && daysUntilExpiry <= 30 && !renewalIgnored && !user?.renewalIgnored
+  // Don't show renewal alert for lifetime users
+  const isLifetime = user?.billingType === 'lifetime'
+  const showRenewalAlert = user?.plan === 'pro' && !isLifetime && daysUntilExpiry !== null && daysUntilExpiry <= 30 && !renewalIgnored && !user?.renewalIgnored
 
   useEffect(() => {
     loadStats()
@@ -143,7 +147,7 @@ export default function DashboardOverview() {
               MineGlance member since {new Date(stats?.memberSince || '').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
             </p>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
               user?.plan === 'pro' || user?.plan === 'bundle'
                 ? 'bg-primary text-white'
@@ -151,6 +155,17 @@ export default function DashboardOverview() {
             }`}>
               {user?.plan === 'bundle' ? 'PRO+' : user?.plan === 'pro' ? 'PRO' : 'FREE'}
             </span>
+            {user?.plan === 'pro' && user?.billingType && (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                user.billingType === 'lifetime'
+                  ? 'bg-purple-500/20 text-purple-300'
+                  : user.billingType === 'annual'
+                  ? 'bg-blue-500/20 text-blue-300'
+                  : 'bg-yellow-500/20 text-yellow-300'
+              }`}>
+                {user.billingType === 'lifetime' ? 'Lifetime' : user.billingType === 'annual' ? 'Annual' : 'Monthly'}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -410,11 +425,9 @@ export default function DashboardOverview() {
         <h2 className="text-lg font-semibold text-dark-text mb-4">Download MineGlance</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           {/* Chrome Extension */}
-          <a
-            href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group"
+          <button
+            onClick={() => setShowDownloadModal(true)}
+            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left"
           >
             <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
               <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
@@ -425,7 +438,7 @@ export default function DashboardOverview() {
               <p className="font-medium text-dark-text group-hover:text-primary transition-colors">Chrome Extension</p>
               <p className="text-xs text-dark-text-muted">Also works on Edge, Brave</p>
             </div>
-          </a>
+          </button>
 
           {/* iOS App - Coming Soon */}
           <div className="flex items-center gap-4 p-4 bg-dark-card-hover/50 rounded-lg opacity-60 cursor-not-allowed">
@@ -509,6 +522,12 @@ export default function DashboardOverview() {
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         userEmail={user?.email}
+      />
+
+      {/* Extension Download Modal */}
+      <ExtensionDownloadModal
+        isOpen={showDownloadModal}
+        onClose={() => setShowDownloadModal(false)}
       />
     </div>
   )

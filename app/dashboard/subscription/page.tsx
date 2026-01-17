@@ -16,6 +16,7 @@ interface PaymentHistoryItem {
 
 interface SubscriptionData {
   plan: 'free' | 'pro'
+  billingType?: 'monthly' | 'annual' | 'lifetime' | null
   licenseKey?: string
   amountPaid?: number
   subscriptionStartDate?: string
@@ -27,6 +28,7 @@ interface SubscriptionData {
   daysUntilExpiry?: number
   canRequestRefund: boolean
   shouldShowRenew: boolean
+  isLifetime?: boolean
 }
 
 export default function SubscriptionPage() {
@@ -156,11 +158,22 @@ export default function SubscriptionPage() {
           {/* Plan */}
           <div className="bg-dark-card-hover rounded-lg p-4">
             <p className="text-sm text-dark-text-muted mb-1">Current Plan</p>
-            <p className="text-2xl font-bold">
+            <div className="flex items-center gap-2">
               <span className={`px-3 py-1 rounded-full text-sm ${subscription?.plan === 'pro' ? 'bg-green-700 text-green-200' : 'bg-gray-700 text-gray-200'}`}>
                 {subscription?.plan === 'pro' ? 'PRO' : 'FREE'}
               </span>
-            </p>
+              {subscription?.plan === 'pro' && subscription?.billingType && (
+                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                  subscription.billingType === 'lifetime'
+                    ? 'bg-purple-700 text-purple-200'
+                    : subscription.billingType === 'annual'
+                    ? 'bg-blue-700 text-blue-200'
+                    : 'bg-yellow-700 text-yellow-200'
+                }`}>
+                  {subscription.billingType === 'lifetime' ? 'Lifetime' : subscription.billingType === 'annual' ? 'Annual' : 'Monthly'}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Amount Paid */}
@@ -187,16 +200,29 @@ export default function SubscriptionPage() {
           )}
 
           {/* Expiry Date */}
-          {subscription?.subscriptionEndDate && (
+          {subscription?.plan === 'pro' && (
             <div className="bg-dark-card-hover rounded-lg p-4">
-              <p className="text-sm text-dark-text-muted mb-1">Expires</p>
-              <p className="text-lg font-semibold text-dark-text">
-                {formatDate(subscription.subscriptionEndDate)}
+              <p className="text-sm text-dark-text-muted mb-1">
+                {subscription?.isLifetime ? 'Status' : 'Expires'}
               </p>
-              {subscription.daysUntilExpiry !== null && subscription.daysUntilExpiry !== undefined && (
-                <p className={`text-xs ${(subscription.daysUntilExpiry ?? 0) <= 30 ? 'text-yellow-400' : 'text-dark-text-dim'}`}>
-                  {(subscription.daysUntilExpiry ?? 0) > 0 ? `${subscription.daysUntilExpiry} days remaining` : 'Expired'}
-                </p>
+              {subscription?.isLifetime ? (
+                <>
+                  <p className="text-lg font-semibold text-purple-400">Never Expires</p>
+                  <p className="text-xs text-dark-text-dim">Lifetime access</p>
+                </>
+              ) : subscription?.subscriptionEndDate ? (
+                <>
+                  <p className="text-lg font-semibold text-dark-text">
+                    {formatDate(subscription.subscriptionEndDate)}
+                  </p>
+                  {subscription.daysUntilExpiry !== null && subscription.daysUntilExpiry !== undefined && (
+                    <p className={`text-xs ${(subscription.daysUntilExpiry ?? 0) <= 30 ? 'text-yellow-400' : 'text-dark-text-dim'}`}>
+                      {(subscription.daysUntilExpiry ?? 0) > 0 ? `${subscription.daysUntilExpiry} days remaining` : 'Expired'}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-lg font-semibold text-dark-text-muted">-</p>
               )}
             </div>
           )}
@@ -244,12 +270,18 @@ export default function SubscriptionPage() {
           )}
         </div>
 
-        {/* Refund Policy Note */}
+        {/* Billing Info Note */}
         {subscription?.plan === 'pro' && (
           <p className="mt-4 text-sm text-dark-text-dim">
-            {subscription.canRequestRefund
-              ? `You have ${30 - (subscription.daysSinceSubscription || 0)} days remaining to request a refund.`
-              : 'The 30-day refund period has ended for this subscription.'}
+            {subscription.isLifetime ? (
+              'You have lifetime access - your subscription never expires.'
+            ) : subscription.canRequestRefund ? (
+              `You have ${30 - (subscription.daysSinceSubscription || 0)} days remaining to request a refund.`
+            ) : subscription.billingType === 'monthly' ? (
+              'Your subscription renews monthly at $6.99.'
+            ) : (
+              'The 30-day refund period has ended. Your subscription renews yearly at $59.'
+            )}
           </p>
         )}
       </div>
