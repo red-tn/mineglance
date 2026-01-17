@@ -21,7 +21,7 @@ export default function Pricing() {
         'All 12+ pools supported',
         'All coins supported',
         'Net profit calculation',
-        'Chrome extension + Mobile app (coming soon)'
+        'Browser extension (Chrome, Edge, Brave)'
       ],
       cta: 'Install Free',
       href: 'https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl',
@@ -157,45 +157,39 @@ export default function Pricing() {
           {/* Download Section */}
           <div className="mt-12 sm:mt-16">
             <h3 className="text-center text-lg sm:text-xl font-semibold text-dark-text mb-6">
-              Available On
+              Works With All Major Browsers
             </h3>
             <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-              {/* Chrome Extension */}
-              <a
-                href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card hover:border-primary transition-all group"
-              >
+              {/* Chrome */}
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card">
                 <svg className="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29zm13.342 2.166a5.446 5.446 0 0 1 1.45 7.09l.002.001h-.002l-3.952 6.848a12.014 12.014 0 0 0 9.26-5.382H17.31a5.458 5.458 0 0 1-2.037-8.557zm-2.818 2.817a3.272 3.272 0 1 0 0 6.545 3.272 3.272 0 0 0 0-6.545z"/>
                 </svg>
-                <div className="text-left">
-                  <p className="text-xs text-dark-text-muted">Get it on</p>
-                  <p className="font-semibold text-dark-text group-hover:text-primary transition-colors">Chrome Web Store</p>
-                </div>
-              </a>
-
-              {/* iOS App Store - Coming Soon */}
-              <div className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card opacity-60 cursor-not-allowed">
-                <svg className="w-8 h-8 text-dark-text-muted" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-                </svg>
-                <div className="text-left">
-                  <p className="text-xs text-dark-text-dim">Coming Soon</p>
-                  <p className="font-semibold text-dark-text-muted">App Store</p>
-                </div>
+                <span className="font-semibold text-dark-text">Chrome</span>
               </div>
 
-              {/* Android - Coming Soon */}
-              <div className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card opacity-60 cursor-not-allowed">
-                <svg className="w-8 h-8 text-dark-text-muted" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.523 15.341a.5.5 0 0 0 0-.682l-.932-.937a.497.497 0 0 0-.34-.141.503.503 0 0 0-.34.141l-.93.937a.5.5 0 0 0 0 .682l.93.937a.5.5 0 0 0 .68 0zM6.75 15.341a.5.5 0 0 1 0-.682l.932-.937a.5.5 0 0 1 .68 0l.93.937a.5.5 0 0 1 0 .682l-.93.937a.5.5 0 0 1-.68 0zM3.016 10.73l1.89-3.31a.75.75 0 0 1 1.3.74l-1.5 2.64h14.588l-1.5-2.64a.75.75 0 0 1 1.3-.74l1.89 3.31a5.25 5.25 0 0 1-2.984 7.52v2.5a.75.75 0 0 1-1.5 0v-2.08a5.234 5.234 0 0 1-1.25.15h-6.5c-.43 0-.85-.05-1.25-.15v2.08a.75.75 0 0 1-1.5 0v-2.5a5.25 5.25 0 0 1-2.984-7.52zM12 3.75a.75.75 0 0 1 .75.75v1.75a.75.75 0 0 1-1.5 0V4.5a.75.75 0 0 1 .75-.75z"/>
+              {/* Edge */}
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card">
+                <svg className="w-8 h-8 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21.86 17.86q.14 0 .25.12.1.13.1.25t-.11.33l-.32.46-.43.53-.44.5q-.21.25-.38.42l-.22.23q-.58.53-1.34 1.04-.76.51-1.6.91-.86.4-1.74.64t-1.67.24q-.9 0-1.69-.28-.8-.28-1.48-.78-.68-.5-1.22-1.17-.53-.66-.92-1.44-.38-.77-.58-1.6-.2-.83-.2-1.67 0-1 .32-1.96.33-.97.87-1.8.14.95.55 1.77.41.81 1.02 1.49.6.68 1.38 1.21.78.54 1.64.9.86.35 1.79.54.92.18 1.85.18h.22q.22 0 .43-.02zM9.8 7.28q.15-.94.58-1.8.44-.85 1.1-1.55.66-.7 1.49-1.22.84-.52 1.76-.8.93-.28 1.89-.28 1.24 0 2.31.47 1.07.48 1.85 1.33.79.85 1.24 2.01.44 1.17.44 2.53 0 .27-.02.53-.01.27-.05.53-.18 1.43-.77 2.64-.6 1.21-1.53 2.12-.94.9-2.15 1.46-1.22.55-2.62.63-.23 0-.44.02-.22.01-.43.01-.97 0-1.93-.22-.95-.21-1.83-.64-.87-.43-1.61-1.08-.74-.64-1.25-1.51-.5-.87-.74-1.94-.24-1.06-.24-2.33 0-.66.08-1.28.08-.63.22-1.24-.88.69-1.58 1.62-.7.94-1.14 2.02-.45 1.09-.6 2.24-.16 1.15-.16 2.28 0 .9.14 1.75.15.85.43 1.65.27.8.67 1.52.4.73.9 1.36.51.64 1.1 1.16.59.51 1.26.9.68.39 1.4.63.72.24 1.49.34-.87.14-1.73.04-.86-.09-1.67-.38-.82-.28-1.56-.73-.74-.44-1.37-1.03-.63-.6-1.13-1.33-.5-.73-.83-1.57-.34-.84-.5-1.75-.17-.91-.17-1.85 0-1.72.53-3.25.53-1.52 1.48-2.76.95-1.23 2.25-2.11 1.3-.87 2.82-1.26z"/>
                 </svg>
-                <div className="text-left">
-                  <p className="text-xs text-dark-text-dim">Coming Soon</p>
-                  <p className="font-semibold text-dark-text-muted">Google Play</p>
-                </div>
+                <span className="font-semibold text-dark-text">Edge</span>
+              </div>
+
+              {/* Brave */}
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card">
+                <svg className="w-8 h-8 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0L3 4.5v6.75c0 5.32 3.83 10.29 9 11.25 5.17-.96 9-5.93 9-11.25V4.5L12 0zm0 2.18l7.5 3.75v6.32c0 4.45-3.21 8.61-7.5 9.57-4.29-.96-7.5-5.12-7.5-9.57V5.93L12 2.18zm3.22 5.03l-1.06.53-.53-.27-.53.27-1.06-.53-2.13 1.06v1.6l1.07.53v1.6l1.06.53 1.06-.53v-1.07l.53-.26.53.26v1.07l1.06.53 1.07-.53v-1.6l1.06-.53v-1.6l-2.13-1.06z"/>
+                </svg>
+                <span className="font-semibold text-dark-text">Brave</span>
+              </div>
+
+              {/* Opera */}
+              <div className="flex items-center gap-3 px-5 py-3 rounded-xl glass-card">
+                <svg className="w-8 h-8 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8.14 4.18c-1.32 1.56-2.16 3.9-2.2 6.52v2.6c.04 2.62.88 4.96 2.2 6.52 1.56 1.84 3.54 2.82 5.66 2.82 1.34 0 2.6-.4 3.7-1.14-2.02 1.3-4.32 2-6.74 2-6.76 0-12.24-5.38-12.24-12S4 .5 10.76.5c2.42 0 4.72.7 6.74 2-1.1-.74-2.36-1.14-3.7-1.14-2.12 0-4.1.98-5.66 2.82zm7.72 0C17.18 5.74 18 8.08 18 10.7v2.6c0 2.62-.82 4.96-2.14 6.52-1.56 1.84-3.54 2.82-5.66 2.82-2.12 0-4.1-.98-5.66-2.82 1.78 2.1 4.02 3.26 6.46 3.26 4.76 0 8.62-4.56 8.62-10.18S15.76 2.72 11 2.72c-2.44 0-4.68 1.16-6.46 3.26 1.56-1.84 3.54-2.82 5.66-2.82 2.12 0 4.1.98 5.66 2.82z"/>
+                </svg>
+                <span className="font-semibold text-dark-text">Opera</span>
               </div>
             </div>
           </div>

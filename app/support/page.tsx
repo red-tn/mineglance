@@ -45,7 +45,7 @@ export default function Support() {
             <a href="#pro-vs-free" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Pro vs Free</a>
             <a href="#pools" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Supported Pools</a>
             <a href="#coins" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Supported Coins</a>
-            <a href="#mobile-app" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Mobile App</a>
+            <a href="#cloud-sync" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Cloud Sync</a>
             <a href="#dashboard" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Dashboard</a>
             <a href="#troubleshooting" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Troubleshooting</a>
           </div>
@@ -61,7 +61,7 @@ export default function Support() {
             <div className="glass-card rounded-xl p-6 border border-dark-border">
               <h3 className="font-semibold text-dark-text mb-4">Quick Setup (5 minutes)</h3>
               <ol className="list-decimal pl-6 space-y-3 text-dark-text-muted">
-                <li><strong className="text-dark-text">Install the extension</strong> from the Chrome Web Store</li>
+                <li><strong className="text-dark-text">Install the extension</strong> from our website (Chrome, Edge, Brave, Opera)</li>
                 <li><strong className="text-dark-text">Click the MineGlance icon</strong> in your browser toolbar (puzzle piece &rarr; pin MineGlance)</li>
                 <li><strong className="text-dark-text">Add your wallet</strong> &mdash; enter the address you use for mining</li>
                 <li><strong className="text-dark-text">Select your pool</strong> &mdash; choose from 10+ supported mining pools</li>
@@ -167,21 +167,21 @@ export default function Support() {
 
             <div className="glass-card rounded-xl p-6 border border-primary/30">
               <h3 className="font-semibold text-dark-text mb-4 flex items-center gap-2">
-                Mobile App Features
+                Cloud Sync Features
                 <span className="px-2 py-0.5 bg-primary text-white text-xs rounded-full">PRO</span>
               </h3>
               <ul className="space-y-3 text-dark-text-muted">
                 <li className="flex items-start gap-3">
                   <span className="text-primary">&#10003;</span>
-                  <div><strong className="text-dark-text">iOS Mobile App</strong> &mdash; Check mining stats on the go (Android coming soon)</div>
+                  <div><strong className="text-dark-text">Cloud Sync</strong> &mdash; Wallets sync automatically across all your browsers</div>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-primary">&#10003;</span>
-                  <div><strong className="text-dark-text">Cloud Sync</strong> &mdash; Wallets sync automatically across all devices</div>
+                  <div><strong className="text-dark-text">Cross-Device Access</strong> &mdash; Access your mining dashboard from any computer</div>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="text-primary">&#10003;</span>
-                  <div><strong className="text-dark-text">Push Notifications</strong> &mdash; Mobile alerts for offline workers</div>
+                  <div><strong className="text-dark-text">Browser Notifications</strong> &mdash; Desktop alerts for offline workers</div>
                 </li>
               </ul>
             </div>
@@ -240,17 +240,7 @@ export default function Support() {
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr className="bg-dark-card-hover/50">
-                  <td className="px-6 py-3 text-sm text-dark-text">Mobile App (iOS)</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
-                </tr>
-                <tr>
                   <td className="px-6 py-3 text-sm text-dark-text">Cloud Sync</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
-                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
-                </tr>
-                <tr className="bg-dark-card-hover/50">
-                  <td className="px-6 py-3 text-sm text-dark-text">Push Notifications</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-dim">&mdash;</td>
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
@@ -321,34 +311,33 @@ export default function Support() {
         </div>
       </div>
 
-      {/* Mobile App */}
-      <div id="mobile-app" className="py-12 border-t border-dark-border">
+      {/* Cloud Sync */}
+      <div id="cloud-sync" className="py-12 border-t border-dark-border">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-gradient mb-6">
-            Mobile App
+            Cloud Sync
             <span className="ml-2 px-2 py-0.5 bg-primary text-white text-xs rounded-full align-middle">PRO</span>
           </h2>
 
           <div className="space-y-6">
             <div className="glass-card rounded-xl p-6 border border-dark-border">
-              <h3 className="font-semibold text-dark-text mb-4">Setting Up the Mobile App</h3>
+              <h3 className="font-semibold text-dark-text mb-4">Setting Up Cloud Sync</h3>
               <ol className="list-decimal pl-6 space-y-3 text-dark-text-muted">
-                <li>Download &quot;MineGlance&quot; from the App Store (iOS)</li>
-                <li>Open the app and sign in with your email</li>
-                <li>Enter your license key when prompted</li>
-                <li>All your wallets and settings will sync automatically via cloud</li>
+                <li>Purchase a Pro license and enter your license key in the extension</li>
+                <li>Your wallets and settings will automatically sync to the cloud</li>
+                <li>Install MineGlance on any other browser (Chrome, Edge, Brave, Opera)</li>
+                <li>Enter the same license key to sync your wallets instantly</li>
               </ol>
             </div>
 
             <div className="glass-card rounded-xl p-6 border border-dark-border">
-              <h3 className="font-semibold text-dark-text mb-4">Mobile App Features</h3>
+              <h3 className="font-semibold text-dark-text mb-4">Cloud Sync Features</h3>
               <ul className="space-y-2 text-dark-text-muted">
-                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Cloud sync across all devices</li>
-                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Real-time hashrate and worker status</li>
-                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Net profit calculation with your electricity settings</li>
-                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Pull-to-refresh for latest stats</li>
-                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Push notifications for offline workers</li>
-                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Wallet reordering via drag-and-drop</li>
+                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Automatic sync across all browsers</li>
+                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Wallets, settings, and preferences all sync</li>
+                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Access your mining dashboard from any computer</li>
+                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Real-time updates when you make changes</li>
+                <li className="flex items-center gap-2"><span className="text-primary">&#10003;</span> Secure AES-256 encryption for all synced data</li>
               </ul>
             </div>
           </div>
@@ -448,11 +437,11 @@ export default function Support() {
             </div>
 
             <div className="glass-card rounded-xl p-6 border border-dark-border">
-              <h3 className="font-semibold text-dark-text mb-2">Mobile app not syncing</h3>
+              <h3 className="font-semibold text-dark-text mb-2">Cloud sync not working</h3>
               <ul className="list-disc pl-6 space-y-2 text-dark-text-muted">
-                <li>Mobile app requires Pro license ($59/year)</li>
-                <li>Sign out and sign back in to refresh your session</li>
-                <li>Make sure you&apos;re using the same email as your Pro license</li>
+                <li>Cloud sync requires Pro license ($59/year)</li>
+                <li>Make sure you&apos;re using the same license key on all browsers</li>
+                <li>Try refreshing the extension by clicking the refresh button</li>
                 <li>Check your internet connection</li>
               </ul>
             </div>

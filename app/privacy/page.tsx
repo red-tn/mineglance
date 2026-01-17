@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Overview</h2>
               <p>
-                MineGlance is a Chrome extension that helps cryptocurrency miners monitor their mining operations
+                MineGlance is a browser extension that helps cryptocurrency miners monitor their mining operations
                 and calculate real-time profitability by showing earnings minus electricity costs.
               </p>
               <p className="font-semibold text-primary">

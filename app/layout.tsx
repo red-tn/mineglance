@@ -5,7 +5,7 @@ import AnalyticsTracker from '@/components/AnalyticsTracker'
 
 export const metadata: Metadata = {
   title: 'MineGlance - Net Profit Dashboard for GPU Miners',
-  description: 'Are you actually making money mining? Find out in 2 clicks. Free Chrome extension for GPU miners.',
+  description: 'Are you actually making money mining? Find out in 2 clicks. Free browser extension for GPU miners.',
   keywords: 'crypto mining dashboard, GPU mining profit, 2miners monitor, mining calculator, net profit mining',
   icons: {
     icon: '/logo-icon.svg',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'MineGlance - Net Profit Dashboard for GPU Miners',
-    description: 'Find out if you are actually making money mining. Free Chrome extension.',
+    description: 'Find out if you are actually making money mining. Free browser extension.',
     images: ['https://mineglance.com/og-image.png'],
   },
 }

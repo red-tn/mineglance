@@ -324,7 +324,7 @@ export default function DashboardOverview() {
                 <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs font-medium rounded">10% OFF</span>
               </div>
               <p className="text-dark-text-muted text-sm mb-3">
-                Unlock unlimited wallets, mobile app access, cloud sync, and email alerts.
+                Unlock unlimited wallets, cloud sync, and email alerts.
               </p>
               <ul className="text-sm text-dark-text-muted space-y-1 mb-4">
                 <li className="flex items-center gap-2">
@@ -337,13 +337,7 @@ export default function DashboardOverview() {
                   <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  iOS &amp; Android mobile app
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Cloud sync across all devices
+                  Cloud sync across devices
                 </li>
                 <li className="flex items-center gap-2">
                   <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">

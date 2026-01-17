@@ -53,7 +53,7 @@ export default function Footer() {
                   onClick={openModal}
                   className="text-dark-text-muted hover:text-primary transition-colors"
                 >
-                  Chrome Extension
+                  Browser Extension
                 </button>
               </li>
               <li>

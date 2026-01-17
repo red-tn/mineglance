@@ -304,7 +304,7 @@ export default function ProfitCalculator() {
               </svg>
             </button>
             <p className="text-sm text-dark-text-dim mt-3">
-              Free Chrome extension - track real earnings from 15+ mining pools
+              Free browser extension - track real earnings from 15+ mining pools
             </p>
           </div>
         </div>

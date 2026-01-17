@@ -37,11 +37,11 @@ export default function Features() {
       )
     },
     {
-      title: 'Mobile App Sync',
-      description: 'Monitor your miners on the go. QR code sync between extension and mobile app. Coming soon to iOS & Android.',
+      title: 'Cloud Sync',
+      description: 'Your wallets and settings sync across all your browsers. Log in anywhere and pick up right where you left off.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
       )
     },

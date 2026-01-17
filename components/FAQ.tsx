@@ -33,7 +33,7 @@ const faqs = [
   },
   {
     question: 'Do I need to install anything on my mining rig?',
-    answer: 'No. MineGlance is a Chrome extension that runs on your regular computer—not your mining rig. It fetches data from pool APIs using your public wallet address. Zero impact on your hashrate.'
+    answer: 'No. MineGlance is a browser extension that runs on your regular computer—not your mining rig. It fetches data from pool APIs using your public wallet address. Zero impact on your hashrate.'
   },
   {
     question: 'Can I use MineGlance on multiple computers?',

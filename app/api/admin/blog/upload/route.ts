@@ -11,13 +11,11 @@ async function verifyAdmin(token: string | null) {
   if (!token) return null
   const { data: session } = await supabase
     .from('admin_sessions')
-    .select('*, users!inner(*)')
+    .select('*')
     .eq('token', token)
     .gt('expires_at', new Date().toISOString())
     .single()
-  if (!session) return null
-  const user = session.users as { is_admin: boolean }
-  return user.is_admin ? session : null
+  return session
 }
 
 export async function POST(request: NextRequest) {
