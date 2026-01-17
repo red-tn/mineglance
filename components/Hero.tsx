@@ -1,8 +1,13 @@
+'use client'
+
 import Image from 'next/image'
-import CTAButton from './CTAButton'
+import ExtensionDownloadModal, { useExtensionDownloadModal } from './ExtensionDownloadModal'
 
 export default function Hero() {
+  const { isOpen, openModal, closeModal } = useExtensionDownloadModal()
+
   return (
+    <>
     <section className="py-20 lg:py-28">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -15,9 +20,12 @@ export default function Hero() {
               Find out in 2 clicks. Net profit dashboard for GPU miners—no monthly fees, no OS replacement.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <CTAButton href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" variant="primary" className="text-lg px-8 py-4">
+              <button
+                onClick={openModal}
+                className="btn-primary text-lg px-8 py-4"
+              >
                 Add to Chrome — It&apos;s Free
-              </CTAButton>
+              </button>
             </div>
             <p className="mt-4 text-sm text-dark-text-dim">
               Works with 2Miners, Nanopool, F2Pool, OCEAN, and more
@@ -76,5 +84,8 @@ export default function Hero() {
 
       </div>
     </section>
+
+    <ExtensionDownloadModal isOpen={isOpen} onClose={closeModal} />
+    </>
   )
 }

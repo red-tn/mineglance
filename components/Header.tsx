@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import CTAButton from './CTAButton'
+import ExtensionDownloadModal, { useExtensionDownloadModal } from './ExtensionDownloadModal'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { isOpen, openModal, closeModal } = useExtensionDownloadModal()
 
   return (
+    <>
     <header className="sticky top-0 z-50 bg-dark-bg/80 backdrop-blur-md border-b border-dark-border">
       <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -44,9 +46,12 @@ export default function Header() {
             <Link href="/support" className="text-dark-text-muted hover:text-primary transition-colors">
               Support
             </Link>
-            <CTAButton href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" variant="primary">
+            <button
+              onClick={openModal}
+              className="btn-primary"
+            >
               Add to Chrome
-            </CTAButton>
+            </button>
           </div>
 
           {/* Mobile menu button */}
@@ -111,13 +116,22 @@ export default function Header() {
               >
                 Support
               </Link>
-              <CTAButton href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" variant="primary" className="w-full">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  openModal()
+                }}
+                className="btn-primary w-full"
+              >
                 Add to Chrome
-              </CTAButton>
+              </button>
             </div>
           </div>
         )}
       </nav>
     </header>
+
+    <ExtensionDownloadModal isOpen={isOpen} onClose={closeModal} />
+    </>
   )
 }

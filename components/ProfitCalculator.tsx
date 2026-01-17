@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { GPUS, ASICS, MiningHardware, formatHashrate } from '@/lib/miningHardware'
 import { COINS, CoinData, calculateProfit, getCoinsForHardwareType, ProfitResult } from '@/lib/coinProfitability'
 import { lookupElectricityRate, DEFAULT_RATE } from '@/lib/electricityRates'
+import ExtensionDownloadModal, { useExtensionDownloadModal } from './ExtensionDownloadModal'
 
 export default function ProfitCalculator() {
   const [hardwareType, setHardwareType] = useState<'gpu' | 'asic'>('gpu')
@@ -14,6 +15,7 @@ export default function ProfitCalculator() {
   const [lookupResult, setLookupResult] = useState<string | null>(null)
   const [manualRate, setManualRate] = useState(false)
   const [result, setResult] = useState<ProfitResult | null>(null)
+  const { isOpen, openModal, closeModal } = useExtensionDownloadModal()
 
   // Get hardware list based on type
   const hardwareList = hardwareType === 'gpu' ? GPUS : ASICS
@@ -289,26 +291,26 @@ export default function ProfitCalculator() {
 
           {/* CTA */}
           <div className="text-center">
-            <a
-              href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={openModal}
               className="inline-flex items-center gap-2 btn-primary text-lg"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               Start Tracking Your Profits
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
-            </a>
+            </button>
             <p className="text-sm text-dark-text-dim mt-3">
               Free Chrome extension - track real earnings from 15+ mining pools
             </p>
           </div>
         </div>
       </div>
+
+      <ExtensionDownloadModal isOpen={isOpen} onClose={closeModal} />
     </section>
   )
 }

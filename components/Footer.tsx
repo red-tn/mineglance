@@ -1,8 +1,14 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import ExtensionDownloadModal, { useExtensionDownloadModal } from './ExtensionDownloadModal'
 
 export default function Footer() {
+  const { isOpen, openModal, closeModal } = useExtensionDownloadModal()
+
   return (
+    <>
     <footer className="bg-dark-card border-t border-dark-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Main Footer Content */}
@@ -43,9 +49,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="https://chromewebstore.google.com/detail/mineglance-mining-profit/fohkkkgboehiaeoakpjbipiakokdgajl" className="text-dark-text-muted hover:text-primary transition-colors">
+                <button
+                  onClick={openModal}
+                  className="text-dark-text-muted hover:text-primary transition-colors"
+                >
                   Chrome Extension
-                </Link>
+                </button>
               </li>
               <li>
                 <Link href="/#faq" className="text-dark-text-muted hover:text-primary transition-colors">
@@ -137,5 +146,8 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+
+    <ExtensionDownloadModal isOpen={isOpen} onClose={closeModal} />
+    </>
   )
 }
