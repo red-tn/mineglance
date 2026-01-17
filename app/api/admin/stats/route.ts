@@ -13,18 +13,13 @@ async function verifyAdmin(request: NextRequest): Promise<boolean> {
 
   const token = authHeader.substring(7)
 
-  // Check session
+  // Check session - must have valid session in database
   const { data: session } = await supabase
     .from('admin_sessions')
     .select('id')
     .eq('token', token)
     .gt('expires_at', new Date().toISOString())
     .single()
-
-  // If session table doesn't exist or no session, check token format
-  if (!session && token.length === 64) {
-    return true // Accept valid-looking tokens for now
-  }
 
   return !!session
 }

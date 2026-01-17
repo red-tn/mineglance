@@ -6,22 +6,28 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Verify the request is from Vercel Cron
-function verifyCronRequest(request: NextRequest): boolean {
+// Verify the request is from Vercel Cron or admin
+async function verifyCronRequest(request: NextRequest): Promise<boolean> {
   const authHeader = request.headers.get('authorization')
 
-  // Allow cron secret or admin token
+  // Allow cron secret
   if (authHeader === `Bearer ${process.env.CRON_SECRET}`) {
     return true
   }
 
-  // Also allow manual trigger from admin with admin token
+  // Also allow manual trigger from admin with valid session token
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7)
-    // Simple check - in production you'd verify admin session
-    if (token.length === 64) {
-      return true
-    }
+
+    // Verify against admin_sessions table
+    const { data: session } = await supabase
+      .from('admin_sessions')
+      .select('id')
+      .eq('token', token)
+      .gt('expires_at', new Date().toISOString())
+      .single()
+
+    return !!session
   }
 
   return false
@@ -30,7 +36,7 @@ function verifyCronRequest(request: NextRequest): boolean {
 export async function GET(request: NextRequest) {
   try {
     // Verify this is a legitimate cron request
-    if (!verifyCronRequest(request)) {
+    if (!await verifyCronRequest(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

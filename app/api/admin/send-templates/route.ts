@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY!
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'hello@mineglance.com'
 
-// Admin authentication check
-function isAdmin(request: NextRequest): boolean {
+// Admin authentication check - verify against admin_sessions table
+async function isAdmin(request: NextRequest): Promise<boolean> {
   const authHeader = request.headers.get('authorization')
-  const adminPassword = process.env.ADMIN_PASSWORD
-  if (!authHeader || !adminPassword) return false
-  const token = authHeader.replace('Bearer ', '')
-  return token === adminPassword
+  if (!authHeader?.startsWith('Bearer ')) return false
+
+  const token = authHeader.substring(7)
+
+  const { data: session } = await supabase
+    .from('admin_sessions')
+    .select('id')
+    .eq('token', token)
+    .gt('expires_at', new Date().toISOString())
+    .single()
+
+  return !!session
 }
 
 const templates = [
@@ -245,7 +259,7 @@ const templates = [
 ]
 
 export async function POST(request: NextRequest) {
-  if (!isAdmin(request)) {
+  if (!await isAdmin(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

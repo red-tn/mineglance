@@ -9,13 +9,21 @@ const supabase = createClient(
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY!
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'hello@mineglance.com'
 
-// Admin authentication check
-function isAdmin(request: NextRequest): boolean {
+// Admin authentication check - verify against admin_sessions table
+async function isAdmin(request: NextRequest): Promise<boolean> {
   const authHeader = request.headers.get('authorization')
-  const adminPassword = process.env.ADMIN_PASSWORD
-  if (!authHeader || !adminPassword) return false
-  const token = authHeader.replace('Bearer ', '')
-  return token === adminPassword
+  if (!authHeader?.startsWith('Bearer ')) return false
+
+  const token = authHeader.substring(7)
+
+  const { data: session } = await supabase
+    .from('admin_sessions')
+    .select('id')
+    .eq('token', token)
+    .gt('expires_at', new Date().toISOString())
+    .single()
+
+  return !!session
 }
 
 // Send renewal reminder email
@@ -104,7 +112,7 @@ async function sendRenewalEmail(email: string, daysUntilExpiry: number): Promise
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAdmin(request)) {
+  if (!await isAdmin(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -192,7 +200,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAdmin(request)) {
+  if (!await isAdmin(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
