@@ -65,10 +65,13 @@ export async function POST(request: NextRequest) {
 
     if (session.payment_status === 'paid' && customerEmail) {
       const amount = session.amount_total || 0
+      // Get billing type from metadata (monthly, annual, lifetime)
+      const billingType = session.metadata?.plan || 'annual'
 
       console.log('Processing checkout:', {
         email: customerEmail,
         amount,
+        billingType,
         productId: session.metadata?.product_id
       })
 
@@ -77,7 +80,8 @@ export async function POST(request: NextRequest) {
         customerId: session.customer as string,
         paymentId: session.payment_intent as string,
         amount: amount,
-        currency: session.currency || 'usd'
+        currency: session.currency || 'usd',
+        billingType: billingType
       })
     }
   }
@@ -106,14 +110,31 @@ async function handleNewPurchase(supabase: any, data: {
   paymentId: string
   amount: number
   currency: string
+  billingType?: string
 }) {
   const emailLower = data.email.toLowerCase()
   const now = new Date().toISOString()
+  const billingType = data.billingType || 'annual'
 
-  // Calculate subscription end date (1 year from now)
+  // Calculate subscription end date based on billing type
   const endDate = new Date()
-  endDate.setFullYear(endDate.getFullYear() + 1)
-  const subscriptionEndDate = endDate.toISOString()
+  let subscriptionEndDate: string | null
+
+  if (billingType === 'monthly') {
+    endDate.setMonth(endDate.getMonth() + 1)
+    subscriptionEndDate = endDate.toISOString()
+  } else if (billingType === 'lifetime') {
+    // Lifetime = no end date (null means never expires)
+    subscriptionEndDate = null
+  } else {
+    // annual (default)
+    endDate.setFullYear(endDate.getFullYear() + 1)
+    subscriptionEndDate = endDate.toISOString()
+  }
+
+  // Format billing type for display: "MineGlance Pro-Monthly", etc.
+  const billingLabel = billingType.charAt(0).toUpperCase() + billingType.slice(1)
+  const planDescription = `MineGlance Pro-${billingLabel}`
 
   // Check if user already exists
   const { data: existing } = await supabase
@@ -156,7 +177,7 @@ async function handleNewPurchase(supabase: any, data: {
           currency: data.currency,
           status: 'succeeded',
           type: 'upgrade',
-          description: 'Upgraded from Free to Pro'
+          description: `Upgraded to ${planDescription}`
         })
 
         await sendWelcomeEmail(emailLower, licenseKey)
@@ -173,20 +194,35 @@ async function handleNewPurchase(supabase: any, data: {
         currency: data.currency,
         status: 'succeeded',
         type: 'renewal',
-        description: 'Subscription renewal'
+        description: `${planDescription} renewal`
       })
 
-      // Extend subscription
-      const currentEnd = new Date()
-      currentEnd.setFullYear(currentEnd.getFullYear() + 1)
+      // Extend subscription based on billing type
+      if (billingType !== 'lifetime') {
+        const currentEnd = new Date()
+        if (billingType === 'monthly') {
+          currentEnd.setMonth(currentEnd.getMonth() + 1)
+        } else {
+          currentEnd.setFullYear(currentEnd.getFullYear() + 1)
+        }
 
-      await supabase
-        .from('users')
-        .update({
-          subscription_end_date: currentEnd.toISOString(),
-          updated_at: now
-        })
-        .eq('id', existing.id)
+        await supabase
+          .from('users')
+          .update({
+            subscription_end_date: currentEnd.toISOString(),
+            updated_at: now
+          })
+          .eq('id', existing.id)
+      } else {
+        // Lifetime - clear end date
+        await supabase
+          .from('users')
+          .update({
+            subscription_end_date: null,
+            updated_at: now
+          })
+          .eq('id', existing.id)
+      }
     }
     return
   }
@@ -222,7 +258,7 @@ async function handleNewPurchase(supabase: any, data: {
         currency: data.currency,
         status: 'succeeded',
         type: 'subscription',
-        description: 'New Pro subscription'
+        description: `New ${planDescription}`
       })
     }
 
