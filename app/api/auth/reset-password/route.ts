@@ -168,11 +168,12 @@ export async function PUT(request: NextRequest) {
     // Find reset token
     const { data: resetData, error: resetError } = await supabase
       .from('password_resets')
-      .select('*, user:users(*)')
+      .select('id, user_id, token, expires_at')
       .eq('token', token)
       .single()
 
     if (resetError || !resetData) {
+      console.error('Reset token lookup failed:', resetError)
       return NextResponse.json({ error: 'Invalid or expired reset link' }, { status: 400 })
     }
 
