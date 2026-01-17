@@ -45,6 +45,14 @@ async function sendWelcomeEmail(email: string): Promise<void> {
                 </a>
               </div>
 
+              <div style="background: rgba(56, 161, 105, 0.1); border: 1px solid rgba(56, 161, 105, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin-top: 30px;">
+                <p style="color: #38a169; margin: 0 0 10px; font-size: 14px; font-weight: 600;">
+                  Upgrade to Pro - Save 10%
+                </p>
+                <p style="color: #9ca3af; margin: 0; font-size: 13px;">
+                  Use code <strong style="color: #fbbf24;">MINE26</strong> for $59/year
+                </p>
+              </div>
             </td>
           </tr>
           <tr>

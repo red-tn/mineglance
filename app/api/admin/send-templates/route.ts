@@ -60,6 +60,12 @@ const templates = [
           <div style="text-align: center; margin: 30px 0;"><a href="#" style="display: inline-block; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Verify Email Address</a></div>
           <p style="color: #9ca3af; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
         </td></tr>
+        <tr><td style="padding: 20px 40px;">
+          <div style="background: rgba(56, 161, 105, 0.1); border: 1px solid rgba(56, 161, 105, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
+            <p style="color: #38a169; margin: 0 0 10px; font-size: 14px; font-weight: 600;">New User Discount: MINE26</p>
+            <p style="color: #9ca3af; margin: 0; font-size: 13px;">Use code <strong style="color: #fbbf24;">MINE26</strong> for 10% off Pro ($59/year)</p>
+          </div>
+        </td></tr>
         <tr><td style="padding: 30px 40px; border-top: 1px solid #2d2d2d;"><p style="color: #6b7280; font-size: 12px; margin: 0; text-align: center;">Questions? Visit <a href="https://www.mineglance.com/support" style="color: #38a169;">mineglance.com/support</a></p></td></tr>
       </table>
     </td></tr>
@@ -81,6 +87,10 @@ const templates = [
         <tr><td style="padding: 20px 40px;">
           <p style="color: #e5e7eb; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">Your account is now active. You can start tracking your mining operations!</p>
           <div style="text-align: center; margin: 30px 0;"><a href="https://www.mineglance.com/dashboard" style="display: inline-block; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Go to Dashboard</a></div>
+          <div style="background: rgba(56, 161, 105, 0.1); border: 1px solid rgba(56, 161, 105, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin-top: 30px;">
+            <p style="color: #38a169; margin: 0 0 10px; font-size: 14px; font-weight: 600;">Upgrade to Pro - Save 10%</p>
+            <p style="color: #9ca3af; margin: 0; font-size: 13px;">Use code <strong style="color: #fbbf24;">MINE26</strong> for $59/year</p>
+          </div>
         </td></tr>
         <tr><td style="padding: 30px 40px; border-top: 1px solid #2d2d2d;"><p style="color: #6b7280; font-size: 12px; margin: 0; text-align: center;">Questions? Visit <a href="https://www.mineglance.com/support" style="color: #38a169;">mineglance.com/support</a></p></td></tr>
       </table>

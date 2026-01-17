@@ -96,6 +96,20 @@ async function sendVerificationEmail(email: string, token: string): Promise<void
             </td>
           </tr>
 
+          <!-- Upgrade CTA -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <div style="background: rgba(56, 161, 105, 0.1); border: 1px solid rgba(56, 161, 105, 0.3); border-radius: 12px; padding: 20px; text-align: center;">
+                <p style="color: #38a169; margin: 0 0 10px; font-size: 14px; font-weight: 600;">
+                  New User Discount: MINE26
+                </p>
+                <p style="color: #9ca3af; margin: 0; font-size: 13px;">
+                  Use code <strong style="color: #fbbf24;">MINE26</strong> for 10% off Pro ($59/year)
+                </p>
+              </div>
+            </td>
+          </tr>
+
           <!-- Footer -->
           <tr>
             <td style="padding: 30px 40px; border-top: 1px solid #2d2d2d;">
