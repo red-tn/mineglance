@@ -94,14 +94,12 @@ export default function AnalyticsPage() {
   function generateLinePath(dailyViews: Array<{ date: string; views: number }>, width: number, height: number): string {
     if (dailyViews.length === 0) return ''
 
-    const padding = 0
-    const chartWidth = width - padding * 2
-    const chartHeight = height - padding * 2
     const max = Math.max(...dailyViews.map(d => d.views), 1)
+    const padding = 10 // Small padding so line doesn't touch edges
 
     const points = dailyViews.map((d, i) => ({
-      x: padding + (i / (dailyViews.length - 1 || 1)) * chartWidth,
-      y: padding + chartHeight - (d.views / max) * chartHeight
+      x: (i / (dailyViews.length - 1 || 1)) * (width - padding * 2) + padding,
+      y: (height - padding) - (d.views / max) * (height - padding * 2)
     }))
 
     if (points.length === 1) {
@@ -117,12 +115,13 @@ export default function AnalyticsPage() {
       const p2 = points[i + 1]
       const p3 = points[Math.min(points.length - 1, i + 2)]
 
-      const cp1x = p1.x + (p2.x - p0.x) / 6
-      const cp1y = p1.y + (p2.y - p0.y) / 6
-      const cp2x = p2.x - (p3.x - p1.x) / 6
-      const cp2y = p2.y - (p3.y - p1.y) / 6
+      const tension = 0.3
+      const cp1x = p1.x + (p2.x - p0.x) * tension
+      const cp1y = p1.y + (p2.y - p0.y) * tension
+      const cp2x = p2.x - (p3.x - p1.x) * tension
+      const cp2y = p2.y - (p3.y - p1.y) * tension
 
-      path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`
+      path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`
     }
 
     return path
@@ -133,9 +132,11 @@ export default function AnalyticsPage() {
     if (dailyViews.length === 0) return ''
 
     const linePath = generateLinePath(dailyViews, width, height)
-    const lastX = (dailyViews.length - 1) / (dailyViews.length - 1 || 1) * width
+    const padding = 10
+    const firstX = padding
+    const lastX = width - padding
 
-    return `${linePath} L ${lastX} ${height} L 0 ${height} Z`
+    return `${linePath} L ${lastX},${height} L ${firstX},${height} Z`
   }
 
   return (
@@ -257,11 +258,15 @@ export default function AnalyticsPage() {
                   ))}
 
                   {/* SVG Line Chart */}
-                  <svg className="absolute inset-0 w-full h-full overflow-visible">
+                  <svg
+                    className="absolute inset-0 w-full h-full"
+                    viewBox="0 0 1000 240"
+                    preserveAspectRatio="none"
+                  >
                     <defs>
                       <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgb(var(--color-primary))" stopOpacity="0.3" />
-                        <stop offset="100%" stopColor="rgb(var(--color-primary))" stopOpacity="0.02" />
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.02" />
                       </linearGradient>
                       <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="#3b82f6" />
@@ -271,59 +276,49 @@ export default function AnalyticsPage() {
 
                     {/* Area fill */}
                     <path
-                      d={generateAreaPath(data.dailyViews, 100, 100)}
+                      d={generateAreaPath(data.dailyViews, 1000, 240)}
                       fill="url(#areaGradient)"
                       className="transition-all duration-500"
-                      style={{ transform: 'scale(1)', transformOrigin: 'bottom' }}
-                      vectorEffect="non-scaling-stroke"
-                      preserveAspectRatio="none"
                     />
 
                     {/* Line */}
                     <path
-                      d={generateLinePath(data.dailyViews, 100, 100)}
+                      d={generateLinePath(data.dailyViews, 1000, 240)}
                       fill="none"
                       stroke="url(#lineGradient)"
-                      strokeWidth="2"
+                      strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       className="transition-all duration-500"
                       vectorEffect="non-scaling-stroke"
-                      preserveAspectRatio="none"
                     />
+                  </svg>
 
-                    {/* Data points */}
+                  {/* Data points overlay (separate so they scale properly) */}
+                  <div className="absolute inset-0">
                     {data.dailyViews.map((day, i) => {
                       const x = (i / (data.dailyViews.length - 1 || 1)) * 100
                       const y = 100 - (day.views / maxViews) * 100
                       return (
-                        <g key={i} className="group cursor-pointer">
-                          <circle
-                            cx={`${x}%`}
-                            cy={`${y}%`}
-                            r="4"
-                            fill="#1a1a2e"
-                            stroke="url(#lineGradient)"
-                            strokeWidth="2"
-                            className="transition-all duration-200 group-hover:r-6"
-                          />
+                        <div
+                          key={i}
+                          className="absolute group"
+                          style={{
+                            left: `${x}%`,
+                            top: `${y}%`,
+                            transform: 'translate(-50%, -50%)'
+                          }}
+                        >
+                          <div className="w-3 h-3 bg-dark-card border-2 border-primary rounded-full cursor-pointer hover:scale-150 transition-transform" />
                           {/* Tooltip */}
-                          <foreignObject
-                            x={`${Math.min(Math.max(x - 10, 0), 80)}%`}
-                            y={`${Math.max(y - 18, 0)}%`}
-                            width="20%"
-                            height="40"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                          >
-                            <div className="bg-dark-bg text-dark-text text-xs px-2 py-1 rounded border border-dark-border shadow-lg whitespace-nowrap inline-block">
-                              <div className="font-medium">{day.views.toLocaleString()} views</div>
-                              <div className="text-dark-text-muted">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
-                            </div>
-                          </foreignObject>
-                        </g>
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-dark-bg text-dark-text text-xs px-2 py-1 rounded border border-dark-border shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            <div className="font-medium">{day.views.toLocaleString()} views</div>
+                            <div className="text-dark-text-muted">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                          </div>
+                        </div>
                       )
                     })}
-                  </svg>
+                  </div>
                 </div>
 
                 {/* X-axis labels */}
