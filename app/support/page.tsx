@@ -487,7 +487,7 @@ export default function Support() {
                 Get help from the community and chat with other miners
               </p>
               <a
-                href="https://discord.gg/CVsrdRTUTc"
+                href="https://discord.gg/ZAAdXVmvFa"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center px-6 py-3 bg-[#5865F2] text-white font-semibold rounded-lg hover:bg-[#4752C4] transition-colors"

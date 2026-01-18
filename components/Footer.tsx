@@ -74,7 +74,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="https://discord.gg/CVsrdRTUTc" target="_blank" rel="noopener noreferrer" className="text-dark-text-muted hover:text-primary transition-colors">
+                <a href="https://discord.gg/ZAAdXVmvFa" target="_blank" rel="noopener noreferrer" className="text-dark-text-muted hover:text-primary transition-colors">
                   Discord Community
                 </a>
               </li>
@@ -147,7 +147,7 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <a
-              href="https://discord.gg/CVsrdRTUTc"
+              href="https://discord.gg/ZAAdXVmvFa"
               target="_blank"
               rel="noopener noreferrer"
               className="text-dark-text-muted hover:text-primary transition-colors"
