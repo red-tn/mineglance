@@ -964,7 +964,7 @@ export default function AdminProfilePage() {
                   }}
                   className="flex-1 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors"
                 >
-                  I've Saved These
+                  I&apos;ve Saved These
                 </button>
               </div>
             </div>

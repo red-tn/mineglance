@@ -153,7 +153,7 @@ export default function AdminLogin() {
                   required
                 />
                 <p className="text-xs text-dark-text-dim mt-2 text-center">
-                  You can also use a backup code if you don't have access to your authenticator
+                  You can also use a backup code if you don&apos;t have access to your authenticator
                 </p>
               </div>
             </>
