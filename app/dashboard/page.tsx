@@ -23,6 +23,14 @@ interface BlogPost {
   read_time: number
 }
 
+interface UpdateInfo {
+  available: boolean
+  currentVersion: string | null
+  latestVersion: string
+  downloadUrl: string
+  releaseNotes: string | null
+}
+
 export default function DashboardOverview() {
   const { user } = useAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -32,6 +40,8 @@ export default function DashboardOverview() {
   const [showDownloadModal, setShowDownloadModal] = useState(false)
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
   const [renewalIgnored, setRenewalIgnored] = useState(false)
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
+  const [updateDismissed, setUpdateDismissed] = useState(false)
 
   // Calculate days until subscription expires
   const daysUntilExpiry = user?.subscriptionEndDate
@@ -59,6 +69,46 @@ export default function DashboardOverview() {
     }
   }
 
+  async function checkForUpdates(installedVersion: string | null) {
+    try {
+      const res = await fetch('/api/software/latest?platform=extension')
+      if (!res.ok) return
+
+      const data = await res.json()
+      if (!data.version) return
+
+      // Compare versions if user has an extension installed
+      if (installedVersion) {
+        const isNewer = compareVersions(data.version, installedVersion) > 0
+        if (isNewer) {
+          setUpdateInfo({
+            available: true,
+            currentVersion: installedVersion,
+            latestVersion: data.version,
+            downloadUrl: data.downloadUrl || '',
+            releaseNotes: data.releaseNotes || null
+          })
+        }
+      }
+    } catch (e) {
+      console.error('Failed to check for updates:', e)
+    }
+  }
+
+  // Compare semantic versions: returns 1 if a > b, -1 if a < b, 0 if equal
+  function compareVersions(a: string, b: string): number {
+    const aParts = a.split('.').map(Number)
+    const bParts = b.split('.').map(Number)
+
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aVal = aParts[i] || 0
+      const bVal = bParts[i] || 0
+      if (aVal > bVal) return 1
+      if (aVal < bVal) return -1
+    }
+    return 0
+  }
+
   async function loadStats() {
     const token = localStorage.getItem('user_token')
     if (!token) return
@@ -77,11 +127,24 @@ export default function DashboardOverview() {
       let activeDevices = 0
       let profileComplete = 0
       let memberSince = new Date().toISOString()
+      let installedVersion: string | null = null
 
       if (devicesRes.ok) {
         const devicesData = await devicesRes.json()
         activeDevices = devicesData.activeCount || 0
+        // Find the highest version among installed devices (most recent extension)
+        if (devicesData.devices && devicesData.devices.length > 0) {
+          const versions = devicesData.devices
+            .map((d: { version?: string }) => d.version)
+            .filter(Boolean) as string[]
+          if (versions.length > 0) {
+            installedVersion = versions.sort((a: string, b: string) => compareVersions(b, a))[0]
+          }
+        }
       }
+
+      // Check for updates with the installed version
+      checkForUpdates(installedVersion)
 
       if (profileRes.ok) {
         const profileData = await profileRes.json()
@@ -206,6 +269,58 @@ export default function DashboardOverview() {
               </button>
               <button
                 onClick={() => setRenewalIgnored(true)}
+                className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
+                title="Dismiss"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Extension Update Available Banner */}
+      {updateInfo?.available && !updateDismissed && (
+        <div className="glass-card rounded-xl p-4 border border-blue-500/50 bg-blue-500/10">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-500/20">
+                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-blue-400">
+                  Extension Update Available
+                </p>
+                <p className="text-sm text-dark-text-muted">
+                  Version {updateInfo.latestVersion} is available
+                  {updateInfo.currentVersion && ` (you have ${updateInfo.currentVersion})`}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {updateInfo.downloadUrl ? (
+                <a
+                  href={updateInfo.downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  Update Now
+                </a>
+              ) : (
+                <button
+                  onClick={() => setShowDownloadModal(true)}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  Update Now
+                </button>
+              )}
+              <button
+                onClick={() => setUpdateDismissed(true)}
                 className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
                 title="Dismiss"
               >

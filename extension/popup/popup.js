@@ -51,6 +51,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const renewalBanner = document.getElementById('renewalBanner');
   const renewalMessage = document.getElementById('renewalMessage');
   const dismissRenewal = document.getElementById('dismissRenewal');
+  const updateBanner = document.getElementById('updateBanner');
+  const latestVersionText = document.getElementById('latestVersionText');
+  const updateLink = document.getElementById('updateLink');
+  const dismissUpdate = document.getElementById('dismissUpdate');
 
   // Auth Modal Elements
   const authModal = document.getElementById('authModal');
@@ -109,6 +113,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.storage.local.set({ renewalDismissed: true });
   });
 
+  // Update dismiss handler
+  dismissUpdate.addEventListener('click', () => {
+    updateBanner.classList.add('hidden');
+    // Store the dismissed version so we don't show again until a newer version
+    chrome.storage.local.get(['latestDismissedVersion'], (result) => {
+      const currentLatest = latestVersionText.textContent.replace('v', '');
+      chrome.storage.local.set({ latestDismissedVersion: currentLatest });
+    });
+  });
+
   // Auth Modal Event Handlers
   authContinueBtn.addEventListener('click', handleEmailContinue);
   authEmail.addEventListener('keydown', (e) => {
@@ -126,6 +140,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     authPassword.value = '';
     hideAuthMessage();
   });
+
+  // Check for extension updates
+  async function checkForUpdates() {
+    try {
+      const currentVersion = chrome.runtime.getManifest().version;
+      const response = await fetch(`${API_BASE}/software/latest?platform=extension`);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (!data.version) return;
+
+      // Compare versions
+      const isNewer = compareVersions(data.version, currentVersion) > 0;
+      if (!isNewer) return;
+
+      // Check if user already dismissed this version
+      const { latestDismissedVersion } = await chrome.storage.local.get(['latestDismissedVersion']);
+      if (latestDismissedVersion && compareVersions(data.version, latestDismissedVersion) <= 0) {
+        return; // Already dismissed this version
+      }
+
+      // Show update banner
+      latestVersionText.textContent = `v${data.version}`;
+      if (data.downloadUrl) {
+        updateLink.href = data.downloadUrl;
+      } else {
+        // Fallback to Chrome Web Store
+        updateLink.href = 'https://chromewebstore.google.com/detail/mineglance-mining-dashboa/idkfpdlpgeehohomaklljfnppfifhegn';
+      }
+      updateBanner.classList.remove('hidden');
+    } catch (e) {
+      console.log('Failed to check for updates:', e);
+    }
+  }
+
+  // Compare semantic versions: returns 1 if a > b, -1 if a < b, 0 if equal
+  function compareVersions(a, b) {
+    const aParts = a.split('.').map(Number);
+    const bParts = b.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aVal = aParts[i] || 0;
+      const bVal = bParts[i] || 0;
+      if (aVal > bVal) return 1;
+      if (aVal < bVal) return -1;
+    }
+    return 0;
+  }
 
   async function handleEmailContinue() {
     const email = authEmail.value.trim().toLowerCase();
@@ -508,6 +570,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (versionNumber) {
       versionNumber.textContent = `v${manifest.version}`;
     }
+
+    // Check for updates in the background
+    checkForUpdates();
 
     try {
       let { authToken, wallets, isPaid, electricity, settings, discoveryCollapsed, plan } = await chrome.storage.local.get([

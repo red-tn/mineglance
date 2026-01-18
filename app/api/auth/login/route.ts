@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import * as OTPAuth from 'otpauth'
 import { verifyPassword, hashPassword } from '@/lib/password'
 
 const supabase = createClient(
@@ -15,7 +16,7 @@ function generateToken(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, licenseKey, instanceId, deviceType, deviceName, browser, version } = await request.json()
+    const { email, password, totpCode, licenseKey, instanceId, deviceType, deviceName, browser, version } = await request.json()
 
     if (!email || !email.includes('@')) {
       return NextResponse.json({ error: 'Valid email is required' }, { status: 400 })
@@ -78,6 +79,52 @@ export async function POST(request: NextRequest) {
         .from('users')
         .update({ password_hash: newHash })
         .eq('id', user.id)
+    }
+
+    // Check if 2FA is enabled
+    if (user.totp_enabled && user.totp_secret) {
+      // If no TOTP code provided, tell client 2FA is required
+      if (!totpCode) {
+        return NextResponse.json({
+          requires2FA: true,
+          message: 'Please enter your authenticator code'
+        })
+      }
+
+      const cleanCode = totpCode.replace(/\s/g, '').toUpperCase()
+      let isValidCode = false
+
+      // First try TOTP verification
+      const totp = new OTPAuth.TOTP({
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
+        secret: user.totp_secret
+      })
+      const delta = totp.validate({ token: cleanCode, window: 1 })
+      isValidCode = delta !== null
+
+      // If TOTP failed, check backup codes (8-character hex codes)
+      if (!isValidCode && cleanCode.length === 8 && user.backup_codes) {
+        const hashedInput = crypto.createHash('sha256').update(cleanCode).digest('hex')
+        const backupCodes = user.backup_codes as string[]
+        const codeIndex = backupCodes.findIndex((c: string) => c === hashedInput)
+
+        if (codeIndex !== -1) {
+          isValidCode = true
+          // Remove used backup code
+          const newBackupCodes = [...backupCodes]
+          newBackupCodes.splice(codeIndex, 1)
+          await supabase
+            .from('users')
+            .update({ backup_codes: newBackupCodes.length > 0 ? newBackupCodes : null })
+            .eq('id', user.id)
+        }
+      }
+
+      if (!isValidCode) {
+        return NextResponse.json({ error: 'Invalid authenticator code' }, { status: 401 })
+      }
     }
 
     // Generate session token

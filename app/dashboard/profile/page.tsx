@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../auth-context'
 import Image from 'next/image'
+import QRCode from 'qrcode'
 
 // Format phone number as user types: (555) 123-4567 or +1 (555) 123-4567
 function formatPhoneNumber(value: string): string {
@@ -97,9 +98,25 @@ export default function ProfilePage() {
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
 
+  // 2FA state
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false)
+  const [setting2FA, setSetting2FA] = useState(false)
+  const [twoFAStep, setTwoFAStep] = useState<'idle' | 'setup' | 'verify' | 'disable'>('idle')
+  const [twoFASecret, setTwoFASecret] = useState('')
+  const [twoFAQRCode, setTwoFAQRCode] = useState('')
+  const [twoFACode, setTwoFACode] = useState('')
+  const [twoFAError, setTwoFAError] = useState('')
+  const [twoFASuccess, setTwoFASuccess] = useState('')
+  const [backupCodes, setBackupCodes] = useState<string[]>([])
+  const [showBackupCodes, setShowBackupCodes] = useState(false)
+
   useEffect(() => {
     loadProfile()
-  }, [])
+    // Load 2FA status from user context
+    if (user?.totpEnabled !== undefined) {
+      setTwoFAEnabled(user.totpEnabled)
+    }
+  }, [user?.totpEnabled])
 
   async function loadProfile() {
     const token = localStorage.getItem('user_token')
@@ -305,6 +322,129 @@ export default function ProfilePage() {
     } finally {
       setUploadingPhoto(false)
     }
+  }
+
+  // 2FA Functions
+  async function handleSetup2FA() {
+    const token = localStorage.getItem('user_token')
+    if (!token) return
+
+    setSetting2FA(true)
+    setTwoFAError('')
+
+    try {
+      const res = await fetch('/api/dashboard/auth/2fa/setup', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setTwoFAError(data.error || 'Failed to setup 2FA')
+        return
+      }
+
+      setTwoFASecret(data.secret)
+      // Generate QR code client-side
+      const qrDataUrl = await QRCode.toDataURL(data.otpauthUrl, {
+        width: 200,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+      })
+      setTwoFAQRCode(qrDataUrl)
+      setTwoFAStep('setup')
+    } catch {
+      setTwoFAError('Connection error. Please try again.')
+    } finally {
+      setSetting2FA(false)
+    }
+  }
+
+  async function handleVerify2FA(e: React.FormEvent) {
+    e.preventDefault()
+    const token = localStorage.getItem('user_token')
+    if (!token) return
+
+    setSetting2FA(true)
+    setTwoFAError('')
+
+    try {
+      const res = await fetch('/api/dashboard/auth/2fa/verify', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: twoFACode, secret: twoFASecret })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setTwoFAError(data.error || 'Invalid code')
+        return
+      }
+
+      setTwoFAEnabled(true)
+      setBackupCodes(data.backupCodes)
+      setShowBackupCodes(true)
+      setTwoFAStep('idle')
+      setTwoFACode('')
+      setTwoFASuccess('Two-factor authentication enabled successfully')
+      refreshUser()
+      setTimeout(() => setTwoFASuccess(''), 5000)
+    } catch {
+      setTwoFAError('Connection error. Please try again.')
+    } finally {
+      setSetting2FA(false)
+    }
+  }
+
+  async function handleDisable2FA(e: React.FormEvent) {
+    e.preventDefault()
+    const token = localStorage.getItem('user_token')
+    if (!token) return
+
+    setSetting2FA(true)
+    setTwoFAError('')
+
+    try {
+      const res = await fetch('/api/dashboard/auth/2fa/disable', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: twoFACode })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setTwoFAError(data.error || 'Invalid code')
+        return
+      }
+
+      setTwoFAEnabled(false)
+      setTwoFAStep('idle')
+      setTwoFACode('')
+      setTwoFASuccess('Two-factor authentication disabled')
+      refreshUser()
+      setTimeout(() => setTwoFASuccess(''), 3000)
+    } catch {
+      setTwoFAError('Connection error. Please try again.')
+    } finally {
+      setSetting2FA(false)
+    }
+  }
+
+  function cancelTwoFASetup() {
+    setTwoFAStep('idle')
+    setTwoFACode('')
+    setTwoFAError('')
+    setTwoFASecret('')
+    setTwoFAQRCode('')
   }
 
   if (loading) {
@@ -625,6 +765,193 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Two-Factor Authentication Section */}
+      <div className="glass-card rounded-xl border border-dark-border p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-dark-text">Two-Factor Authentication</h3>
+            <p className="text-sm text-dark-text-muted mt-1">
+              Add an extra layer of security to your account
+            </p>
+          </div>
+          {twoFAEnabled && (
+            <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">
+              Enabled
+            </span>
+          )}
+        </div>
+
+        {twoFAError && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm mb-4">
+            {twoFAError}
+          </div>
+        )}
+        {twoFASuccess && (
+          <div className="bg-primary/10 border border-primary/30 text-primary px-4 py-3 rounded-lg text-sm mb-4">
+            {twoFASuccess}
+          </div>
+        )}
+
+        {/* Idle State - Show enable/disable button */}
+        {twoFAStep === 'idle' && !showBackupCodes && (
+          <div>
+            {!twoFAEnabled ? (
+              <div className="bg-dark-card-hover rounded-lg p-4 border border-dark-border">
+                <p className="text-dark-text-muted text-sm mb-4">
+                  Use an authenticator app like Google Authenticator, Authy, or 1Password to generate one-time codes.
+                </p>
+                <button
+                  onClick={handleSetup2FA}
+                  disabled={setting2FA}
+                  className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-light transition-colors disabled:opacity-50"
+                >
+                  {setting2FA ? 'Setting up...' : 'Enable 2FA'}
+                </button>
+              </div>
+            ) : (
+              <div className="bg-dark-card-hover rounded-lg p-4 border border-dark-border">
+                <p className="text-dark-text-muted text-sm mb-4">
+                  Two-factor authentication is currently enabled. You&apos;ll need to enter a code from your authenticator app to disable it.
+                </p>
+                <button
+                  onClick={() => setTwoFAStep('disable')}
+                  className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg font-medium hover:bg-red-500/30 transition-colors"
+                >
+                  Disable 2FA
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Setup Step - Show QR code */}
+        {twoFAStep === 'setup' && (
+          <div className="space-y-4">
+            <div className="bg-dark-card-hover rounded-lg p-6 border border-dark-border">
+              <h4 className="font-medium text-dark-text mb-4">1. Scan this QR code with your authenticator app</h4>
+              <div className="flex justify-center mb-4">
+                {twoFAQRCode && (
+                  <img src={twoFAQRCode} alt="2FA QR Code" className="rounded-lg" />
+                )}
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-dark-text-dim mb-2">Or enter this code manually:</p>
+                <code className="bg-dark-bg px-3 py-1.5 rounded text-sm text-primary font-mono break-all">
+                  {twoFASecret}
+                </code>
+              </div>
+            </div>
+
+            <form onSubmit={handleVerify2FA} className="bg-dark-card-hover rounded-lg p-6 border border-dark-border">
+              <h4 className="font-medium text-dark-text mb-4">2. Enter the 6-digit code from your app</h4>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={twoFACode}
+                  onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="flex-1 px-4 py-3 bg-dark-bg border border-dark-border rounded-lg text-dark-text text-center text-xl tracking-widest font-mono placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="000000"
+                  maxLength={6}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={setting2FA || twoFACode.length !== 6}
+                  className="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {setting2FA ? 'Verifying...' : 'Verify'}
+                </button>
+              </div>
+            </form>
+
+            <button
+              onClick={cancelTwoFASetup}
+              className="text-sm text-dark-text-muted hover:text-dark-text transition-colors"
+            >
+              Cancel setup
+            </button>
+          </div>
+        )}
+
+        {/* Disable Step - Verify code to disable */}
+        {twoFAStep === 'disable' && (
+          <form onSubmit={handleDisable2FA} className="space-y-4">
+            <div className="bg-dark-card-hover rounded-lg p-6 border border-dark-border">
+              <h4 className="font-medium text-dark-text mb-4">Enter your authenticator code to disable 2FA</h4>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={twoFACode}
+                  onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="flex-1 px-4 py-3 bg-dark-bg border border-dark-border rounded-lg text-dark-text text-center text-xl tracking-widest font-mono placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="000000"
+                  maxLength={6}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={setting2FA || twoFACode.length !== 6}
+                  className="px-6 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {setting2FA ? 'Disabling...' : 'Disable'}
+                </button>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setTwoFAStep('idle')
+                setTwoFACode('')
+                setTwoFAError('')
+              }}
+              className="text-sm text-dark-text-muted hover:text-dark-text transition-colors"
+            >
+              Cancel
+            </button>
+          </form>
+        )}
+
+        {/* Backup Codes Modal */}
+        {showBackupCodes && backupCodes.length > 0 && (
+          <div className="space-y-4">
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+              <h4 className="font-medium text-yellow-400 mb-2">Save your backup codes</h4>
+              <p className="text-sm text-dark-text-muted mb-4">
+                Store these codes in a safe place. Each code can only be used once if you lose access to your authenticator app.
+              </p>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {backupCodes.map((code, i) => (
+                  <code key={i} className="bg-dark-bg px-3 py-2 rounded text-center text-sm font-mono text-dark-text">
+                    {code}
+                  </code>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(backupCodes.join('\n'))
+                    setTwoFASuccess('Backup codes copied to clipboard')
+                    setTimeout(() => setTwoFASuccess(''), 3000)
+                  }}
+                  className="px-4 py-2 bg-dark-card-hover border border-dark-border text-dark-text rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors"
+                >
+                  Copy Codes
+                </button>
+                <button
+                  onClick={() => {
+                    setShowBackupCodes(false)
+                    setBackupCodes([])
+                  }}
+                  className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-light transition-colors"
+                >
+                  I&apos;ve Saved My Codes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -13,6 +13,7 @@ interface User {
   renewalReminderSent: boolean
   renewalIgnored: boolean
   billingType: 'monthly' | 'annual' | 'lifetime' | null
+  totpEnabled: boolean
 }
 
 interface AuthContextType {

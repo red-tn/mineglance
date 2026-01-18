@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
       renewal_reminder_sent: boolean
       renewal_ignored: boolean
       billing_type: 'monthly' | 'annual' | 'lifetime' | null
+      totp_enabled: boolean | null
     }
 
     // Check if user is still valid
@@ -71,7 +72,8 @@ export async function POST(request: NextRequest) {
         subscriptionEndDate: user.subscription_end_date,
         renewalReminderSent: user.renewal_reminder_sent || false,
         renewalIgnored: user.renewal_ignored || false,
-        billingType: user.billing_type
+        billingType: user.billing_type,
+        totpEnabled: user.totp_enabled || false
       }
     })
 
