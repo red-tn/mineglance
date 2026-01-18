@@ -65,7 +65,8 @@ export async function GET(request: NextRequest) {
         role: admin.role,
         isActive: admin.is_active,
         lastLogin: admin.last_login,
-        createdAt: admin.created_at
+        createdAt: admin.created_at,
+        totpEnabled: admin.totp_enabled || false
       }
     })
   } catch (error) {

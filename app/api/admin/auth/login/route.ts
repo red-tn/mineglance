@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { authenticator } from 'otplib'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { checkRateLimit, resetRateLimit, getClientIp } from '@/lib/rateLimit'
 
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { email, password } = await request.json()
+    const { email, password, totpCode } = await request.json()
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
@@ -101,6 +102,28 @@ export async function POST(request: NextRequest) {
         .from('admin_users')
         .update({ password_hash: newHash })
         .eq('id', admin.id)
+    }
+
+    // Check if 2FA is enabled
+    if (admin?.totp_enabled && admin?.totp_secret) {
+      // If no TOTP code provided, tell client 2FA is required
+      if (!totpCode) {
+        return NextResponse.json({
+          requires2FA: true,
+          message: 'Please enter your authenticator code'
+        })
+      }
+
+      // Verify TOTP code
+      const isValidTotp = authenticator.verify({
+        token: totpCode.replace(/\s/g, ''),
+        secret: admin.totp_secret
+      })
+
+      if (!isValidTotp) {
+        await logAudit(normalizedEmail, 'login_failed', '2fa_invalid_code', request)
+        return NextResponse.json({ error: 'Invalid authenticator code' }, { status: 401 })
+      }
     }
 
     // Reset rate limit on successful login

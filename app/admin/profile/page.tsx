@@ -25,6 +25,7 @@ interface MyProfile {
   isActive: boolean
   lastLogin: string | null
   createdAt: string
+  totpEnabled?: boolean
 }
 
 export default function AdminProfilePage() {
@@ -64,6 +65,16 @@ export default function AdminProfilePage() {
   // File upload
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+
+  // 2FA
+  const [show2FASetup, setShow2FASetup] = useState(false)
+  const [qrCode, setQrCode] = useState('')
+  const [totpSecret, setTotpSecret] = useState('')
+  const [verifyCode, setVerifyCode] = useState('')
+  const [verifying2FA, setVerifying2FA] = useState(false)
+  const [disabling2FA, setDisabling2FA] = useState(false)
+  const [disableCode, setDisableCode] = useState('')
+  const [showDisable2FA, setShowDisable2FA] = useState(false)
 
   // Phone formatting function
   function formatPhoneNumber(value: string): string {
@@ -238,6 +249,109 @@ export default function AdminProfilePage() {
       img.onerror = reject
       img.src = URL.createObjectURL(file)
     })
+  }
+
+  // 2FA Functions
+  async function setup2FA() {
+    const token = localStorage.getItem('admin_token')
+    if (!token) return
+
+    setError('')
+    try {
+      const res = await fetch('/api/admin/auth/2fa/setup', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setQrCode(data.qrCode)
+        setTotpSecret(data.secret)
+        setShow2FASetup(true)
+      } else {
+        const data = await res.json()
+        setError(data.error || 'Failed to setup 2FA')
+      }
+    } catch {
+      setError('Connection error')
+    }
+  }
+
+  async function verify2FA() {
+    if (!verifyCode || verifyCode.length < 6) {
+      setError('Please enter a valid 6-digit code')
+      return
+    }
+
+    const token = localStorage.getItem('admin_token')
+    if (!token) return
+
+    setVerifying2FA(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/admin/auth/2fa/verify', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: verifyCode })
+      })
+
+      if (res.ok) {
+        setSuccess('2FA enabled successfully!')
+        setShow2FASetup(false)
+        setQrCode('')
+        setTotpSecret('')
+        setVerifyCode('')
+        loadData()
+      } else {
+        const data = await res.json()
+        setError(data.error || 'Invalid code')
+      }
+    } catch {
+      setError('Connection error')
+    } finally {
+      setVerifying2FA(false)
+    }
+  }
+
+  async function disable2FA() {
+    if (!disableCode || disableCode.length < 6) {
+      setError('Please enter your authenticator code')
+      return
+    }
+
+    const token = localStorage.getItem('admin_token')
+    if (!token) return
+
+    setDisabling2FA(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/admin/auth/2fa/disable', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: disableCode })
+      })
+
+      if (res.ok) {
+        setSuccess('2FA disabled successfully')
+        setShowDisable2FA(false)
+        setDisableCode('')
+        loadData()
+      } else {
+        const data = await res.json()
+        setError(data.error || 'Invalid code')
+      }
+    } catch {
+      setError('Connection error')
+    } finally {
+      setDisabling2FA(false)
+    }
   }
 
   async function handleInviteAdmin() {
@@ -609,6 +723,189 @@ export default function AdminProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Two-Factor Authentication Section */}
+      <div className="bg-dark-card rounded-xl border border-dark-border overflow-hidden">
+        <div className="px-6 py-4 border-b border-dark-border">
+          <h2 className="text-lg font-semibold text-dark-text">Two-Factor Authentication</h2>
+          <p className="text-sm text-dark-text-muted mt-0.5">Add an extra layer of security to your account</p>
+        </div>
+
+        <div className="p-6">
+          {profile?.totpEnabled ? (
+            // 2FA is enabled
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-dark-text">2FA is enabled</p>
+                  <p className="text-sm text-dark-text-muted">Your account is protected with an authenticator app</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDisable2FA(true)}
+                className="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg font-medium transition-colors"
+              >
+                Disable 2FA
+              </button>
+            </div>
+          ) : (
+            // 2FA is not enabled
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-dark-text">2FA is not enabled</p>
+                  <p className="text-sm text-dark-text-muted">Enable 2FA for additional account security</p>
+                </div>
+              </div>
+              <button
+                onClick={setup2FA}
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors"
+              >
+                Enable 2FA
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 2FA Setup Modal */}
+      {show2FASetup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-card rounded-xl border border-dark-border w-full max-w-md">
+            <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-dark-text">Set Up 2FA</h3>
+              <button
+                onClick={() => {
+                  setShow2FASetup(false)
+                  setQrCode('')
+                  setTotpSecret('')
+                  setVerifyCode('')
+                }}
+                className="text-dark-text-muted hover:text-dark-text"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-center">
+                <p className="text-sm text-dark-text-muted mb-4">
+                  Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                </p>
+                {qrCode && (
+                  <div className="inline-block p-4 bg-white rounded-lg">
+                    <img src={qrCode} alt="2FA QR Code" className="w-48 h-48" />
+                  </div>
+                )}
+              </div>
+
+              <div className="text-center">
+                <p className="text-xs text-dark-text-dim mb-1">Or enter this code manually:</p>
+                <code className="text-sm font-mono text-primary bg-dark-bg px-3 py-1 rounded">
+                  {totpSecret}
+                </code>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark-text-muted mb-1">
+                  Enter the 6-digit code from your app
+                </label>
+                <input
+                  type="text"
+                  value={verifyCode}
+                  onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text text-center text-2xl tracking-widest font-mono focus:outline-none focus:border-primary"
+                  placeholder="000000"
+                  maxLength={6}
+                />
+              </div>
+
+              <button
+                onClick={verify2FA}
+                disabled={verifying2FA || verifyCode.length < 6}
+                className="w-full px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                {verifying2FA ? 'Verifying...' : 'Verify & Enable 2FA'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Disable 2FA Modal */}
+      {showDisable2FA && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-card rounded-xl border border-dark-border w-full max-w-md">
+            <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-dark-text">Disable 2FA</h3>
+              <button
+                onClick={() => {
+                  setShowDisable2FA(false)
+                  setDisableCode('')
+                }}
+                className="text-dark-text-muted hover:text-dark-text"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                <p className="text-red-400 text-sm">
+                  Disabling 2FA will make your account less secure. Enter your current authenticator code to confirm.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-dark-text-muted mb-1">
+                  Enter your authenticator code
+                </label>
+                <input
+                  type="text"
+                  value={disableCode}
+                  onChange={(e) => setDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text text-center text-2xl tracking-widest font-mono focus:outline-none focus:border-primary"
+                  placeholder="000000"
+                  maxLength={6}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={disable2FA}
+                  disabled={disabling2FA || disableCode.length < 6}
+                  className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                >
+                  {disabling2FA ? 'Disabling...' : 'Disable 2FA'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDisable2FA(false)
+                    setDisableCode('')
+                  }}
+                  className="px-4 py-2 bg-dark-card-hover text-dark-text rounded-lg font-medium hover:bg-dark-border transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Admin Users Section */}
       <div className="bg-dark-card rounded-xl border border-dark-border overflow-hidden">
