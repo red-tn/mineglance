@@ -68,17 +68,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const { code } = await request.json()
+    const { code, secret } = await request.json()
 
     if (!code || typeof code !== 'string') {
       return NextResponse.json({ error: 'Code is required' }, { status: 400 })
     }
 
-    if (!user.totp_secret) {
-      return NextResponse.json({ error: 'No 2FA setup in progress' }, { status: 400 })
+    // Use secret from request body (passed from setup) or fallback to database
+    const totpSecret = secret || user.totp_secret
+
+    if (!totpSecret) {
+      return NextResponse.json({ error: 'No 2FA setup in progress. Please start setup again.' }, { status: 400 })
     }
 
-    const isValid = verifyTOTP(user.totp_secret, code.replace(/\s/g, ''))
+    const isValid = verifyTOTP(totpSecret, code.replace(/\s/g, ''))
 
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid code' }, { status: 400 })
@@ -87,11 +90,12 @@ export async function POST(request: NextRequest) {
     // Generate backup codes
     const { codes, hashedCodes } = generateBackupCodes()
 
-    // Enable 2FA and store hashed backup codes
+    // Enable 2FA, save secret (if passed), and store hashed backup codes
     await supabase
       .from('users')
       .update({
         totp_enabled: true,
+        totp_secret: totpSecret,
         backup_codes: hashedCodes
       })
       .eq('id', user.id)
