@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { authenticator } from 'otplib'
+import * as OTPAuth from 'otpauth'
 import QRCode from 'qrcode'
 
 const supabase = createClient(
@@ -27,6 +27,18 @@ async function getAdminFromToken(token: string) {
   return admin || null
 }
 
+// Generate a random base32 secret
+function generateSecret(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+  let secret = ''
+  const randomBytes = new Uint8Array(20)
+  crypto.getRandomValues(randomBytes)
+  for (let i = 0; i < 20; i++) {
+    secret += chars[randomBytes[i] % 32]
+  }
+  return secret
+}
+
 // GET - Generate new TOTP secret and QR code
 export async function GET(request: NextRequest) {
   try {
@@ -43,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate new secret
-    const secret = authenticator.generateSecret()
+    const secret = generateSecret()
 
     // Store secret temporarily (not enabled yet until verified)
     await supabase
@@ -51,12 +63,18 @@ export async function GET(request: NextRequest) {
       .update({ totp_secret: secret })
       .eq('id', admin.id)
 
+    // Create TOTP instance
+    const totp = new OTPAuth.TOTP({
+      issuer: 'MineGlance Admin',
+      label: admin.email,
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: secret
+    })
+
     // Generate otpauth URL
-    const otpauthUrl = authenticator.keyuri(
-      admin.email,
-      'MineGlance Admin',
-      secret
-    )
+    const otpauthUrl = totp.toString()
 
     // Generate QR code as data URL
     const qrCodeDataUrl = await QRCode.toDataURL(otpauthUrl, {

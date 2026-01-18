@@ -15,7 +15,7 @@
     "@types/qrcode": "^1.5.6",
     "bcryptjs": "^2.4.3",
     "next": "14.2.21",
-    "otplib": "^13.1.1",
+    "otpauth": "^9.4.1",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

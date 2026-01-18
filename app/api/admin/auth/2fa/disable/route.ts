@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { authenticator } from 'otplib'
+import * as OTPAuth from 'otpauth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,6 +24,20 @@ async function getAdminFromToken(token: string) {
     .single()
 
   return admin || null
+}
+
+// Verify TOTP code
+function verifyTOTP(secret: string, code: string): boolean {
+  const totp = new OTPAuth.TOTP({
+    algorithm: 'SHA1',
+    digits: 6,
+    period: 30,
+    secret: secret
+  })
+
+  // Allow 1 period window (30 seconds before/after)
+  const delta = totp.validate({ token: code, window: 1 })
+  return delta !== null
 }
 
 // POST - Disable 2FA (requires current code)
@@ -53,10 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the code before disabling
-    const isValid = authenticator.verify({
-      token: code.replace(/\s/g, ''),
-      secret: admin.totp_secret
-    })
+    const isValid = verifyTOTP(admin.totp_secret, code.replace(/\s/g, ''))
 
     if (!isValid) {
       return NextResponse.json({ error: 'Invalid code' }, { status: 400 })

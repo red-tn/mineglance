@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
-import { authenticator } from 'otplib'
+import * as OTPAuth from 'otpauth'
 import { hashPassword, verifyPassword } from '@/lib/password'
 import { checkRateLimit, resetRateLimit, getClientIp } from '@/lib/rateLimit'
 
@@ -115,10 +115,14 @@ export async function POST(request: NextRequest) {
       }
 
       // Verify TOTP code
-      const isValidTotp = authenticator.verify({
-        token: totpCode.replace(/\s/g, ''),
+      const totp = new OTPAuth.TOTP({
+        algorithm: 'SHA1',
+        digits: 6,
+        period: 30,
         secret: admin.totp_secret
       })
+      const delta = totp.validate({ token: totpCode.replace(/\s/g, ''), window: 1 })
+      const isValidTotp = delta !== null
 
       if (!isValidTotp) {
         await logAudit(normalizedEmail, 'login_failed', '2fa_invalid_code', request)
