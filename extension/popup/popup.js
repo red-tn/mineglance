@@ -185,11 +185,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       latestVersionText.textContent = `v${data.version}`;
       if (data.downloadUrl) {
         updateLink.href = data.downloadUrl;
-      } else {
-        // Fallback to Chrome Web Store
-        updateLink.href = 'https://chromewebstore.google.com/detail/mineglance-mining-dashboa/idkfpdlpgeehohomaklljfnppfifhegn';
+        updateBanner.classList.remove('hidden');
       }
-      updateBanner.classList.remove('hidden');
+      // If no download URL, don't show the banner
     } catch (e) {
       console.log('Failed to check for updates:', e);
     }
@@ -289,9 +287,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           })
         });
         const data = await response.json();
+        console.log('Login response:', response.status, data);
 
         if (data.requires2FA) {
           // Show 2FA step
+          console.log('2FA required, showing 2FA step');
           authPasswordStep.classList.add('hidden');
           auth2FAStep.classList.remove('hidden');
           auth2FACode.focus();

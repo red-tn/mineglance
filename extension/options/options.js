@@ -278,8 +278,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const showDiscovery = document.getElementById('showDiscovery');
   const liteMode = document.getElementById('liteMode');
 
-  // Mobile app section is now shown for all users (no Pro restriction)
-
   // Modals
   const walletModal = document.getElementById('walletModal');
   const rigModal = document.getElementById('rigModal');
@@ -518,7 +516,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Show masked license key
       const key = data.licenseKey;
       licenseKeyDisplay.textContent = key.substring(0, 7) + '••••-••••';
-      planBadge.textContent = data.plan === 'bundle' ? 'PRO + MOBILE' : 'PRO';
+      planBadge.textContent = 'PRO';
       enableProFeatures();
     }
 
@@ -570,8 +568,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     alertEmail.disabled = false;
     emailFrequency.disabled = false;
     testEmailBtn.disabled = false;
-
-    // Mobile app section is now always visible for all users
   }
 
   // Sync settings from server (manual refresh)
