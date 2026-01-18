@@ -31,6 +31,12 @@ interface UpdateInfo {
   releaseNotes: string | null
 }
 
+interface ExtensionRelease {
+  version: string
+  downloadUrl: string
+  fileName: string
+}
+
 export default function DashboardOverview() {
   const { user } = useAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -42,6 +48,7 @@ export default function DashboardOverview() {
   const [renewalIgnored, setRenewalIgnored] = useState(false)
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [updateDismissed, setUpdateDismissed] = useState(false)
+  const [extensionRelease, setExtensionRelease] = useState<ExtensionRelease | null>(null)
 
   // Calculate days until subscription expires
   const daysUntilExpiry = user?.subscriptionEndDate
@@ -55,7 +62,28 @@ export default function DashboardOverview() {
   useEffect(() => {
     loadStats()
     loadBlogPosts()
+    loadExtensionRelease()
   }, [])
+
+  async function loadExtensionRelease() {
+    try {
+      const res = await fetch('/api/software/latest?platform=extension')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.version && data.downloadUrl) {
+          // Extract filename from URL
+          const fileName = data.downloadUrl.split('/').pop() || `mineglance-extension-${data.version}.zip`
+          setExtensionRelease({
+            version: data.version,
+            downloadUrl: data.downloadUrl,
+            fileName
+          })
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load extension release:', e)
+    }
+  }
 
   async function loadBlogPosts() {
     try {
@@ -537,24 +565,53 @@ export default function DashboardOverview() {
 
       {/* Download Extension */}
       <div className="glass-card rounded-xl p-6 border border-dark-border">
-        <h2 className="text-lg font-semibold text-dark-text mb-4">Download Extension</h2>
-        <button
-          onClick={() => setShowDownloadModal(true)}
-          className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left w-full"
-        >
-          <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-            <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm13.412 2.514l-3.766 6.522a5.45 5.45 0 0 1 3.768 5.167A5.454 5.454 0 0 1 12 21.818l-.391.001h10.073A11.944 11.944 0 0 0 24 12c0-1.387-.236-2.721-.669-3.962H15.343z"/>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-dark-text">Download Extension</h2>
+          {extensionRelease && (
+            <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">
+              v{extensionRelease.version}
+            </span>
+          )}
+        </div>
+        {extensionRelease ? (
+          <a
+            href={extensionRelease.downloadUrl}
+            download
+            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left w-full"
+          >
+            <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm13.412 2.514l-3.766 6.522a5.45 5.45 0 0 1 3.768 5.167A5.454 5.454 0 0 1 12 21.818l-.391.001h10.073A11.944 11.944 0 0 0 24 12c0-1.387-.236-2.721-.669-3.962H15.343z"/>
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-dark-text group-hover:text-primary transition-colors">Browser Extension</p>
+              <p className="text-xs text-dark-text-muted">{extensionRelease.fileName}</p>
+            </div>
+            <svg className="w-5 h-5 text-dark-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-dark-text group-hover:text-primary transition-colors">Browser Extension</p>
-            <p className="text-xs text-dark-text-muted">Works on Chrome, Edge, Brave, Opera</p>
-          </div>
-          <svg className="w-5 h-5 text-dark-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-        </button>
+          </a>
+        ) : (
+          <button
+            onClick={() => setShowDownloadModal(true)}
+            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left w-full"
+          >
+            <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm13.412 2.514l-3.766 6.522a5.45 5.45 0 0 1 3.768 5.167A5.454 5.454 0 0 1 12 21.818l-.391.001h10.073A11.944 11.944 0 0 0 24 12c0-1.387-.236-2.721-.669-3.962H15.343z"/>
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-dark-text group-hover:text-primary transition-colors">Browser Extension</p>
+              <p className="text-xs text-dark-text-muted">Works on Chrome, Edge, Brave, Opera</p>
+            </div>
+            <svg className="w-5 h-5 text-dark-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </button>
+        )}
+        <p className="text-xs text-dark-text-dim mt-3">Works on Chrome, Edge, Brave, Opera</p>
       </div>
 
       {/* Blog Feed */}
