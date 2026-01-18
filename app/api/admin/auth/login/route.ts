@@ -114,19 +114,46 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Verify TOTP code
+      const cleanCode = totpCode.replace(/\s/g, '').toUpperCase()
+      let isValidCode = false
+      let usedBackupCode = false
+
+      // First try TOTP verification
       const totp = new OTPAuth.TOTP({
         algorithm: 'SHA1',
         digits: 6,
         period: 30,
         secret: admin.totp_secret
       })
-      const delta = totp.validate({ token: totpCode.replace(/\s/g, ''), window: 1 })
-      const isValidTotp = delta !== null
+      const delta = totp.validate({ token: cleanCode, window: 1 })
+      isValidCode = delta !== null
 
-      if (!isValidTotp) {
+      // If TOTP failed, check backup codes (8-character hex codes)
+      if (!isValidCode && cleanCode.length === 8 && admin.backup_codes) {
+        const hashedInput = crypto.createHash('sha256').update(cleanCode).digest('hex')
+        const backupCodes = admin.backup_codes as string[]
+        const codeIndex = backupCodes.findIndex(c => c === hashedInput)
+
+        if (codeIndex !== -1) {
+          isValidCode = true
+          usedBackupCode = true
+          // Remove used backup code
+          const newBackupCodes = [...backupCodes]
+          newBackupCodes.splice(codeIndex, 1)
+          await supabase
+            .from('admin_users')
+            .update({ backup_codes: newBackupCodes.length > 0 ? newBackupCodes : null })
+            .eq('id', admin.id)
+        }
+      }
+
+      if (!isValidCode) {
         await logAudit(normalizedEmail, 'login_failed', '2fa_invalid_code', request)
         return NextResponse.json({ error: 'Invalid authenticator code' }, { status: 401 })
+      }
+
+      if (usedBackupCode) {
+        await logAudit(normalizedEmail, 'login_backup_code_used', null, request)
       }
     }
 

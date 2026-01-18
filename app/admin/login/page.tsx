@@ -145,20 +145,23 @@ export default function AdminLogin() {
                   id="totpCode"
                   type="text"
                   value={totpCode}
-                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/[^0-9A-Fa-f]/g, '').slice(0, 8).toUpperCase())}
                   className="w-full px-4 py-4 rounded-lg bg-dark-card-hover border border-dark-border text-dark-text text-center text-2xl tracking-widest font-mono placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   placeholder="000000"
-                  maxLength={6}
+                  maxLength={8}
                   autoFocus
                   required
                 />
+                <p className="text-xs text-dark-text-dim mt-2 text-center">
+                  You can also use a backup code if you don't have access to your authenticator
+                </p>
               </div>
             </>
           )}
 
           <button
             type="submit"
-            disabled={loading || (requires2FA && totpCode.length < 6)}
+            disabled={loading || (requires2FA && totpCode.length < 6 && totpCode.length !== 8)}
             className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-glow"
           >
             {loading ? (
