@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
       ],
       mode: selectedPlan.mode,
       customer_email: email || undefined,
+      allow_promotion_codes: true,
       metadata: {
         plan: plan,
         planType: selectedPlan.mode,
