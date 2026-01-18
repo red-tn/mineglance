@@ -334,7 +334,6 @@ export default function ProfilePage() {
 
     try {
       const res = await fetch('/api/dashboard/auth/2fa/setup', {
-        method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
@@ -725,6 +724,7 @@ export default function ProfilePage() {
             <label className="block text-sm font-medium text-dark-text mb-1">Current Password</label>
             <input
               type="password"
+              autoComplete="current-password"
               value={passwordData.currentPassword}
               onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
               className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -737,6 +737,7 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium text-dark-text mb-1">New Password</label>
               <input
                 type="password"
+                autoComplete="new-password"
                 value={passwordData.newPassword}
                 onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
                 className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -747,6 +748,7 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium text-dark-text mb-1">Confirm New Password</label>
               <input
                 type="password"
+                autoComplete="new-password"
                 value={passwordData.confirmPassword}
                 onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                 className="w-full px-4 py-2.5 bg-dark-card-hover border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"

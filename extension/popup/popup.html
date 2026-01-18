@@ -33,6 +33,15 @@
           <p class="auth-forgot"><a href="https://www.mineglance.com/reset-password" target="_blank">Forgot password?</a></p>
         </div>
 
+        <!-- Step 3: 2FA Code -->
+        <div id="auth2FAStep" class="auth-step hidden">
+          <p class="auth-info">Enter the code from your authenticator app</p>
+          <input type="text" id="auth2FACode" class="auth-input auth-input-code" placeholder="000000" maxlength="8" autocomplete="one-time-code" />
+          <p class="auth-hint">You can also use a backup code</p>
+          <button id="auth2FABtn" class="btn btn-primary auth-btn">Verify</button>
+          <button id="auth2FABackBtn" class="btn btn-secondary auth-btn-link">Back</button>
+        </div>
+
         <!-- Success / Error Messages -->
         <div id="authMessage" class="auth-message hidden"></div>
       </div>

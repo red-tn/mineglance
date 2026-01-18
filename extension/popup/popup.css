@@ -965,6 +965,22 @@ body.lite-mode .icon-btn:hover {
   color: var(--text-muted);
 }
 
+.auth-input-code {
+  text-align: center;
+  font-size: 24px;
+  font-family: monospace;
+  letter-spacing: 8px;
+  padding: 16px;
+}
+
+.auth-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
+
 .auth-btn {
   width: 100%;
   padding: 14px 24px;

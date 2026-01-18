@@ -60,12 +60,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const authModal = document.getElementById('authModal');
   const authEmailStep = document.getElementById('authEmailStep');
   const authPasswordStep = document.getElementById('authPasswordStep');
+  const auth2FAStep = document.getElementById('auth2FAStep');
   const authEmail = document.getElementById('authEmail');
   const authPassword = document.getElementById('authPassword');
+  const auth2FACode = document.getElementById('auth2FACode');
   const authPasswordInfo = document.getElementById('authPasswordInfo');
   const authContinueBtn = document.getElementById('authContinueBtn');
   const authPasswordBtn = document.getElementById('authPasswordBtn');
   const authBackBtn = document.getElementById('authBackBtn');
+  const auth2FABtn = document.getElementById('auth2FABtn');
+  const auth2FABackBtn = document.getElementById('auth2FABackBtn');
   const authMessage = document.getElementById('authMessage');
 
   // Buttons
@@ -138,6 +142,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     authPasswordStep.classList.add('hidden');
     authEmailStep.classList.remove('hidden');
     authPassword.value = '';
+    hideAuthMessage();
+  });
+
+  // 2FA Event Handlers
+  auth2FABtn.addEventListener('click', handle2FASubmit);
+  auth2FACode.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handle2FASubmit();
+  });
+  auth2FACode.addEventListener('input', (e) => {
+    // Auto-format: only allow digits and uppercase letters (for backup codes)
+    e.target.value = e.target.value.replace(/[^0-9A-Fa-f]/g, '').toUpperCase().slice(0, 8);
+  });
+  auth2FABackBtn.addEventListener('click', () => {
+    auth2FAStep.classList.add('hidden');
+    authPasswordStep.classList.remove('hidden');
+    auth2FACode.value = '';
     hideAuthMessage();
   });
 
@@ -270,6 +290,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         const data = await response.json();
 
+        if (data.requires2FA) {
+          // Show 2FA step
+          authPasswordStep.classList.add('hidden');
+          auth2FAStep.classList.remove('hidden');
+          auth2FACode.focus();
+          return;
+        }
+
         if (data.token) {
           await handleLoginSuccess(data);
         } else {
@@ -281,6 +309,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     } finally {
       authPasswordBtn.disabled = false;
       authPasswordBtn.textContent = isNewUser ? 'Create Account' : 'Sign In';
+    }
+  }
+
+  async function handle2FASubmit() {
+    const code = auth2FACode.value.trim();
+    if (!code || (code.length !== 6 && code.length !== 8)) {
+      showAuthMessage('Enter a 6-digit code or 8-character backup code', 'error');
+      return;
+    }
+
+    auth2FABtn.disabled = true;
+    auth2FABtn.textContent = 'Verifying...';
+    hideAuthMessage();
+
+    try {
+      const response = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: pendingEmail,
+          password: authPassword.value.trim(),
+          totpCode: code,
+          instanceId: await getInstallId(),
+          deviceType: 'extension',
+          deviceName: navigator.userAgent.includes('Chrome') ? 'Chrome Extension' : 'Browser Extension',
+          browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other',
+          version: chrome.runtime.getManifest().version
+        })
+      });
+      const data = await response.json();
+
+      if (data.token) {
+        await handleLoginSuccess(data);
+      } else {
+        showAuthMessage(data.error || 'Invalid code', 'error');
+      }
+    } catch (err) {
+      showAuthMessage('Connection error. Please try again.', 'error');
+    } finally {
+      auth2FABtn.disabled = false;
+      auth2FABtn.textContent = 'Verify';
     }
   }
 
