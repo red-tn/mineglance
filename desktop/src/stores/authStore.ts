@@ -2,9 +2,10 @@ import { create } from 'zustand';
 import { Store } from '@tauri-apps/plugin-store';
 import { platform } from '@tauri-apps/plugin-os';
 import { fetch } from '@tauri-apps/plugin-http';
+import { writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
 
 const API_BASE = 'https://www.mineglance.com';
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.4';
 
 // Generate a unique instance ID for this device
 async function getInstanceId(): Promise<string> {
@@ -15,6 +16,13 @@ async function getInstanceId(): Promise<string> {
     instanceId = 'desktop-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     await store.set('instanceId', instanceId);
     await store.save();
+  }
+
+  // Also write to a plain text file for NSIS uninstall hook
+  try {
+    await writeTextFile('instance_id.txt', instanceId, { baseDir: BaseDirectory.AppLocalData });
+  } catch (e) {
+    console.error('Failed to write instance_id.txt:', e);
   }
 
   return instanceId;
