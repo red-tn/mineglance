@@ -26,7 +26,7 @@ const navItems = [
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const { liteMode, setLiteMode } = useSettingsStore();
-  const { hasUpdate, latestVersion, dismissed, dismissUpdate, downloading, downloadedPath, installUpdate, downloadUpdate, error } = useUpdateStore();
+  const { hasUpdate, latestVersion, dismissed, dismissUpdate, downloadUpdate, error } = useUpdateStore();
   const location = useLocation();
 
   const handleLogout = async () => {
@@ -48,7 +48,7 @@ export default function Layout() {
               <span className="font-bold text-base text-[var(--text)]">MineGlance</span>
               {user?.plan === "pro" && <span className="pro-badge">PRO</span>}
             </div>
-            <span className="text-[10px] text-[var(--text-dim)]">v1.3.9</span>
+            <span className="text-[10px] text-[var(--text-dim)]">v1.3.10</span>
           </div>
         </div>
 
@@ -116,47 +116,20 @@ export default function Layout() {
 
         {/* Update Banner */}
         {hasUpdate && !dismissed && (
-          <div className={`border-b px-4 py-2 flex items-center justify-between ${
-            downloadedPath ? 'bg-green-500/10 border-green-500/30' : 'bg-primary/10 border-primary/30'
-          }`}>
+          <div className="border-b px-4 py-2 flex items-center justify-between bg-primary/10 border-primary/30">
             <div className="flex items-center gap-3">
-              <Download size={18} className={downloadedPath ? 'text-green-500' : 'text-primary'} />
+              <Download size={18} className="text-primary" />
               <span className="text-sm text-[var(--text)]">
-                {downloading ? (
-                  <>
-                    <span className="font-medium">Downloading update...</span> MineGlance v{latestVersion}
-                  </>
-                ) : downloadedPath ? (
-                  <>
-                    <span className="font-medium">Update ready!</span> Click to update to v{latestVersion}
-                  </>
-                ) : (
-                  <>
-                    <span className="font-medium">Update available!</span> MineGlance v{latestVersion}
-                  </>
-                )}
+                <span className="font-medium">Update available!</span> MineGlance v{latestVersion}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {downloadedPath ? (
-                <button
-                  onClick={installUpdate}
-                  className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-all"
-                >
-                  Update Now
-                </button>
-              ) : downloading ? (
-                <span className="px-3 py-1 text-sm text-[var(--text-muted)]">
-                  Downloading...
-                </span>
-              ) : (
-                <button
-                  onClick={downloadUpdate}
-                  className="px-3 py-1 bg-primary hover:bg-primary/80 text-white text-sm font-medium rounded-lg transition-all"
-                >
-                  {error ? 'Retry' : 'Download'}
-                </button>
-              )}
+              <button
+                onClick={downloadUpdate}
+                className="px-3 py-1 bg-primary hover:bg-primary/80 text-white text-sm font-medium rounded-lg transition-all"
+              >
+                Download
+              </button>
               <button
                 onClick={dismissUpdate}
                 className="p-1 rounded hover:bg-[var(--card-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-all"

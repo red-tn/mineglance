@@ -276,8 +276,8 @@ export default function AdminBlogPage() {
       if (res.ok) {
         const savedPost = await res.json()
 
-        // Send email if checkbox is checked and at least one audience selected
-        const shouldSendEmail = form.sendEmailOnPublish && (form.emailToFree || form.emailToPro)
+        // Send email ONLY when status is published and checkbox is checked
+        const shouldSendEmail = form.status === 'published' && form.sendEmailOnPublish && (form.emailToFree || form.emailToPro)
 
         if (shouldSendEmail) {
           try {
