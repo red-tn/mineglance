@@ -5,7 +5,7 @@ import { fetch } from '@tauri-apps/plugin-http';
 import { writeTextFile, mkdir, BaseDirectory } from '@tauri-apps/plugin-fs';
 
 const API_BASE = 'https://www.mineglance.com';
-const APP_VERSION = '1.3.6';
+const APP_VERSION = '1.3.7';
 
 // Generate a unique instance ID for this device
 async function getInstanceId(): Promise<string> {
