@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
       return new NextResponse(null, { status: 204 })
     }
 
-    // Build download URL from Supabase storage
-    const downloadUrl = `https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public/software/${release.file_name}`
+    // Use download URL from database
+    const downloadUrl = release.download_url
 
     // Return Tauri-compatible update manifest
     const updateManifest = {

@@ -128,7 +128,7 @@ export default function Layout() {
                   </>
                 ) : downloadedPath ? (
                   <>
-                    <span className="font-medium">Update ready!</span> Click Install to update to v{latestVersion}
+                    <span className="font-medium">Update ready!</span> Click to update to v{latestVersion}
                   </>
                 ) : (
                   <>
@@ -143,7 +143,7 @@ export default function Layout() {
                   onClick={installUpdate}
                   className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-all"
                 >
-                  Install & Restart
+                  Update Now
                 </button>
               ) : downloading ? (
                 <span className="px-3 py-1 text-sm text-[var(--text-muted)]">
@@ -154,7 +154,7 @@ export default function Layout() {
                   onClick={downloadUpdate}
                   className="px-3 py-1 bg-primary hover:bg-primary/80 text-white text-sm font-medium rounded-lg transition-all"
                 >
-                  {error ? 'Retry Download' : 'Download Now'}
+                  {error ? 'Retry' : 'Download'}
                 </button>
               )}
               <button
