@@ -8,11 +8,11 @@ const pngPath = path.join(__dirname, 'youtube-banner.png');
 const svgBuffer = fs.readFileSync(svgPath);
 
 sharp(svgBuffer)
-  .resize(2048, 1152)
+  .resize(2560, 1440)
   .png({ quality: 90 })
   .toFile(pngPath)
   .then(() => {
-    console.log('Banner created: youtube-banner.png (2048x1152)');
+    console.log('Banner created: youtube-banner.png (2560x1440)');
     const stats = fs.statSync(pngPath);
     console.log(`File size: ${(stats.size / 1024 / 1024).toFixed(2)} MB`);
   })
