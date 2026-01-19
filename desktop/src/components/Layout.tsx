@@ -82,10 +82,15 @@ export default function Layout() {
             <div className="text-xs text-[var(--text-dim)] truncate">{user?.email}</div>
           </div>
 
+          {/* Version */}
+          <div className="px-3 py-1.5 text-center">
+            <span className="text-xs text-[var(--text-dim)]">v1.2.9</span>
+          </div>
+
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-danger hover:bg-danger/10 transition-all mt-2"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-danger hover:bg-danger/10 transition-all mt-1"
           >
             <LogOut size={18} />
             <span className="text-sm">Sign Out</span>
