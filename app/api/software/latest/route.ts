@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Valid platforms
-    const validPlatforms = ['extension', 'mobile_ios', 'mobile_android']
+    const validPlatforms = ['extension', 'desktop_windows', 'desktop_macos']
     if (!validPlatforms.includes(platform)) {
       return NextResponse.json({ error: 'Invalid platform' }, { status: 400 })
     }

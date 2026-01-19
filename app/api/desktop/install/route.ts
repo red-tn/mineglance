@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     // Get latest release for this platform
     const { data: release, error } = await supabase
       .from('software_releases')
-      .select('version, release_notes, file_name, created_at')
+      .select('version, release_notes, download_url, released_at')
       .eq('platform', platform)
       .eq('is_latest', true)
       .single()
@@ -96,13 +96,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ version: null, downloadUrl: null })
     }
 
-    const downloadUrl = `https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public/software/${release.file_name}`
-
     return NextResponse.json({
       version: release.version,
       releaseNotes: release.release_notes,
-      downloadUrl,
-      releasedAt: release.created_at,
+      downloadUrl: release.download_url,
+      releasedAt: release.released_at,
     })
   } catch (error) {
     console.error('Desktop version check error:', error)
