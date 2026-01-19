@@ -628,6 +628,7 @@ export default function AdminBlogPage() {
                         <td className="px-4 py-3">
                           <button
                             onClick={() => { setStatusPost(post); setShowStatusModal(true) }}
+                            title={post.status === 'scheduled' && post.scheduled_at ? `Scheduled: ${new Date(post.scheduled_at).toLocaleString()}` : undefined}
                             className={`px-2 py-1 rounded text-xs font-medium cursor-pointer hover:ring-2 hover:ring-white/30 transition ${STATUS_COLORS[post.status]}`}
                           >
                             {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
@@ -712,6 +713,7 @@ export default function AdminBlogPage() {
                       </div>
                       <button
                         onClick={() => { setStatusPost(post); setShowStatusModal(true) }}
+                        title={post.status === 'scheduled' && post.scheduled_at ? `Scheduled: ${new Date(post.scheduled_at).toLocaleString()}` : undefined}
                         className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap cursor-pointer hover:ring-2 hover:ring-white/30 transition ${STATUS_COLORS[post.status]}`}
                       >
                         {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
