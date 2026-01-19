@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
-import { Eye, EyeOff, ArrowLeft, ExternalLink, Key } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, ExternalLink } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
   const { isAuthenticated, requires2FA, error, login, verify2FA, clearError } = useAuthStore();
 
-  const [licenseKey, setLicenseKey] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
@@ -38,7 +37,7 @@ export default function Login() {
     setIsLoading(true);
     clearError();
 
-    const result = await login(email, password, licenseKey || undefined);
+    const result = await login(email, password);
 
     setIsLoading(false);
 
@@ -66,12 +65,6 @@ export default function Login() {
     }
   };
 
-  const formatLicenseKey = (value: string) => {
-    // Remove non-alphanumeric characters except dashes
-    const cleaned = value.toUpperCase().replace(/[^A-Z0-9-]/g, "");
-    return cleaned;
-  };
-
   return (
     <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm">
@@ -86,7 +79,7 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Credentials Step (Email + Optional License Key) */}
+        {/* Credentials Step (Email only) */}
         {step === "credentials" && (
           <div className="space-y-4">
             <div>
@@ -102,23 +95,6 @@ export default function Login() {
                 className="w-full px-4 py-3 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-primary transition-colors"
                 autoFocus
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
-                License Key <span className="text-[var(--text-dim)]">(Pro users only)</span>
-              </label>
-              <div className="relative">
-                <Key size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                <input
-                  type="text"
-                  value={licenseKey}
-                  onChange={(e) => setLicenseKey(formatLicenseKey(e.target.value))}
-                  onKeyPress={(e) => handleKeyPress(e, handleCredentialsContinue)}
-                  placeholder="XXXX-XXXX-XXXX-XXXX (optional)"
-                  className="w-full pl-10 pr-4 py-3 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg text-[var(--text)] font-mono placeholder:text-[var(--text-dim)] focus:outline-none focus:border-primary transition-colors"
-                />
-              </div>
             </div>
 
             <button
@@ -161,9 +137,6 @@ export default function Login() {
 
             <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 mb-4">
               <p className="text-sm text-[var(--text)]">Signing in as <strong>{email}</strong></p>
-              {licenseKey && (
-                <p className="text-xs text-[var(--text-muted)] font-mono mt-1">{licenseKey}</p>
-              )}
             </div>
 
             <div className="relative">

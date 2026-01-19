@@ -3,6 +3,7 @@ import { useAuthStore } from "../stores/authStore";
 import {
   LayoutDashboard,
   Wallet,
+  Monitor,
   Settings as SettingsIcon,
   User,
   LogOut,
@@ -14,6 +15,7 @@ import { useSettingsStore } from "../stores/settingsStore";
 const navItems = [
   { path: "/", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/wallets", icon: Wallet, label: "Wallets" },
+  { path: "/devices", icon: Monitor, label: "Devices" },
   { path: "/settings", icon: SettingsIcon, label: "Settings" },
   { path: "/profile", icon: User, label: "Profile" },
 ];

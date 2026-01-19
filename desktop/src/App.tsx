@@ -6,6 +6,7 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Wallets from "./pages/Wallets";
+import Devices from "./pages/Devices";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 
@@ -59,6 +60,7 @@ function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="wallets" element={<Wallets />} />
+          <Route path="devices" element={<Devices />} />
           <Route path="settings" element={<Settings />} />
           <Route path="profile" element={<Profile />} />
         </Route>

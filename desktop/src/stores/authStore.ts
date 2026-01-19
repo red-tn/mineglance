@@ -55,14 +55,13 @@ interface AuthState {
   user: User | null;
   token: string | null;
   requires2FA: boolean;
-  pendingLicenseKey: string | null;
   pendingEmail: string | null;
   pendingPassword: string | null;
   error: string | null;
 
   // Actions
   checkAuth: () => Promise<void>;
-  login: (email: string, password: string, licenseKey?: string) => Promise<{ success: boolean; requires2FA?: boolean; requiresPasswordSetup?: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; requires2FA?: boolean; requiresPasswordSetup?: boolean; error?: string }>;
   verify2FA: (code: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -74,7 +73,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   requires2FA: false,
-  pendingLicenseKey: null,
   pendingEmail: null,
   pendingPassword: null,
   error: null,
@@ -123,21 +121,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  login: async (email: string, password: string, licenseKey?: string) => {
+  login: async (email: string, password: string) => {
     set({ error: null });
 
     try {
-      const body: Record<string, string> = { email, password };
-      if (licenseKey) {
-        body.licenseKey = licenseKey;
-      }
-
       const response = await fetch(`${API_BASE}/api/dashboard/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
@@ -156,7 +149,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (data.requires2FA) {
         set({
           requires2FA: true,
-          pendingLicenseKey: licenseKey || null,
           pendingEmail: email,
           pendingPassword: password,
         });
@@ -219,7 +211,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   verify2FA: async (code: string) => {
-    const { pendingLicenseKey, pendingEmail, pendingPassword } = get();
+    const { pendingEmail, pendingPassword } = get();
 
     console.log('verify2FA called with code:', code);
     console.log('pendingEmail:', pendingEmail);
@@ -230,15 +222,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     try {
-      const body: Record<string, string> = {
-        email: pendingEmail,
-        password: pendingPassword,
-        totpCode: code,
-      };
-      if (pendingLicenseKey) {
-        body.licenseKey = pendingLicenseKey;
-      }
-
       console.log('Sending 2FA request to:', `${API_BASE}/api/dashboard/auth/login`);
 
       const response = await fetch(`${API_BASE}/api/dashboard/auth/login`, {
@@ -246,7 +229,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          email: pendingEmail,
+          password: pendingPassword,
+          totpCode: code,
+        }),
       });
 
       console.log('2FA response status:', response.status);
@@ -331,7 +318,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user: null,
       token: null,
       requires2FA: false,
-      pendingLicenseKey: null,
       pendingEmail: null,
       pendingPassword: null,
     });
