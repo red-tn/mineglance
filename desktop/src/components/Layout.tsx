@@ -54,7 +54,7 @@ export default function Layout() {
               <span className="font-bold text-base text-[var(--text)]">MineGlance</span>
               {user?.plan === "pro" && <span className="pro-badge">PRO</span>}
             </div>
-            <span className="text-[10px] text-[var(--text-dim)]">v1.3.1</span>
+            <span className="text-[10px] text-[var(--text-dim)]">v1.3.2</span>
           </div>
         </div>
 
