@@ -1,6 +1,7 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { useUpdateStore } from "../stores/updateStore";
+import { open } from "@tauri-apps/plugin-shell";
 import {
   LayoutDashboard,
   Wallet,
@@ -33,9 +34,9 @@ export default function Layout() {
     await logout();
   };
 
-  const handleDownloadUpdate = () => {
+  const handleDownloadUpdate = async () => {
     if (downloadUrl) {
-      window.open(downloadUrl, '_blank');
+      await open(downloadUrl);
     }
   };
 
