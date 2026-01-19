@@ -57,6 +57,7 @@ export default function DashboardOverview() {
   const [windowsAnnouncementDismissed, setWindowsAnnouncementDismissed] = useState(false)
   const [macAnnouncementDismissed, setMacAnnouncementDismissed] = useState(false)
   const [latestReleaseNotes, setLatestReleaseNotes] = useState<{ windows?: string; mac?: string }>({})
+  const [userInstalledVersions, setUserInstalledVersions] = useState<{ windows?: string; mac?: string; extension?: string }>({})
 
   // Calculate days until subscription expires
   const daysUntilExpiry = user?.subscriptionEndDate
@@ -229,14 +230,31 @@ export default function DashboardOverview() {
         extensionCount = devices.filter((d: { deviceType?: string }) => d.deviceType === 'extension').length
         windowsCount = devices.filter((d: { deviceType?: string }) => d.deviceType === 'desktop_windows').length
         macosCount = devices.filter((d: { deviceType?: string }) => d.deviceType === 'desktop_macos').length
-        // Find the highest version among installed devices (most recent extension)
-        if (devices.length > 0) {
-          const versions = devices
-            .map((d: { version?: string }) => d.version)
-            .filter(Boolean) as string[]
-          if (versions.length > 0) {
-            installedVersion = versions.sort((a: string, b: string) => compareVersions(b, a))[0]
-          }
+
+        // Find highest version for each platform
+        const extensionVersions = devices
+          .filter((d: { deviceType?: string }) => d.deviceType === 'extension')
+          .map((d: { version?: string }) => d.version)
+          .filter(Boolean) as string[]
+        const windowsVersions = devices
+          .filter((d: { deviceType?: string }) => d.deviceType === 'desktop_windows')
+          .map((d: { version?: string }) => d.version)
+          .filter(Boolean) as string[]
+        const macVersions = devices
+          .filter((d: { deviceType?: string }) => d.deviceType === 'desktop_macos')
+          .map((d: { version?: string }) => d.version)
+          .filter(Boolean) as string[]
+
+        // Store user's installed versions
+        setUserInstalledVersions({
+          extension: extensionVersions.length > 0 ? extensionVersions.sort((a, b) => compareVersions(b, a))[0] : undefined,
+          windows: windowsVersions.length > 0 ? windowsVersions.sort((a, b) => compareVersions(b, a))[0] : undefined,
+          mac: macVersions.length > 0 ? macVersions.sort((a, b) => compareVersions(b, a))[0] : undefined
+        })
+
+        // For extension update check (existing logic)
+        if (extensionVersions.length > 0) {
+          installedVersion = extensionVersions.sort((a: string, b: string) => compareVersions(b, a))[0]
         }
       }
 
@@ -430,8 +448,8 @@ export default function DashboardOverview() {
         </div>
       )}
 
-      {/* Windows Desktop App Announcement */}
-      {windowsRelease && !windowsAnnouncementDismissed && (
+      {/* Windows Desktop App Announcement - only show if user has older version */}
+      {windowsRelease && !windowsAnnouncementDismissed && userInstalledVersions.windows && compareVersions(windowsRelease.version, userInstalledVersions.windows) > 0 && (
         <div className="glass-card rounded-xl p-4 border border-sky-500/50 bg-sky-500/10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -474,8 +492,8 @@ export default function DashboardOverview() {
         </div>
       )}
 
-      {/* macOS Desktop App Announcement */}
-      {macosRelease && !macAnnouncementDismissed && (
+      {/* macOS Desktop App Announcement - only show if user has older version */}
+      {macosRelease && !macAnnouncementDismissed && userInstalledVersions.mac && compareVersions(macosRelease.version, userInstalledVersions.mac) > 0 && (
         <div className="glass-card rounded-xl p-4 border border-gray-500/50 bg-gray-500/10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">

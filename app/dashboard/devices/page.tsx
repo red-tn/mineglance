@@ -35,6 +35,38 @@ export default function DevicesPage() {
   const [windowsAnnouncementDismissed, setWindowsAnnouncementDismissed] = useState(true)
   const [macAnnouncementDismissed, setMacAnnouncementDismissed] = useState(true)
 
+  // Compare semantic versions: returns 1 if a > b, -1 if a < b, 0 if equal
+  function compareVersions(a: string, b: string): number {
+    const aParts = a.split('.').map(Number)
+    const bParts = b.split('.').map(Number)
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aVal = aParts[i] || 0
+      const bVal = bParts[i] || 0
+      if (aVal > bVal) return 1
+      if (aVal < bVal) return -1
+    }
+    return 0
+  }
+
+  // Get highest installed version for a platform
+  function getInstalledVersion(deviceType: string): string | null {
+    const versions = devices
+      .filter(d => d.deviceType === deviceType)
+      .map(d => d.version)
+      .filter(Boolean) as string[]
+    if (versions.length === 0) return null
+    return versions.sort((a, b) => compareVersions(b, a))[0]
+  }
+
+  const installedWindowsVersion = getInstalledVersion('desktop_windows')
+  const installedMacVersion = getInstalledVersion('desktop_macos')
+
+  // Check if update is available (latest > installed)
+  const windowsUpdateAvailable = windowsRelease && installedWindowsVersion &&
+    compareVersions(windowsRelease.version, installedWindowsVersion) > 0
+  const macUpdateAvailable = macosRelease && installedMacVersion &&
+    compareVersions(macosRelease.version, installedMacVersion) > 0
+
   useEffect(() => {
     loadDevices()
     loadSoftwareReleases()
@@ -350,8 +382,8 @@ export default function DevicesPage() {
         </div>
       </div>
 
-      {/* Software Announcement Banners */}
-      {windowsRelease && !windowsAnnouncementDismissed && (
+      {/* Software Announcement Banners - only show if user has older version installed */}
+      {windowsUpdateAvailable && !windowsAnnouncementDismissed && (
         <div className="glass-card rounded-xl p-4 border border-sky-500/50 bg-sky-500/10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -392,7 +424,7 @@ export default function DevicesPage() {
         </div>
       )}
 
-      {macosRelease && !macAnnouncementDismissed && (
+      {macUpdateAvailable && !macAnnouncementDismissed && (
         <div className="glass-card rounded-xl p-4 border border-gray-500/50 bg-gray-500/10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
