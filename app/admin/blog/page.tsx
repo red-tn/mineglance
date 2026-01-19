@@ -1133,13 +1133,51 @@ export default function AdminBlogPage() {
 
                 {form.status === 'scheduled' && (
                   <div>
-                    <label className="block text-dark-text-muted text-sm mb-1">Scheduled Date</label>
+                    <label className="block text-dark-text-muted text-sm mb-1">Scheduled Date & Time</label>
                     <input
                       type="datetime-local"
                       value={form.scheduled_at}
                       onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })}
-                      className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                      min={new Date().toISOString().slice(0, 16)}
+                      className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary [color-scheme:dark]"
                     />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date()
+                          d.setHours(d.getHours() + 1, 0, 0, 0)
+                          setForm({ ...form, scheduled_at: d.toISOString().slice(0, 16) })
+                        }}
+                        className="px-3 py-1 text-xs bg-dark-border text-dark-text-muted rounded hover:bg-dark-card-hover"
+                      >
+                        +1 hour
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date()
+                          d.setDate(d.getDate() + 1)
+                          d.setHours(9, 0, 0, 0)
+                          setForm({ ...form, scheduled_at: d.toISOString().slice(0, 16) })
+                        }}
+                        className="px-3 py-1 text-xs bg-dark-border text-dark-text-muted rounded hover:bg-dark-card-hover"
+                      >
+                        Tomorrow 9am
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date()
+                          d.setDate(d.getDate() + 7)
+                          d.setHours(9, 0, 0, 0)
+                          setForm({ ...form, scheduled_at: d.toISOString().slice(0, 16) })
+                        }}
+                        className="px-3 py-1 text-xs bg-dark-border text-dark-text-muted rounded hover:bg-dark-card-hover"
+                      >
+                        Next week
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
