@@ -257,8 +257,6 @@ export default function InstallsPage() {
           >
             <option value="all">All Platforms</option>
             <option value="extension">Extension</option>
-            <option value="mobile_ios">iOS</option>
-            <option value="mobile_android">Android</option>
             <option value="desktop_windows">Windows Desktop</option>
             <option value="desktop_macos">macOS Desktop</option>
           </select>
@@ -315,7 +313,7 @@ export default function InstallsPage() {
       </div>
 
       {/* Platform Cards - Top Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="glass-card rounded-xl border border-dark-border p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-dark-text-muted text-sm">Total</span>
@@ -337,28 +335,8 @@ export default function InstallsPage() {
 
         <div className="glass-card rounded-xl border border-dark-border p-5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-dark-text-muted text-sm">iOS</span>
-            <span className="text-blue-400 text-xl">📱</span>
-          </div>
-          <p className="text-3xl font-bold text-dark-text">{platformStats?.ios.total || 0}</p>
-          <p className="text-xs text-dark-text-dim mt-1">
-            {platformStats?.ios.active || 0} active
-          </p>
-        </div>
-
-        <div className="glass-card rounded-xl border border-dark-border p-5 opacity-60">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-dark-text-muted text-sm">Android</span>
-            <span className="text-green-400 text-xl">🤖</span>
-          </div>
-          <p className="text-3xl font-bold text-dark-text">{platformStats?.android.total || 0}</p>
-          <p className="text-xs text-amber-400 mt-1">Coming Soon</p>
-        </div>
-
-        <div className="glass-card rounded-xl border border-dark-border p-5">
-          <div className="flex items-center justify-between mb-2">
             <span className="text-dark-text-muted text-sm">Windows</span>
-            <span className="text-blue-400 text-xl">🖥️</span>
+            <span className="text-sky-400 text-xl">🖥️</span>
           </div>
           <p className="text-3xl font-bold text-dark-text">{platformStats?.desktop_windows?.total || 0}</p>
           <p className="text-xs text-dark-text-dim mt-1">
@@ -448,10 +426,10 @@ export default function InstallsPage() {
           </div>
         </div>
 
-        {/* iOS Chart */}
+        {/* Windows Chart */}
         <div className="glass-card rounded-xl border border-dark-border p-6">
           <h3 className="text-lg font-semibold text-dark-text mb-4 flex items-center gap-2">
-            <span>📱</span> iOS Installs
+            <span>🖥️</span> Windows Installs
           </h3>
           <div className="h-24">
             {chartData.length === 0 ? (
@@ -459,18 +437,18 @@ export default function InstallsPage() {
             ) : (
               <div className="flex items-end h-full gap-0.5">
                 {chartData.map((item, index) => {
-                  const maxIos = Math.max(...chartData.map(d => d.ios), 1)
+                  const maxWin = Math.max(...chartData.map(d => d.desktop_windows), 1)
                   return (
                     <div
                       key={index}
                       className="flex-1 group relative"
-                      title={`${item.date}: ${item.ios}`}
+                      title={`${item.date}: ${item.desktop_windows}`}
                     >
                       <div
-                        className="bg-blue-500/50 hover:bg-blue-500 rounded-t transition-colors"
+                        className="bg-sky-500/50 hover:bg-sky-500 rounded-t transition-colors"
                         style={{
-                          height: `${Math.max((item.ios / maxIos) * 100, 2)}%`,
-                          minHeight: item.ios > 0 ? '4px' : '2px'
+                          height: `${Math.max((item.desktop_windows / maxWin) * 100, 2)}%`,
+                          minHeight: item.desktop_windows > 0 ? '4px' : '2px'
                         }}
                       />
                     </div>
@@ -481,13 +459,36 @@ export default function InstallsPage() {
           </div>
         </div>
 
-        {/* Android Chart (Placeholder) */}
-        <div className="glass-card rounded-xl border border-dark-border p-6 opacity-60">
+        {/* macOS Chart */}
+        <div className="glass-card rounded-xl border border-dark-border p-6">
           <h3 className="text-lg font-semibold text-dark-text mb-4 flex items-center gap-2">
-            <span>🤖</span> Android Installs
+            <span>🍎</span> macOS Installs
           </h3>
-          <div className="h-24 flex items-center justify-center">
-            <span className="text-amber-400 text-sm">Coming Soon</span>
+          <div className="h-24">
+            {chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-dark-text-dim">No data</div>
+            ) : (
+              <div className="flex items-end h-full gap-0.5">
+                {chartData.map((item, index) => {
+                  const maxMac = Math.max(...chartData.map(d => d.desktop_macos), 1)
+                  return (
+                    <div
+                      key={index}
+                      className="flex-1 group relative"
+                      title={`${item.date}: ${item.desktop_macos}`}
+                    >
+                      <div
+                        className="bg-gray-500/50 hover:bg-gray-400 rounded-t transition-colors"
+                        style={{
+                          height: `${Math.max((item.desktop_macos / maxMac) * 100, 2)}%`,
+                          minHeight: item.desktop_macos > 0 ? '4px' : '2px'
+                        }}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

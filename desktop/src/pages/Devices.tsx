@@ -308,18 +308,17 @@ export default function Devices() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
                           {getPlatformLabel(device.deviceType)}
                         </span>
-                        {/* Only show Online/Offline status for desktop apps, not extensions */}
-                        {isDesktopDevice(device.deviceType) && isOnline && (
+                        {/* Show Online/Offline status for all device types */}
+                        {isOnline ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1 animate-pulse" />
                             Online
                           </span>
-                        )}
-                        {isDesktopDevice(device.deviceType) && !isOnline && recentActivity && (
+                        ) : recentActivity ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 text-gray-400">
                             Offline
                           </span>
-                        )}
+                        ) : null}
                         {nearPurge && daysLeft !== null && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
                             <AlertTriangle className="w-3 h-3 mr-1" />

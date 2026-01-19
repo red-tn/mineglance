@@ -27,8 +27,6 @@ interface BugFix {
 
 const PLATFORMS = {
   extension: 'Chrome Extension',
-  mobile_ios: 'Mobile iOS',
-  mobile_android: 'Mobile Android',
   desktop_windows: 'Windows Desktop',
   desktop_macos: 'macOS Desktop'
 }

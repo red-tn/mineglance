@@ -9,6 +9,9 @@ import ExtensionDownloadModal from '@/components/ExtensionDownloadModal'
 
 interface DashboardStats {
   activeDevices: number
+  extensionCount: number
+  windowsCount: number
+  macosCount: number
   profileComplete: number
   memberSince: string
 }
@@ -153,6 +156,9 @@ export default function DashboardOverview() {
       })
 
       let activeDevices = 0
+      let extensionCount = 0
+      let windowsCount = 0
+      let macosCount = 0
       let profileComplete = 0
       let memberSince = new Date().toISOString()
       let installedVersion: string | null = null
@@ -160,9 +166,14 @@ export default function DashboardOverview() {
       if (devicesRes.ok) {
         const devicesData = await devicesRes.json()
         activeDevices = devicesData.activeCount || 0
+        // Count devices by type
+        const devices = devicesData.devices || []
+        extensionCount = devices.filter((d: { deviceType?: string }) => d.deviceType === 'extension').length
+        windowsCount = devices.filter((d: { deviceType?: string }) => d.deviceType === 'desktop_windows').length
+        macosCount = devices.filter((d: { deviceType?: string }) => d.deviceType === 'desktop_macos').length
         // Find the highest version among installed devices (most recent extension)
-        if (devicesData.devices && devicesData.devices.length > 0) {
-          const versions = devicesData.devices
+        if (devices.length > 0) {
+          const versions = devices
             .map((d: { version?: string }) => d.version)
             .filter(Boolean) as string[]
           if (versions.length > 0) {
@@ -191,7 +202,7 @@ export default function DashboardOverview() {
         profileComplete = Math.round((filledFields / fields.length) * 100)
       }
 
-      setStats({ activeDevices, profileComplete, memberSince })
+      setStats({ activeDevices, extensionCount, windowsCount, macosCount, profileComplete, memberSince })
     } catch (e) {
       console.error('Failed to load stats:', e)
     } finally {
@@ -366,20 +377,33 @@ export default function DashboardOverview() {
         {/* Devices Card */}
         <Link href="/dashboard/devices" className="block">
           <div className="glass-card rounded-xl p-6 hover:border-primary/50 transition-colors border border-dark-border">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
                 <p className="text-sm text-dark-text-muted">Connected Devices</p>
-                <p className="text-2xl font-bold text-dark-text">
-                  {stats?.activeDevices || 0}
-                </p>
+              </div>
+              <span className="px-2 py-0.5 bg-primary/20 text-primary text-sm font-bold rounded-full">
+                {stats?.activeDevices || 0}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-2 bg-dark-card-hover rounded-lg">
+                <p className="text-lg font-bold text-dark-text">{stats?.extensionCount || 0}</p>
+                <p className="text-xs text-dark-text-muted">Extension</p>
+              </div>
+              <div className="text-center p-2 bg-dark-card-hover rounded-lg">
+                <p className="text-lg font-bold text-dark-text">{stats?.windowsCount || 0}</p>
+                <p className="text-xs text-dark-text-muted">Windows</p>
+              </div>
+              <div className="text-center p-2 bg-dark-card-hover rounded-lg">
+                <p className="text-lg font-bold text-dark-text">{stats?.macosCount || 0}</p>
+                <p className="text-xs text-dark-text-muted">macOS</p>
               </div>
             </div>
-            <p className="mt-3 text-xs text-dark-text-muted">Browser Extension</p>
           </div>
         </Link>
 
@@ -563,83 +587,75 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Download Extension */}
+      {/* Download MineGlance - Combined Card */}
       <div className="glass-card rounded-xl p-6 border border-dark-border">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-dark-text">Download Extension</h2>
+          <h2 className="text-lg font-semibold text-dark-text">Get MineGlance</h2>
           {extensionRelease && (
             <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-medium">
               v{extensionRelease.version}
             </span>
           )}
         </div>
-        {extensionRelease ? (
-          <a
-            href={extensionRelease.downloadUrl}
-            download
-            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left w-full"
-          >
-            <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm13.412 2.514l-3.766 6.522a5.45 5.45 0 0 1 3.768 5.167A5.454 5.454 0 0 1 12 21.818l-.391.001h10.073A11.944 11.944 0 0 0 24 12c0-1.387-.236-2.721-.669-3.962H15.343z"/>
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-dark-text group-hover:text-primary transition-colors">Browser Extension</p>
-              <p className="text-xs text-dark-text-muted">{extensionRelease.fileName}</p>
-            </div>
-            <svg className="w-5 h-5 text-dark-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </a>
-        ) : (
-          <button
-            onClick={() => setShowDownloadModal(true)}
-            className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left w-full"
-          >
-            <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm13.412 2.514l-3.766 6.522a5.45 5.45 0 0 1 3.768 5.167A5.454 5.454 0 0 1 12 21.818l-.391.001h10.073A11.944 11.944 0 0 0 24 12c0-1.387-.236-2.721-.669-3.962H15.343z"/>
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-dark-text group-hover:text-primary transition-colors">Browser Extension</p>
-              <p className="text-xs text-dark-text-muted">Works on Chrome, Edge, Brave, Opera</p>
-            </div>
-            <svg className="w-5 h-5 text-dark-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </button>
-        )}
-        <p className="text-xs text-dark-text-dim mt-3">Works on Chrome, Edge, Brave, Opera</p>
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Extension */}
+          {extensionRelease ? (
+            <a
+              href={extensionRelease.downloadUrl}
+              download
+              className="flex flex-col items-center p-4 bg-dark-card-hover rounded-lg hover:bg-blue-500/10 hover:border-blue-500/30 transition-colors group border border-transparent"
+            >
+              <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-2">
+                <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm13.412 2.514l-3.766 6.522a5.45 5.45 0 0 1 3.768 5.167A5.454 5.454 0 0 1 12 21.818l-.391.001h10.073A11.944 11.944 0 0 0 24 12c0-1.387-.236-2.721-.669-3.962H15.343z"/>
+                </svg>
+              </div>
+              <p className="font-medium text-dark-text group-hover:text-blue-400 transition-colors text-sm">Extension</p>
+              <p className="text-xs text-dark-text-muted mt-0.5">Chrome, Edge, Brave</p>
+            </a>
+          ) : (
+            <button
+              onClick={() => setShowDownloadModal(true)}
+              className="flex flex-col items-center p-4 bg-dark-card-hover rounded-lg hover:bg-blue-500/10 hover:border-blue-500/30 transition-colors group border border-transparent"
+            >
+              <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center mb-2">
+                <svg className="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C8.21 0 4.831 1.757 2.632 4.501l3.953 6.848A5.454 5.454 0 0 1 12 6.545h10.691A12 12 0 0 0 12 0zM1.931 5.47A11.943 11.943 0 0 0 0 12c0 6.012 4.42 10.991 10.189 11.864l3.953-6.847a5.45 5.45 0 0 1-6.865-2.29L1.931 5.47zm13.412 2.514l-3.766 6.522a5.45 5.45 0 0 1 3.768 5.167A5.454 5.454 0 0 1 12 21.818l-.391.001h10.073A11.944 11.944 0 0 0 24 12c0-1.387-.236-2.721-.669-3.962H15.343z"/>
+                </svg>
+              </div>
+              <p className="font-medium text-dark-text group-hover:text-blue-400 transition-colors text-sm">Extension</p>
+              <p className="text-xs text-dark-text-muted mt-0.5">Chrome, Edge, Brave</p>
+            </button>
+          )}
 
-      {/* Download Desktop App */}
-      <div className="glass-card rounded-xl p-6 border border-dark-border">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-dark-text">Desktop App</h2>
-          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full font-medium">
-            NEW
-          </span>
+          {/* Windows */}
+          <Link
+            href="/download"
+            className="flex flex-col items-center p-4 bg-dark-card-hover rounded-lg hover:bg-sky-500/10 hover:border-sky-500/30 transition-colors group border border-transparent"
+          >
+            <div className="w-12 h-12 rounded-lg bg-sky-500/20 flex items-center justify-center mb-2">
+              <svg className="w-6 h-6 text-sky-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 5.5L10.5 4.3V11.5H3V5.5ZM3 18.5V12.5H10.5V19.7L3 18.5ZM11.5 4.1L21 2.5V11.5H11.5V4.1ZM11.5 12.5H21V21.5L11.5 19.9V12.5Z"/>
+              </svg>
+            </div>
+            <p className="font-medium text-dark-text group-hover:text-sky-400 transition-colors text-sm">Windows</p>
+            <p className="text-xs text-dark-text-muted mt-0.5">Desktop App</p>
+          </Link>
+
+          {/* macOS */}
+          <Link
+            href="/download"
+            className="flex flex-col items-center p-4 bg-dark-card-hover rounded-lg hover:bg-gray-500/10 hover:border-gray-500/30 transition-colors group border border-transparent"
+          >
+            <div className="w-12 h-12 rounded-lg bg-gray-500/20 flex items-center justify-center mb-2">
+              <svg className="w-6 h-6 text-gray-300" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+              </svg>
+            </div>
+            <p className="font-medium text-dark-text group-hover:text-gray-300 transition-colors text-sm">macOS</p>
+            <p className="text-xs text-dark-text-muted mt-0.5">Desktop App</p>
+          </Link>
         </div>
-        <Link
-          href="/download"
-          className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left w-full"
-        >
-          <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
-            <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="font-medium text-dark-text group-hover:text-primary transition-colors">MineGlance Desktop</p>
-            <p className="text-xs text-dark-text-muted">Windows & macOS</p>
-          </div>
-          <svg className="w-5 h-5 text-dark-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-        </Link>
-        <p className="text-xs text-dark-text-dim mt-3">Native app with system tray & notifications</p>
       </div>
 
       {/* Blog Feed */}
