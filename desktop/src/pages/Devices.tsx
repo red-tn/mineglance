@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetch } from '@tauri-apps/plugin-http';
 import { useAuthStore } from '../stores/authStore';
-import { Monitor, Puzzle, Smartphone, Trash2, AlertTriangle, Copy, CheckCircle, Crown } from 'lucide-react';
+import { Monitor, Puzzle, Trash2, AlertTriangle, Copy, CheckCircle, Crown } from 'lucide-react';
 
 const API_BASE = 'https://www.mineglance.com';
 
@@ -127,9 +127,6 @@ export default function Devices() {
     if (deviceType === 'extension') {
       return <Puzzle size={20} />;
     }
-    if (deviceType.includes('mobile') || deviceType.includes('ios') || deviceType.includes('android')) {
-      return <Smartphone size={20} />;
-    }
     return <Monitor size={20} />;
   }
 
@@ -141,10 +138,6 @@ export default function Devices() {
         return 'Windows Desktop';
       case 'desktop_macos':
         return 'macOS Desktop';
-      case 'mobile_ios':
-        return 'iOS App';
-      case 'mobile_android':
-        return 'Android App';
       default:
         return deviceType;
     }
@@ -156,9 +149,6 @@ export default function Devices() {
     }
     if (deviceType.includes('desktop')) {
       return 'text-purple-400 bg-purple-500/20';
-    }
-    if (deviceType.includes('mobile') || deviceType.includes('ios') || deviceType.includes('android')) {
-      return 'text-orange-400 bg-orange-500/20';
     }
     return 'text-[var(--text-muted)] bg-[var(--card-hover)]';
   }
@@ -173,7 +163,6 @@ export default function Devices() {
 
   const extensionCount = devices.filter(d => d.deviceType === 'extension').length;
   const desktopCount = devices.filter(d => d.deviceType.includes('desktop')).length;
-  const mobileCount = devices.filter(d => d.deviceType.includes('mobile') || d.deviceType.includes('ios') || d.deviceType.includes('android')).length;
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -205,7 +194,7 @@ export default function Devices() {
       </div>
 
       {/* Platform Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="card p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
@@ -226,18 +215,6 @@ export default function Devices() {
             <div>
               <p className="text-xl font-bold text-[var(--text)]">{desktopCount}</p>
               <p className="text-xs text-[var(--text-muted)]">Desktop Apps</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400">
-              <Smartphone size={20} />
-            </div>
-            <div>
-              <p className="text-xl font-bold text-[var(--text)]">{mobileCount}</p>
-              <p className="text-xs text-[var(--text-muted)]">Mobile Apps</p>
             </div>
           </div>
         </div>
