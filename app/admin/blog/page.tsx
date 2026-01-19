@@ -65,6 +65,11 @@ export default function AdminBlogPage() {
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [previewPost, setPreviewPost] = useState<BlogPost | null>(null)
 
+  // Status change state
+  const [showStatusModal, setShowStatusModal] = useState(false)
+  const [statusPost, setStatusPost] = useState<BlogPost | null>(null)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
+
   // Email modal states
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [emailPost, setEmailPost] = useState<BlogPost | null>(null)
@@ -254,6 +259,51 @@ export default function AdminBlogPage() {
       }
     } catch (error) {
       console.error('Failed to delete post:', error)
+    }
+  }
+
+  async function handleStatusChange(post: BlogPost, newStatus: 'draft' | 'published' | 'scheduled') {
+    if (post.status === newStatus) {
+      setShowStatusModal(false)
+      return
+    }
+
+    setUpdatingStatus(true)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const res = await fetch(`/api/admin/blog/${post.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: post.title,
+          slug: post.slug,
+          content: post.content,
+          excerpt: post.excerpt,
+          featured_image_url: post.featured_image_url,
+          seo_description: post.seo_description,
+          status: newStatus,
+          is_pinned_homepage: post.is_pinned_homepage,
+          is_pinned_dashboard: post.is_pinned_dashboard,
+          author_name: post.author_name,
+          tags: (post.tags || []).join(', ')
+        })
+      })
+
+      if (res.ok) {
+        fetchPosts()
+        setShowStatusModal(false)
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Failed to update status')
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error)
+      alert('Failed to update status')
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
@@ -576,9 +626,12 @@ export default function AdminBlogPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_COLORS[post.status]}`}>
+                          <button
+                            onClick={() => { setStatusPost(post); setShowStatusModal(true) }}
+                            className={`px-2 py-1 rounded text-xs font-medium cursor-pointer hover:ring-2 hover:ring-white/30 transition ${STATUS_COLORS[post.status]}`}
+                          >
                             {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                          </span>
+                          </button>
                         </td>
                         <td className="px-4 py-3 text-dark-text-muted">{post.view_count || 0}</td>
                         <td className="px-4 py-3 text-dark-text-muted">{post.comment_count || 0}</td>
@@ -657,9 +710,12 @@ export default function AdminBlogPage() {
                         </a>
                         <div className="text-dark-text-dim text-xs truncate">/blog/{post.slug}</div>
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${STATUS_COLORS[post.status]}`}>
+                      <button
+                        onClick={() => { setStatusPost(post); setShowStatusModal(true) }}
+                        className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap cursor-pointer hover:ring-2 hover:ring-white/30 transition ${STATUS_COLORS[post.status]}`}
+                      >
                         {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                      </span>
+                      </button>
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -1395,6 +1451,53 @@ export default function AdminBlogPage() {
                   Edit Post
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Change Modal */}
+      {showStatusModal && statusPost && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-dark-card rounded-xl p-6 max-w-sm w-full">
+            <h2 className="text-xl font-bold text-white mb-4">Change Status</h2>
+            <p className="text-dark-text-muted mb-4 text-sm truncate">{statusPost.title}</p>
+
+            <div className="space-y-2 mb-6">
+              {(['draft', 'published', 'scheduled'] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleStatusChange(statusPost, status)}
+                  disabled={updatingStatus}
+                  className={`w-full p-3 rounded-lg text-left flex items-center justify-between transition ${
+                    statusPost.status === status
+                      ? 'bg-primary/20 border-2 border-primary'
+                      : 'bg-dark-bg hover:bg-dark-card-hover border-2 border-transparent'
+                  } ${updatingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`w-3 h-3 rounded-full ${
+                      status === 'draft' ? 'bg-gray-400' :
+                      status === 'published' ? 'bg-green-400' :
+                      'bg-blue-400'
+                    }`} />
+                    <span className="text-white font-medium capitalize">{status}</span>
+                  </div>
+                  {statusPost.status === status && (
+                    <span className="text-primary text-sm">Current</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowStatusModal(false)}
+                disabled={updatingStatus}
+                className="flex-1 px-4 py-2 bg-dark-border text-white rounded-lg hover:bg-dark-border/80 disabled:opacity-50"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
