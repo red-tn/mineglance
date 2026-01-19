@@ -30,7 +30,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   const { liteMode } = useSettingsStore();
-  const { checkAuth } = useAuthStore();
+  const { checkAuth, sendHeartbeat, refreshSubscription, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     // Apply theme class
@@ -45,6 +45,28 @@ function App() {
     // Check auth on app start
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Send heartbeat immediately on auth
+    sendHeartbeat();
+
+    // Send heartbeat every 5 minutes
+    const heartbeatInterval = setInterval(() => {
+      sendHeartbeat();
+    }, 5 * 60 * 1000);
+
+    // Refresh subscription every 15 minutes
+    const subscriptionInterval = setInterval(() => {
+      refreshSubscription();
+    }, 15 * 60 * 1000);
+
+    return () => {
+      clearInterval(heartbeatInterval);
+      clearInterval(subscriptionInterval);
+    };
+  }, [isAuthenticated, sendHeartbeat, refreshSubscription]);
 
   return (
     <BrowserRouter>

@@ -45,42 +45,48 @@
         </div>
       </section>
 
-      <!-- Pro Activation Section -->
-      <section class="section" id="proActivationSection">
-        <h2>Pro License</h2>
+      <!-- Subscription Status Section -->
+      <section class="section" id="subscriptionSection">
+        <h2>Subscription</h2>
 
         <!-- Not signed in message -->
-        <div id="proNeedAuth" class="hidden">
-          <p class="section-desc">Sign in via the popup to activate your Pro license.</p>
+        <div id="subscriptionNeedAuth" class="hidden">
+          <p class="section-desc">Sign in via the popup to view your subscription status.</p>
         </div>
 
-        <!-- Activation form for signed-in free users -->
-        <div id="proActivationForm">
-          <p class="section-desc">Enter your license key from your purchase confirmation email.</p>
-          <div class="form-group">
-            <label for="licenseKey">License Key</label>
-            <div class="input-with-button">
-              <input type="text" id="licenseKey" placeholder="XXXX-XXXX-XXXX-XXXX" style="text-transform: uppercase; font-family: monospace; letter-spacing: 1px;">
-              <button id="activateProBtn" class="btn btn-accent">Activate</button>
+        <!-- Free user status -->
+        <div id="subscriptionFreeStatus" class="hidden">
+          <div style="padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <p style="margin: 0; font-weight: 600;">Free Plan</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.8;">1 wallet, basic features</p>
+              </div>
+              <span class="tag" style="background: rgba(255,255,255,0.1); color: var(--text-muted);">FREE</span>
             </div>
-            <p id="activationResult" class="lookup-result hidden"></p>
+            <div style="margin-top: 12px;">
+              <a href="https://www.mineglance.com/#pricing" target="_blank" class="btn btn-accent" style="width: 100%; text-align: center;">Upgrade to Pro - $59/year</a>
+            </div>
           </div>
-          <p class="help-text">
-            <a href="https://www.mineglance.com/support#license-key" target="_blank" style="color: var(--primary);">Lost your license key?</a>
-          </p>
         </div>
 
-        <div id="proActiveStatus" class="pro-active-status hidden">
+        <!-- Pro user status -->
+        <div id="subscriptionProStatus" class="pro-active-status hidden">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <p style="margin: 0;">Pro license active</p>
-              <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.8;" id="licenseKeyDisplay"></p>
+              <p style="margin: 0; font-weight: 600;">Pro Plan</p>
+              <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.8;" id="subscriptionDetails">Unlimited wallets, all features</p>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span id="planBadge" class="tag" style="background: rgba(255,255,255,0.2); color: white;">PRO</span>
-              <button id="deactivateBtn" class="btn btn-small" style="background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3);">Deactivate</button>
-            </div>
+            <span id="planBadge" class="tag" style="background: rgba(255,255,255,0.2); color: white;">PRO</span>
           </div>
+          <div id="subscriptionExpiry" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 12px; opacity: 0.8;">
+            <!-- Filled by JS -->
+          </div>
+        </div>
+
+        <!-- Expired subscription notice -->
+        <div id="subscriptionExpiredNotice" class="hidden" style="margin-top: 12px; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;">
+          <p style="margin: 0; color: #ef4444; font-size: 13px;">Your subscription has expired. <a href="https://www.mineglance.com/dashboard/subscription" target="_blank" style="color: #ef4444; font-weight: 600;">Renew now</a> to restore Pro features.</p>
         </div>
       </section>
 

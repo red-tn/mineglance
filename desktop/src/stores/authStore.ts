@@ -65,6 +65,8 @@ interface AuthState {
   verify2FA: (code: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   clearError: () => void;
+  sendHeartbeat: () => Promise<void>;
+  refreshSubscription: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -324,4 +326,68 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+
+  sendHeartbeat: async () => {
+    const { token, isAuthenticated } = get();
+    if (!token || !isAuthenticated) return;
+
+    try {
+      const instanceId = await getInstanceId();
+
+      await fetch(`${API_BASE}/api/instances`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          instanceId,
+          version: APP_VERSION,
+        }),
+      });
+    } catch (e) {
+      console.error('Heartbeat failed:', e);
+    }
+  },
+
+  refreshSubscription: async () => {
+    const { token, isAuthenticated } = get();
+    if (!token || !isAuthenticated) return;
+
+    try {
+      const response = await fetch(`${API_BASE}/api/dashboard/auth/verify`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const user = data.user;
+
+        // Check if subscription is expired
+        let plan = user.plan;
+        if (user.subscription_end_date && user.billing_type !== 'lifetime') {
+          const endDate = new Date(user.subscription_end_date);
+          if (endDate < new Date()) {
+            plan = 'free'; // Expired subscription
+          }
+        }
+
+        set({
+          user: {
+            id: user.id,
+            email: user.email,
+            plan: plan,
+            billingType: user.billingType || user.billing_type,
+            fullName: user.full_name,
+            subscriptionEndDate: user.subscription_end_date,
+          },
+        });
+      }
+    } catch (e) {
+      console.error('Failed to refresh subscription:', e);
+    }
+  },
 }));

@@ -149,6 +149,9 @@ chrome.runtime.onInstalled.addListener(() => {
 
   // Set up auto-refresh for all users (after slight delay to ensure storage is ready)
   setTimeout(() => setupAutoRefresh(), 1000);
+
+  // Set up heartbeat for online status tracking
+  setTimeout(() => setupHeartbeat(), 2000);
 });
 
 // Also register instance on startup (for returning users)
@@ -158,7 +161,111 @@ chrome.runtime.onStartup.addListener(() => {
   verifyLicenseOnStartup();
   // Set up auto-refresh for all users
   setupAutoRefresh();
+  // Set up heartbeat for online status tracking
+  setupHeartbeat();
 });
+
+// Send heartbeat to update last_seen timestamp
+async function sendHeartbeat() {
+  const { authToken, installId } = await chrome.storage.local.get(['authToken', 'installId']);
+
+  if (!authToken || !installId) return;
+
+  try {
+    await fetch(`${API_BASE}/instances`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        instanceId: installId,
+        version: chrome.runtime.getManifest().version,
+      }),
+    });
+    console.log('Heartbeat sent successfully');
+  } catch (e) {
+    console.error('Heartbeat failed:', e);
+  }
+}
+
+// Set up heartbeat alarm (every 5 minutes)
+async function setupHeartbeat() {
+  // Clear any existing heartbeat alarm
+  await chrome.alarms.clear('heartbeat');
+
+  // Create alarm to fire every 5 minutes
+  chrome.alarms.create('heartbeat', { periodInMinutes: 5 });
+
+  // Send initial heartbeat
+  sendHeartbeat();
+}
+
+// Check subscription status and update plan if expired
+async function checkSubscriptionStatus() {
+  const { authToken, isPaid } = await chrome.storage.local.get(['authToken', 'isPaid']);
+
+  if (!authToken) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    });
+
+    if (!response.ok) return;
+
+    const data = await response.json();
+
+    if (data.valid) {
+      const newPlan = data.plan || 'free';
+      const newIsPaid = newPlan === 'pro';
+
+      // Check if subscription expired
+      if (data.subscriptionEndDate && data.billingType !== 'lifetime') {
+        const endDate = new Date(data.subscriptionEndDate);
+        if (endDate < new Date()) {
+          // Subscription expired
+          await chrome.storage.local.set({
+            isPaid: false,
+            plan: 'free',
+            subscriptionExpired: true
+          });
+
+          // Notify user
+          chrome.notifications.create('subscription-expired', {
+            type: 'basic',
+            iconUrl: 'icons/icon128.png',
+            title: 'MineGlance Subscription Expired',
+            message: 'Your Pro subscription has expired. Renew to continue using Pro features.'
+          });
+          return;
+        }
+      }
+
+      // Update local storage with current plan
+      await chrome.storage.local.set({
+        isPaid: newIsPaid,
+        plan: newPlan,
+        subscriptionEndDate: data.subscriptionEndDate,
+        billingType: data.billingType,
+        subscriptionExpired: false
+      });
+
+      // If plan changed from pro to free unexpectedly, notify user
+      if (isPaid && !newIsPaid) {
+        chrome.notifications.create('plan-downgraded', {
+          type: 'basic',
+          iconUrl: 'icons/icon128.png',
+          title: 'MineGlance Plan Updated',
+          message: 'Your plan has changed to Free. Some features may be limited.'
+        });
+      }
+    }
+  } catch (e) {
+    console.error('Subscription check failed:', e);
+  }
+}
 
 // Verify license status with server (checks for revocation)
 async function verifyLicenseOnStartup() {
@@ -1059,6 +1166,10 @@ async function setupAutoRefresh() {
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'refresh') {
     await refreshAllData();
+  } else if (alarm.name === 'heartbeat') {
+    await sendHeartbeat();
+    // Also check subscription status periodically
+    await checkSubscriptionStatus();
   }
 });
 

@@ -368,9 +368,24 @@ export default function Profile() {
               <div className="flex items-center gap-3 text-[var(--text)]">
                 <CreditCard size={18} className="text-[var(--text-muted)]" />
                 <span>
-                  {profile.billingType === "lifetime"
-                    ? "Lifetime Access"
-                    : `Subscription renews ${formatDate(user?.subscriptionEndDate)}`}
+                  {profile.billingType === "lifetime" ? (
+                    <span className="text-primary">Lifetime Access - Never expires</span>
+                  ) : user?.subscriptionEndDate ? (
+                    (() => {
+                      const endDate = new Date(user.subscriptionEndDate);
+                      const daysLeft = Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                      const billingLabel = profile.billingType === 'monthly' ? 'Monthly' : 'Annual';
+                      if (daysLeft <= 0) {
+                        return <span className="text-danger">Subscription expired - Renew now</span>;
+                      } else if (daysLeft <= 7) {
+                        return <span className="text-warning">{billingLabel} · Expires in {daysLeft} days</span>;
+                      } else {
+                        return <span>{billingLabel} · Renews {formatDate(user.subscriptionEndDate)} ({daysLeft} days)</span>;
+                      }
+                    })()
+                  ) : (
+                    <span>Subscription active</span>
+                  )}
                 </span>
               </div>
             )}

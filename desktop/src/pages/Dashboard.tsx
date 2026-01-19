@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useWalletStore } from "../stores/walletStore";
 import { useSettingsStore } from "../stores/settingsStore";
 import { useAuthStore } from "../stores/authStore";
-import { RefreshCw, TrendingUp, TrendingDown, Zap, ExternalLink, Newspaper } from "lucide-react";
+import { RefreshCw, TrendingUp, TrendingDown, Zap, ExternalLink, Newspaper, Coins, Flame } from "lucide-react";
 import WalletCard from "../components/WalletCard";
 
 interface BlogPost {
@@ -14,12 +14,25 @@ interface BlogPost {
   image_url?: string;
 }
 
+interface MinableCoin {
+  symbol: string;
+  name: string;
+  algorithm: string;
+  profitPerDay: number;
+  change24h: number;
+  isNew: boolean;
+  isHot: boolean;
+}
+
 export default function Dashboard() {
   const { wallets, isLoading, lastRefresh, syncWallets, refreshStats, getTotalProfit, getTotalRevenue } = useWalletStore();
   const { electricityCost } = useSettingsStore();
   const { user, token } = useAuthStore();
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [loadingBlog, setLoadingBlog] = useState(true);
+  const [minableCoins, setMinableCoins] = useState<MinableCoin[]>([]);
+  const [loadingCoins, setLoadingCoins] = useState(true);
+  const [coinsTab, setCoinsTab] = useState<'trending' | 'top' | 'new'>('trending');
 
   // Sync wallets from server on mount
   useEffect(() => {
@@ -44,6 +57,78 @@ export default function Dashboard() {
       }
     }
     fetchBlog();
+  }, []);
+
+  // Fetch minable coins data from WhatToMine
+  useEffect(() => {
+    async function fetchMinableCoins() {
+      try {
+        const response = await fetch('https://whattomine.com/coins.json');
+        if (!response.ok) throw new Error('Failed to fetch');
+
+        const data = await response.json();
+
+        // Map known coins
+        const knownCoins: Record<string, { name: string; symbol: string }> = {
+          'etc': { name: 'Ethereum Classic', symbol: 'ETC' },
+          'rvn': { name: 'Ravencoin', symbol: 'RVN' },
+          'erg': { name: 'Ergo', symbol: 'ERG' },
+          'flux': { name: 'Flux', symbol: 'FLUX' },
+          'kas': { name: 'Kaspa', symbol: 'KAS' },
+          'nexa': { name: 'Nexa', symbol: 'NEXA' },
+          'alph': { name: 'Alephium', symbol: 'ALPH' },
+          'xmr': { name: 'Monero', symbol: 'XMR' },
+          'firo': { name: 'Firo', symbol: 'FIRO' },
+          'rtm': { name: 'Raptoreum', symbol: 'RTM' },
+          'xna': { name: 'Neurai', symbol: 'XNA' },
+          'cfx': { name: 'Conflux', symbol: 'CFX' },
+          'btg': { name: 'Bitcoin Gold', symbol: 'BTG' },
+          'beam': { name: 'Beam', symbol: 'BEAM' },
+          'zec': { name: 'Zcash', symbol: 'ZEC' },
+        };
+
+        const newCoins = ['xna', 'nexa', 'alph', 'kas', 'firo'];
+        const coins: MinableCoin[] = [];
+
+        if (data.coins) {
+          for (const [, coin] of Object.entries(data.coins) as [string, any][]) {
+            const tag = coin.tag?.toLowerCase();
+            if (!tag || !knownCoins[tag]) continue;
+
+            const profitability = parseFloat(coin.profitability) || 0;
+            if (profitability <= 0) continue;
+
+            coins.push({
+              symbol: coin.tag,
+              name: knownCoins[tag].name,
+              algorithm: coin.algorithm || 'Unknown',
+              profitPerDay: profitability / 100, // Normalize
+              change24h: (profitability - 100), // Relative to 100%
+              isNew: newCoins.includes(tag),
+              isHot: profitability > 120
+            });
+          }
+        }
+
+        // Sort by profitability
+        coins.sort((a, b) => b.profitPerDay - a.profitPerDay);
+        setMinableCoins(coins.slice(0, 12)); // Top 12 coins
+      } catch (error) {
+        console.error('Failed to fetch minable coins:', error);
+        // Use fallback data
+        setMinableCoins([
+          { symbol: 'KAS', name: 'Kaspa', algorithm: 'kHeavyHash', profitPerDay: 2.50, change24h: 5.2, isNew: true, isHot: true },
+          { symbol: 'RVN', name: 'Ravencoin', algorithm: 'KAWPOW', profitPerDay: 1.20, change24h: 2.1, isNew: false, isHot: false },
+          { symbol: 'ETC', name: 'Ethereum Classic', algorithm: 'Etchash', profitPerDay: 1.80, change24h: -1.5, isNew: false, isHot: false },
+          { symbol: 'FLUX', name: 'Flux', algorithm: 'ZelHash', profitPerDay: 1.10, change24h: 3.8, isNew: false, isHot: false },
+          { symbol: 'ERG', name: 'Ergo', algorithm: 'Autolykos2', profitPerDay: 0.95, change24h: 1.2, isNew: false, isHot: false },
+          { symbol: 'ALPH', name: 'Alephium', algorithm: 'Blake3', profitPerDay: 1.50, change24h: 8.5, isNew: true, isHot: true },
+        ]);
+      } finally {
+        setLoadingCoins(false);
+      }
+    }
+    fetchMinableCoins();
   }, []);
 
   useEffect(() => {
@@ -200,6 +285,74 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Minable Coins Section */}
+      <div className="pt-6 border-t border-[var(--border)]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-[var(--text)] flex items-center gap-2">
+            <Coins size={20} className="text-primary" />
+            Minable Coins
+          </h2>
+          <div className="flex gap-1 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg p-1">
+            {(['trending', 'top', 'new'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setCoinsTab(tab)}
+                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                  coinsTab === tab
+                    ? 'bg-primary text-white'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text)]'
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loadingCoins ? (
+          <div className="flex items-center justify-center py-8 text-[var(--text-muted)]">
+            <div className="spinner" />
+          </div>
+        ) : minableCoins.length === 0 ? (
+          <div className="text-center py-8 text-[var(--text-muted)]">
+            No coin data available
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {minableCoins
+              .filter(coin => {
+                if (coinsTab === 'new') return coin.isNew;
+                if (coinsTab === 'trending') return Math.abs(coin.change24h) > 3 || coin.isHot;
+                return true; // top shows all sorted by profitability
+              })
+              .slice(0, 6)
+              .map((coin) => (
+                <div
+                  key={coin.symbol}
+                  className="bg-[var(--card-bg)] rounded-lg p-3 border border-[var(--border)] hover:border-primary/30 transition-all"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[var(--text)]">{coin.symbol}</span>
+                      {coin.isHot && (
+                        <Flame size={12} className="text-orange-500" />
+                      )}
+                      {coin.isNew && (
+                        <span className="px-1.5 py-0.5 bg-primary/20 text-primary text-[10px] font-semibold rounded">NEW</span>
+                      )}
+                    </div>
+                    <span className={`text-xs font-medium ${coin.change24h >= 0 ? 'text-primary' : 'text-danger'}`}>
+                      {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] truncate">{coin.algorithm}</p>
+                  <p className="text-sm font-semibold text-primary mt-1">${coin.profitPerDay.toFixed(2)}/day</p>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
 
       {/* Blog Posts Section */}
       <div className="pt-6 border-t border-[var(--border)]">

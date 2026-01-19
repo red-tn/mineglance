@@ -239,16 +239,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const userEmailDisplay = document.getElementById('userEmailDisplay');
   const dashboardLink = document.getElementById('dashboardLink');
   const signOutBtn = document.getElementById('signOutBtn');
-  const proNeedAuth = document.getElementById('proNeedAuth');
 
-  // Pro activation elements
-  const proActivationForm = document.getElementById('proActivationForm');
-  const proActiveStatus = document.getElementById('proActiveStatus');
-  const licenseKeyInput = document.getElementById('licenseKey');
-  const licenseKeyDisplay = document.getElementById('licenseKeyDisplay');
+  // Subscription elements
+  const subscriptionNeedAuth = document.getElementById('subscriptionNeedAuth');
+  const subscriptionFreeStatus = document.getElementById('subscriptionFreeStatus');
+  const subscriptionProStatus = document.getElementById('subscriptionProStatus');
+  const subscriptionDetails = document.getElementById('subscriptionDetails');
+  const subscriptionExpiry = document.getElementById('subscriptionExpiry');
+  const subscriptionExpiredNotice = document.getElementById('subscriptionExpiredNotice');
   const planBadge = document.getElementById('planBadge');
-  const activateProBtn = document.getElementById('activateProBtn');
-  const activationResult = document.getElementById('activationResult');
 
   // Electricity
   const zipCode = document.getElementById('zipCode');
@@ -337,15 +336,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Electricity lookup
   lookupRateBtn.addEventListener('click', lookupElectricityRate);
 
-  // Pro activation
-  activateProBtn.addEventListener('click', activatePro);
-
-  // Pro deactivation
-  const deactivateBtn = document.getElementById('deactivateBtn');
-  if (deactivateBtn) {
-    deactivateBtn.addEventListener('click', deactivatePro);
-  }
-
   // Sign out
   signOutBtn.addEventListener('click', async () => {
     if (confirm('Sign out of MineGlance? Your settings will be saved locally.')) {
@@ -376,7 +366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Functions
   async function loadSettings() {
     const data = await chrome.storage.local.get([
-      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'licenseKey', 'plan', 'installId', 'authToken', 'userId', 'userEmail'
+      'wallets', 'rigs', 'electricity', 'settings', 'isPaid', 'licenseKey', 'plan', 'installId', 'authToken', 'userId', 'userEmail', 'subscriptionEndDate', 'billingType', 'subscriptionExpired'
     ]);
 
     wallets = data.wallets || [];
@@ -495,29 +485,62 @@ document.addEventListener('DOMContentLoaded', async () => {
       userEmailDisplay.textContent = data.userEmail;
       dashboardLink.style.display = 'inline-flex';
       signOutBtn.style.display = 'inline-flex';
-      proNeedAuth.classList.add('hidden');
-      proActivationForm.classList.remove('hidden');
+      subscriptionNeedAuth.classList.add('hidden');
+
+      // Check for subscription expiry
+      const subscriptionExpired = data.subscriptionExpired || false;
+      let isExpired = subscriptionExpired;
+
+      // Also check expiry date if we have it
+      if (data.subscriptionEndDate && data.billingType !== 'lifetime') {
+        const endDate = new Date(data.subscriptionEndDate);
+        isExpired = endDate < new Date();
+      }
+
+      // Update subscription section based on plan
+      if (isPaid && !isExpired) {
+        proStatus.classList.remove('hidden');
+        proStatus.textContent = data.plan === 'bundle' ? 'PRO+' : 'PRO';
+        proUpgradeNotice.classList.add('hidden');
+        subscriptionFreeStatus.classList.add('hidden');
+        subscriptionProStatus.classList.remove('hidden');
+        subscriptionExpiredNotice.classList.add('hidden');
+        planBadge.textContent = data.plan === 'bundle' ? 'PRO+' : 'PRO';
+
+        // Show subscription details
+        if (data.billingType === 'lifetime') {
+          subscriptionExpiry.innerHTML = '<span style="color: #38a169;">Lifetime access - never expires</span>';
+        } else if (data.subscriptionEndDate) {
+          const endDate = new Date(data.subscriptionEndDate);
+          const daysLeft = Math.ceil((endDate - Date.now()) / (1000 * 60 * 60 * 24));
+          const formattedDate = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const billingLabel = data.billingType === 'monthly' ? 'Monthly' : 'Annual';
+          subscriptionExpiry.innerHTML = `${billingLabel} subscription · Renews ${formattedDate} (${daysLeft} days)`;
+        } else {
+          subscriptionExpiry.innerHTML = 'Subscription active';
+        }
+
+        enableProFeatures();
+      } else {
+        // Free user or expired subscription
+        proStatus.classList.add('hidden');
+        proUpgradeNotice.classList.remove('hidden');
+        subscriptionFreeStatus.classList.remove('hidden');
+        subscriptionProStatus.classList.add('hidden');
+
+        // Show expired notice if subscription expired
+        if (isExpired && data.subscriptionEndDate) {
+          subscriptionExpiredNotice.classList.remove('hidden');
+        }
+      }
     } else {
       // User is not signed in
       userEmailDisplay.textContent = 'Not signed in - open the popup to sign in';
       dashboardLink.style.display = 'none';
       signOutBtn.style.display = 'none';
-      proNeedAuth.classList.remove('hidden');
-      proActivationForm.classList.add('hidden');
-    }
-
-    // Update UI
-    if (isPaid && data.licenseKey) {
-      proStatus.classList.remove('hidden');
-      proStatus.textContent = data.plan === 'bundle' ? 'PRO+' : 'PRO';
-      proUpgradeNotice.classList.add('hidden');
-      proActivationForm.classList.add('hidden');
-      proActiveStatus.classList.remove('hidden');
-      // Show masked license key
-      const key = data.licenseKey;
-      licenseKeyDisplay.textContent = key.substring(0, 7) + '••••-••••';
-      planBadge.textContent = 'PRO';
-      enableProFeatures();
+      subscriptionNeedAuth.classList.remove('hidden');
+      subscriptionFreeStatus.classList.add('hidden');
+      subscriptionProStatus.classList.add('hidden');
     }
 
     // Load electricity settings
@@ -909,100 +932,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => {
       lookupResult.classList.add('hidden');
     }, 5000);
-  }
-
-  async function activatePro() {
-    const licenseKey = licenseKeyInput.value.trim().toUpperCase();
-
-    // Validate license key format: XXXX-XXXX-XXXX-XXXX (alphanumeric)
-    // Also accept legacy MG-XXXX-XXXX-XXXX format for existing users
-    const newKeyPattern = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-    const legacyKeyPattern = /^MG-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-    if (!licenseKey || (!newKeyPattern.test(licenseKey) && !legacyKeyPattern.test(licenseKey))) {
-      showActivationResult('Please enter a valid license key (XXXX-XXXX-XXXX-XXXX)', 'error');
-      return;
-    }
-
-    // Check if user is signed in
-    const { authToken } = await chrome.storage.local.get('authToken');
-    if (!authToken) {
-      showActivationResult('Please sign in first via the extension popup.', 'error');
-      return;
-    }
-
-    activateProBtn.disabled = true;
-    activateProBtn.textContent = 'Activating...';
-
-    try {
-      const response = await fetch(`${API_BASE}/auth/activate-license`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ licenseKey })
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        // Save Pro status locally
-        await chrome.storage.local.set({
-          isPaid: true,
-          licenseKey,
-          plan: data.plan || 'pro'
-        });
-        showActivationResult('License activated! You now have Pro access on all devices.', 'success');
-        setTimeout(() => location.reload(), 1500);
-      } else {
-        showActivationResult(data.error || 'Invalid license key.', 'error');
-      }
-    } catch (error) {
-      showActivationResult('Connection error. Please try again.', 'error');
-    } finally {
-      activateProBtn.disabled = false;
-      activateProBtn.textContent = 'Activate';
-    }
-  }
-
-  function showActivationResult(message, type) {
-    activationResult.textContent = message;
-    activationResult.className = `lookup-result ${type}`;
-    activationResult.classList.remove('hidden');
-
-    if (type !== 'success') {
-      setTimeout(() => {
-        activationResult.classList.add('hidden');
-      }, 5000);
-    }
-  }
-
-  async function deactivatePro() {
-    if (!confirm('Are you sure you want to deactivate your Pro license on this device?')) {
-      return;
-    }
-
-    // Clear license data from storage
-    await chrome.storage.local.remove(['isPaid', 'licenseKey', 'plan']);
-
-    // Show activation form again
-    proStatus.classList.add('hidden');
-    proUpgradeNotice.classList.remove('hidden');
-    proActivationForm.classList.remove('hidden');
-    proActiveStatus.classList.add('hidden');
-    licenseKeyInput.value = '';
-
-    // Disable pro features (but NOT refreshInterval - that's free)
-    notifyWorkerOffline.disabled = true;
-    notifyProfitDrop.disabled = true;
-    notifyBetterCoin.disabled = true;
-    profitDropThreshold.disabled = true;
-    emailAlertsEnabled.disabled = true;
-    alertEmail.disabled = true;
-    emailFrequency.disabled = true;
-    testEmailBtn.disabled = true;
-
-    alert('License deactivated. You can re-activate anytime with your license key.');
   }
 
   function openWalletModal(wallet = null) {
