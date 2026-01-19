@@ -69,9 +69,15 @@ function App() {
       refreshSubscription();
     }, 15 * 60 * 1000);
 
+    // Check for updates every 30 minutes
+    const updateInterval = setInterval(() => {
+      checkForUpdates();
+    }, 30 * 60 * 1000);
+
     return () => {
       clearInterval(heartbeatInterval);
       clearInterval(subscriptionInterval);
+      clearInterval(updateInterval);
     };
   }, [isAuthenticated, sendHeartbeat, refreshSubscription, checkForUpdates]);
 

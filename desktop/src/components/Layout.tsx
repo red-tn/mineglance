@@ -26,7 +26,7 @@ const navItems = [
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const { liteMode, setLiteMode } = useSettingsStore();
-  const { hasUpdate, latestVersion, dismissed, dismissUpdate, downloading, downloadedPath, installUpdate } = useUpdateStore();
+  const { hasUpdate, latestVersion, dismissed, dismissUpdate, downloading, downloadedPath, installUpdate, downloadUpdate, error } = useUpdateStore();
   const location = useLocation();
 
   const handleLogout = async () => {
@@ -48,7 +48,7 @@ export default function Layout() {
               <span className="font-bold text-base text-[var(--text)]">MineGlance</span>
               {user?.plan === "pro" && <span className="pro-badge">PRO</span>}
             </div>
-            <span className="text-[10px] text-[var(--text-dim)]">v1.3.5</span>
+            <span className="text-[10px] text-[var(--text-dim)]">v1.3.6</span>
           </div>
         </div>
 
@@ -147,9 +147,16 @@ export default function Layout() {
                 </button>
               ) : downloading ? (
                 <span className="px-3 py-1 text-sm text-[var(--text-muted)]">
-                  Please wait...
+                  Downloading...
                 </span>
-              ) : null}
+              ) : (
+                <button
+                  onClick={downloadUpdate}
+                  className="px-3 py-1 bg-primary hover:bg-primary/80 text-white text-sm font-medium rounded-lg transition-all"
+                >
+                  {error ? 'Retry Download' : 'Download Now'}
+                </button>
+              )}
               <button
                 onClick={dismissUpdate}
                 className="p-1 rounded hover:bg-[var(--card-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-all"

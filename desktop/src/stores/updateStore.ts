@@ -7,7 +7,7 @@ import { open } from '@tauri-apps/plugin-shell';
 import { exit } from '@tauri-apps/plugin-process';
 
 const API_BASE = 'https://www.mineglance.com/api';
-const APP_VERSION = '1.3.5';
+const APP_VERSION = '1.3.6';
 
 interface UpdateState {
   latestVersion: string | null;
@@ -82,27 +82,40 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   },
 
   downloadUpdate: async () => {
-    const { downloadUrl, latestVersion, downloading } = get();
-    if (!downloadUrl || !latestVersion || downloading) return;
+    const { downloadUrl, latestVersion, downloading, downloadedPath } = get();
+
+    // Skip if already downloaded or currently downloading
+    if (downloadedPath || downloading) return;
+
+    if (!downloadUrl || !latestVersion) {
+      console.error('No download URL or version available');
+      set({ error: 'No download URL available' });
+      return;
+    }
 
     set({ downloading: true, downloadProgress: 0, error: null });
+    console.log('Starting update download:', downloadUrl);
 
     try {
       const response = await fetch(downloadUrl);
       if (!response.ok) {
-        throw new Error('Failed to download update');
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
       }
 
+      console.log('Download response OK, reading blob...');
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
+      console.log(`Downloaded ${bytes.length} bytes`);
 
       // Save to temp directory
       const temp = await tempDir();
       const fileName = `MineGlance_${latestVersion}_x64-setup.exe`;
       const filePath = await join(temp, fileName);
+      console.log('Saving to:', filePath);
 
       await writeFile(filePath, bytes);
+      console.log('File saved successfully');
 
       set({
         downloading: false,
