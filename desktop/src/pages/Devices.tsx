@@ -5,6 +5,24 @@ import { Monitor, Puzzle, Trash2, AlertTriangle, Copy, CheckCircle, Crown } from
 
 const API_BASE = 'https://www.mineglance.com';
 
+// Windows icon component
+function WindowsIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M3 5.5L10.5 4.3V11.5H3V5.5ZM3 18.5V12.5H10.5V19.7L3 18.5ZM11.5 4.1L21 2.5V11.5H11.5V4.1ZM11.5 12.5H21V21.5L11.5 19.9V12.5Z"/>
+    </svg>
+  );
+}
+
+// Apple icon component
+function AppleIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+    </svg>
+  );
+}
+
 interface Device {
   id: string;
   installId: string;
@@ -127,7 +145,10 @@ export default function Devices() {
     if (deviceType === 'extension') {
       return <Puzzle size={20} />;
     }
-    return <Monitor size={20} />;
+    if (deviceType === 'desktop_macos') {
+      return <AppleIcon size={20} />;
+    }
+    return <WindowsIcon size={20} />;
   }
 
   function getPlatformLabel(deviceType: string) {
@@ -135,9 +156,9 @@ export default function Devices() {
       case 'extension':
         return 'Browser Extension';
       case 'desktop_windows':
-        return 'Windows Desktop';
+        return 'Windows';
       case 'desktop_macos':
-        return 'macOS Desktop';
+        return 'macOS';
       default:
         return deviceType;
     }
@@ -147,10 +168,17 @@ export default function Devices() {
     if (deviceType === 'extension') {
       return 'text-blue-400 bg-blue-500/20';
     }
-    if (deviceType.includes('desktop')) {
-      return 'text-purple-400 bg-purple-500/20';
+    if (deviceType === 'desktop_windows') {
+      return 'text-sky-400 bg-sky-500/20';
+    }
+    if (deviceType === 'desktop_macos') {
+      return 'text-gray-300 bg-gray-500/20';
     }
     return 'text-[var(--text-muted)] bg-[var(--card-hover)]';
+  }
+
+  function isDesktopDevice(deviceType: string): boolean {
+    return deviceType === 'desktop_windows' || deviceType === 'desktop_macos';
   }
 
   if (loading) {
@@ -162,7 +190,8 @@ export default function Devices() {
   }
 
   const extensionCount = devices.filter(d => d.deviceType === 'extension').length;
-  const desktopCount = devices.filter(d => d.deviceType.includes('desktop')).length;
+  const windowsCount = devices.filter(d => d.deviceType === 'desktop_windows').length;
+  const macCount = devices.filter(d => d.deviceType === 'desktop_macos').length;
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -193,8 +222,9 @@ export default function Devices() {
         </div>
       </div>
 
-      {/* Platform Summary */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* Platform Summary - 3 cards, responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Extensions */}
         <div className="card p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
@@ -207,14 +237,28 @@ export default function Devices() {
           </div>
         </div>
 
+        {/* Windows */}
         <div className="card p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
-              <Monitor size={20} />
+            <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400">
+              <WindowsIcon size={20} />
             </div>
             <div>
-              <p className="text-xl font-bold text-[var(--text)]">{desktopCount}</p>
-              <p className="text-xs text-[var(--text-muted)]">Desktop Apps</p>
+              <p className="text-xl font-bold text-[var(--text)]">{windowsCount}</p>
+              <p className="text-xs text-[var(--text-muted)]">Windows</p>
+            </div>
+          </div>
+        </div>
+
+        {/* macOS */}
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gray-500/20 flex items-center justify-center text-gray-300">
+              <AppleIcon size={20} />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-[var(--text)]">{macCount}</p>
+              <p className="text-xs text-[var(--text-muted)]">macOS</p>
             </div>
           </div>
         </div>
@@ -264,10 +308,16 @@ export default function Devices() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
                           {getPlatformLabel(device.deviceType)}
                         </span>
-                        {isOnline && (
+                        {/* Only show Online/Offline status for desktop apps, not extensions */}
+                        {isDesktopDevice(device.deviceType) && isOnline && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1 animate-pulse" />
                             Online
+                          </span>
+                        )}
+                        {isDesktopDevice(device.deviceType) && !isOnline && recentActivity && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 text-gray-400">
+                            Offline
                           </span>
                         )}
                         {nearPurge && daysLeft !== null && (
@@ -338,23 +388,23 @@ export default function Devices() {
               <>
                 <h4 className="font-medium text-[var(--text)] mb-1">Unlimited Devices</h4>
                 <p className="text-sm text-[var(--text-muted)]">
-                  Your MineGlance Pro license works on unlimited devices. Install on any browser, desktop, or mobile device - all your data syncs automatically via the cloud.
+                  Your MineGlance Pro license works on unlimited browser extensions and desktop apps. Install on Chrome, Edge, Brave, Opera, Windows, or macOS - all your data syncs automatically via the cloud.
                 </p>
               </>
             ) : (
               <>
                 <h4 className="font-medium text-[var(--text)] mb-1">Free Plan</h4>
                 <p className="text-sm text-[var(--text-muted)]">
-                  You can use MineGlance on multiple devices with the free plan. Upgrade to Pro for unlimited wallets, email alerts, and priority support.
+                  You can use MineGlance on multiple devices with the free plan. Your wallets sync across all your browser extensions and desktop apps automatically.
                 </p>
                 <a
                   href="https://mineglance.com/#pricing"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-2 text-sm text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 mt-3 text-sm text-primary hover:underline"
                 >
                   <Crown size={14} />
-                  Upgrade to Pro
+                  Upgrade to Pro for unlimited wallets & email alerts
                 </a>
               </>
             )}
