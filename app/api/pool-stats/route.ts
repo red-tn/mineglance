@@ -49,7 +49,10 @@ const POOL_APIS: Record<string, Record<string, string>> = {
     'btc': 'https://api.ocean.xyz/v1/statsnap/{address}',
   },
   'public-pool': {
-    'btc': 'https://public-pool.io/api/client/{address}',
+    'btc': 'https://public-pool.io:40557/api/client/{address}',
+  },
+  'publicpool': {
+    'btc': 'https://public-pool.io:40557/api/client/{address}',
   },
 }
 
@@ -184,10 +187,10 @@ async function fetchOceanStats(address: string) {
 }
 
 async function fetchPublicPoolStats(address: string) {
-  const url = POOL_APIS['public-pool']['btc'].replace('{address}', address)
+  const url = POOL_APIS['publicpool']['btc'].replace('{address}', address)
 
   const response = await fetch(url)
-  if (!response.ok) throw new Error('Failed to fetch from public-pool')
+  if (!response.ok) throw new Error('Failed to fetch from Public Pool')
 
   const data = await response.json()
 
@@ -244,6 +247,7 @@ async function fetchPoolStats(pool: string, coin: string, address: string) {
     case 'ocean':
       return await fetchOceanStats(address)
     case 'public-pool':
+    case 'publicpool':
       return await fetchPublicPoolStats(address)
     case 'ckpool':
       return await fetchCkPoolStats(address, false)

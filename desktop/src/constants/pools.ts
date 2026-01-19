@@ -128,7 +128,7 @@ export const POOLS: Pool[] = [
     ],
   },
   {
-    id: "public-pool",
+    id: "publicpool",
     name: "Public Pool (BTC)",
     coins: [
       { id: "BTC", name: "Bitcoin", algorithm: "SHA-256" },
