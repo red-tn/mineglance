@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetch } from '@tauri-apps/plugin-http';
 import { useAuthStore } from '../stores/authStore';
-import { Monitor, Puzzle, Smartphone, Trash2, AlertTriangle, Copy, CheckCircle } from 'lucide-react';
+import { Monitor, Puzzle, Smartphone, Trash2, AlertTriangle, Copy, CheckCircle, Crown } from 'lucide-react';
 
 const API_BASE = 'https://www.mineglance.com';
 
@@ -17,7 +17,8 @@ interface Device {
 }
 
 export default function Devices() {
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
+  const isPro = user?.plan === 'pro';
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -348,14 +349,38 @@ export default function Devices() {
       {/* Info Card */}
       <div className="card p-6">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-[var(--card-hover)] flex items-center justify-center flex-shrink-0">
-            <CheckCircle className="w-5 h-5 text-[var(--text-muted)]" />
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isPro ? 'bg-primary/20' : 'bg-[var(--card-hover)]'}`}>
+            {isPro ? (
+              <Crown className="w-5 h-5 text-primary" />
+            ) : (
+              <CheckCircle className="w-5 h-5 text-[var(--text-muted)]" />
+            )}
           </div>
           <div>
-            <h4 className="font-medium text-[var(--text)] mb-1">Unlimited Devices</h4>
-            <p className="text-sm text-[var(--text-muted)]">
-              Your MineGlance Pro license works on unlimited devices. Install on any browser, desktop, or mobile device - all your data syncs automatically via the cloud.
-            </p>
+            {isPro ? (
+              <>
+                <h4 className="font-medium text-[var(--text)] mb-1">Unlimited Devices</h4>
+                <p className="text-sm text-[var(--text-muted)]">
+                  Your MineGlance Pro license works on unlimited devices. Install on any browser, desktop, or mobile device - all your data syncs automatically via the cloud.
+                </p>
+              </>
+            ) : (
+              <>
+                <h4 className="font-medium text-[var(--text)] mb-1">Free Plan</h4>
+                <p className="text-sm text-[var(--text-muted)]">
+                  You can use MineGlance on multiple devices with the free plan. Upgrade to Pro for unlimited wallets, email alerts, and priority support.
+                </p>
+                <a
+                  href="https://mineglance.com/#pricing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-2 text-sm text-primary hover:underline"
+                >
+                  <Crown size={14} />
+                  Upgrade to Pro
+                </a>
+              </>
+            )}
           </div>
         </div>
       </div>
