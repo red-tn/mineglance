@@ -277,10 +277,9 @@ export default function AdminBlogPage() {
         const savedPost = await res.json()
 
         // Send email if publishing and email options are selected
-        const isPublishing = form.status === 'published' && form.sendEmailOnPublish
-        const wasAlreadyPublished = editingPost?.status === 'published'
+        const shouldSendEmail = form.status === 'published' && form.sendEmailOnPublish && (form.emailToFree || form.emailToPro)
 
-        if (isPublishing && !wasAlreadyPublished && (form.emailToFree || form.emailToPro)) {
+        if (shouldSendEmail) {
           try {
             const postId = savedPost.id || editingPost?.id
             const emailRes = await fetch('/api/admin/blog/send-email', {
@@ -1302,8 +1301,8 @@ export default function AdminBlogPage() {
                 </label>
               </div>
 
-              {/* Email on Publish Section - only show when publishing a draft or creating new */}
-              {form.status === 'published' && editingPost?.status !== 'published' && (
+              {/* Email on Publish Section - show when status is published */}
+              {form.status === 'published' && (
                 <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                   <label className="flex items-center gap-3 cursor-pointer mb-3">
                     <input
