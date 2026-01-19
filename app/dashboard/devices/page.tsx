@@ -14,6 +14,12 @@ interface Device {
   lastSeen: string | null
 }
 
+interface SoftwareRelease {
+  version: string
+  downloadUrl: string
+  releaseNotes?: string
+}
+
 export default function DevicesPage() {
   const { user } = useAuth()
   const [devices, setDevices] = useState<Device[]>([])
@@ -22,8 +28,16 @@ export default function DevicesPage() {
   const [error, setError] = useState('')
   const isPro = user?.plan === 'pro'
 
+  // Software release info
+  const [extensionRelease, setExtensionRelease] = useState<SoftwareRelease | null>(null)
+  const [windowsRelease, setWindowsRelease] = useState<SoftwareRelease | null>(null)
+  const [macosRelease, setMacosRelease] = useState<SoftwareRelease | null>(null)
+  const [windowsAnnouncementDismissed, setWindowsAnnouncementDismissed] = useState(true)
+  const [macAnnouncementDismissed, setMacAnnouncementDismissed] = useState(true)
+
   useEffect(() => {
     loadDevices()
+    loadSoftwareReleases()
 
     // Poll for updates every 30 seconds
     const pollInterval = setInterval(() => {
@@ -32,6 +46,51 @@ export default function DevicesPage() {
 
     return () => clearInterval(pollInterval)
   }, [])
+
+  async function loadSoftwareReleases() {
+    // Load extension release
+    try {
+      const res = await fetch('/api/software/latest?platform=extension')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.version && data.downloadUrl) {
+          setExtensionRelease({ version: data.version, downloadUrl: data.downloadUrl, releaseNotes: data.releaseNotes })
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load extension release:', e)
+    }
+
+    // Load Windows release
+    try {
+      const res = await fetch('/api/software/latest?platform=desktop_windows')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.version && data.downloadUrl) {
+          setWindowsRelease({ version: data.version, downloadUrl: data.downloadUrl, releaseNotes: data.releaseNotes })
+          const seenVersion = localStorage.getItem('seen_windows_version')
+          setWindowsAnnouncementDismissed(seenVersion === data.version)
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load Windows release:', e)
+    }
+
+    // Load macOS release
+    try {
+      const res = await fetch('/api/software/latest?platform=desktop_macos')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.version && data.downloadUrl) {
+          setMacosRelease({ version: data.version, downloadUrl: data.downloadUrl, releaseNotes: data.releaseNotes })
+          const seenVersion = localStorage.getItem('seen_mac_version')
+          setMacAnnouncementDismissed(seenVersion === data.version)
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load macOS release:', e)
+    }
+  }
 
   async function loadDevices() {
     const token = localStorage.getItem('user_token')
@@ -232,43 +291,147 @@ export default function DevicesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Extensions */}
         <div className="glass-card rounded-xl p-4 border border-dark-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
-              {getPlatformIcon('extension')}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+                {getPlatformIcon('extension')}
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-dark-text">{extensionCount}</p>
+                <p className="text-xs text-dark-text-muted">Extensions</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-dark-text">{extensionCount}</p>
-              <p className="text-xs text-dark-text-muted">Extensions</p>
-            </div>
+            {extensionRelease && (
+              <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full font-medium">
+                v{extensionRelease.version}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Windows */}
         <div className="glass-card rounded-xl p-4 border border-dark-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400">
-              {getPlatformIcon('desktop_windows')}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400">
+                {getPlatformIcon('desktop_windows')}
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-dark-text">{windowsCount}</p>
+                <p className="text-xs text-dark-text-muted">Windows</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-dark-text">{windowsCount}</p>
-              <p className="text-xs text-dark-text-muted">Windows</p>
-            </div>
+            {windowsRelease && (
+              <span className="text-xs bg-sky-500/20 text-sky-400 px-2 py-1 rounded-full font-medium">
+                v{windowsRelease.version}
+              </span>
+            )}
           </div>
         </div>
 
         {/* macOS */}
         <div className="glass-card rounded-xl p-4 border border-dark-border">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gray-500/20 flex items-center justify-center text-gray-300">
-              {getPlatformIcon('desktop_macos')}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gray-500/20 flex items-center justify-center text-gray-300">
+                {getPlatformIcon('desktop_macos')}
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-dark-text">{macosCount}</p>
+                <p className="text-xs text-dark-text-muted">macOS</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-dark-text">{macosCount}</p>
-              <p className="text-xs text-dark-text-muted">macOS</p>
-            </div>
+            {macosRelease && (
+              <span className="text-xs bg-gray-500/20 text-gray-400 px-2 py-1 rounded-full font-medium">
+                v{macosRelease.version}
+              </span>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Software Announcement Banners */}
+      {windowsRelease && !windowsAnnouncementDismissed && (
+        <div className="glass-card rounded-xl p-4 border border-sky-500/50 bg-sky-500/10">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-sky-500/20 text-sky-400">
+                {getPlatformIcon('desktop_windows')}
+              </div>
+              <div>
+                <p className="font-medium text-sky-400">
+                  🎉 Windows Desktop v{windowsRelease.version} Available
+                </p>
+                <p className="text-sm text-dark-text-muted line-clamp-1">
+                  {windowsRelease.releaseNotes?.split('\n')[0] || 'New version available for download'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <a
+                href={windowsRelease.downloadUrl}
+                download
+                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Download
+              </a>
+              <button
+                onClick={() => {
+                  localStorage.setItem('seen_windows_version', windowsRelease.version)
+                  setWindowsAnnouncementDismissed(true)
+                }}
+                className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
+                title="Dismiss"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {macosRelease && !macAnnouncementDismissed && (
+        <div className="glass-card rounded-xl p-4 border border-gray-500/50 bg-gray-500/10">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-500/20 text-gray-300">
+                {getPlatformIcon('desktop_macos')}
+              </div>
+              <div>
+                <p className="font-medium text-gray-300">
+                  🎉 macOS Desktop v{macosRelease.version} Available
+                </p>
+                <p className="text-sm text-dark-text-muted line-clamp-1">
+                  {macosRelease.releaseNotes?.split('\n')[0] || 'New version available for download'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <a
+                href={macosRelease.downloadUrl}
+                download
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Download
+              </a>
+              <button
+                onClick={() => {
+                  localStorage.setItem('seen_mac_version', macosRelease.version)
+                  setMacAnnouncementDismissed(true)
+                }}
+                className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
+                title="Dismiss"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg text-sm">
