@@ -26,7 +26,7 @@ const navItems = [
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const { liteMode, setLiteMode } = useSettingsStore();
-  const { hasUpdate, latestVersion, dismissed, dismissUpdate, downloadUpdate, error } = useUpdateStore();
+  const { hasUpdate, latestVersion, dismissed, dismissUpdate, downloadUpdate } = useUpdateStore();
   const location = useLocation();
 
   const handleLogout = async () => {
