@@ -1,7 +1,43 @@
 import { create } from 'zustand';
 import { Store } from '@tauri-apps/plugin-store';
+import { platform } from '@tauri-apps/plugin-os';
 
 const API_BASE = 'https://www.mineglance.com';
+const APP_VERSION = '1.0.0';
+
+// Generate a unique instance ID for this device
+async function getInstanceId(): Promise<string> {
+  const store = await Store.load('settings.json');
+  let instanceId = await store.get<string>('instanceId');
+
+  if (!instanceId) {
+    instanceId = 'desktop-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    await store.set('instanceId', instanceId);
+    await store.save();
+  }
+
+  return instanceId;
+}
+
+// Get device type based on platform
+async function getDeviceType(): Promise<string> {
+  try {
+    const os = await platform();
+    if (os === 'macos' || os === 'darwin') return 'desktop_macos';
+    return 'desktop_windows';
+  } catch {
+    return 'desktop_windows';
+  }
+}
+
+// Get device name
+function getDeviceName(): string {
+  try {
+    return `MineGlance Desktop`;
+  } catch {
+    return 'MineGlance Desktop';
+  }
+}
 
 interface User {
   id: string;
@@ -144,6 +180,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         },
       });
 
+      // Register this device
+      try {
+        const instanceId = await getInstanceId();
+        const deviceType = await getDeviceType();
+        const deviceName = getDeviceName();
+
+        await fetch(`${API_BASE}/api/instances`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${data.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            instanceId,
+            deviceType,
+            deviceName,
+            version: APP_VERSION,
+          }),
+        });
+      } catch (e) {
+        console.error('Failed to register device:', e);
+        // Don't fail login if device registration fails
+      }
+
       return { success: true };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Network error';
@@ -155,8 +215,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   verify2FA: async (code: string) => {
     const { pendingLicenseKey, pendingEmail, pendingPassword } = get();
 
+    console.log('verify2FA called with code:', code);
+    console.log('pendingEmail:', pendingEmail);
+    console.log('pendingPassword:', pendingPassword ? '[SET]' : '[NOT SET]');
+
     if (!pendingEmail || !pendingPassword) {
-      return { success: false, error: 'No pending login' };
+      return { success: false, error: 'No pending login - please go back and enter your credentials again' };
     }
 
     try {
@@ -169,6 +233,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         body.licenseKey = pendingLicenseKey;
       }
 
+      console.log('Sending 2FA request to:', `${API_BASE}/api/dashboard/auth/login`);
+
       const response = await fetch(`${API_BASE}/api/dashboard/auth/login`, {
         method: 'POST',
         headers: {
@@ -176,6 +242,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         },
         body: JSON.stringify(body),
       });
+
+      console.log('2FA response status:', response.status);
 
       const data = await response.json();
 
@@ -206,9 +274,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         },
       });
 
+      // Register this device
+      try {
+        const instanceId = await getInstanceId();
+        const deviceType = await getDeviceType();
+        const deviceName = getDeviceName();
+
+        await fetch(`${API_BASE}/api/instances`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${data.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            instanceId,
+            deviceType,
+            deviceName,
+            version: APP_VERSION,
+          }),
+        });
+      } catch (e) {
+        console.error('Failed to register device:', e);
+      }
+
       return { success: true };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Network error';
+      console.error('2FA verification error:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error) || 'Network error';
       set({ error: errorMessage });
       return { success: false, error: errorMessage };
     }

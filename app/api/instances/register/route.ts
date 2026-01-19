@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate device type
-    if (!['extension', 'mobile_ios', 'mobile_android'].includes(deviceType)) {
+    if (!['extension', 'mobile_ios', 'mobile_android', 'desktop_windows', 'desktop_macos'].includes(deviceType)) {
       return NextResponse.json({ error: 'Invalid device type' }, { status: 400 })
     }
 

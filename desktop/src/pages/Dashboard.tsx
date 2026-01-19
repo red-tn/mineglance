@@ -1,18 +1,50 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWalletStore } from "../stores/walletStore";
 import { useSettingsStore } from "../stores/settingsStore";
 import { useAuthStore } from "../stores/authStore";
-import { RefreshCw, TrendingUp, TrendingDown, Zap, AlertCircle, ExternalLink } from "lucide-react";
+import { RefreshCw, TrendingUp, TrendingDown, Zap, ExternalLink, Newspaper } from "lucide-react";
 import WalletCard from "../components/WalletCard";
 
-export default function Dashboard() {
-  const { wallets, isLoading, lastRefresh, loadWallets, refreshStats, getTotalProfit, getTotalRevenue } = useWalletStore();
-  const { electricityCost } = useSettingsStore();
-  const { user } = useAuthStore();
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  published_at: string;
+  image_url?: string;
+}
 
+export default function Dashboard() {
+  const { wallets, isLoading, lastRefresh, syncWallets, refreshStats, getTotalProfit, getTotalRevenue } = useWalletStore();
+  const { electricityCost } = useSettingsStore();
+  const { user, token } = useAuthStore();
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
+  const [loadingBlog, setLoadingBlog] = useState(true);
+
+  // Sync wallets from server on mount
   useEffect(() => {
-    loadWallets();
-  }, [loadWallets]);
+    if (token) {
+      syncWallets();
+    }
+  }, [token, syncWallets]);
+
+  // Fetch blog posts
+  useEffect(() => {
+    async function fetchBlog() {
+      try {
+        const response = await fetch('https://www.mineglance.com/api/blog?limit=3');
+        if (response.ok) {
+          const data = await response.json();
+          setBlogPosts(data.posts || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch blog:', error);
+      } finally {
+        setLoadingBlog(false);
+      }
+    }
+    fetchBlog();
+  }, []);
 
   useEffect(() => {
     if (wallets.length > 0) {
@@ -168,6 +200,67 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Blog Posts Section */}
+      <div className="pt-6 border-t border-[var(--border)]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-[var(--text)] flex items-center gap-2">
+            <Newspaper size={20} className="text-primary" />
+            Mining in the News
+          </h2>
+          <a
+            href="https://mineglance.com/blog"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary hover:underline flex items-center gap-1"
+          >
+            View all <ExternalLink size={12} />
+          </a>
+        </div>
+
+        {loadingBlog ? (
+          <div className="flex items-center justify-center py-8 text-[var(--text-muted)]">
+            <div className="spinner" />
+          </div>
+        ) : blogPosts.length === 0 ? (
+          <div className="text-center py-8 text-[var(--text-muted)]">
+            No blog posts available
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {blogPosts.map((post) => (
+              <a
+                key={post.id}
+                href={`https://mineglance.com/blog/${post.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[var(--card-bg)] rounded-xl p-4 border border-[var(--border)] hover:border-primary/50 transition-all group"
+              >
+                <div className="flex gap-4">
+                  {post.image_url && (
+                    <img
+                      src={post.image_url}
+                      alt={post.title}
+                      className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-[var(--text)] group-hover:text-primary transition-colors line-clamp-2">
+                      {post.title}
+                    </h3>
+                    <p className="text-sm text-[var(--text-muted)] mt-1 line-clamp-2">
+                      {post.excerpt}
+                    </p>
+                    <p className="text-xs text-[var(--text-dim)] mt-2">
+                      {new Date(post.published_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

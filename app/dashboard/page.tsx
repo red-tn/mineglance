@@ -614,6 +614,34 @@ export default function DashboardOverview() {
         <p className="text-xs text-dark-text-dim mt-3">Works on Chrome, Edge, Brave, Opera</p>
       </div>
 
+      {/* Download Desktop App */}
+      <div className="glass-card rounded-xl p-6 border border-dark-border">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-dark-text">Desktop App</h2>
+          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full font-medium">
+            NEW
+          </span>
+        </div>
+        <Link
+          href="/desktop"
+          className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left w-full"
+        >
+          <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+            <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-dark-text group-hover:text-primary transition-colors">MineGlance Desktop</p>
+            <p className="text-xs text-dark-text-muted">Windows & macOS</p>
+          </div>
+          <svg className="w-5 h-5 text-dark-text-muted group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        </Link>
+        <p className="text-xs text-dark-text-dim mt-3">Native app with system tray & notifications</p>
+      </div>
+
       {/* Blog Feed */}
       {blogPosts.length > 0 && (
         <div className="glass-card rounded-xl p-6 border border-dark-border">
