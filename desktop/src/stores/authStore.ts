@@ -4,7 +4,7 @@ import { platform } from '@tauri-apps/plugin-os';
 import { fetch } from '@tauri-apps/plugin-http';
 
 const API_BASE = 'https://www.mineglance.com';
-const APP_VERSION = '1.2.9';
+const APP_VERSION = '1.3.0';
 
 // Generate a unique instance ID for this device
 async function getInstanceId(): Promise<string> {
