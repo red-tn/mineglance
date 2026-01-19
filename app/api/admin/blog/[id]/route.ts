@@ -99,7 +99,11 @@ export async function PUT(
       author_name: body.author_name,
       published_at,
       scheduled_at: body.scheduled_at || null,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      // Email preferences for scheduled posts
+      send_email_on_publish: body.sendEmailOnPublish || false,
+      email_to_free: body.emailToFree || false,
+      email_to_pro: body.emailToPro || false
     }
 
     if (tags !== undefined) {

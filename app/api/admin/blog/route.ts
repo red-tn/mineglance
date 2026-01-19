@@ -145,7 +145,11 @@ export async function POST(request: NextRequest) {
         author_name: body.author_name || 'MineGlance Team',
         published_at: body.status === 'published' ? new Date().toISOString() : null,
         scheduled_at: body.scheduled_at || null,
-        tags
+        tags,
+        // Email preferences for scheduled posts
+        send_email_on_publish: body.sendEmailOnPublish || false,
+        email_to_free: body.emailToFree || false,
+        email_to_pro: body.emailToPro || false
       })
       .select()
       .single()
