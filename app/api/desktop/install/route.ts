@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const { data: existing } = await supabase
       .from('user_instances')
       .select('id')
-      .eq('install_id', instanceId)
+      .eq('instance_id', instanceId)
       .single()
 
     if (existing) {
@@ -45,13 +45,13 @@ export async function POST(request: NextRequest) {
           platform,
           device_name: deviceName || (platform === 'desktop_windows' ? 'Windows Desktop' : 'macOS Desktop'),
         })
-        .eq('install_id', instanceId)
+        .eq('instance_id', instanceId)
     } else {
       // Create new instance
       await supabase
         .from('user_instances')
         .insert({
-          install_id: instanceId,
+          instance_id: instanceId,
           user_id: userId || null,
           platform,
           version,

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     const { error } = await supabase
       .from('user_instances')
       .delete()
-      .eq('install_id', instanceId)
+      .eq('instance_id', instanceId)
 
     if (error) {
       console.error('Failed to delete instance:', error)
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
   const { data, error, count } = await supabase
     .from('user_instances')
     .delete()
-    .eq('install_id', instanceId)
+    .eq('instance_id', instanceId)
     .select()
 
   if (error) {
