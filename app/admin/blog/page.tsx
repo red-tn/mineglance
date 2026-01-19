@@ -344,6 +344,8 @@ export default function AdminBlogPage() {
       sendToFree: true,
       sendToPro: true,
       includeExtensionUpdate: false,
+      includeWindowsUpdate: false,
+      includeMacUpdate: false,
       testEmail: ''
     })
     setShowEmailModal(true)
