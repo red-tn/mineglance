@@ -7,7 +7,7 @@ import { open } from '@tauri-apps/plugin-shell';
 import { exit } from '@tauri-apps/plugin-process';
 
 const API_BASE = 'https://www.mineglance.com/api';
-const APP_VERSION = '1.3.8';
+const APP_VERSION = '1.3.9';
 
 interface UpdateState {
   latestVersion: string | null;
@@ -97,25 +97,32 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
     console.log('Starting update download:', downloadUrl);
 
     try {
+      // Get temp file path first
+      const temp = await tempDir();
+      const fileName = `MineGlance_${latestVersion}_x64-setup.exe`;
+      const filePath = await join(temp, fileName);
+      console.log('Will save to:', filePath);
+
+      // Use native fetch with streaming
       const response = await fetch(downloadUrl);
       if (!response.ok) {
         throw new Error(`Download failed: ${response.status} ${response.statusText}`);
       }
 
-      console.log('Download response OK, reading blob...');
-      const blob = await response.blob();
-      const arrayBuffer = await blob.arrayBuffer();
+      const contentLength = response.headers.get('content-length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+      console.log('Download started, total size:', total);
+
+      // Read the response as array buffer directly
+      const arrayBuffer = await response.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
       console.log(`Downloaded ${bytes.length} bytes`);
 
-      // Save to temp directory
-      const temp = await tempDir();
-      const fileName = `MineGlance_${latestVersion}_x64-setup.exe`;
-      const filePath = await join(temp, fileName);
-      console.log('Saving to:', filePath);
+      set({ downloadProgress: 50 });
 
+      // Write to file
       await writeFile(filePath, bytes);
-      console.log('File saved successfully');
+      console.log('File saved successfully to:', filePath);
 
       set({
         downloading: false,
@@ -124,9 +131,11 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
       });
     } catch (e) {
       console.error('Failed to download update:', e);
+      const errorMsg = e instanceof Error ? e.message : 'Download failed';
+      console.error('Error details:', errorMsg);
       set({
         downloading: false,
-        error: e instanceof Error ? e.message : 'Download failed',
+        error: errorMsg,
       });
     }
   },
