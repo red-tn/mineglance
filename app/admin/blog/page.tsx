@@ -197,7 +197,7 @@ export default function AdminBlogPage() {
       is_pinned_homepage: post.is_pinned_homepage,
       is_pinned_dashboard: post.is_pinned_dashboard,
       author_name: post.author_name || 'MineGlance Team',
-      scheduled_at: post.scheduled_at || '',
+      scheduled_at: post.scheduled_at ? new Date(post.scheduled_at).toISOString().slice(0, 16) : '',
       tags: (post.tags || []).join(', ')
     })
     setShowModal(true)
