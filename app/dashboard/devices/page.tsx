@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAuth } from '../auth-context'
 
 interface Device {
   id: string
@@ -14,10 +15,12 @@ interface Device {
 }
 
 export default function DevicesPage() {
+  const { user } = useAuth()
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
   const [removing, setRemoving] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const isPro = user?.plan === 'pro'
 
   useEffect(() => {
     loadDevices()
@@ -131,6 +134,18 @@ export default function DevicesPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
           </svg>
         )
+      case 'desktop_windows':
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 5.5L10.5 4.3V11.5H3V5.5ZM3 18.5V12.5H10.5V19.7L3 18.5ZM11.5 4.1L21 2.5V11.5H11.5V4.1ZM11.5 12.5H21V21.5L11.5 19.9V12.5Z"/>
+          </svg>
+        )
+      case 'desktop_macos':
+        return (
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+          </svg>
+        )
       default:
         return (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,6 +159,10 @@ export default function DevicesPage() {
     switch (deviceType) {
       case 'extension':
         return 'Browser Extension'
+      case 'desktop_windows':
+        return 'Windows'
+      case 'desktop_macos':
+        return 'macOS'
       default:
         return 'Unknown'
     }
@@ -153,6 +172,10 @@ export default function DevicesPage() {
     switch (deviceType) {
       case 'extension':
         return 'text-blue-400 bg-blue-500/20'
+      case 'desktop_windows':
+        return 'text-sky-400 bg-sky-500/20'
+      case 'desktop_macos':
+        return 'text-gray-300 bg-gray-500/20'
       default:
         return 'text-dark-text-muted bg-dark-card-hover'
     }
@@ -171,6 +194,8 @@ export default function DevicesPage() {
 
   // Count by platform
   const extensionCount = devices.filter(d => d.deviceType === 'extension').length
+  const windowsCount = devices.filter(d => d.deviceType === 'desktop_windows').length
+  const macosCount = devices.filter(d => d.deviceType === 'desktop_macos').length
 
   return (
     <div className="space-y-6">
@@ -203,15 +228,44 @@ export default function DevicesPage() {
         </div>
       </div>
 
-      {/* Platform Summary */}
-      <div className="glass-card rounded-xl p-4 border border-dark-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
-            {getPlatformIcon('extension')}
+      {/* Platform Summary - 3 cards grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Extensions */}
+        <div className="glass-card rounded-xl p-4 border border-dark-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+              {getPlatformIcon('extension')}
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-dark-text">{extensionCount}</p>
+              <p className="text-xs text-dark-text-muted">Extensions</p>
+            </div>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-dark-text">{extensionCount}</p>
-            <p className="text-xs text-dark-text-muted">Browser Extensions</p>
+        </div>
+
+        {/* Windows */}
+        <div className="glass-card rounded-xl p-4 border border-dark-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center text-sky-400">
+              {getPlatformIcon('desktop_windows')}
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-dark-text">{windowsCount}</p>
+              <p className="text-xs text-dark-text-muted">Windows</p>
+            </div>
+          </div>
+        </div>
+
+        {/* macOS */}
+        <div className="glass-card rounded-xl p-4 border border-dark-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gray-500/20 flex items-center justify-center text-gray-300">
+              {getPlatformIcon('desktop_macos')}
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-dark-text">{macosCount}</p>
+              <p className="text-xs text-dark-text-muted">macOS</p>
+            </div>
           </div>
         </div>
       </div>
@@ -262,12 +316,16 @@ export default function DevicesPage() {
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
                           {getPlatformLabel(device.deviceType)}
                         </span>
-                        {isOnline && (
+                        {isOnline ? (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1 animate-pulse" />
                             Online
                           </span>
-                        )}
+                        ) : recentActivity ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-500/20 text-gray-400">
+                            Offline
+                          </span>
+                        ) : null}
                         {nearPurge && daysLeft !== null && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
                             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -335,17 +393,45 @@ export default function DevicesPage() {
       {/* Info Card */}
       <div className="glass-card rounded-xl p-6 border border-dark-border">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-dark-card-hover flex items-center justify-center flex-shrink-0">
-            <svg className="w-5 h-5 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isPro ? 'bg-primary/20' : 'bg-dark-card-hover'}`}>
+            {isPro ? (
+              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
           </div>
           <div>
-            <h4 className="font-medium text-dark-text mb-1">Unlimited Devices</h4>
-            <p className="text-sm text-dark-text-muted">
-              Your MineGlance Pro license works on unlimited browser extensions. Install on Chrome, Edge,
-              Brave, or Opera - all your data syncs automatically via the cloud.
-            </p>
+            {isPro ? (
+              <>
+                <h4 className="font-medium text-dark-text mb-1">Unlimited Devices</h4>
+                <p className="text-sm text-dark-text-muted">
+                  Your MineGlance Pro license works on unlimited browser extensions and desktop apps. Install on Chrome, Edge,
+                  Brave, Opera, Windows, or macOS - all your data syncs automatically via the cloud.
+                </p>
+              </>
+            ) : (
+              <>
+                <h4 className="font-medium text-dark-text mb-1">Free Plan</h4>
+                <p className="text-sm text-dark-text-muted">
+                  You can use MineGlance on multiple devices with the free plan. Your wallets sync across all your browser extensions and desktop apps automatically.
+                </p>
+                <a
+                  href="https://mineglance.com/#pricing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-3 text-sm text-primary hover:underline"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  Upgrade to Pro for unlimited wallets & email alerts
+                </a>
+              </>
+            )}
           </div>
         </div>
       </div>

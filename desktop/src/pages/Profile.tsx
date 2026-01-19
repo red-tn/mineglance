@@ -19,6 +19,8 @@ interface Profile {
   billingType: string | null;
   createdAt: string;
   totpEnabled: boolean;
+  blogDisplayName: string | null;
+  blogEmailOptIn: boolean;
 }
 
 function formatPhoneNumber(value: string): string {
@@ -79,6 +81,8 @@ export default function Profile() {
     state: '',
     zip: '',
     country: '',
+    blogDisplayName: '',
+    blogEmailOptIn: true,
   });
 
   // Password change state
@@ -118,6 +122,8 @@ export default function Profile() {
           state: data.profile.state || '',
           zip: data.profile.zip || '',
           country: data.profile.country || '',
+          blogDisplayName: data.profile.blogDisplayName || '',
+          blogEmailOptIn: data.profile.blogEmailOptIn !== false,
         });
       }
     } catch (e) {
@@ -493,6 +499,48 @@ export default function Profile() {
                   className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:border-primary"
                 />
               </div>
+            </div>
+
+            {/* Blog Display Name */}
+            <div className="pt-4 border-t border-[var(--border)]">
+              <h3 className="font-medium text-[var(--text)] mb-3">Blog Display Name</h3>
+              <p className="text-sm text-[var(--text-muted)] mb-3">
+                This name will be shown on your blog comments. Choose something unique!
+              </p>
+              <input
+                type="text"
+                value={formData.blogDisplayName}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+                  if (value.length <= 30) {
+                    setFormData({ ...formData, blogDisplayName: value });
+                  }
+                }}
+                placeholder="YourDisplayName"
+                className="w-full px-3 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:border-primary font-mono"
+              />
+              <p className="text-xs text-[var(--text-dim)] mt-1">
+                3-30 characters, letters, numbers and underscores only
+              </p>
+            </div>
+
+            {/* Email Preferences */}
+            <div className="pt-4 border-t border-[var(--border)]">
+              <h3 className="font-medium text-[var(--text)] mb-3">Email Preferences</h3>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.blogEmailOptIn}
+                  onChange={(e) => setFormData({ ...formData, blogEmailOptIn: e.target.checked })}
+                  className="mt-1 w-4 h-4 rounded border-[var(--border)] bg-[var(--bg)] text-primary focus:ring-primary"
+                />
+                <div>
+                  <p className="font-medium text-[var(--text)]">Receive blog updates and mining news</p>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    Get notified about new blog posts, mining tips, extension updates, and industry news. We typically send 1-2 emails per month.
+                  </p>
+                </div>
+              </label>
             </div>
 
             <button
