@@ -66,6 +66,13 @@ export default function DashboardOverview() {
     loadStats()
     loadBlogPosts()
     loadExtensionRelease()
+
+    // Poll for device status updates every 30 seconds
+    const pollInterval = setInterval(() => {
+      loadStats()
+    }, 30000)
+
+    return () => clearInterval(pollInterval)
   }, [])
 
   async function loadExtensionRelease() {

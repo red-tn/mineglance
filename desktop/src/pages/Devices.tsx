@@ -45,7 +45,14 @@ export default function Devices() {
 
   useEffect(() => {
     loadDevices();
-  }, []);
+
+    // Poll for updates every 30 seconds
+    const pollInterval = setInterval(() => {
+      loadDevices();
+    }, 30000);
+
+    return () => clearInterval(pollInterval);
+  }, [token]);
 
   async function loadDevices() {
     if (!token) return;
