@@ -12,10 +12,8 @@
     "updater:default",
     "fs:default",
     "fs:allow-write-text-file",
-    "fs:allow-app-write",
-    "fs:allow-temp-write",
-    "fs:allow-app-local-data-write",
-    "fs:allow-app-local-data-read",
+    "fs:allow-app-write-recursive",
+    "fs:allow-temp-write-recursive",
     "process:default",
     "process:allow-exit",
     {
