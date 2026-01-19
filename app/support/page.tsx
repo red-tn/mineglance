@@ -42,6 +42,7 @@ export default function Support() {
           <div className="flex flex-wrap justify-center gap-3">
             <a href="#getting-started" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Getting Started</a>
             <a href="#features" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Features</a>
+            <a href="#desktop-app" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Desktop App</a>
             <a href="#pro-vs-free" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Pro vs Free</a>
             <a href="#pools" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Supported Pools</a>
             <a href="#coins" className="px-4 py-2 bg-primary/20 text-primary rounded-full text-sm font-medium hover:bg-primary/30 transition">Supported Coins</a>
@@ -189,6 +190,80 @@ export default function Support() {
         </div>
       </div>
 
+      {/* Desktop App */}
+      <div id="desktop-app" className="py-12 border-t border-dark-border">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-gradient mb-6">Desktop App</h2>
+
+          <div className="space-y-6">
+            <div className="glass-card rounded-xl p-6 border border-blue-500/30">
+              <h3 className="font-semibold text-dark-text mb-4">Desktop App Features</h3>
+              <p className="text-dark-text-muted mb-4">
+                The MineGlance desktop app provides a native experience with features not available in the browser extension:
+              </p>
+              <ul className="space-y-3 text-dark-text-muted">
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-400">&#10003;</span>
+                  <div><strong className="text-dark-text">System Tray</strong> &mdash; Quick access from your taskbar, minimize to tray</div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-400">&#10003;</span>
+                  <div><strong className="text-dark-text">Native Notifications</strong> &mdash; System-level alerts for workers and profit</div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-400">&#10003;</span>
+                  <div><strong className="text-dark-text">Auto-Start</strong> &mdash; Launch automatically when your computer starts</div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-400">&#10003;</span>
+                  <div><strong className="text-dark-text">Auto-Updates</strong> &mdash; Updates download automatically in the background</div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-400">&#10003;</span>
+                  <div><strong className="text-dark-text">One-Click Install</strong> &mdash; Click &quot;Install &amp; Restart&quot; when an update is ready</div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-blue-400">&#10003;</span>
+                  <div><strong className="text-dark-text">Clean Uninstall</strong> &mdash; Automatically removes device from your account when uninstalled</div>
+                </li>
+              </ul>
+            </div>
+
+            <div className="glass-card rounded-xl p-6 border border-dark-border">
+              <h3 className="font-semibold text-dark-text mb-4">Installing the Desktop App</h3>
+              <ol className="list-decimal pl-6 space-y-3 text-dark-text-muted">
+                <li><strong className="text-dark-text">Download</strong> from <a href="/download" className="text-primary hover:underline">mineglance.com/download</a></li>
+                <li><strong className="text-dark-text">Run the installer</strong> (Windows may show SmartScreen warning - click &quot;More info&quot; then &quot;Run anyway&quot;)</li>
+                <li><strong className="text-dark-text">Sign in</strong> with your MineGlance account email and password</li>
+                <li><strong className="text-dark-text">Start monitoring</strong> &mdash; your wallets will sync automatically if you have Pro</li>
+              </ol>
+            </div>
+
+            <div className="glass-card rounded-xl p-6 border border-dark-border">
+              <h3 className="font-semibold text-dark-text mb-4">System Requirements</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium text-dark-text mb-2">Windows</h4>
+                  <ul className="text-sm text-dark-text-muted space-y-1">
+                    <li>Windows 10 or later (64-bit)</li>
+                    <li>4 GB RAM minimum</li>
+                    <li>100 MB disk space</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium text-dark-text mb-2">macOS</h4>
+                  <ul className="text-sm text-dark-text-muted space-y-1">
+                    <li>macOS 10.13 (High Sierra) or later</li>
+                    <li>Intel or Apple Silicon</li>
+                    <li>100 MB disk space</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Pro vs Free */}
       <div id="pro-vs-free" className="py-12 border-t border-dark-border">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -245,9 +320,14 @@ export default function Support() {
                   <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
                 </tr>
                 <tr>
-                  <td className="px-6 py-3 text-sm text-dark-text">License Type</td>
+                  <td className="px-6 py-3 text-sm text-dark-text">Desktop App</td>
+                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
+                  <td className="px-6 py-3 text-center text-sm text-primary">&#10003;</td>
+                </tr>
+                <tr className="bg-dark-card-hover/50">
+                  <td className="px-6 py-3 text-sm text-dark-text">Billing Options</td>
                   <td className="px-6 py-3 text-center text-sm text-dark-text-muted">&mdash;</td>
-                  <td className="px-6 py-3 text-center text-sm text-dark-text-muted">Annual</td>
+                  <td className="px-6 py-3 text-center text-sm text-dark-text-muted">Monthly, Annual, or Lifetime</td>
                 </tr>
               </tbody>
             </table>
@@ -461,6 +541,17 @@ export default function Support() {
                 <li>Make sure you&apos;re using the same license key on all browsers</li>
                 <li>Try refreshing the extension by clicking the refresh button</li>
                 <li>Check your internet connection</li>
+              </ul>
+            </div>
+
+            <div className="glass-card rounded-xl p-6 border border-blue-500/30">
+              <h3 className="font-semibold text-dark-text mb-2">Desktop app issues</h3>
+              <ul className="list-disc pl-6 space-y-2 text-dark-text-muted">
+                <li><strong className="text-dark-text">Windows SmartScreen warning:</strong> Click &quot;More info&quot; then &quot;Run anyway&quot; (app isn&apos;t code-signed yet)</li>
+                <li><strong className="text-dark-text">Update not downloading:</strong> Check your internet connection, try restarting the app</li>
+                <li><strong className="text-dark-text">Update won&apos;t install:</strong> Make sure no other MineGlance windows are open</li>
+                <li><strong className="text-dark-text">Can&apos;t sign in:</strong> Use your email and password (not license key) to sign in</li>
+                <li><strong className="text-dark-text">Missing from account after uninstall:</strong> Device is automatically removed on uninstall &mdash; this is normal</li>
               </ul>
             </div>
           </div>

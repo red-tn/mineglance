@@ -58,10 +58,10 @@ export default function DownloadPage() {
   const desktopFeatures = [
     { icon: Layout, title: 'Full Dashboard', description: 'Complete mining dashboard experience' },
     { icon: Bell, title: 'Native Notifications', description: 'System-level alerts for workers and profit' },
-    { icon: Monitor, title: 'System Tray', description: 'Quick access from taskbar/menu bar' },
+    { icon: Monitor, title: 'System Tray', description: 'Quick access from taskbar, minimize to tray' },
     { icon: Zap, title: 'Start on Boot', description: 'Launch automatically with your computer' },
-    { icon: RefreshCw, title: 'Auto-Updates', description: 'Always stay on the latest version' },
-    { icon: Shield, title: 'Secure Login', description: 'Same 2FA-enabled authentication' },
+    { icon: RefreshCw, title: 'Auto-Updates', description: 'Downloads in background, one-click install' },
+    { icon: Shield, title: 'Clean Uninstall', description: 'Removes device from account automatically' },
   ]
 
   return (
@@ -318,12 +318,12 @@ export default function DownloadPage() {
             '12+ supported mining pools',
             '23+ supported cryptocurrencies',
             'Dark & light theme',
-            'Cloud sync across devices',
+            'Cloud sync across devices (Pro)',
             'Two-factor authentication',
             'Worker offline alerts',
             'Profit drop notifications',
-            'Auto-refresh intervals',
-            'Mining rig power tracking',
+            'Background auto-updates (Desktop)',
+            'System tray integration (Desktop)',
             'Multi-wallet support (Pro)',
           ].map((feature, i) => (
             <div key={i} className="flex items-center gap-3 text-dark-text-muted">
