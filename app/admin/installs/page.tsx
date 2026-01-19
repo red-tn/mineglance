@@ -31,6 +31,8 @@ interface PlatformStats {
   extension: PlatformStat
   ios: PlatformStat
   android: PlatformStat
+  desktop_windows: PlatformStat
+  desktop_macos: PlatformStat
 }
 
 interface InstallSummary {
@@ -46,6 +48,8 @@ interface ChartData {
   extension: number
   ios: number
   android: number
+  desktop_windows: number
+  desktop_macos: number
   total: number
 }
 
@@ -139,6 +143,8 @@ export default function InstallsPage() {
       case 'mobile_ios': return '📱'
       case 'mobile_android': return '🤖'
       case 'extension': return '🧩'
+      case 'desktop_windows': return '🖥️'
+      case 'desktop_macos': return '🍎'
       default: return '❓'
     }
   }
@@ -148,6 +154,8 @@ export default function InstallsPage() {
       case 'mobile_ios': return 'iOS'
       case 'mobile_android': return 'Android'
       case 'extension': return 'Extension'
+      case 'desktop_windows': return 'Windows'
+      case 'desktop_macos': return 'macOS'
       default: return 'Unknown'
     }
   }
@@ -251,6 +259,8 @@ export default function InstallsPage() {
             <option value="extension">Extension</option>
             <option value="mobile_ios">iOS</option>
             <option value="mobile_android">Android</option>
+            <option value="desktop_windows">Windows Desktop</option>
+            <option value="desktop_macos">macOS Desktop</option>
           </select>
           <select
             value={isPro}
@@ -305,7 +315,7 @@ export default function InstallsPage() {
       </div>
 
       {/* Platform Cards - Top Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div className="glass-card rounded-xl border border-dark-border p-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-dark-text-muted text-sm">Total</span>
@@ -343,6 +353,28 @@ export default function InstallsPage() {
           </div>
           <p className="text-3xl font-bold text-dark-text">{platformStats?.android.total || 0}</p>
           <p className="text-xs text-amber-400 mt-1">Coming Soon</p>
+        </div>
+
+        <div className="glass-card rounded-xl border border-dark-border p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-dark-text-muted text-sm">Windows</span>
+            <span className="text-blue-400 text-xl">🖥️</span>
+          </div>
+          <p className="text-3xl font-bold text-dark-text">{platformStats?.desktop_windows?.total || 0}</p>
+          <p className="text-xs text-dark-text-dim mt-1">
+            {platformStats?.desktop_windows?.active || 0} active
+          </p>
+        </div>
+
+        <div className="glass-card rounded-xl border border-dark-border p-5">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-dark-text-muted text-sm">macOS</span>
+            <span className="text-gray-400 text-xl">🍎</span>
+          </div>
+          <p className="text-3xl font-bold text-dark-text">{platformStats?.desktop_macos?.total || 0}</p>
+          <p className="text-xs text-dark-text-dim mt-1">
+            {platformStats?.desktop_macos?.active || 0} active
+          </p>
         </div>
       </div>
 

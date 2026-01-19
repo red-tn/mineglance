@@ -25,23 +25,27 @@ export async function POST(request: NextRequest) {
 
     const { licenseKey, email, password, totpCode } = await request.json()
 
-    if (!licenseKey || !email) {
-      return NextResponse.json({ error: 'License key and email required' }, { status: 400 })
+    if (!email) {
+      return NextResponse.json({ error: 'Email required' }, { status: 400 })
     }
 
-    const normalizedKey = licenseKey.toUpperCase().trim()
     const normalizedEmail = email.toLowerCase().trim()
+    const normalizedKey = licenseKey ? licenseKey.toUpperCase().trim() : null
 
-    // Find user by license key and email
-    const { data: user, error } = await supabase
+    // Find user - by license key + email if provided, otherwise just email
+    let query = supabase
       .from('users')
       .select('*')
-      .eq('license_key', normalizedKey)
       .eq('email', normalizedEmail)
-      .single()
+
+    if (normalizedKey) {
+      query = query.eq('license_key', normalizedKey)
+    }
+
+    const { data: user, error } = await query.single()
 
     if (error || !user) {
-      return NextResponse.json({ error: 'Invalid license key or email' }, { status: 401 })
+      return NextResponse.json({ error: normalizedKey ? 'Invalid license key or email' : 'Invalid email' }, { status: 401 })
     }
 
     if (user.is_revoked) {
@@ -176,9 +180,12 @@ export async function POST(request: NextRequest) {
       success: true,
       token,
       user: {
+        id: user.id,
         email: user.email,
-        fullName: user.full_name,
+        full_name: user.full_name,
         plan: user.plan,
+        billingType: user.billing_type,
+        subscription_end_date: user.subscription_end_date,
         profilePhoto: user.profile_photo_url
       }
     })

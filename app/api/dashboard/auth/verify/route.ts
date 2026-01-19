@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function POST(request: NextRequest) {
+async function verifyToken(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
     if (!authHeader?.startsWith('Bearer ')) {
@@ -81,4 +81,12 @@ export async function POST(request: NextRequest) {
     console.error('Verify error:', error)
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
+}
+
+export async function GET(request: NextRequest) {
+  return verifyToken(request)
+}
+
+export async function POST(request: NextRequest) {
+  return verifyToken(request)
 }
