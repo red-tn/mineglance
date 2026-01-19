@@ -65,10 +65,14 @@ export default function AdminBlogPage() {
   const [emailResult, setEmailResult] = useState<{ sent: number; failed: number } | null>(null)
   const [subscriberCounts, setSubscriberCounts] = useState({ free: 0, pro: 0 })
   const [latestExtension, setLatestExtension] = useState<{ version: string; notes: string[] } | null>(null)
+  const [latestWindows, setLatestWindows] = useState<{ version: string; notes: string[] } | null>(null)
+  const [latestMac, setLatestMac] = useState<{ version: string; notes: string[] } | null>(null)
   const [emailOptions, setEmailOptions] = useState({
     sendToFree: true,
     sendToPro: true,
     includeExtensionUpdate: false,
+    includeWindowsUpdate: false,
+    includeMacUpdate: false,
     testEmail: ''
   })
 
@@ -362,6 +366,18 @@ export default function AdminBlogPage() {
             notes: data.latestReleaseNotes || []
           })
         }
+        if (data.latestWindowsVersion) {
+          setLatestWindows({
+            version: data.latestWindowsVersion,
+            notes: data.windowsReleaseNotes || []
+          })
+        }
+        if (data.latestMacVersion) {
+          setLatestMac({
+            version: data.latestMacVersion,
+            notes: data.macReleaseNotes || []
+          })
+        }
       }
     } catch (error) {
       console.error('Failed to fetch subscriber counts:', error)
@@ -389,6 +405,12 @@ export default function AdminBlogPage() {
           includeExtensionUpdate: emailOptions.includeExtensionUpdate,
           extensionVersion: latestExtension?.version,
           releaseNotes: latestExtension?.notes,
+          includeWindowsUpdate: emailOptions.includeWindowsUpdate,
+          windowsVersion: latestWindows?.version,
+          windowsReleaseNotes: latestWindows?.notes,
+          includeMacUpdate: emailOptions.includeMacUpdate,
+          macVersion: latestMac?.version,
+          macReleaseNotes: latestMac?.notes,
           testEmail: isTest ? emailOptions.testEmail : undefined
         })
       })
@@ -1139,9 +1161,10 @@ export default function AdminBlogPage() {
                   </div>
                 </div>
 
-                {/* Extension Update Option */}
-                {latestExtension && (
-                  <div className="mb-4">
+                {/* Software Update Options */}
+                <div className="mb-4 space-y-2">
+                  <p className="text-dark-text-muted text-sm mb-2">Include software updates:</p>
+                  {latestExtension && (
                     <label className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg cursor-pointer">
                       <input
                         type="checkbox"
@@ -1149,13 +1172,41 @@ export default function AdminBlogPage() {
                         onChange={(e) => setEmailOptions({ ...emailOptions, includeExtensionUpdate: e.target.checked })}
                         className="w-4 h-4 rounded"
                       />
-                      <div>
-                        <span className="text-white font-medium">Include extension update</span>
-                        <p className="text-blue-400 text-sm">Version {latestExtension.version}</p>
+                      <div className="flex-1">
+                        <span className="text-white font-medium">🧩 Browser Extension</span>
+                        <p className="text-blue-400 text-sm">v{latestExtension.version}</p>
                       </div>
                     </label>
-                  </div>
-                )}
+                  )}
+                  {latestWindows && (
+                    <label className="flex items-center gap-3 p-3 bg-sky-500/10 border border-sky-500/30 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={emailOptions.includeWindowsUpdate}
+                        onChange={(e) => setEmailOptions({ ...emailOptions, includeWindowsUpdate: e.target.checked })}
+                        className="w-4 h-4 rounded"
+                      />
+                      <div className="flex-1">
+                        <span className="text-white font-medium">🖥️ Windows Desktop</span>
+                        <p className="text-sky-400 text-sm">v{latestWindows.version}</p>
+                      </div>
+                    </label>
+                  )}
+                  {latestMac && (
+                    <label className="flex items-center gap-3 p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={emailOptions.includeMacUpdate}
+                        onChange={(e) => setEmailOptions({ ...emailOptions, includeMacUpdate: e.target.checked })}
+                        className="w-4 h-4 rounded"
+                      />
+                      <div className="flex-1">
+                        <span className="text-white font-medium">🍎 macOS Desktop</span>
+                        <p className="text-gray-400 text-sm">v{latestMac.version}</p>
+                      </div>
+                    </label>
+                  )}
+                </div>
 
                 {/* Test Email */}
                 <div className="mb-4">

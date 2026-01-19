@@ -58,6 +58,12 @@ function buildEmailHtml(options: {
   includeExtensionUpdate: boolean
   extensionVersion?: string
   releaseNotes?: string[]
+  includeWindowsUpdate?: boolean
+  windowsVersion?: string
+  windowsReleaseNotes?: string[]
+  includeMacUpdate?: boolean
+  macVersion?: string
+  macReleaseNotes?: string[]
   unsubscribeUrl: string
   showProUpgrade: boolean
 }): string {
@@ -69,6 +75,12 @@ function buildEmailHtml(options: {
     includeExtensionUpdate,
     extensionVersion,
     releaseNotes,
+    includeWindowsUpdate,
+    windowsVersion,
+    windowsReleaseNotes,
+    includeMacUpdate,
+    macVersion,
+    macReleaseNotes,
     unsubscribeUrl,
     showProUpgrade
   } = options
@@ -83,45 +95,48 @@ function buildEmailHtml(options: {
     </div>
   ` : ''
 
-  // Extension update section
-  const extensionUpdateSection = includeExtensionUpdate && extensionVersion ? `
+  // Helper to build software update section
+  const buildUpdateSection = (title: string, version: string, notes: string[] | undefined, link: string, emoji: string, color: string) => `
     <tr>
-      <td style="padding: 0 40px 32px;">
-        <div style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); border-radius: 12px; padding: 24px; border: 1px solid #3182ce;">
+      <td style="padding: 0 40px 16px;">
+        <div style="background: linear-gradient(135deg, ${color}20 0%, ${color}10 100%); border-radius: 12px; padding: 20px; border: 1px solid ${color}50;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="vertical-align: top; width: 36px;">
-                <span style="font-size: 24px;">🚀</span>
+                <span style="font-size: 24px;">${emoji}</span>
               </td>
               <td style="vertical-align: top;">
-                <h3 style="margin: 0 0 8px; color: #ffffff; font-size: 18px; font-weight: bold;">
-                  Extension Update Available!
+                <h3 style="margin: 0 0 4px; color: #ffffff; font-size: 16px; font-weight: bold;">
+                  ${title}
                 </h3>
-                <p style="margin: 0 0 8px; color: #90cdf4; font-size: 14px; font-weight: 600;">
-                  Version ${escapeHtml(extensionVersion)} is now available
+                <p style="margin: 0; color: #90cdf4; font-size: 13px; font-weight: 600;">
+                  Version ${escapeHtml(version)}
                 </p>
+              </td>
+              <td style="vertical-align: middle; text-align: right;">
+                <a href="${link}" style="display: inline-block; background: rgba(255,255,255,0.15); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; border: 1px solid rgba(255,255,255,0.2);">
+                  Update
+                </a>
               </td>
             </tr>
           </table>
-
-          ${releaseNotes && releaseNotes.length > 0 ? `
-            <div style="margin: 16px 0; padding: 16px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-              <p style="margin: 0 0 8px; color: #e2e8f0; font-size: 13px; font-weight: 600;">What's New:</p>
-              <ul style="margin: 0; padding-left: 20px; color: #cbd5e0; font-size: 13px; line-height: 1.8;">
-                ${(Array.isArray(releaseNotes) ? releaseNotes : String(releaseNotes).split('\n').filter(line => line.trim())).map(note => `<li>${escapeHtml(String(note))}</li>`).join('')}
-              </ul>
-            </div>
-          ` : ''}
-
-          <div style="text-align: center; margin-top: 20px;">
-            <a href="${WEBSITE_URL}/#install" style="display: inline-block; background: rgba(255,255,255,0.15); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.2);">
-              Update Extension
-            </a>
-          </div>
         </div>
       </td>
     </tr>
-  ` : ''
+  `
+
+  // Software update sections
+  const extensionUpdateSection = includeExtensionUpdate && extensionVersion
+    ? buildUpdateSection('Browser Extension', extensionVersion, releaseNotes, `${WEBSITE_URL}/download`, '🧩', '#3182ce')
+    : ''
+
+  const windowsUpdateSection = includeWindowsUpdate && windowsVersion
+    ? buildUpdateSection('Windows Desktop App', windowsVersion, windowsReleaseNotes, `${WEBSITE_URL}/download`, '🖥️', '#0078d4')
+    : ''
+
+  const macUpdateSection = includeMacUpdate && macVersion
+    ? buildUpdateSection('macOS Desktop App', macVersion, macReleaseNotes, `${WEBSITE_URL}/download`, '🍎', '#555555')
+    : ''
 
   // Pro upgrade CTA (only for free users)
   const proUpgradeSection = showProUpgrade ? `
@@ -191,6 +206,8 @@ function buildEmailHtml(options: {
           </tr>
 
           ${extensionUpdateSection}
+          ${windowsUpdateSection}
+          ${macUpdateSection}
 
           ${proUpgradeSection}
 
@@ -268,6 +285,12 @@ export async function POST(request: NextRequest) {
       includeExtensionUpdate,
       extensionVersion,
       releaseNotes,
+      includeWindowsUpdate,
+      windowsVersion,
+      windowsReleaseNotes,
+      includeMacUpdate,
+      macVersion,
+      macReleaseNotes,
       testEmail
     } = body
     console.log('Blog email POST: Body parsed', { postId, sendToFree, sendToPro, testEmail: !!testEmail })
@@ -303,6 +326,12 @@ export async function POST(request: NextRequest) {
         includeExtensionUpdate: includeExtensionUpdate || false,
         extensionVersion,
         releaseNotes: releaseNotes || [],
+        includeWindowsUpdate: includeWindowsUpdate || false,
+        windowsVersion,
+        windowsReleaseNotes: windowsReleaseNotes || [],
+        includeMacUpdate: includeMacUpdate || false,
+        macVersion,
+        macReleaseNotes: macReleaseNotes || [],
         unsubscribeUrl,
         showProUpgrade: true // Show upgrade CTA in test
       })
@@ -378,6 +407,12 @@ export async function POST(request: NextRequest) {
         includeExtensionUpdate: includeExtensionUpdate || false,
         extensionVersion,
         releaseNotes: releaseNotes || [],
+        includeWindowsUpdate: includeWindowsUpdate || false,
+        windowsVersion,
+        windowsReleaseNotes: windowsReleaseNotes || [],
+        includeMacUpdate: includeMacUpdate || false,
+        macVersion,
+        macReleaseNotes: macReleaseNotes || [],
         unsubscribeUrl,
         showProUpgrade: subscriber.plan === 'free'
       })
@@ -440,19 +475,25 @@ export async function GET(request: NextRequest) {
       else if (user.plan === 'pro') proCount++
     }
 
-    // Get latest extension release
-    const { data: latestRelease } = await supabase
+    // Get latest releases for all platforms
+    const { data: latestReleases } = await supabase
       .from('software_releases')
-      .select('version, release_notes')
-      .eq('platform', 'extension')
+      .select('platform, version, release_notes')
       .eq('is_latest', true)
-      .single()
+
+    const extensionRelease = latestReleases?.find(r => r.platform === 'extension')
+    const windowsRelease = latestReleases?.find(r => r.platform === 'desktop_windows')
+    const macRelease = latestReleases?.find(r => r.platform === 'desktop_macos')
 
     return NextResponse.json({
       freeSubscribers: freeCount || 0,
       proSubscribers: proCount || 0,
-      latestExtensionVersion: latestRelease?.version || null,
-      latestReleaseNotes: latestRelease?.release_notes || null
+      latestExtensionVersion: extensionRelease?.version || null,
+      latestReleaseNotes: extensionRelease?.release_notes || null,
+      latestWindowsVersion: windowsRelease?.version || null,
+      windowsReleaseNotes: windowsRelease?.release_notes || null,
+      latestMacVersion: macRelease?.version || null,
+      macReleaseNotes: macRelease?.release_notes || null
     })
 
   } catch (error) {

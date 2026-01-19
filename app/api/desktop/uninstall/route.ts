@@ -57,20 +57,21 @@ export async function GET(request: NextRequest) {
   }
 
   // Delete the instance from user_instances
-  const { error } = await supabase
+  const { data, error, count } = await supabase
     .from('user_instances')
     .delete()
     .eq('install_id', instanceId)
+    .select()
 
   if (error) {
-    console.error('Failed to delete instance:', error)
+    console.error('Failed to delete instance:', error.message, error.details, error.hint)
     return NextResponse.json(
-      { error: 'Failed to remove instance' },
+      { error: 'Failed to remove instance', details: error.message },
       { status: 500 }
     )
   }
 
-  console.log(`Desktop uninstall (GET): removed instance ${instanceId}`)
+  console.log(`Desktop uninstall (GET): removed instance ${instanceId}, deleted ${data?.length || 0} rows`)
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, deleted: data?.length || 0 })
 }

@@ -209,6 +209,15 @@ export default function AdminSoftwarePage() {
     return acc
   }, {} as Record<string, string>)
 
+  // Sort releases: latest first (grouped at top), then by date descending
+  const sortedReleases = [...releases].sort((a, b) => {
+    // Latest releases come first
+    if (a.is_latest && !b.is_latest) return -1
+    if (!a.is_latest && b.is_latest) return 1
+    // Within same category, sort by release date descending
+    return new Date(b.released_at).getTime() - new Date(a.released_at).getTime()
+  })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -288,14 +297,14 @@ export default function AdminSoftwarePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-border">
-              {releases.length === 0 ? (
+              {sortedReleases.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-dark-text-muted">
                     No releases found
                   </td>
                 </tr>
               ) : (
-                releases.map(release => (
+                sortedReleases.map(release => (
                   <tr key={release.id} className="hover:bg-dark-card-hover">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
