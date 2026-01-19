@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
 
 interface BlogPost {
   id: string
@@ -57,6 +60,10 @@ export default function AdminBlogPage() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Preview modal state
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [previewPost, setPreviewPost] = useState<BlogPost | null>(null)
 
   // Email modal states
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -581,6 +588,12 @@ export default function AdminBlogPage() {
                             : new Date(post.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => { setPreviewPost(post); setShowPreviewModal(true) }}
+                            className="text-purple-400 hover:text-purple-300 mr-3"
+                          >
+                            Preview
+                          </button>
                           {post.status === 'published' && (
                             <button
                               onClick={() => openEmailModal(post)}
@@ -668,22 +681,30 @@ export default function AdminBlogPage() {
                       </span>
                     </div>
 
-                    <div className="flex gap-3 pt-3 border-t border-dark-border">
-                      <a
-                        href={`/blog/${post.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 bg-dark-card-hover text-dark-text-muted hover:text-white rounded-lg font-medium transition-colors"
+                    <div className="flex gap-3 pt-3 border-t border-dark-border flex-wrap">
+                      <button
+                        onClick={() => { setPreviewPost(post); setShowPreviewModal(true) }}
+                        className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg font-medium"
                       >
-                        View
-                      </a>
+                        Preview
+                      </button>
                       {post.status === 'published' && (
-                        <button
-                          onClick={() => openEmailModal(post)}
-                          className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg font-medium"
-                        >
-                          Email
-                        </button>
+                        <>
+                          <a
+                            href={`/blog/${post.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-dark-card-hover text-dark-text-muted hover:text-white rounded-lg font-medium transition-colors"
+                          >
+                            View
+                          </a>
+                          <button
+                            onClick={() => openEmailModal(post)}
+                            className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg font-medium"
+                          >
+                            Email
+                          </button>
+                        </>
                       )}
                       <button
                         onClick={() => openEditPost(post)}
@@ -863,13 +884,17 @@ export default function AdminBlogPage() {
               </div>
 
               <div>
-                <label className="block text-dark-text-muted text-sm mb-1">Content (Markdown)</label>
+                <label className="block text-dark-text-muted text-sm mb-1">Content (Markdown + HTML supported)</label>
                 <textarea
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   rows={12}
                   className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+                  placeholder="Write your content using Markdown or HTML. Examples:&#10;&#10;## Heading&#10;**Bold text** and *italic*&#10;&#10;<a href='https://example.com' class='btn'>Click Here</a>&#10;<img src='https://...' alt='Image' />"
                 />
+                <p className="text-xs text-dark-text-dim mt-1">
+                  Supports Markdown (headings, bold, lists, tables) and HTML (images, links, buttons, custom styling)
+                </p>
               </div>
 
               <div>
@@ -1257,6 +1282,120 @@ export default function AdminBlogPage() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreviewModal && previewPost && (
+        <div className="fixed inset-0 bg-black/80 z-50 overflow-y-auto">
+          <div className="min-h-full flex items-start justify-center p-4">
+            <div className="bg-dark-bg rounded-xl max-w-4xl w-full my-8 border border-dark-border">
+              {/* Header */}
+              <div className="sticky top-0 bg-dark-card border-b border-dark-border p-4 flex items-center justify-between rounded-t-xl">
+                <div className="flex items-center gap-3">
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_COLORS[previewPost.status]}`}>
+                    {previewPost.status.charAt(0).toUpperCase() + previewPost.status.slice(1)}
+                  </span>
+                  <h2 className="text-lg font-semibold text-white">Preview</h2>
+                </div>
+                <button
+                  onClick={() => setShowPreviewModal(false)}
+                  className="p-2 hover:bg-dark-border rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Featured Image */}
+                {previewPost.featured_image_url && (
+                  <div className="relative h-64 rounded-xl overflow-hidden mb-6">
+                    <Image
+                      src={previewPost.featured_image_url}
+                      alt={previewPost.title}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                )}
+
+                {/* Title & Meta */}
+                <h1 className="text-3xl font-bold text-white mb-4">{previewPost.title}</h1>
+                <div className="flex flex-wrap items-center gap-4 text-dark-text-muted mb-8">
+                  <span>By {previewPost.author_name}</span>
+                  <span>•</span>
+                  <span>/blog/{previewPost.slug}</span>
+                </div>
+
+                {/* Excerpt */}
+                {previewPost.excerpt && (
+                  <p className="text-lg text-dark-text-muted italic border-l-4 border-primary pl-4 mb-8">
+                    {previewPost.excerpt}
+                  </p>
+                )}
+
+                {/* Content */}
+                <div className="prose prose-invert max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]}
+                    components={{
+                      h1: ({ children }) => <h1 className="text-3xl font-bold text-white mt-8 mb-4">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-2xl font-bold text-white mt-8 mb-4">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-xl font-semibold text-white mt-6 mb-3">{children}</h3>,
+                      h4: ({ children }) => <h4 className="text-lg font-semibold text-white mt-4 mb-2">{children}</h4>,
+                      p: ({ children }) => <p className="mb-4 text-dark-text-muted leading-relaxed">{children}</p>,
+                      a: ({ href, children }) => <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>,
+                      strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+                      em: ({ children }) => <em>{children}</em>,
+                      ul: ({ children }) => <ul className="list-disc list-inside mb-4 text-dark-text-muted space-y-2">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal list-inside mb-4 text-dark-text-muted space-y-2">{children}</ol>,
+                      li: ({ children }) => <li>{children}</li>,
+                      blockquote: ({ children }) => <blockquote className="border-l-4 border-primary pl-4 my-4 italic text-dark-text-muted">{children}</blockquote>,
+                      code: ({ className, children }) => {
+                        const isInline = !className
+                        return isInline
+                          ? <code className="bg-dark-card px-1.5 py-0.5 rounded text-primary text-sm">{children}</code>
+                          : <code className={`block bg-dark-card p-4 rounded-lg overflow-x-auto text-sm ${className || ''}`}>{children}</code>
+                      },
+                      pre: ({ children }) => <pre className="bg-dark-card p-4 rounded-lg overflow-x-auto mb-4">{children}</pre>,
+                      table: ({ children }) => <table className="w-full border-collapse mb-4">{children}</table>,
+                      th: ({ children }) => <th className="border border-dark-border px-4 py-2 bg-dark-card text-left text-white font-semibold">{children}</th>,
+                      td: ({ children }) => <td className="border border-dark-border px-4 py-2 text-dark-text-muted">{children}</td>,
+                      img: ({ src, alt }) => (
+                        <span className="block my-4">
+                          <Image src={src || ''} alt={alt || ''} width={800} height={400} className="rounded-lg max-w-full h-auto" unoptimized />
+                        </span>
+                      ),
+                      hr: () => <hr className="border-dark-border my-8" />,
+                    }}
+                  >
+                    {previewPost.content || '*No content yet*'}
+                  </ReactMarkdown>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-dark-card border-t border-dark-border p-4 flex gap-3 rounded-b-xl">
+                <button
+                  onClick={() => setShowPreviewModal(false)}
+                  className="flex-1 px-4 py-3 bg-dark-border text-white rounded-lg hover:bg-dark-border/80"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => { setShowPreviewModal(false); openEditPost(previewPost) }}
+                  className="flex-1 btn-primary px-4 py-3 rounded-lg font-medium"
+                >
+                  Edit Post
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
