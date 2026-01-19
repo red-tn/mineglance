@@ -1,17 +1,27 @@
 import { create } from 'zustand';
 import { fetch } from '@tauri-apps/plugin-http';
 import { Store } from '@tauri-apps/plugin-store';
+import { tempDir, join } from '@tauri-apps/api/path';
+import { writeFile } from '@tauri-apps/plugin-fs';
+import { open } from '@tauri-apps/plugin-shell';
+import { exit } from '@tauri-apps/plugin-process';
 
 const API_BASE = 'https://www.mineglance.com/api';
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.3';
 
 interface UpdateState {
   latestVersion: string | null;
   downloadUrl: string | null;
   hasUpdate: boolean;
   dismissed: boolean;
+  downloading: boolean;
+  downloadProgress: number;
+  downloadedPath: string | null;
+  error: string | null;
 
   checkForUpdates: () => Promise<void>;
+  downloadUpdate: () => Promise<void>;
+  installUpdate: () => Promise<void>;
   dismissUpdate: () => Promise<void>;
 }
 
@@ -33,6 +43,10 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
   downloadUrl: null,
   hasUpdate: false,
   dismissed: false,
+  downloading: false,
+  downloadProgress: 0,
+  downloadedPath: null,
+  error: null,
 
   checkForUpdates: async () => {
     try {
@@ -59,8 +73,63 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
         hasUpdate: true,
         dismissed: false,
       });
+
+      // Auto-download in background
+      get().downloadUpdate();
     } catch (e) {
       console.error('Failed to check for updates:', e);
+    }
+  },
+
+  downloadUpdate: async () => {
+    const { downloadUrl, latestVersion, downloading } = get();
+    if (!downloadUrl || !latestVersion || downloading) return;
+
+    set({ downloading: true, downloadProgress: 0, error: null });
+
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        throw new Error('Failed to download update');
+      }
+
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+
+      // Save to temp directory
+      const temp = await tempDir();
+      const fileName = `MineGlance_${latestVersion}_x64-setup.exe`;
+      const filePath = await join(temp, fileName);
+
+      await writeFile(filePath, bytes);
+
+      set({
+        downloading: false,
+        downloadProgress: 100,
+        downloadedPath: filePath,
+      });
+    } catch (e) {
+      console.error('Failed to download update:', e);
+      set({
+        downloading: false,
+        error: e instanceof Error ? e.message : 'Download failed',
+      });
+    }
+  },
+
+  installUpdate: async () => {
+    const { downloadedPath } = get();
+    if (!downloadedPath) return;
+
+    try {
+      // Launch the installer
+      await open(downloadedPath);
+      // Exit the app so installer can proceed
+      await exit(0);
+    } catch (e) {
+      console.error('Failed to install update:', e);
+      set({ error: e instanceof Error ? e.message : 'Install failed' });
     }
   },
 

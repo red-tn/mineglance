@@ -17,6 +17,8 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             // Create system tray menu
             let quit_i = MenuItem::with_id(app, "quit", "Quit MineGlance", true, None::<&str>)?;
