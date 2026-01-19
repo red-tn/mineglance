@@ -67,11 +67,13 @@ export async function GET(request: NextRequest) {
       const [
         { count: installCount },
         { count: walletCount },
-        { count: rigCount }
+        { count: rigCount },
+        { data: latestInstance }
       ] = await Promise.all([
         supabase.from('user_instances').select('*', { count: 'exact', head: true }).eq('user_id', userId),
         supabase.from('user_wallets').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-        supabase.from('user_rigs').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+        supabase.from('user_rigs').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+        supabase.from('user_instances').select('version, last_seen').eq('user_id', userId).order('last_seen', { ascending: false }).limit(1).single()
       ])
 
       return NextResponse.json({
@@ -83,6 +85,7 @@ export async function GET(request: NextRequest) {
           installCount: installCount || 0,
           walletCount: walletCount || 0,
           rigCount: rigCount || 0,
+          extVersion: latestInstance?.version || null,
           paymentHistory: paymentHistory || []
         }
       })
@@ -158,13 +161,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ users: [], total: 0, page, limit })
     }
 
-    // Get stats for each user: installs, wallets, rigs
+    // Get stats for each user: installs, wallets, rigs, ext version
     const usersWithStats = await Promise.all(
       (licenses || []).map(async (license) => {
         const [
           { count: installCount },
           { count: walletCount },
-          { count: rigCount }
+          { count: rigCount },
+          { data: latestInstance }
         ] = await Promise.all([
           supabase
             .from('user_instances')
@@ -177,7 +181,14 @@ export async function GET(request: NextRequest) {
           supabase
             .from('user_rigs')
             .select('*', { count: 'exact', head: true })
+            .eq('user_id', license.id),
+          supabase
+            .from('user_instances')
+            .select('version')
             .eq('user_id', license.id)
+            .order('last_seen', { ascending: false })
+            .limit(1)
+            .single()
         ])
 
         return {
@@ -187,7 +198,8 @@ export async function GET(request: NextRequest) {
           billingType: license.billing_type,
           installCount: installCount || 0,
           walletCount: walletCount || 0,
-          rigCount: rigCount || 0
+          rigCount: rigCount || 0,
+          extVersion: latestInstance?.version || null
         }
       })
     )

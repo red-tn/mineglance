@@ -30,6 +30,7 @@ interface License {
   installCount: number
   walletCount: number
   rigCount: number
+  extVersion?: string | null
   blog_display_name?: string
   profile_photo_url?: string
   full_name?: string
@@ -379,7 +380,7 @@ export default function UsersPage() {
                 >
                   Email<SortIcon column="email" />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">License Key</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Ext Version</th>
                 <th
                   className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
                   onClick={() => handleSort('plan')}
@@ -414,9 +415,9 @@ export default function UsersPage() {
                     <span className="font-medium text-dark-text">{user.email}</span>
                   </td>
                   <td className="px-4 py-3">
-                    {user.key ? (
+                    {user.extVersion ? (
                       <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded">
-                        {user.key.substring(0, 12)}...
+                        v{user.extVersion}
                       </code>
                     ) : (
                       <span className="text-dark-text-muted">-</span>
@@ -567,8 +568,10 @@ export default function UsersPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-dark-text-muted">License Key</label>
-                    <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded break-all">{selectedUser.key || '-'}</p>
+                    <label className="text-sm font-medium text-dark-text-muted">Extension Version</label>
+                    <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded">
+                      {selectedUser.extVersion ? `v${selectedUser.extVersion}` : 'Not installed'}
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
