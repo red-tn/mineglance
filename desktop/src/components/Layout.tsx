@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
+import { useUpdateStore } from "../stores/updateStore";
 import {
   LayoutDashboard,
   Wallet,
@@ -9,6 +10,8 @@ import {
   LogOut,
   Moon,
   Sun,
+  Download,
+  X,
 } from "lucide-react";
 import { useSettingsStore } from "../stores/settingsStore";
 
@@ -23,10 +26,17 @@ const navItems = [
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const { liteMode, setLiteMode } = useSettingsStore();
+  const { hasUpdate, latestVersion, downloadUrl, dismissed, dismissUpdate } = useUpdateStore();
   const location = useLocation();
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleDownloadUpdate = () => {
+    if (downloadUrl) {
+      window.open(downloadUrl, '_blank');
+    }
   };
 
   return (
@@ -109,6 +119,34 @@ export default function Layout() {
             {navItems.find((item) => item.path === location.pathname)?.label || "Dashboard"}
           </span>
         </header>
+
+        {/* Update Banner */}
+        {hasUpdate && !dismissed && (
+          <div className="bg-primary/10 border-b border-primary/30 px-4 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Download size={18} className="text-primary" />
+              <span className="text-sm text-[var(--text)]">
+                <span className="font-medium">Update available!</span> MineGlance v{latestVersion} is ready to download.
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {downloadUrl && (
+                <button
+                  onClick={handleDownloadUpdate}
+                  className="px-3 py-1 bg-primary hover:bg-primary-light text-white text-sm font-medium rounded-lg transition-all"
+                >
+                  Download
+                </button>
+              )}
+              <button
+                onClick={dismissUpdate}
+                className="p-1 rounded hover:bg-[var(--card-hover)] text-[var(--text-muted)] hover:text-[var(--text)] transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-6">

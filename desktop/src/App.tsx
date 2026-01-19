@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./stores/authStore";
 import { useSettingsStore } from "./stores/settingsStore";
+import { useUpdateStore } from "./stores/updateStore";
 import { useEffect } from "react";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -31,6 +32,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function App() {
   const { liteMode } = useSettingsStore();
   const { checkAuth, sendHeartbeat, refreshSubscription, isAuthenticated } = useAuthStore();
+  const { checkForUpdates } = useUpdateStore();
 
   useEffect(() => {
     // Apply theme class
@@ -52,6 +54,9 @@ function App() {
     // Send heartbeat immediately on auth
     sendHeartbeat();
 
+    // Check for updates on startup
+    checkForUpdates();
+
     // Send heartbeat every 5 minutes
     const heartbeatInterval = setInterval(() => {
       sendHeartbeat();
@@ -66,7 +71,7 @@ function App() {
       clearInterval(heartbeatInterval);
       clearInterval(subscriptionInterval);
     };
-  }, [isAuthenticated, sendHeartbeat, refreshSubscription]);
+  }, [isAuthenticated, sendHeartbeat, refreshSubscription, checkForUpdates]);
 
   return (
     <BrowserRouter>
