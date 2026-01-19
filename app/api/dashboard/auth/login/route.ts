@@ -1,3 +1,4 @@
+// Login API - updated to support optional license key for free users
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
