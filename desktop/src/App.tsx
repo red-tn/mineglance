@@ -69,15 +69,22 @@ function App() {
       refreshSubscription();
     }, 15 * 60 * 1000);
 
-    // Check for updates every 30 minutes
+    // Check for updates every 5 minutes
     const updateInterval = setInterval(() => {
       checkForUpdates();
-    }, 30 * 60 * 1000);
+    }, 5 * 60 * 1000);
+
+    // Also check for updates when window regains focus
+    const handleFocus = () => {
+      checkForUpdates();
+    };
+    window.addEventListener('focus', handleFocus);
 
     return () => {
       clearInterval(heartbeatInterval);
       clearInterval(subscriptionInterval);
       clearInterval(updateInterval);
+      window.removeEventListener('focus', handleFocus);
     };
   }, [isAuthenticated, sendHeartbeat, refreshSubscription, checkForUpdates]);
 

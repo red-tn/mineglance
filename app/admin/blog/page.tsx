@@ -101,8 +101,16 @@ export default function AdminBlogPage() {
     is_pinned_dashboard: false,
     author_name: 'MineGlance Team',
     scheduled_at: '',
-    tags: ''
+    tags: '',
+    // Email on publish options
+    sendEmailOnPublish: false,
+    emailToFree: true,
+    emailToPro: true
   })
+
+  // Fetch subscriber counts and latest releases when modal opens
+  const [modalSubscriberCounts, setModalSubscriberCounts] = useState({ free: 0, pro: 0 })
+  const [fetchingCounts, setFetchingCounts] = useState(false)
 
   useEffect(() => {
     if (activeTab === 'posts') {
@@ -165,6 +173,27 @@ export default function AdminBlogPage() {
     }
   }
 
+  async function fetchModalSubscriberCounts() {
+    setFetchingCounts(true)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const res = await fetch('/api/admin/blog/send-email', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setModalSubscriberCounts({
+          free: data.freeSubscribers || 0,
+          pro: data.proSubscribers || 0
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch subscriber counts:', error)
+    } finally {
+      setFetchingCounts(false)
+    }
+  }
+
   function openNewPost() {
     setEditingPost(null)
     setForm({
@@ -179,9 +208,13 @@ export default function AdminBlogPage() {
       is_pinned_dashboard: false,
       author_name: 'MineGlance Team',
       scheduled_at: '',
-      tags: ''
+      tags: '',
+      sendEmailOnPublish: false,
+      emailToFree: true,
+      emailToPro: true
     })
     setShowModal(true)
+    fetchModalSubscriberCounts()
   }
 
   function openEditPost(post: BlogPost) {
@@ -198,9 +231,13 @@ export default function AdminBlogPage() {
       is_pinned_dashboard: post.is_pinned_dashboard,
       author_name: post.author_name || 'MineGlance Team',
       scheduled_at: post.scheduled_at ? new Date(post.scheduled_at).toISOString().slice(0, 16) : '',
-      tags: (post.tags || []).join(', ')
+      tags: (post.tags || []).join(', '),
+      sendEmailOnPublish: false,
+      emailToFree: true,
+      emailToPro: true
     })
     setShowModal(true)
+    fetchModalSubscriberCounts()
   }
 
   async function handleSavePost() {
@@ -226,6 +263,40 @@ export default function AdminBlogPage() {
       })
 
       if (res.ok) {
+        const savedPost = await res.json()
+
+        // Send email if publishing and email options are selected
+        const isPublishing = form.status === 'published' && form.sendEmailOnPublish
+        const wasAlreadyPublished = editingPost?.status === 'published'
+
+        if (isPublishing && !wasAlreadyPublished && (form.emailToFree || form.emailToPro)) {
+          try {
+            const postId = savedPost.id || editingPost?.id
+            const emailRes = await fetch('/api/admin/blog/send-email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                postId,
+                sendToFree: form.emailToFree,
+                sendToPro: form.emailToPro
+              })
+            })
+
+            if (emailRes.ok) {
+              const emailData = await emailRes.json()
+              alert(`Post published! Emails sent: ${emailData.sent} (${emailData.failed} failed)`)
+            } else {
+              alert('Post published but email sending failed')
+            }
+          } catch (emailError) {
+            console.error('Email send error:', emailError)
+            alert('Post published but email sending failed')
+          }
+        }
+
         setShowModal(false)
         fetchPosts()
       } else {
@@ -1209,6 +1280,53 @@ export default function AdminBlogPage() {
                   <span className="text-white">Pin to Dashboard</span>
                 </label>
               </div>
+
+              {/* Email on Publish Section - only show when publishing a draft or creating new */}
+              {form.status === 'published' && editingPost?.status !== 'published' && (
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <label className="flex items-center gap-3 cursor-pointer mb-3">
+                    <input
+                      type="checkbox"
+                      checked={form.sendEmailOnPublish}
+                      onChange={(e) => setForm({ ...form, sendEmailOnPublish: e.target.checked })}
+                      className="w-5 h-5 rounded"
+                    />
+                    <div>
+                      <span className="text-white font-medium">📧 Send email notification on publish</span>
+                      {fetchingCounts ? (
+                        <p className="text-blue-300 text-sm">Loading subscriber counts...</p>
+                      ) : (
+                        <p className="text-blue-300 text-sm">
+                          {modalSubscriberCounts.free + modalSubscriberCounts.pro} total subscribers
+                        </p>
+                      )}
+                    </div>
+                  </label>
+
+                  {form.sendEmailOnPublish && (
+                    <div className="ml-8 space-y-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.emailToFree}
+                          onChange={(e) => setForm({ ...form, emailToFree: e.target.checked })}
+                          className="w-4 h-4 rounded"
+                        />
+                        <span className="text-dark-text-muted">Free users ({modalSubscriberCounts.free})</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.emailToPro}
+                          onChange={(e) => setForm({ ...form, emailToPro: e.target.checked })}
+                          className="w-4 h-4 rounded"
+                        />
+                        <span className="text-dark-text-muted">Pro users ({modalSubscriberCounts.pro})</span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 mt-6 sticky bottom-0 bg-dark-card pt-4 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 sm:pb-6 -mb-4 sm:-mb-6 border-t border-dark-border">

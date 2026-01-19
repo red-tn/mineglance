@@ -54,6 +54,9 @@ export default function DashboardOverview() {
   const [extensionRelease, setExtensionRelease] = useState<SoftwareRelease | null>(null)
   const [windowsRelease, setWindowsRelease] = useState<SoftwareRelease | null>(null)
   const [macosRelease, setMacosRelease] = useState<SoftwareRelease | null>(null)
+  const [windowsAnnouncementDismissed, setWindowsAnnouncementDismissed] = useState(false)
+  const [macAnnouncementDismissed, setMacAnnouncementDismissed] = useState(false)
+  const [latestReleaseNotes, setLatestReleaseNotes] = useState<{ windows?: string; mac?: string }>({})
 
   // Calculate days until subscription expires
   const daysUntilExpiry = user?.subscriptionEndDate
@@ -100,6 +103,17 @@ export default function DashboardOverview() {
         if (data.version && data.downloadUrl) {
           const fileName = data.downloadUrl.split('/').pop() || `mineglance-desktop-${data.version}-windows.exe`
           setWindowsRelease({ version: data.version, downloadUrl: data.downloadUrl, fileName })
+          // Check if user has seen this version
+          const seenWindowsVersion = localStorage.getItem('seen_windows_version')
+          if (seenWindowsVersion !== data.version) {
+            setWindowsAnnouncementDismissed(false)
+          } else {
+            setWindowsAnnouncementDismissed(true)
+          }
+          // Store release notes
+          if (data.releaseNotes) {
+            setLatestReleaseNotes(prev => ({ ...prev, windows: data.releaseNotes }))
+          }
         }
       }
     } catch (e) {
@@ -114,6 +128,17 @@ export default function DashboardOverview() {
         if (data.version && data.downloadUrl) {
           const fileName = data.downloadUrl.split('/').pop() || `mineglance-desktop-${data.version}-macos.dmg`
           setMacosRelease({ version: data.version, downloadUrl: data.downloadUrl, fileName })
+          // Check if user has seen this version
+          const seenMacVersion = localStorage.getItem('seen_mac_version')
+          if (seenMacVersion !== data.version) {
+            setMacAnnouncementDismissed(false)
+          } else {
+            setMacAnnouncementDismissed(true)
+          }
+          // Store release notes
+          if (data.releaseNotes) {
+            setLatestReleaseNotes(prev => ({ ...prev, mac: data.releaseNotes }))
+          }
         }
       }
     } catch (e) {
@@ -393,6 +418,94 @@ export default function DashboardOverview() {
               )}
               <button
                 onClick={() => setUpdateDismissed(true)}
+                className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
+                title="Dismiss"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Windows Desktop App Announcement */}
+      {windowsRelease && !windowsAnnouncementDismissed && (
+        <div className="glass-card rounded-xl p-4 border border-sky-500/50 bg-sky-500/10">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-sky-500/20">
+                <svg className="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 5.5L10.5 4.3V11.5H3V5.5ZM3 18.5V12.5H10.5V19.7L3 18.5ZM11.5 4.1L21 2.5V11.5H11.5V4.1ZM11.5 12.5H21V21.5L11.5 19.9V12.5Z"/>
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-sky-400">
+                  🎉 Windows Desktop App v{windowsRelease.version}
+                </p>
+                <p className="text-sm text-dark-text-muted line-clamp-1">
+                  {latestReleaseNotes.windows?.split('\n')[0] || 'New version available for download'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <a
+                href={windowsRelease.downloadUrl}
+                download
+                className="px-4 py-2 bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Download
+              </a>
+              <button
+                onClick={() => {
+                  localStorage.setItem('seen_windows_version', windowsRelease.version)
+                  setWindowsAnnouncementDismissed(true)
+                }}
+                className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
+                title="Dismiss"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* macOS Desktop App Announcement */}
+      {macosRelease && !macAnnouncementDismissed && (
+        <div className="glass-card rounded-xl p-4 border border-gray-500/50 bg-gray-500/10">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-500/20">
+                <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/>
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-gray-300">
+                  🎉 macOS Desktop App v{macosRelease.version}
+                </p>
+                <p className="text-sm text-dark-text-muted line-clamp-1">
+                  {latestReleaseNotes.mac?.split('\n')[0] || 'New version available for download'}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <a
+                href={macosRelease.downloadUrl}
+                download
+                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Download
+              </a>
+              <button
+                onClick={() => {
+                  localStorage.setItem('seen_mac_version', macosRelease.version)
+                  setMacAnnouncementDismissed(true)
+                }}
                 className="p-2 text-dark-text-muted hover:text-dark-text transition-colors"
                 title="Dismiss"
               >
