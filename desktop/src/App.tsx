@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "./stores/authStore";
+import { useAuthStore, ensureInstanceIdFile } from "./stores/authStore";
 import { useSettingsStore } from "./stores/settingsStore";
 import { useUpdateStore } from "./stores/updateStore";
 import { useEffect } from "react";
@@ -44,6 +44,8 @@ function App() {
   }, [liteMode]);
 
   useEffect(() => {
+    // Ensure instance ID file exists for uninstall cleanup
+    ensureInstanceIdFile();
     // Check auth on app start
     checkAuth();
   }, [checkAuth]);

@@ -2,10 +2,10 @@ import { create } from 'zustand';
 import { Store } from '@tauri-apps/plugin-store';
 import { platform } from '@tauri-apps/plugin-os';
 import { fetch } from '@tauri-apps/plugin-http';
-import { writeTextFile, BaseDirectory } from '@tauri-apps/plugin-fs';
+import { writeTextFile, mkdir, BaseDirectory } from '@tauri-apps/plugin-fs';
 
 const API_BASE = 'https://www.mineglance.com';
-const APP_VERSION = '1.3.4';
+const APP_VERSION = '1.3.5';
 
 // Generate a unique instance ID for this device
 async function getInstanceId(): Promise<string> {
@@ -19,13 +19,38 @@ async function getInstanceId(): Promise<string> {
   }
 
   // Also write to a plain text file for NSIS uninstall hook
+  await writeInstanceIdFile(instanceId);
+
+  return instanceId;
+}
+
+// Write instance ID to file for NSIS uninstall hook to read
+async function writeInstanceIdFile(instanceId: string): Promise<void> {
   try {
+    // Ensure the directory exists
+    try {
+      await mkdir('', { baseDir: BaseDirectory.AppLocalData, recursive: true });
+    } catch {
+      // Directory might already exist
+    }
     await writeTextFile('instance_id.txt', instanceId, { baseDir: BaseDirectory.AppLocalData });
+    console.log('Wrote instance_id.txt:', instanceId);
   } catch (e) {
     console.error('Failed to write instance_id.txt:', e);
   }
+}
 
-  return instanceId;
+// Ensure instance ID file exists - call on app startup
+export async function ensureInstanceIdFile(): Promise<void> {
+  try {
+    const store = await Store.load('settings.json');
+    const instanceId = await store.get<string>('instanceId');
+    if (instanceId) {
+      await writeInstanceIdFile(instanceId);
+    }
+  } catch (e) {
+    console.error('Failed to ensure instance_id.txt:', e);
+  }
 }
 
 // Get device type based on platform

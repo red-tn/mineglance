@@ -12,6 +12,7 @@
     "updater:default",
     "fs:default",
     "fs:allow-write-text-file",
+    "fs:allow-mkdir",
     "fs:allow-app-write-recursive",
     "fs:allow-temp-write-recursive",
     "process:default",

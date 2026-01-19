@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MineGlance - Mining Profit Dashboard",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "Are you actually making money mining? Find out in 2 clicks. Net profit dashboard for GPU miners.",
   "permissions": [
     "storage",
