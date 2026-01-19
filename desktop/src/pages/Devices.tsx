@@ -184,10 +184,6 @@ export default function Devices() {
     return 'text-[var(--text-muted)] bg-[var(--card-hover)]';
   }
 
-  function isDesktopDevice(deviceType: string): boolean {
-    return deviceType === 'desktop_windows' || deviceType === 'desktop_macos';
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">

@@ -24,7 +24,7 @@ async function getInstanceId(): Promise<string> {
 async function getDeviceType(): Promise<string> {
   try {
     const os = await platform();
-    if (os === 'macos' || os === 'darwin') return 'desktop_macos';
+    if (os === 'macos') return 'desktop_macos';
     return 'desktop_windows';
   } catch {
     return 'desktop_windows';
@@ -256,7 +256,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true,
         token: data.token,
         requires2FA: false,
-        pendingLicenseKey: null,
         pendingEmail: null,
         pendingPassword: null,
         user: {

@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, GripVertical, X, AlertCircle, ExternalLink } from
 import { POOLS, getCoinsForPool } from "../constants/pools";
 
 export default function Wallets() {
-  const { wallets, loadWallets, addWallet, updateWallet, removeWallet, reorderWallets } = useWalletStore();
+  const { wallets, loadWallets, addWallet, updateWallet, removeWallet } = useWalletStore();
   const { user } = useAuthStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
