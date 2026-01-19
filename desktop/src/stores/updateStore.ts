@@ -3,7 +3,7 @@ import { fetch } from '@tauri-apps/plugin-http';
 import { Store } from '@tauri-apps/plugin-store';
 
 const API_BASE = 'https://www.mineglance.com/api';
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 
 interface UpdateState {
   latestVersion: string | null;
