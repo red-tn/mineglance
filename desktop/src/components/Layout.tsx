@@ -39,8 +39,13 @@ export default function Layout() {
           data-tauri-drag-region
         >
           <img src="/icon.svg" alt="MineGlance" className="w-8 h-8 rounded-lg" />
-          <span className="font-bold text-base text-[var(--text)]">MineGlance</span>
-          {user?.plan === "pro" && <span className="pro-badge ml-1">PRO</span>}
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-base text-[var(--text)]">MineGlance</span>
+              {user?.plan === "pro" && <span className="pro-badge">PRO</span>}
+            </div>
+            <span className="text-[10px] text-[var(--text-dim)]">v1.2.9</span>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -82,15 +87,10 @@ export default function Layout() {
             <div className="text-xs text-[var(--text-dim)] truncate">{user?.email}</div>
           </div>
 
-          {/* Version */}
-          <div className="px-3 py-1.5 text-center">
-            <span className="text-xs text-[var(--text-dim)]">v1.2.9</span>
-          </div>
-
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-danger hover:bg-danger/10 transition-all mt-1"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-danger hover:bg-danger/10 transition-all mt-2"
           >
             <LogOut size={18} />
             <span className="text-sm">Sign Out</span>
