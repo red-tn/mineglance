@@ -276,8 +276,8 @@ export default function AdminBlogPage() {
       if (res.ok) {
         const savedPost = await res.json()
 
-        // Send email if publishing and email options are selected
-        const shouldSendEmail = form.status === 'published' && form.sendEmailOnPublish && (form.emailToFree || form.emailToPro)
+        // Send email if checkbox is checked and at least one audience selected
+        const shouldSendEmail = form.sendEmailOnPublish && (form.emailToFree || form.emailToPro)
 
         if (shouldSendEmail) {
           try {
@@ -1301,8 +1301,8 @@ export default function AdminBlogPage() {
                 </label>
               </div>
 
-              {/* Email on Publish Section - show when status is published */}
-              {form.status === 'published' && (
+              {/* Email Notification Section - always visible */}
+              {(
                 <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                   <label className="flex items-center gap-3 cursor-pointer mb-3">
                     <input
@@ -1312,7 +1312,7 @@ export default function AdminBlogPage() {
                       className="w-5 h-5 rounded"
                     />
                     <div>
-                      <span className="text-white font-medium">📧 Send email notification on publish</span>
+                      <span className="text-white font-medium">📧 Send email notification</span>
                       {fetchingCounts ? (
                         <p className="text-blue-300 text-sm">Loading subscriber counts...</p>
                       ) : (
