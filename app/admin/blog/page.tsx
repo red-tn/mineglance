@@ -217,6 +217,17 @@ export default function AdminBlogPage() {
     fetchModalSubscriberCounts()
   }
 
+  // Convert UTC date to local datetime-local format (YYYY-MM-DDTHH:MM)
+  function toLocalDateTimeString(utcDateString: string): string {
+    const date = new Date(utcDateString)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+
   function openEditPost(post: BlogPost) {
     setEditingPost(post)
     setForm({
@@ -230,7 +241,7 @@ export default function AdminBlogPage() {
       is_pinned_homepage: post.is_pinned_homepage,
       is_pinned_dashboard: post.is_pinned_dashboard,
       author_name: post.author_name || 'MineGlance Team',
-      scheduled_at: post.scheduled_at ? new Date(post.scheduled_at).toISOString().slice(0, 16) : '',
+      scheduled_at: post.scheduled_at ? toLocalDateTimeString(post.scheduled_at) : '',
       tags: (post.tags || []).join(', '),
       sendEmailOnPublish: false,
       emailToFree: true,
@@ -707,10 +718,20 @@ export default function AdminBlogPage() {
                         </td>
                         <td className="px-4 py-3 text-dark-text-muted">{post.view_count || 0}</td>
                         <td className="px-4 py-3 text-dark-text-muted">{post.comment_count || 0}</td>
-                        <td className="px-4 py-3 text-dark-text-muted text-sm">
-                          {post.published_at
-                            ? new Date(post.published_at).toLocaleDateString()
-                            : new Date(post.created_at).toLocaleDateString()}
+                        <td className="px-4 py-3 text-sm">
+                          {post.status === 'scheduled' && post.scheduled_at ? (
+                            <span className="text-red-400 font-medium">
+                              {new Date(post.scheduled_at).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: '2-digit', hour12: true })}
+                            </span>
+                          ) : post.published_at ? (
+                            <span className="text-dark-text-muted">
+                              {new Date(post.published_at).toLocaleString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit', hour: 'numeric', minute: '2-digit', hour12: true })}
+                            </span>
+                          ) : (
+                            <span className="text-dark-text-dim">
+                              {new Date(post.created_at).toLocaleDateString()}
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
