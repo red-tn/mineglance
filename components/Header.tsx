@@ -3,11 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import ExtensionDownloadModal, { useExtensionDownloadModal } from './ExtensionDownloadModal'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { isOpen, openModal, closeModal } = useExtensionDownloadModal()
 
   return (
     <>
@@ -40,18 +38,21 @@ export default function Header() {
             <Link href="/#pricing" className="text-dark-text-muted hover:text-primary transition-colors">
               Pricing
             </Link>
+            <Link href="/download" className="text-dark-text-muted hover:text-primary transition-colors">
+              Download
+            </Link>
             <Link href="/blog" className="text-dark-text-muted hover:text-primary transition-colors">
               Blog
             </Link>
             <Link href="/support" className="text-dark-text-muted hover:text-primary transition-colors">
               Support
             </Link>
-            <button
-              onClick={openModal}
+            <Link
+              href="/download"
               className="btn-primary"
             >
-              Add to Chrome
-            </button>
+              Get MineGlance
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -103,6 +104,13 @@ export default function Header() {
                 Pricing
               </Link>
               <Link
+                href="/download"
+                className="text-dark-text-muted hover:text-primary transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Download
+              </Link>
+              <Link
                 href="/blog"
                 className="text-dark-text-muted hover:text-primary transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
@@ -116,22 +124,18 @@ export default function Header() {
               >
                 Support
               </Link>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  openModal()
-                }}
-                className="btn-primary w-full"
+              <Link
+                href="/download"
+                onClick={() => setMobileMenuOpen(false)}
+                className="btn-primary w-full text-center"
               >
-                Add to Chrome
-              </button>
+                Get MineGlance
+              </Link>
             </div>
           </div>
         )}
       </nav>
     </header>
-
-    <ExtensionDownloadModal isOpen={isOpen} onClose={closeModal} />
     </>
   )
 }

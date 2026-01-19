@@ -1,11 +1,9 @@
 'use client'
 
 import Image from 'next/image'
-import ExtensionDownloadModal, { useExtensionDownloadModal } from './ExtensionDownloadModal'
+import Link from 'next/link'
 
 export default function Hero() {
-  const { isOpen, openModal, closeModal } = useExtensionDownloadModal()
-
   return (
     <>
     <section className="py-20 lg:py-28">
@@ -20,12 +18,12 @@ export default function Hero() {
               Find out in 2 clicks. Net profit dashboard for GPU miners—no monthly fees, no OS replacement.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <button
-                onClick={openModal}
+              <Link
+                href="/download"
                 className="btn-primary text-lg px-8 py-4"
               >
-                Add to Chrome — It&apos;s Free
-              </button>
+                Download MineGlance — It&apos;s Free
+              </Link>
             </div>
             <p className="mt-4 text-sm text-dark-text-dim">
               Works with 2Miners, Nanopool, F2Pool, OCEAN, and more
@@ -84,8 +82,6 @@ export default function Hero() {
 
       </div>
     </section>
-
-    <ExtensionDownloadModal isOpen={isOpen} onClose={closeModal} />
     </>
   )
 }

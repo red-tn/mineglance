@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Store } from '@tauri-apps/plugin-store';
+import { fetch } from '@tauri-apps/plugin-http';
 import { useAuthStore } from './authStore';
 
 const API_BASE = 'https://www.mineglance.com';
@@ -302,21 +303,58 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   },
 }));
 
-// Placeholder function - will be replaced with actual pool API calls
+// Fetch wallet stats from server API
 async function fetchWalletStats(wallet: Wallet): Promise<WalletStats> {
-  // Import and use pool parsers here
-  // For now, return placeholder
-  return {
-    walletId: wallet.id,
-    hashrate: 0,
-    hashrateUnit: 'MH/s',
-    workersOnline: 0,
-    workersOffline: 0,
-    balance: 0,
-    balanceUSD: 0,
-    dailyRevenue: 0,
-    dailyProfit: 0,
-    coinPrice: 0,
-    lastUpdated: new Date(),
-  };
+  try {
+    const response = await fetch(`${API_BASE}/api/pool-stats`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pool: wallet.pool,
+        coin: wallet.coin,
+        address: wallet.address,
+        power: wallet.power || 0,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch stats');
+    }
+
+    const data = await response.json();
+
+    return {
+      walletId: wallet.id,
+      hashrate: data.hashrate || 0,
+      hashrateUnit: data.hashrateUnit || 'MH/s',
+      workersOnline: data.workersOnline || 0,
+      workersOffline: data.workersOffline || 0,
+      balance: data.balance || 0,
+      balanceUSD: data.balanceUSD || 0,
+      pendingBalance: data.pendingBalance,
+      dailyRevenue: data.dailyRevenue || 0,
+      dailyProfit: data.dailyProfit || 0,
+      coinPrice: data.coinPrice || 0,
+      lastUpdated: new Date(),
+    };
+  } catch (error) {
+    console.error(`Failed to fetch stats for wallet ${wallet.name}:`, error);
+    return {
+      walletId: wallet.id,
+      hashrate: 0,
+      hashrateUnit: 'MH/s',
+      workersOnline: 0,
+      workersOffline: 0,
+      balance: 0,
+      balanceUSD: 0,
+      dailyRevenue: 0,
+      dailyProfit: 0,
+      coinPrice: 0,
+      error: error instanceof Error ? error.message : 'Failed to fetch stats',
+      lastUpdated: new Date(),
+    };
+  }
 }

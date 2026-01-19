@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Store } from '@tauri-apps/plugin-store';
 import { platform } from '@tauri-apps/plugin-os';
+import { fetch } from '@tauri-apps/plugin-http';
 
 const API_BASE = 'https://www.mineglance.com';
 const APP_VERSION = '1.0.0';
@@ -186,7 +187,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const deviceType = await getDeviceType();
         const deviceName = getDeviceName();
 
-        await fetch(`${API_BASE}/api/instances`, {
+        console.log('Registering device:', { instanceId, deviceType, deviceName, version: APP_VERSION });
+
+        const regResponse = await fetch(`${API_BASE}/api/instances`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${data.token}`,
@@ -199,6 +202,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             version: APP_VERSION,
           }),
         });
+
+        const regData = await regResponse.json();
+        console.log('Device registration response:', regResponse.status, regData);
       } catch (e) {
         console.error('Failed to register device:', e);
         // Don't fail login if device registration fails
@@ -280,7 +286,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const deviceType = await getDeviceType();
         const deviceName = getDeviceName();
 
-        await fetch(`${API_BASE}/api/instances`, {
+        console.log('Registering device after 2FA:', { instanceId, deviceType, deviceName, version: APP_VERSION });
+
+        const regResponse = await fetch(`${API_BASE}/api/instances`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${data.token}`,
@@ -293,8 +301,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             version: APP_VERSION,
           }),
         });
+
+        const regData = await regResponse.json();
+        console.log('Device registration response after 2FA:', regResponse.status, regData);
       } catch (e) {
-        console.error('Failed to register device:', e);
+        console.error('Failed to register device after 2FA:', e);
       }
 
       return { success: true };

@@ -623,7 +623,7 @@ export default function DashboardOverview() {
           </span>
         </div>
         <Link
-          href="/desktop"
+          href="/download"
           className="flex items-center gap-4 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors group text-left w-full"
         >
           <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
