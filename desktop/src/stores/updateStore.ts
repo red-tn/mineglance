@@ -7,7 +7,7 @@ import { open } from '@tauri-apps/plugin-shell';
 import { exit } from '@tauri-apps/plugin-process';
 
 const API_BASE = 'https://www.mineglance.com/api';
-const APP_VERSION = '1.3.7';
+const APP_VERSION = '1.3.8';
 
 interface UpdateState {
   latestVersion: string | null;
