@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 1152" width="2048" height="1152">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="50%" style="stop-color:#111111"/>
+      <stop offset="100%" style="stop-color:#0a0a0a"/>
+    </linearGradient>
+
+    <!-- Green glow gradient -->
+    <radialGradient id="glowGreen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#22c55e;stop-opacity:0"/>
+    </radialGradient>
+
+    <!-- Blue glow gradient -->
+    <radialGradient id="glowBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.2"/>
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0"/>
+    </radialGradient>
+
+    <!-- Card gradient -->
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a"/>
+      <stop offset="100%" style="stop-color:#0d0d0d"/>
+    </linearGradient>
+
+    <!-- Profit gradient -->
+    <linearGradient id="profitGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#22c55e"/>
+      <stop offset="100%" style="stop-color:#16a34a"/>
+    </linearGradient>
+
+    <!-- Grid pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" stroke-width="0.5" stroke-opacity="0.03"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="2048" height="1152" fill="url(#bgGradient)"/>
+
+  <!-- Grid overlay -->
+  <rect width="2048" height="1152" fill="url(#grid)"/>
+
+  <!-- Decorative glows -->
+  <ellipse cx="400" cy="400" rx="400" ry="400" fill="url(#glowGreen)"/>
+  <ellipse cx="1648" cy="752" rx="500" ry="500" fill="url(#glowBlue)"/>
+  <ellipse cx="1024" cy="576" rx="300" ry="300" fill="url(#glowGreen)" opacity="0.5"/>
+
+  <!-- Left side content -->
+  <g transform="translate(150, 350)">
+    <!-- Logo icon -->
+    <g transform="translate(0, 0)">
+      <rect x="0" y="0" width="80" height="80" rx="16" fill="#22c55e"/>
+      <text x="40" y="55" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">M</text>
+    </g>
+
+    <!-- Brand name -->
+    <text x="100" y="58" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="white">MineGlance</text>
+
+    <!-- Tagline -->
+    <text x="0" y="140" font-family="Arial, sans-serif" font-size="42" fill="#22c55e" font-weight="600">Know Your True Mining Profit</text>
+
+    <!-- Sub-tagline -->
+    <text x="0" y="200" font-family="Arial, sans-serif" font-size="28" fill="#9ca3af">Real-time hashrate, workers, and earnings after electricity</text>
+
+    <!-- Feature pills -->
+    <g transform="translate(0, 260)">
+      <rect x="0" y="0" width="180" height="44" rx="22" fill="#1a1a1a" stroke="#333333" stroke-width="1"/>
+      <text x="90" y="29" font-family="Arial, sans-serif" font-size="18" fill="#22c55e" text-anchor="middle">12+ Pools</text>
+
+      <rect x="200" y="0" width="180" height="44" rx="22" fill="#1a1a1a" stroke="#333333" stroke-width="1"/>
+      <text x="290" y="29" font-family="Arial, sans-serif" font-size="18" fill="#22c55e" text-anchor="middle">23+ Coins</text>
+
+      <rect x="400" y="0" width="180" height="44" rx="22" fill="#1a1a1a" stroke="#333333" stroke-width="1"/>
+      <text x="490" y="29" font-family="Arial, sans-serif" font-size="18" fill="#22c55e" text-anchor="middle">Free Forever</text>
+    </g>
+  </g>
+
+  <!-- Right side - Dashboard mockup -->
+  <g transform="translate(1150, 200)">
+    <!-- Main card -->
+    <rect x="0" y="0" width="700" height="700" rx="24" fill="url(#cardGradient)" stroke="#2a2a2a" stroke-width="2"/>
+
+    <!-- Card header -->
+    <g transform="translate(40, 40)">
+      <rect x="0" y="0" width="50" height="50" rx="10" fill="#22c55e"/>
+      <text x="25" y="35" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">M</text>
+      <text x="70" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">MineGlance</text>
+      <rect x="540" y="5" width="80" height="40" rx="8" fill="#22c55e" fill-opacity="0.2"/>
+      <text x="580" y="32" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#22c55e" text-anchor="middle">PRO</text>
+    </g>
+
+    <!-- Divider -->
+    <line x1="40" y1="110" x2="660" y2="110" stroke="#2a2a2a" stroke-width="1"/>
+
+    <!-- Net Profit section -->
+    <g transform="translate(40, 140)">
+      <text x="310" y="30" font-family="Arial, sans-serif" font-size="18" fill="#9ca3af" text-anchor="middle" letter-spacing="2">TODAY'S NET PROFIT</text>
+      <text x="310" y="100" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#22c55e" text-anchor="middle">+$47.82</text>
+      <text x="310" y="135" font-family="Arial, sans-serif" font-size="18" fill="#6b7280" text-anchor="middle">After electricity costs</text>
+    </g>
+
+    <!-- Stats row -->
+    <g transform="translate(40, 300)">
+      <!-- Hashrate box -->
+      <rect x="0" y="0" width="290" height="100" rx="12" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
+      <text x="145" y="35" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle">Hashrate</text>
+      <text x="145" y="75" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">842 MH/s</text>
+
+      <!-- Workers box -->
+      <rect x="330" y="0" width="290" height="100" rx="12" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
+      <text x="475" y="35" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle">Workers</text>
+      <text x="475" y="75" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#22c55e" text-anchor="middle">4/4 Online</text>
+    </g>
+
+    <!-- Balance row -->
+    <g transform="translate(40, 430)">
+      <!-- Balance box -->
+      <rect x="0" y="0" width="290" height="100" rx="12" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
+      <text x="145" y="35" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle">Balance</text>
+      <text x="145" y="75" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">0.0847 BTC</text>
+
+      <!-- Coin Price box -->
+      <rect x="330" y="0" width="290" height="100" rx="12" fill="#1a1a1a" stroke="#2a2a2a" stroke-width="1"/>
+      <text x="475" y="35" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af" text-anchor="middle">BTC Price</text>
+      <text x="475" y="75" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">$97,432</text>
+    </g>
+
+    <!-- Best coin suggestion -->
+    <g transform="translate(40, 560)">
+      <rect x="0" y="0" width="620" height="70" rx="12" fill="#22c55e" fill-opacity="0.1" stroke="#22c55e" stroke-width="1" stroke-opacity="0.3"/>
+      <text x="310" y="45" font-family="Arial, sans-serif" font-size="22" fill="#22c55e" text-anchor="middle">BTC is your most profitable coin right now</text>
+    </g>
+  </g>
+
+  <!-- Bottom decorative elements -->
+  <g transform="translate(150, 950)">
+    <!-- Pool logos placeholder -->
+    <text x="0" y="30" font-family="Arial, sans-serif" font-size="20" fill="#6b7280">Supports: 2Miners | Nanopool | F2Pool | OCEAN | Ethermine | HeroMiners | WoolyPooly | more...</text>
+  </g>
+
+  <!-- Platform badges -->
+  <g transform="translate(150, 850)">
+    <rect x="0" y="0" width="140" height="50" rx="8" fill="#1a1a1a" stroke="#333333" stroke-width="1"/>
+    <text x="70" y="32" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">Chrome</text>
+
+    <rect x="160" y="0" width="140" height="50" rx="8" fill="#1a1a1a" stroke="#333333" stroke-width="1"/>
+    <text x="230" y="32" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">Edge</text>
+
+    <rect x="320" y="0" width="140" height="50" rx="8" fill="#1a1a1a" stroke="#333333" stroke-width="1"/>
+    <text x="390" y="32" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">Windows</text>
+
+    <rect x="480" y="0" width="140" height="50" rx="8" fill="#1a1a1a" stroke="#333333" stroke-width="1"/>
+    <text x="550" y="32" font-family="Arial, sans-serif" font-size="16" fill="white" text-anchor="middle">macOS</text>
+  </g>
+
+  <!-- Website URL -->
+  <text x="1898" y="1100" font-family="Arial, sans-serif" font-size="28" fill="#22c55e" text-anchor="end" font-weight="600">mineglance.com</text>
+</svg>
