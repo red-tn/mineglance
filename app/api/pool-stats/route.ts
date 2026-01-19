@@ -183,6 +183,52 @@ async function fetchOceanStats(address: string) {
   }
 }
 
+async function fetchPublicPoolStats(address: string) {
+  const url = POOL_APIS['public-pool']['btc'].replace('{address}', address)
+
+  const response = await fetch(url)
+  if (!response.ok) throw new Error('Failed to fetch from public-pool')
+
+  const data = await response.json()
+
+  // Public Pool returns hashrate in H/s, convert to TH/s
+  const hashrateHs = data.hashRate || data.hashrate || 0
+  const hashrateTHs = hashrateHs / 1e12
+
+  return {
+    hashrate: hashrateTHs,
+    workersOnline: data.workerCount || data.workers?.length || 0,
+    workersOffline: 0,
+    balance: (data.totalEarned || 0) / 1e8, // Satoshis to BTC
+    pendingBalance: 0,
+  }
+}
+
+async function fetchCkPoolStats(address: string, isEU: boolean = false) {
+  const poolKey = isEU ? 'ckpool-eu' : 'ckpool'
+  const url = POOL_APIS[poolKey]['btc'].replace('{address}', address)
+
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`Failed to fetch from ${poolKey}`)
+
+  const data = await response.json()
+
+  // CKPool returns hashrate in various units
+  const hashrate1hr = data.hashrate1hr || 0
+  // Convert to TH/s (CKPool typically returns in appropriate units)
+  const hashrateTHs = typeof hashrate1hr === 'string'
+    ? parseFloat(hashrate1hr)
+    : hashrate1hr / 1e12
+
+  return {
+    hashrate: hashrateTHs,
+    workersOnline: data.workers || 0,
+    workersOffline: 0,
+    balance: data.balance || 0,
+    pendingBalance: 0,
+  }
+}
+
 async function fetchPoolStats(pool: string, coin: string, address: string) {
   const poolLower = pool.toLowerCase()
 
@@ -197,6 +243,12 @@ async function fetchPoolStats(pool: string, coin: string, address: string) {
       return await fetchWoolyPoolyStats(coin, address)
     case 'ocean':
       return await fetchOceanStats(address)
+    case 'public-pool':
+      return await fetchPublicPoolStats(address)
+    case 'ckpool':
+      return await fetchCkPoolStats(address, false)
+    case 'ckpool-eu':
+      return await fetchCkPoolStats(address, true)
     default:
       throw new Error(`Pool ${pool} not yet supported`)
   }
