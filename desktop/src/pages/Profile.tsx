@@ -667,7 +667,7 @@ export default function Profile() {
               rel="noopener noreferrer"
               className="w-full flex items-center justify-center gap-2 p-3 bg-primary hover:bg-primary-light text-white font-semibold rounded-lg transition-all shadow-glow"
             >
-              Upgrade to Pro - $59/year
+              Upgrade to Pro
               <ExternalLink size={14} />
             </a>
           )}

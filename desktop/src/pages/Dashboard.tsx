@@ -207,7 +207,7 @@ export default function Dashboard() {
             rel="noopener noreferrer"
             className="px-4 py-2 bg-primary hover:bg-primary-light text-white font-semibold rounded-lg transition-all shadow-glow flex items-center gap-2"
           >
-            Upgrade $59
+            Upgrade to Pro
             <ExternalLink size={14} />
           </a>
         </div>
