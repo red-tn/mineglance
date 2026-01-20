@@ -265,14 +265,14 @@ export default function SubscriptionPage() {
             </button>
           )}
 
-          {/* Refund Button */}
+          {/* Cancel Plan Button */}
           {subscription?.canRequestRefund && (
             <button
               onClick={handleRequestRefund}
               disabled={actionLoading}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 font-medium transition-colors"
+              className="px-4 py-2 text-sm text-dark-text-muted hover:text-red-400 transition-colors"
             >
-              {actionLoading ? 'Submitting...' : 'Request Refund'}
+              {actionLoading ? 'Submitting...' : 'Cancel Plan'}
             </button>
           )}
 
