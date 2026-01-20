@@ -81,17 +81,30 @@ STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public
 # }
 
 PENDING_RELEASES = [
-    # Desktop App v1.3.5
+    # Extension v1.3.5
     {
         "version": "1.3.5",
-        "platform": "desktop_windows",
-        "release_notes": """v1.3.5 - Stability & Sync Update
+        "platform": "extension",
+        "release_notes": """v1.3.5 - Pro Features Update
 
-- Improved device heartbeat (updates every 30 seconds)
-- Version syncs to dashboard immediately on startup
-- Better update detection and download flow
-- Unified versioning with browser extension""",
-        "zip_filename": "MineGlance_1.3.5_x64-setup.exe",
+- Price Alerts: Get email notifications when coin prices hit your target
+- Payout Prediction: See estimated time until next pool payout with progress bar
+- Performance Charts: Enable chart tracking for 7/30/90 day history
+- All new features available in wallet settings for Pro users""",
+        "zip_filename": "mineglance-extension-v1.3.5.zip",
+        "is_latest": True
+    },
+    # Mobile iOS v1.3.5
+    {
+        "version": "1.3.5",
+        "platform": "mobile_ios",
+        "release_notes": """v1.3.5 - Pro Features Update
+
+- Price Alerts: Configure price target notifications for your coins
+- Payout Prediction: Track progress toward pool payout thresholds
+- Performance Charts: Enable chart data collection for wallets
+- Improved wallet sync with cloud backup""",
+        "zip_filename": None,  # iOS doesn't have a direct download
         "is_latest": True
     }
 ]
@@ -121,6 +134,113 @@ def get_extension_version():
     except Exception as e:
         print(f"  [WARN] Could not read manifest: {e}")
         return None
+
+def get_mobile_version():
+    """Read version from mobile app.json"""
+    app_json_path = os.path.join(os.path.dirname(__file__), '..', 'mobile', 'app.json')
+    try:
+        with open(app_json_path, 'r') as f:
+            config = json.load(f)
+            return config.get('expo', {}).get('version', 'unknown')
+    except Exception as e:
+        print(f"  [WARN] Could not read app.json: {e}")
+        return None
+
+def increment_ios_build_number():
+    """Increment the iOS buildNumber in app.json"""
+    app_json_path = os.path.join(os.path.dirname(__file__), '..', 'mobile', 'app.json')
+    try:
+        with open(app_json_path, 'r') as f:
+            config = json.load(f)
+
+        current_build = int(config.get('expo', {}).get('ios', {}).get('buildNumber', '0'))
+        new_build = current_build + 1
+        config['expo']['ios']['buildNumber'] = str(new_build)
+
+        with open(app_json_path, 'w') as f:
+            json.dump(config, f, indent=2)
+
+        print(f"  [OK] Incremented iOS buildNumber: {current_build} -> {new_build}")
+        return new_build
+    except Exception as e:
+        print(f"  [ERROR] Could not increment build number: {e}")
+        return None
+
+def run_eas_build():
+    """Run EAS build for iOS"""
+    mobile_dir = os.path.join(os.path.dirname(__file__), '..', 'mobile')
+
+    print("  [BUILD] Running 'npx eas build --platform ios --non-interactive'...")
+    print("  [BUILD] This will take 15-20 minutes...")
+
+    try:
+        result = subprocess.run(
+            'npx eas build --platform ios --non-interactive',
+            cwd=mobile_dir,
+            shell=True,
+            capture_output=False,  # Show output in real-time
+            timeout=1800  # 30 minute timeout
+        )
+
+        if result.returncode == 0:
+            print("  [OK] EAS build completed successfully!")
+            return True
+        else:
+            print(f"  [ERROR] EAS build failed with exit code {result.returncode}")
+            return False
+    except subprocess.TimeoutExpired:
+        print("  [ERROR] EAS build timed out after 30 minutes")
+        return False
+    except Exception as e:
+        print(f"  [ERROR] EAS build failed: {e}")
+        return False
+
+def submit_to_testflight():
+    """Submit latest iOS build to TestFlight"""
+    mobile_dir = os.path.join(os.path.dirname(__file__), '..', 'mobile')
+
+    print("  [SUBMIT] Running 'npx eas submit --platform ios --latest --non-interactive'...")
+
+    try:
+        result = subprocess.run(
+            'npx eas submit --platform ios --latest --non-interactive',
+            cwd=mobile_dir,
+            shell=True,
+            capture_output=False,
+            timeout=600  # 10 minute timeout
+        )
+
+        if result.returncode == 0:
+            print("  [OK] Submitted to TestFlight successfully!")
+            return True
+        else:
+            print(f"  [ERROR] TestFlight submission failed with exit code {result.returncode}")
+            return False
+    except subprocess.TimeoutExpired:
+        print("  [ERROR] TestFlight submission timed out")
+        return False
+    except Exception as e:
+        print(f"  [ERROR] TestFlight submission failed: {e}")
+        return False
+
+def build_and_submit_ios(version):
+    """Full iOS build and submit workflow"""
+    print("\n  --- iOS Build & Submit Workflow ---")
+
+    # Step 1: Increment build number
+    build_num = increment_ios_build_number()
+    if not build_num:
+        return False
+
+    # Step 2: Run EAS build
+    if not run_eas_build():
+        return False
+
+    # Step 3: Submit to TestFlight
+    if not submit_to_testflight():
+        return False
+
+    return True
 
 def get_desktop_version():
     """Read version from tauri.conf.json"""
@@ -395,8 +515,10 @@ def publish_release(release):
     if release.get("is_latest"):
         unset_latest_for_platform(platform)
 
-    # Build download URL
-    download_url = f"{STORAGE_URL}/{release['zip_filename']}"
+    # Build download URL (None for mobile apps which use app stores)
+    download_url = None
+    if release.get('zip_filename'):
+        download_url = f"{STORAGE_URL}/{release['zip_filename']}"
 
     # Insert new release
     url = f"{SUPABASE_URL}/rest/v1/software_releases"
@@ -410,10 +532,13 @@ def publish_release(release):
         "version": version,
         "platform": platform,
         "release_notes": release["release_notes"],
-        "download_url": download_url,
         "is_latest": release.get("is_latest", False),
         "released_at": datetime.now().isoformat()
     }
+
+    # Only include download_url if it exists
+    if download_url:
+        data["download_url"] = download_url
 
     response = requests.post(url, headers=headers, json=data)
 
@@ -610,7 +735,18 @@ def main():
         print(f"Processing: {release['platform']} v{release['version']}")
         print(f"{'=' * 40}")
 
-        filename = release['zip_filename']
+        filename = release.get('zip_filename')
+
+        # Handle mobile_ios separately (no file upload, uses EAS/TestFlight)
+        if release['platform'] == 'mobile_ios':
+            if build_and_submit_ios(release['version']):
+                # Publish to database (no download URL for iOS - uses TestFlight)
+                if publish_release(release):
+                    published += 1
+            else:
+                print(f"  [ERROR] iOS build/submit failed")
+            continue
+
         file_ready = False
 
         # Step 1: Get the file (create ZIP or find EXE)

@@ -3,7 +3,7 @@
     "name": "MineGlance",
     "slug": "mineglance",
     "owner": "mineglance",
-    "version": "1.2.6",
+    "version": "1.3.5",
     "sdkVersion": "54.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
