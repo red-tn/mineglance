@@ -21,6 +21,13 @@ export default function Wallets() {
     address: "",
     power: 0,
     enabled: true,
+    // Pro features
+    priceAlertEnabled: false,
+    priceAlertTarget: null as number | null,
+    priceAlertCondition: "above" as "above" | "below",
+    payoutPredictionEnabled: true,
+    chartEnabled: false,
+    chartPeriod: 30,
   });
 
   useEffect(() => {
@@ -37,6 +44,12 @@ export default function Wallets() {
       address: "",
       power: 0,
       enabled: true,
+      priceAlertEnabled: false,
+      priceAlertTarget: null,
+      priceAlertCondition: "above",
+      payoutPredictionEnabled: true,
+      chartEnabled: false,
+      chartPeriod: 30,
     });
     setEditingWallet(null);
     setError(null);
@@ -61,6 +74,12 @@ export default function Wallets() {
       address: wallet.address,
       power: wallet.power || 0,
       enabled: wallet.enabled,
+      priceAlertEnabled: wallet.priceAlertEnabled || false,
+      priceAlertTarget: wallet.priceAlertTarget ?? null,
+      priceAlertCondition: wallet.priceAlertCondition || "above",
+      payoutPredictionEnabled: wallet.payoutPredictionEnabled ?? true,
+      chartEnabled: wallet.chartEnabled || false,
+      chartPeriod: wallet.chartPeriod || 30,
     });
     setIsModalOpen(true);
   };
@@ -327,6 +346,106 @@ export default function Wallets() {
                   Used for profit calculation
                 </p>
               </div>
+
+              {/* Pro Features Section */}
+              {user?.plan === "pro" && (
+                <div className="border-t border-[var(--border)] pt-4 mt-4">
+                  <p className="text-sm font-semibold text-[var(--text)] mb-3 flex items-center gap-2">
+                    Pro Features
+                    <span className="text-xs px-2 py-0.5 bg-primary/20 text-primary rounded">PRO</span>
+                  </p>
+
+                  {/* Price Alert */}
+                  <div className="space-y-2 mb-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.priceAlertEnabled}
+                        onChange={(e) =>
+                          setFormData({ ...formData, priceAlertEnabled: e.target.checked })
+                        }
+                        className="w-4 h-4 rounded border-[var(--border)] text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-[var(--text)]">Price Alert</span>
+                    </label>
+                    {formData.priceAlertEnabled && (
+                      <div className="ml-6 flex items-center gap-2 text-sm">
+                        <span className="text-[var(--text-muted)]">Alert when price goes</span>
+                        <select
+                          value={formData.priceAlertCondition}
+                          onChange={(e) =>
+                            setFormData({ ...formData, priceAlertCondition: e.target.value as "above" | "below" })
+                          }
+                          className="px-2 py-1 bg-[var(--bg)] border border-[var(--border)] rounded text-[var(--text)] text-sm"
+                        >
+                          <option value="above">above</option>
+                          <option value="below">below</option>
+                        </select>
+                        <span className="text-[var(--text-muted)]">$</span>
+                        <input
+                          type="number"
+                          step="0.0001"
+                          value={formData.priceAlertTarget || ""}
+                          onChange={(e) =>
+                            setFormData({ ...formData, priceAlertTarget: parseFloat(e.target.value) || null })
+                          }
+                          placeholder="0.00"
+                          className="w-24 px-2 py-1 bg-[var(--bg)] border border-[var(--border)] rounded text-[var(--text)] text-sm"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Payout Prediction */}
+                  <div className="mb-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.payoutPredictionEnabled}
+                        onChange={(e) =>
+                          setFormData({ ...formData, payoutPredictionEnabled: e.target.checked })
+                        }
+                        className="w-4 h-4 rounded border-[var(--border)] text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-[var(--text)]">Show Payout Prediction</span>
+                    </label>
+                    <p className="text-xs text-[var(--text-dim)] ml-6 mt-1">
+                      Estimate time until next pool payout
+                    </p>
+                  </div>
+
+                  {/* Performance Charts */}
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.chartEnabled}
+                        onChange={(e) =>
+                          setFormData({ ...formData, chartEnabled: e.target.checked })
+                        }
+                        className="w-4 h-4 rounded border-[var(--border)] text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-[var(--text)]">Performance Charts</span>
+                    </label>
+                    {formData.chartEnabled && (
+                      <div className="ml-6 mt-2 flex items-center gap-2 text-sm">
+                        <span className="text-[var(--text-muted)]">Chart period:</span>
+                        <select
+                          value={formData.chartPeriod}
+                          onChange={(e) =>
+                            setFormData({ ...formData, chartPeriod: parseInt(e.target.value) })
+                          }
+                          className="px-2 py-1 bg-[var(--bg)] border border-[var(--border)] rounded text-[var(--text)] text-sm"
+                        >
+                          <option value={7}>7 days</option>
+                          <option value={30}>30 days</option>
+                          <option value={90}>90 days</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Error */}
               {error && (

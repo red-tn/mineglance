@@ -13,6 +13,13 @@ interface Wallet {
   power: number
   enabled: boolean
   order: number
+  // Pro features
+  priceAlertEnabled?: boolean
+  priceAlertTarget?: number | null
+  priceAlertCondition?: 'above' | 'below'
+  payoutPredictionEnabled?: boolean
+  chartEnabled?: boolean
+  chartPeriod?: number
 }
 
 interface Rig {
@@ -133,7 +140,14 @@ export default function WalletsPage() {
     pool: '2miners',
     coin: 'etc',
     address: '',
-    power: 200
+    power: 200,
+    // Pro features
+    priceAlertEnabled: false,
+    priceAlertTarget: null as number | null,
+    priceAlertCondition: 'above' as 'above' | 'below',
+    payoutPredictionEnabled: true,
+    chartEnabled: false,
+    chartPeriod: 30
   })
 
   // Rig form state
@@ -195,7 +209,13 @@ export default function WalletsPage() {
       pool: '2miners',
       coin: 'etc',
       address: '',
-      power: 200
+      power: 200,
+      priceAlertEnabled: false,
+      priceAlertTarget: null,
+      priceAlertCondition: 'above',
+      payoutPredictionEnabled: true,
+      chartEnabled: false,
+      chartPeriod: 30
     })
     setShowModal(true)
   }
@@ -207,7 +227,13 @@ export default function WalletsPage() {
       pool: wallet.pool,
       coin: wallet.coin,
       address: wallet.address,
-      power: wallet.power
+      power: wallet.power,
+      priceAlertEnabled: wallet.priceAlertEnabled || false,
+      priceAlertTarget: wallet.priceAlertTarget ?? null,
+      priceAlertCondition: wallet.priceAlertCondition || 'above',
+      payoutPredictionEnabled: wallet.payoutPredictionEnabled ?? true,
+      chartEnabled: wallet.chartEnabled || false,
+      chartPeriod: wallet.chartPeriod || 30
     })
     setShowModal(true)
   }
@@ -830,6 +856,107 @@ export default function WalletsPage() {
                     Total watts your rig uses. Used to calculate electricity costs.
                   </p>
                 </div>
+
+                {/* Pro Features Section */}
+                {isPro && (
+                  <div className="border-t border-dark-border pt-4 mt-2">
+                    <p className="text-sm font-semibold text-dark-text mb-3 flex items-center gap-2">
+                      Pro Features
+                      <span className="text-xs px-2 py-0.5 bg-primary/20 text-primary rounded">PRO</span>
+                    </p>
+
+                    {/* Payout Prediction */}
+                    <label className="flex items-center gap-3 mb-4 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.payoutPredictionEnabled}
+                        onChange={(e) => setFormData({ ...formData, payoutPredictionEnabled: e.target.checked })}
+                        className="w-4 h-4 rounded border-dark-border text-primary focus:ring-primary"
+                      />
+                      <div>
+                        <span className="text-sm text-dark-text">Show Payout Prediction</span>
+                        <p className="text-xs text-dark-text-dim">Estimate time until next pool payout</p>
+                      </div>
+                    </label>
+
+                    {/* Price Alert */}
+                    <label className="flex items-center gap-3 mb-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.priceAlertEnabled}
+                        onChange={(e) => setFormData({ ...formData, priceAlertEnabled: e.target.checked })}
+                        className="w-4 h-4 rounded border-dark-border text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-dark-text">Price Alert</span>
+                    </label>
+
+                    {formData.priceAlertEnabled && (
+                      <div className="ml-7 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-dark-text-muted">Alert when price goes</span>
+                          <select
+                            value={formData.priceAlertCondition}
+                            onChange={(e) => setFormData({ ...formData, priceAlertCondition: e.target.value as 'above' | 'below' })}
+                            className="px-2 py-1 bg-dark-card-hover border border-dark-border rounded text-dark-text text-sm"
+                          >
+                            <option value="above">above</option>
+                            <option value="below">below</option>
+                          </select>
+                          <span className="text-dark-text-muted">$</span>
+                          <input
+                            type="number"
+                            step="0.0001"
+                            value={formData.priceAlertTarget || ''}
+                            onChange={(e) => setFormData({ ...formData, priceAlertTarget: parseFloat(e.target.value) || null })}
+                            placeholder="0.00"
+                            className="w-24 px-2 py-1 bg-dark-card-hover border border-dark-border rounded text-dark-text text-sm"
+                          />
+                        </div>
+                        <p className="text-xs text-dark-text-dim mt-1">
+                          Get an email when your coin hits this price target
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Performance Charts */}
+                    <label className="flex items-center gap-3 mb-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.chartEnabled}
+                        onChange={(e) => setFormData({ ...formData, chartEnabled: e.target.checked })}
+                        className="w-4 h-4 rounded border-dark-border text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-dark-text">Performance Charts</span>
+                    </label>
+
+                    {formData.chartEnabled && (
+                      <div className="ml-7">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-dark-text-muted">Chart period:</span>
+                          <div className="flex gap-1">
+                            {[7, 30, 90].map((period) => (
+                              <button
+                                key={period}
+                                type="button"
+                                onClick={() => setFormData({ ...formData, chartPeriod: period })}
+                                className={`px-3 py-1 rounded text-sm ${
+                                  formData.chartPeriod === period
+                                    ? 'bg-primary text-white'
+                                    : 'bg-dark-card-hover text-dark-text-muted hover:text-dark-text'
+                                }`}
+                              >
+                                {period}d
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs text-dark-text-dim mt-1">
+                          Track hashrate, profit, and workers over time
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {error && (
                   <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">

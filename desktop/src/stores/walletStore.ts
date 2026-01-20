@@ -14,6 +14,13 @@ export interface Wallet {
   enabled: boolean;
   power?: number; // watts
   order?: number;
+  // Pro features
+  priceAlertEnabled?: boolean;
+  priceAlertTarget?: number | null;
+  priceAlertCondition?: 'above' | 'below';
+  payoutPredictionEnabled?: boolean;
+  chartEnabled?: boolean;
+  chartPeriod?: number; // 7, 30, or 90 days
 }
 
 export interface WalletStats {
@@ -27,6 +34,7 @@ export interface WalletStats {
   pendingBalance?: number;
   dailyRevenue: number;
   dailyProfit: number;
+  dailyEarnings?: number; // in native coin, for payout prediction
   coinPrice: number;
   error?: string;
   lastUpdated: Date;

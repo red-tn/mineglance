@@ -349,6 +349,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('cancelWalletBtn').addEventListener('click', () => closeModal(walletModal));
   document.getElementById('saveWalletBtn').addEventListener('click', saveWallet);
 
+  // Wallet Pro features toggle visibility
+  document.getElementById('walletPriceAlertEnabled').addEventListener('change', (e) => {
+    document.getElementById('priceAlertOptions').style.display = e.target.checked ? 'block' : 'none';
+  });
+  document.getElementById('walletChartEnabled').addEventListener('change', (e) => {
+    document.getElementById('chartOptions').style.display = e.target.checked ? 'block' : 'none';
+  });
+
   // Rig modal
   document.getElementById('closeRigModal').addEventListener('click', () => closeModal(rigModal));
   document.getElementById('cancelRigBtn').addEventListener('click', () => closeModal(rigModal));
@@ -944,6 +952,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('walletAddress').value = wallet?.address || '';
     document.getElementById('walletPower').value = wallet?.power || '';
 
+    // Pro features
+    const priceAlertEnabled = document.getElementById('walletPriceAlertEnabled');
+    const priceAlertCondition = document.getElementById('walletPriceAlertCondition');
+    const priceAlertTarget = document.getElementById('walletPriceAlertTarget');
+    const priceAlertOptions = document.getElementById('priceAlertOptions');
+    const payoutPrediction = document.getElementById('walletPayoutPrediction');
+    const chartEnabled = document.getElementById('walletChartEnabled');
+    const chartPeriod = document.getElementById('walletChartPeriod');
+    const chartOptions = document.getElementById('chartOptions');
+    const walletProUpgradeNotice = document.getElementById('walletProUpgradeNotice');
+
+    // Set values from wallet data
+    priceAlertEnabled.checked = wallet?.priceAlertEnabled || false;
+    priceAlertCondition.value = wallet?.priceAlertCondition || 'above';
+    priceAlertTarget.value = wallet?.priceAlertTarget || '';
+    payoutPrediction.checked = wallet?.payoutPredictionEnabled ?? true;
+    chartEnabled.checked = wallet?.chartEnabled || false;
+    chartPeriod.value = wallet?.chartPeriod || '30';
+
+    // Show/hide options based on checkbox state
+    priceAlertOptions.style.display = priceAlertEnabled.checked ? 'block' : 'none';
+    chartOptions.style.display = chartEnabled.checked ? 'block' : 'none';
+
+    // Enable/disable based on Pro status
+    if (isPaid) {
+      priceAlertEnabled.disabled = false;
+      priceAlertCondition.disabled = false;
+      priceAlertTarget.disabled = false;
+      payoutPrediction.disabled = false;
+      chartEnabled.disabled = false;
+      chartPeriod.disabled = false;
+      walletProUpgradeNotice.style.display = 'none';
+    } else {
+      priceAlertEnabled.disabled = true;
+      priceAlertCondition.disabled = true;
+      priceAlertTarget.disabled = true;
+      payoutPrediction.disabled = true;
+      chartEnabled.disabled = true;
+      chartPeriod.disabled = true;
+      walletProUpgradeNotice.style.display = 'block';
+    }
+
     walletModal.classList.remove('hidden');
   }
 
@@ -961,6 +1011,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const address = document.getElementById('walletAddress').value.trim();
     const power = parseInt(document.getElementById('walletPower').value) || 200;
 
+    // Pro features
+    const priceAlertEnabled = document.getElementById('walletPriceAlertEnabled').checked;
+    const priceAlertCondition = document.getElementById('walletPriceAlertCondition').value;
+    const priceAlertTarget = parseFloat(document.getElementById('walletPriceAlertTarget').value) || null;
+    const payoutPredictionEnabled = document.getElementById('walletPayoutPrediction').checked;
+    const chartEnabled = document.getElementById('walletChartEnabled').checked;
+    const chartPeriod = parseInt(document.getElementById('walletChartPeriod').value) || 30;
+
     if (!name || !address) {
       alert('Please fill in wallet name and address');
       return;
@@ -973,7 +1031,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Update existing
       const index = wallets.findIndex(w => w.id === editingWalletId);
       if (index !== -1) {
-        wallets[index] = { ...wallets[index], name, pool, coin, address, power };
+        wallets[index] = {
+          ...wallets[index],
+          name, pool, coin, address, power,
+          priceAlertEnabled, priceAlertCondition, priceAlertTarget,
+          payoutPredictionEnabled, chartEnabled, chartPeriod
+        };
 
         // Sync to server if authenticated
         if (authToken) {
@@ -986,7 +1049,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               },
               body: JSON.stringify({
                 id: editingWalletId,
-                name, pool, coin, address, power
+                name, pool, coin, address, power,
+                priceAlertEnabled, priceAlertCondition, priceAlertTarget,
+                payoutPredictionEnabled, chartEnabled, chartPeriod
               })
             });
           } catch (err) {
@@ -1003,7 +1068,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         coin,
         address,
         power,
-        enabled: true
+        enabled: true,
+        priceAlertEnabled, priceAlertCondition, priceAlertTarget,
+        payoutPredictionEnabled, chartEnabled, chartPeriod
       };
 
       // Sync to server if authenticated

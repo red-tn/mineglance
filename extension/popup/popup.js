@@ -33,6 +33,55 @@ function getPoolUrl(pool, coin, address) {
 
 const API_BASE = 'https://www.mineglance.com/api';
 
+// Pool minimum payout thresholds for payout prediction
+const POOL_THRESHOLDS = {
+  '2miners': {
+    etc: 0.1, rvn: 10, ergo: 0.5, flux: 1, kas: 100, alph: 0.1,
+    nexa: 10000, xna: 1, rtm: 10, ctxc: 1, clore: 1, dnx: 0.5, zil: 50, btc: 0.0005
+  },
+  nanopool: { etc: 0.05, rvn: 10, ergo: 1, cfx: 1, xmr: 0.1, zec: 0.01 },
+  f2pool: { etc: 0.1, rvn: 10, kas: 100, alph: 0.1, ckb: 100, hns: 10, sc: 100, btc: 0.001 },
+  ethermine: { etc: 0.1 },
+  hiveon: { etc: 0.1, rvn: 10 },
+  herominers: { etc: 0.1, rvn: 10, ergo: 0.5, flux: 1, kas: 100, xmr: 0.1, rtm: 10, neox: 1 },
+  woolypooly: { etc: 0.1, rvn: 10, ergo: 0.5, flux: 1, kas: 100, alph: 0.1, cfx: 1, ctxc: 1 },
+  'cedriccrispin': { firo: 0.1 },
+  ckpool: { btc: 0.001 },
+  'ckpool-eu': { btc: 0.001 },
+  publicpool: { btc: 0.001 },
+  ocean: { btc: 0.0001 }
+};
+
+function getPoolThreshold(pool, coin) {
+  const poolLower = pool.toLowerCase();
+  const coinLower = coin.toLowerCase();
+  return POOL_THRESHOLDS[poolLower]?.[coinLower] ?? null;
+}
+
+function calculatePayoutEstimate(currentBalance, dailyEarnings, threshold) {
+  if (currentBalance >= threshold) {
+    return { hours: 0, ready: true, formatted: 'Ready!', progress: 100 };
+  }
+  if (!dailyEarnings || dailyEarnings <= 0) {
+    return { hours: Infinity, ready: false, formatted: 'N/A', progress: Math.min((currentBalance / threshold) * 100, 100) };
+  }
+  const remaining = threshold - currentBalance;
+  const hoursToEarn = (remaining / dailyEarnings) * 24;
+  const progress = Math.min((currentBalance / threshold) * 100, 100);
+
+  if (hoursToEarn < 1) {
+    return { hours: hoursToEarn, ready: false, formatted: '<1h', progress };
+  } else if (hoursToEarn < 24) {
+    return { hours: hoursToEarn, ready: false, formatted: `~${Math.ceil(hoursToEarn)}h`, progress };
+  } else if (hoursToEarn < 168) {
+    const days = Math.ceil(hoursToEarn / 24);
+    return { hours: hoursToEarn, ready: false, formatted: `~${days}d`, progress };
+  } else {
+    const weeks = Math.ceil(hoursToEarn / 168);
+    return { hours: hoursToEarn, ready: false, formatted: `~${weeks}w`, progress };
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // DOM Elements
   const loading = document.getElementById('loading');
@@ -1003,6 +1052,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         const changeClass = priceChange24h >= 0 ? 'positive' : 'negative';
         const changeSign = priceChange24h >= 0 ? '+' : '';
 
+        // Payout prediction (Pro feature)
+        let payoutHtml = '';
+        const showPayout = wallet.payoutPredictionEnabled ?? false;
+        if (showPayout) {
+          const threshold = getPoolThreshold(wallet.pool, wallet.coin);
+          if (threshold !== null) {
+            const dailyEarnings = poolData.earnings24h || poolData.dailyEarnings || 0;
+            const payout = calculatePayoutEstimate(poolData.balance || 0, dailyEarnings, threshold);
+            const progressColor = payout.ready ? '#38a169' : payout.progress > 75 ? '#ecc94b' : 'var(--accent)';
+            payoutHtml = `
+              <div class="payout-prediction" style="margin-top: 8px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 10px; color: var(--text-muted);">Payout Progress</span>
+                  <span style="font-size: 11px; font-weight: 600; color: ${payout.ready ? '#38a169' : 'var(--text)'};">${payout.formatted}</span>
+                </div>
+                <div style="height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+                  <div style="height: 100%; width: ${payout.progress}%; background: ${progressColor}; border-radius: 2px; transition: width 0.3s;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                  <span style="font-size: 9px; color: var(--text-muted);">${(poolData.balance || 0).toFixed(4)}</span>
+                  <span style="font-size: 9px; color: var(--text-muted);">${threshold} ${wallet.coin.toUpperCase()}</span>
+                </div>
+              </div>
+            `;
+          }
+        }
+
         card.innerHTML = `
           <div class="wallet-card-header">
             <div class="wallet-name">
@@ -1046,6 +1122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <span class="ribbon-value">$${balanceUSD.toFixed(2)}</span>
             </div>
           </div>
+          ${payoutHtml}
         `;
       }
 

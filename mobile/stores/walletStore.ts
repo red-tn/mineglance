@@ -180,6 +180,13 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
             power: w.power || 200,
             enabled: w.enabled !== false,
             order: w.display_order || 0,
+            // Pro features
+            priceAlertEnabled: w.priceAlertEnabled || false,
+            priceAlertTarget: w.priceAlertTarget ?? null,
+            priceAlertCondition: w.priceAlertCondition || 'above',
+            payoutPredictionEnabled: w.payoutPredictionEnabled ?? true,
+            chartEnabled: w.chartEnabled || false,
+            chartPeriod: w.chartPeriod || 30,
           }));
 
           set({ wallets });
@@ -218,6 +225,13 @@ export const useWalletStore = create<WalletStore>((set, get) => ({
           power: wallet.power || 200,
           enabled: wallet.enabled,
           display_order: wallet.order || 0,
+          // Pro features
+          priceAlertEnabled: wallet.priceAlertEnabled || false,
+          priceAlertTarget: wallet.priceAlertTarget ?? null,
+          priceAlertCondition: wallet.priceAlertCondition || 'above',
+          payoutPredictionEnabled: wallet.payoutPredictionEnabled ?? true,
+          chartEnabled: wallet.chartEnabled || false,
+          chartPeriod: wallet.chartPeriod || 30,
         });
       }
 

@@ -1,6 +1,56 @@
 import { useWalletStore, Wallet } from "../stores/walletStore";
 import { ExternalLink, AlertTriangle } from "lucide-react";
 
+// Pool minimum payout thresholds
+const POOL_THRESHOLDS: Record<string, Record<string, number>> = {
+  "2miners": { etc: 0.1, rvn: 10, ergo: 0.5, flux: 1, kas: 100, alph: 0.1, nexa: 10000, xna: 1, rtm: 10, ctxc: 1, clore: 1, dnx: 0.5, zil: 50, btc: 0.0005 },
+  nanopool: { etc: 0.05, rvn: 10, ergo: 1, cfx: 1, xmr: 0.1, zec: 0.01 },
+  f2pool: { etc: 0.1, rvn: 10, kas: 100, alph: 0.1, ckb: 100, hns: 10, sc: 100, btc: 0.001 },
+  ethermine: { etc: 0.1 },
+  hiveon: { etc: 0.1, rvn: 10 },
+  herominers: { etc: 0.1, rvn: 10, ergo: 0.5, flux: 1, kas: 100, xmr: 0.1, rtm: 10, neox: 1 },
+  woolypooly: { etc: 0.1, rvn: 10, ergo: 0.5, flux: 1, kas: 100, alph: 0.1, cfx: 1, ctxc: 1 },
+  cedriccrispin: { firo: 0.1 },
+  ckpool: { btc: 0.001 },
+  "ckpool-eu": { btc: 0.001 },
+  publicpool: { btc: 0.001 },
+  ocean: { btc: 0.0001 },
+};
+
+function getPoolThreshold(pool: string, coin: string): number | null {
+  return POOL_THRESHOLDS[pool.toLowerCase()]?.[coin.toLowerCase()] ?? null;
+}
+
+function calculatePayoutEstimate(
+  currentBalance: number,
+  dailyEarnings: number,
+  threshold: number
+): { hours: number; ready: boolean; formatted: string; progress: number } {
+  const progress = Math.min((currentBalance / threshold) * 100, 100);
+
+  if (currentBalance >= threshold) {
+    return { hours: 0, ready: true, formatted: "Ready!", progress: 100 };
+  }
+  if (!dailyEarnings || dailyEarnings <= 0) {
+    return { hours: Infinity, ready: false, formatted: "N/A", progress };
+  }
+
+  const remaining = threshold - currentBalance;
+  const hoursToEarn = (remaining / dailyEarnings) * 24;
+
+  if (hoursToEarn < 1) {
+    return { hours: hoursToEarn, ready: false, formatted: "<1h", progress };
+  } else if (hoursToEarn < 24) {
+    return { hours: hoursToEarn, ready: false, formatted: `~${Math.ceil(hoursToEarn)}h`, progress };
+  } else if (hoursToEarn < 168) {
+    const days = Math.ceil(hoursToEarn / 24);
+    return { hours: hoursToEarn, ready: false, formatted: `~${days}d`, progress };
+  } else {
+    const weeks = Math.ceil(hoursToEarn / 168);
+    return { hours: hoursToEarn, ready: false, formatted: `~${weeks}w`, progress };
+  }
+}
+
 interface WalletCardProps {
   wallet: Wallet;
   index: number;
@@ -137,6 +187,37 @@ export default function WalletCard({ wallet, index }: WalletCardProps) {
           </div>
         </div>
       )}
+
+      {/* Payout Prediction (Pro feature) */}
+      {stats && !stats.error && wallet.payoutPredictionEnabled && (() => {
+        const threshold = getPoolThreshold(wallet.pool, wallet.coin);
+        if (!threshold) return null;
+
+        const dailyEarnings = stats.dailyEarnings || 0;
+        const payout = calculatePayoutEstimate(stats.balance, dailyEarnings, threshold);
+        const progressColor = payout.ready ? "#38a169" : payout.progress > 75 ? "#ecc94b" : "var(--primary)";
+
+        return (
+          <div className="mt-2 p-2 bg-[var(--bg)] rounded-lg">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)]">Payout Progress</span>
+              <span className={`text-xs font-bold ${payout.ready ? "text-primary" : "text-[var(--text)]"}`}>
+                {payout.formatted}
+              </span>
+            </div>
+            <div className="h-1 bg-[var(--border)] rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${payout.progress}%`, backgroundColor: progressColor }}
+              />
+            </div>
+            <div className="flex justify-between mt-1">
+              <span className="text-[8px] text-[var(--text-dim)]">{stats.balance.toFixed(4)}</span>
+              <span className="text-[8px] text-[var(--text-dim)]">{threshold} {wallet.coin.toUpperCase()}</span>
+            </div>
+          </div>
+        );
+      })()}
     </a>
   );
 }

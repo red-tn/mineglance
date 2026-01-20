@@ -48,6 +48,13 @@ export default function WalletsScreen() {
   const [formAddress, setFormAddress] = useState('');
   const [formName, setFormName] = useState('');
   const [formPower, setFormPower] = useState('200');
+  // Pro feature form state
+  const [formPriceAlertEnabled, setFormPriceAlertEnabled] = useState(false);
+  const [formPriceAlertTarget, setFormPriceAlertTarget] = useState('');
+  const [formPriceAlertCondition, setFormPriceAlertCondition] = useState<'above' | 'below'>('above');
+  const [formPayoutPredictionEnabled, setFormPayoutPredictionEnabled] = useState(true);
+  const [formChartEnabled, setFormChartEnabled] = useState(false);
+  const [formChartPeriod, setFormChartPeriod] = useState('30');
 
   // Dynamic colors based on theme
   const colors = getColors(liteMode);
@@ -77,6 +84,12 @@ export default function WalletsScreen() {
     setFormAddress('');
     setFormName('');
     setFormPower('200');
+    setFormPriceAlertEnabled(false);
+    setFormPriceAlertTarget('');
+    setFormPriceAlertCondition('above');
+    setFormPayoutPredictionEnabled(true);
+    setFormChartEnabled(false);
+    setFormChartPeriod('30');
     setEditingWallet(null);
   };
 
@@ -92,6 +105,13 @@ export default function WalletsScreen() {
     setFormAddress(wallet.address);
     setFormName(wallet.name || '');
     setFormPower(String(wallet.power || 200));
+    // Pro features
+    setFormPriceAlertEnabled(wallet.priceAlertEnabled || false);
+    setFormPriceAlertTarget(wallet.priceAlertTarget ? String(wallet.priceAlertTarget) : '');
+    setFormPriceAlertCondition(wallet.priceAlertCondition || 'above');
+    setFormPayoutPredictionEnabled(wallet.payoutPredictionEnabled ?? true);
+    setFormChartEnabled(wallet.chartEnabled || false);
+    setFormChartPeriod(String(wallet.chartPeriod || 30));
     setShowAddModal(true);
     setSelectedWalletId(null);
   };
@@ -119,6 +139,13 @@ export default function WalletsScreen() {
       power: parseInt(formPower) || 200,
       enabled: editingWallet?.enabled ?? true,
       order: editingWallet?.order ?? wallets.length,
+      // Pro features
+      priceAlertEnabled: formPriceAlertEnabled,
+      priceAlertTarget: formPriceAlertTarget ? parseFloat(formPriceAlertTarget) : null,
+      priceAlertCondition: formPriceAlertCondition,
+      payoutPredictionEnabled: formPayoutPredictionEnabled,
+      chartEnabled: formChartEnabled,
+      chartPeriod: parseInt(formChartPeriod) || 30,
     };
 
     try {
@@ -473,6 +500,94 @@ export default function WalletsScreen() {
                 placeholderTextColor={colors.textLight}
                 keyboardType="numeric"
               />
+
+              {/* Pro Features Section */}
+              {isPro() && (
+                <View style={styles.proFeaturesSection}>
+                  <Text style={styles.proFeaturesTitle}>Pro Features</Text>
+
+                  {/* Payout Prediction */}
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    onPress={() => setFormPayoutPredictionEnabled(!formPayoutPredictionEnabled)}
+                  >
+                    <View style={[styles.checkbox, formPayoutPredictionEnabled && styles.checkboxChecked]}>
+                      {formPayoutPredictionEnabled && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Show Payout Prediction</Text>
+                  </TouchableOpacity>
+
+                  {/* Price Alert */}
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    onPress={() => setFormPriceAlertEnabled(!formPriceAlertEnabled)}
+                  >
+                    <View style={[styles.checkbox, formPriceAlertEnabled && styles.checkboxChecked]}>
+                      {formPriceAlertEnabled && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Price Alert</Text>
+                  </TouchableOpacity>
+
+                  {formPriceAlertEnabled && (
+                    <View style={styles.subOption}>
+                      <Text style={styles.subOptionText}>Alert when price goes</Text>
+                      <View style={styles.priceAlertRow}>
+                        <TouchableOpacity
+                          style={[styles.conditionButton, formPriceAlertCondition === 'above' && styles.conditionButtonActive]}
+                          onPress={() => setFormPriceAlertCondition('above')}
+                        >
+                          <Text style={[styles.conditionText, formPriceAlertCondition === 'above' && styles.conditionTextActive]}>above</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.conditionButton, formPriceAlertCondition === 'below' && styles.conditionButtonActive]}
+                          onPress={() => setFormPriceAlertCondition('below')}
+                        >
+                          <Text style={[styles.conditionText, formPriceAlertCondition === 'below' && styles.conditionTextActive]}>below</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.subOptionText}>$</Text>
+                        <TextInput
+                          style={[styles.input, styles.priceInput]}
+                          value={formPriceAlertTarget}
+                          onChangeText={setFormPriceAlertTarget}
+                          placeholder="0.00"
+                          placeholderTextColor={colors.textLight}
+                          keyboardType="decimal-pad"
+                        />
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Performance Charts */}
+                  <TouchableOpacity
+                    style={styles.checkboxRow}
+                    onPress={() => setFormChartEnabled(!formChartEnabled)}
+                  >
+                    <View style={[styles.checkbox, formChartEnabled && styles.checkboxChecked]}>
+                      {formChartEnabled && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <Text style={styles.checkboxLabel}>Performance Charts</Text>
+                  </TouchableOpacity>
+
+                  {formChartEnabled && (
+                    <View style={styles.subOption}>
+                      <Text style={styles.subOptionText}>Chart period:</Text>
+                      <View style={styles.chartPeriodRow}>
+                        {['7', '30', '90'].map((period) => (
+                          <TouchableOpacity
+                            key={period}
+                            style={[styles.periodButton, formChartPeriod === period && styles.periodButtonActive]}
+                            onPress={() => setFormChartPeriod(period)}
+                          >
+                            <Text style={[styles.periodText, formChartPeriod === period && styles.periodTextActive]}>
+                              {period}d
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )}
             </ScrollView>
 
             <View style={styles.modalFooter}>
@@ -869,6 +984,107 @@ const createStyles = (colors: ReturnType<typeof getColors>) => StyleSheet.create
   saveButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    color: '#fff',
+  },
+  // Pro Features styles
+  proFeaturesSection: {
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  proFeaturesTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: spacing.md,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: borderRadius.xs,
+    borderWidth: 2,
+    borderColor: colors.border,
+    marginRight: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  checkboxLabel: {
+    fontSize: fontSize.sm,
+    color: colors.text,
+  },
+  subOption: {
+    marginLeft: 30,
+    marginBottom: spacing.md,
+  },
+  subOptionText: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
+  },
+  priceAlertRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  conditionButton: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  conditionButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  conditionText: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  conditionTextActive: {
+    color: '#fff',
+  },
+  priceInput: {
+    flex: 1,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    minWidth: 80,
+  },
+  chartPeriodRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  periodButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  periodButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  periodText: {
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+  periodTextActive: {
     color: '#fff',
   },
 });

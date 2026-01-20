@@ -8,6 +8,13 @@ export interface Wallet {
   enabled: boolean;
   order?: number;
   power?: number; // watts for this wallet/rig
+  // Pro features
+  priceAlertEnabled?: boolean;
+  priceAlertTarget?: number | null;
+  priceAlertCondition?: 'above' | 'below';
+  payoutPredictionEnabled?: boolean;
+  chartEnabled?: boolean;
+  chartPeriod?: number; // 7, 30, or 90 days
 }
 
 // Mining Rig types
