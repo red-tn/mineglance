@@ -344,7 +344,7 @@ export default function AdminSoftwarePage() {
             onClick={() => openEmailModal()}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition flex items-center gap-2"
           >
-            <span>📧</span> Send Update Email
+            📧 Send Update Email
           </button>
           <button
             onClick={() => openAddModal('bug')}
