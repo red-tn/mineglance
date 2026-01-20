@@ -145,6 +145,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             subscriptionEndDate: data.user.subscription_end_date,
           },
         });
+
+        // Send heartbeat immediately after successful auth verification
+        // This ensures version is updated on every app startup
+        try {
+          const instanceId = await getInstanceId();
+          console.log('Sending startup heartbeat:', { instanceId, version: APP_VERSION });
+
+          await fetch(`${API_BASE}/api/instances`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              instanceId,
+              version: APP_VERSION,
+            }),
+          });
+          console.log('Startup heartbeat sent successfully');
+        } catch (e) {
+          console.error('Startup heartbeat failed:', e);
+        }
       } else {
         // Token invalid, clear it
         await store.delete('authToken');

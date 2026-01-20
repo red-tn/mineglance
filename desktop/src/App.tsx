@@ -59,10 +59,10 @@ function App() {
     // Check for updates on startup
     checkForUpdates();
 
-    // Send heartbeat every 5 minutes
+    // Send heartbeat every 30 seconds
     const heartbeatInterval = setInterval(() => {
       sendHeartbeat();
-    }, 5 * 60 * 1000);
+    }, 30 * 1000);
 
     // Refresh subscription every 15 minutes
     const subscriptionInterval = setInterval(() => {

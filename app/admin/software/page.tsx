@@ -25,6 +25,12 @@ interface BugFix {
   created_at: string
 }
 
+interface EmailStats {
+  freeSubscribers: number
+  proSubscribers: number
+  latestBlog: { id: string; title: string; slug: string } | null
+}
+
 const PLATFORMS = {
   extension: 'Chrome Extension',
   desktop_windows: 'Windows Desktop',
@@ -53,6 +59,19 @@ export default function AdminSoftwarePage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [modalType, setModalType] = useState<'release' | 'bug'>('release')
   const [saving, setSaving] = useState(false)
+
+  // Email modal state
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [selectedReleases, setSelectedReleases] = useState<string[]>([])
+  const [emailStats, setEmailStats] = useState<EmailStats | null>(null)
+  const [emailForm, setEmailForm] = useState({
+    sendToFree: true,
+    sendToPro: true,
+    includeBlog: true,
+    testEmail: ''
+  })
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailResult, setEmailResult] = useState<{ sent: number; failed: number } | null>(null)
 
   // Release form
   const [releaseForm, setReleaseForm] = useState({
@@ -177,6 +196,96 @@ export default function AdminSoftwarePage() {
     }
   }
 
+  // Email functions
+  async function fetchEmailStats() {
+    try {
+      const token = localStorage.getItem('admin_token')
+      const res = await fetch('/api/admin/software/send-email', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setEmailStats(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch email stats:', error)
+    }
+  }
+
+  function openEmailModal(releaseId?: string) {
+    if (releaseId) {
+      setSelectedReleases([releaseId])
+    } else {
+      // Select all latest releases by default
+      const latestIds = releases.filter(r => r.is_latest).map(r => r.id)
+      setSelectedReleases(latestIds)
+    }
+    setEmailForm({ sendToFree: true, sendToPro: true, includeBlog: true, testEmail: '' })
+    setEmailResult(null)
+    fetchEmailStats()
+    setShowEmailModal(true)
+  }
+
+  function toggleReleaseSelection(id: string) {
+    setSelectedReleases(prev =>
+      prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
+    )
+  }
+
+  async function handleSendEmail(isTest: boolean) {
+    if (selectedReleases.length === 0) {
+      alert('Please select at least one release')
+      return
+    }
+
+    if (isTest && !emailForm.testEmail) {
+      alert('Please enter a test email address')
+      return
+    }
+
+    if (!isTest && !emailForm.sendToFree && !emailForm.sendToPro) {
+      alert('Please select at least one audience (Free or Pro)')
+      return
+    }
+
+    setSendingEmail(true)
+    setEmailResult(null)
+
+    try {
+      const token = localStorage.getItem('admin_token')
+      const res = await fetch('/api/admin/software/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          releaseIds: selectedReleases,
+          sendToFree: isTest ? false : emailForm.sendToFree,
+          sendToPro: isTest ? false : emailForm.sendToPro,
+          includeBlog: emailForm.includeBlog,
+          testEmail: isTest ? emailForm.testEmail : undefined
+        })
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        setEmailResult({ sent: data.sent, failed: data.failed })
+        if (!isTest && data.sent > 0) {
+          alert(`Successfully sent ${data.sent} emails!`)
+        }
+      } else {
+        alert(data.error || 'Failed to send emails')
+      }
+    } catch (error) {
+      console.error('Failed to send email:', error)
+      alert('Failed to send emails')
+    } finally {
+      setSendingEmail(false)
+    }
+  }
+
   function openAddModal(type: 'release' | 'bug') {
     setModalType(type)
     if (type === 'release') {
@@ -231,6 +340,12 @@ export default function AdminSoftwarePage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-dark-text">Software Management</h1>
         <div className="flex gap-2">
+          <button
+            onClick={() => openEmailModal()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition flex items-center gap-2"
+          >
+            <span>📧</span> Send Update Email
+          </button>
           <button
             onClick={() => openAddModal('bug')}
             className="px-4 py-2 bg-dark-card-hover text-dark-text rounded-lg hover:bg-dark-border transition border border-dark-border"
@@ -333,12 +448,21 @@ export default function AdminSoftwarePage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <button
-                        onClick={() => handleDelete('release', release.id)}
-                        className="text-red-400 hover:underline"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => openEmailModal(release.id)}
+                          className="text-blue-400 hover:underline"
+                          title="Send update email for this release"
+                        >
+                          Email
+                        </button>
+                        <button
+                          onClick={() => handleDelete('release', release.id)}
+                          className="text-red-400 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -555,6 +679,175 @@ export default function AdminSoftwarePage() {
                 className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-light disabled:opacity-50 transition shadow-glow"
               >
                 {saving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="glass-card rounded-xl max-w-2xl w-full border border-dark-border max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-dark-border">
+              <h2 className="text-xl font-bold text-dark-text flex items-center gap-2">
+                <span>📧</span> Send Software Update Email
+              </h2>
+              <p className="text-sm text-dark-text-muted mt-1">
+                Notify users about new software updates
+              </p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Select Releases */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-3">Select Releases to Include</label>
+                <div className="space-y-2 max-h-48 overflow-y-auto border border-dark-border rounded-lg p-3">
+                  {releases.filter(r => r.is_latest).length > 0 && (
+                    <div className="mb-3">
+                      <div className="text-xs text-dark-text-muted uppercase tracking-wider mb-2">Latest Versions</div>
+                      {releases.filter(r => r.is_latest).map(release => (
+                        <label key={release.id} className="flex items-center gap-3 p-2 hover:bg-dark-card-hover rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedReleases.includes(release.id)}
+                            onChange={() => toggleReleaseSelection(release.id)}
+                            className="rounded text-primary bg-dark-card-hover border-dark-border"
+                          />
+                          <span className="text-dark-text">
+                            {PLATFORMS[release.platform as keyof typeof PLATFORMS]} v{release.version}
+                          </span>
+                          <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full">Latest</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {releases.filter(r => !r.is_latest).slice(0, 5).length > 0 && (
+                    <div>
+                      <div className="text-xs text-dark-text-muted uppercase tracking-wider mb-2">Previous Versions</div>
+                      {releases.filter(r => !r.is_latest).slice(0, 5).map(release => (
+                        <label key={release.id} className="flex items-center gap-3 p-2 hover:bg-dark-card-hover rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedReleases.includes(release.id)}
+                            onChange={() => toggleReleaseSelection(release.id)}
+                            className="rounded text-primary bg-dark-card-hover border-dark-border"
+                          />
+                          <span className="text-dark-text-muted">
+                            {PLATFORMS[release.platform as keyof typeof PLATFORMS]} v{release.version}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedReleases.length === 0 && (
+                  <p className="text-sm text-red-400 mt-2">Please select at least one release</p>
+                )}
+              </div>
+
+              {/* Audience Selection */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-3">Send To</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={emailForm.sendToFree}
+                      onChange={e => setEmailForm(f => ({ ...f, sendToFree: e.target.checked }))}
+                      className="rounded text-primary bg-dark-card-hover border-dark-border"
+                    />
+                    <span className="text-dark-text">Free Users</span>
+                    {emailStats && (
+                      <span className="text-sm text-dark-text-muted">({emailStats.freeSubscribers})</span>
+                    )}
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={emailForm.sendToPro}
+                      onChange={e => setEmailForm(f => ({ ...f, sendToPro: e.target.checked }))}
+                      className="rounded text-primary bg-dark-card-hover border-dark-border"
+                    />
+                    <span className="text-dark-text">Pro Users</span>
+                    {emailStats && (
+                      <span className="text-sm text-dark-text-muted">({emailStats.proSubscribers})</span>
+                    )}
+                  </label>
+                </div>
+                {emailStats && (
+                  <p className="text-sm text-dark-text-muted mt-2">
+                    Total recipients: {(emailForm.sendToFree ? emailStats.freeSubscribers : 0) + (emailForm.sendToPro ? emailStats.proSubscribers : 0)}
+                  </p>
+                )}
+              </div>
+
+              {/* Include Blog */}
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={emailForm.includeBlog}
+                    onChange={e => setEmailForm(f => ({ ...f, includeBlog: e.target.checked }))}
+                    className="rounded text-primary bg-dark-card-hover border-dark-border"
+                  />
+                  <div>
+                    <span className="text-dark-text">Include Latest Blog Post</span>
+                    {emailStats?.latestBlog && (
+                      <p className="text-sm text-dark-text-muted">"{emailStats.latestBlog.title}"</p>
+                    )}
+                  </div>
+                </label>
+              </div>
+
+              {/* Test Email */}
+              <div className="p-4 bg-dark-card-hover rounded-lg border border-dark-border">
+                <label className="block text-sm font-medium text-dark-text mb-2">Send Test Email</label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={emailForm.testEmail}
+                    onChange={e => setEmailForm(f => ({ ...f, testEmail: e.target.value }))}
+                    placeholder="test@example.com"
+                    className="flex-1 px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text placeholder-dark-text-dim focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                  <button
+                    onClick={() => handleSendEmail(true)}
+                    disabled={sendingEmail || !emailForm.testEmail || selectedReleases.length === 0}
+                    className="px-4 py-2 bg-dark-border text-dark-text rounded-lg hover:bg-dark-text-muted/30 disabled:opacity-50 transition"
+                  >
+                    {sendingEmail ? 'Sending...' : 'Send Test'}
+                  </button>
+                </div>
+                {emailResult && emailForm.testEmail && (
+                  <p className={`text-sm mt-2 ${emailResult.sent > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {emailResult.sent > 0 ? '✓ Test email sent!' : '✗ Failed to send test email'}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-dark-border flex justify-between items-center">
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="px-4 py-2 text-dark-text-muted hover:bg-dark-card-hover rounded-lg transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleSendEmail(false)}
+                disabled={sendingEmail || selectedReleases.length === 0 || (!emailForm.sendToFree && !emailForm.sendToPro)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition flex items-center gap-2"
+              >
+                {sendingEmail ? (
+                  <>
+                    <span className="animate-spin">⏳</span> Sending...
+                  </>
+                ) : (
+                  <>
+                    <span>📧</span> Send to {emailStats ? ((emailForm.sendToFree ? emailStats.freeSubscribers : 0) + (emailForm.sendToPro ? emailStats.proSubscribers : 0)) : 0} Users
+                  </>
+                )}
               </button>
             </div>
           </div>
