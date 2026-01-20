@@ -239,7 +239,7 @@ async function handleRetentionOffer(userId: string, offer: string) {
 
       return NextResponse.json({
         success: true,
-        message: 'Your subscription has been extended by 1 month for free!'
+        message: 'Your subscription has been extended by 1 month for free! This was a one-time offer.'
       })
     }
 
@@ -253,7 +253,7 @@ async function handleRetentionOffer(userId: string, offer: string) {
 
       return NextResponse.json({
         success: true,
-        message: 'Annual discount applied! Use code STAY10 at checkout for 10% off.',
+        message: 'One-time annual discount unlocked! Use code STAY10 at checkout for 10% off.',
         checkoutUrl: 'https://buy.stripe.com/dR617I4DP42l1LqcMN?prefilled_promo_code=STAY10'
       })
     }
@@ -267,7 +267,7 @@ async function handleRetentionOffer(userId: string, offer: string) {
 
       return NextResponse.json({
         success: true,
-        message: 'Lifetime discount applied! Use code STAY25 at checkout for 25% off.',
+        message: 'One-time lifetime discount unlocked! Use code STAY25 at checkout for 25% off.',
         checkoutUrl: 'https://buy.stripe.com/4gw4jUcglaUNc0U7st?prefilled_promo_code=STAY25'
       })
     }

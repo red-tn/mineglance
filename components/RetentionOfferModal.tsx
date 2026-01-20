@@ -87,6 +87,9 @@ export default function RetentionOfferModal({
           <p className="text-dark-text-muted">
             We&apos;d hate to see you leave. Here are some special offers just for you:
           </p>
+          <p className="text-xs text-dark-text-dim mt-2">
+            These are one-time offers and can only be used once per account.
+          </p>
         </div>
 
         {/* Error message */}
@@ -118,7 +121,10 @@ export default function RetentionOfferModal({
                   Get 1 month added to your subscription for free
                 </p>
               </div>
-              <div className="text-green-400 font-bold">FREE</div>
+              <div className="text-right">
+                <div className="text-green-400 font-bold">FREE</div>
+                <div className="text-[10px] text-dark-text-dim">ONE-TIME</div>
+              </div>
             </div>
             {loading === 'free_month' && (
               <div className="mt-2 flex items-center justify-center">
@@ -148,7 +154,10 @@ export default function RetentionOfferModal({
                     Switch to annual and save 10% - only $53.10/year
                   </p>
                 </div>
-                <div className="text-blue-400 font-bold">10% OFF</div>
+                <div className="text-right">
+                  <div className="text-blue-400 font-bold">10% OFF</div>
+                  <div className="text-[10px] text-dark-text-dim">ONE-TIME</div>
+                </div>
               </div>
               {loading === 'annual_discount' && (
                 <div className="mt-2 flex items-center justify-center">
@@ -179,7 +188,10 @@ export default function RetentionOfferModal({
                     Go lifetime and never pay again - only $74.25
                   </p>
                 </div>
-                <div className="text-purple-400 font-bold">25% OFF</div>
+                <div className="text-right">
+                  <div className="text-purple-400 font-bold">25% OFF</div>
+                  <div className="text-[10px] text-dark-text-dim">ONE-TIME</div>
+                </div>
               </div>
               {loading === 'lifetime_discount' && (
                 <div className="mt-2 flex items-center justify-center">
