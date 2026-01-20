@@ -1052,9 +1052,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const changeClass = priceChange24h >= 0 ? 'positive' : 'negative';
         const changeSign = priceChange24h >= 0 ? '+' : '';
 
-        // Payout prediction (Pro feature)
+        // Payout prediction (Pro feature) - defaults to true for Pro users
         let payoutHtml = '';
-        const showPayout = wallet.payoutPredictionEnabled ?? false;
+        const showPayout = wallet.payoutPredictionEnabled !== false; // Show by default unless explicitly disabled
         if (showPayout) {
           const threshold = getPoolThreshold(wallet.pool, wallet.coin);
           if (threshold !== null) {

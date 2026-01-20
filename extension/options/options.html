@@ -356,19 +356,19 @@
 
           <!-- Pro Features Section -->
           <div id="walletProFeatures" class="wallet-pro-features" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
-            <h4 style="font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <h4 style="font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
               Pro Features <span class="pro-feature" style="font-size: 10px;">PRO</span>
             </h4>
 
-            <!-- Price Alerts -->
-            <div class="form-group" style="margin-bottom: 12px;">
-              <label class="toggle" style="margin-bottom: 8px;">
+            <div class="toggle-group">
+              <!-- Price Alerts -->
+              <label class="toggle">
                 <input type="checkbox" id="walletPriceAlertEnabled" disabled>
                 <span class="toggle-slider"></span>
                 <span class="toggle-label">Price Alert</span>
               </label>
-              <div id="priceAlertOptions" style="display: none; margin-left: 50px; margin-top: 8px;">
-                <div style="display: flex; gap: 8px; align-items: center;">
+              <div id="priceAlertOptions" style="display: none; margin-left: 52px; margin-top: 8px; margin-bottom: 8px;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                   <span style="font-size: 12px;">Alert when price goes</span>
                   <select id="walletPriceAlertCondition" style="width: auto; padding: 4px 8px; font-size: 12px;" disabled>
                     <option value="above">above</option>
@@ -379,26 +379,22 @@
                 </div>
                 <p class="help-text" style="margin-top: 4px; font-size: 11px;">Get an email when your coin hits this price target.</p>
               </div>
-            </div>
 
-            <!-- Payout Prediction -->
-            <div class="form-group" style="margin-bottom: 12px;">
-              <label class="toggle">
+              <!-- Payout Prediction -->
+              <label class="toggle" style="margin-top: 12px;">
                 <input type="checkbox" id="walletPayoutPrediction" disabled>
                 <span class="toggle-slider"></span>
                 <span class="toggle-label">Show Payout Prediction</span>
               </label>
-              <p class="help-text" style="margin-left: 50px; margin-top: 4px; font-size: 11px;">Estimate time until next pool payout based on earnings.</p>
-            </div>
+              <p class="help-text" style="margin-left: 52px; margin-top: 4px; font-size: 11px;">Estimate time until next pool payout based on earnings.</p>
 
-            <!-- Performance Charts -->
-            <div class="form-group" style="margin-bottom: 0;">
-              <label class="toggle" style="margin-bottom: 8px;">
+              <!-- Performance Charts -->
+              <label class="toggle" style="margin-top: 12px;">
                 <input type="checkbox" id="walletChartEnabled" disabled>
                 <span class="toggle-slider"></span>
                 <span class="toggle-label">Performance Charts</span>
               </label>
-              <div id="chartOptions" style="display: none; margin-left: 50px; margin-top: 8px;">
+              <div id="chartOptions" style="display: none; margin-left: 52px; margin-top: 8px;">
                 <div style="display: flex; gap: 8px; align-items: center;">
                   <span style="font-size: 12px;">Chart period:</span>
                   <select id="walletChartPeriod" style="width: auto; padding: 4px 8px; font-size: 12px;" disabled>
@@ -412,7 +408,7 @@
             </div>
 
             <!-- Upgrade notice for free users -->
-            <div id="walletProUpgradeNotice" class="pro-notice" style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; display: none;">
+            <div id="walletProUpgradeNotice" class="pro-notice" style="margin-top: 16px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; display: none;">
               <p style="margin: 0; font-size: 12px; text-align: center;">
                 <a href="https://www.mineglance.com/#pricing" target="_blank" style="color: var(--accent);">Upgrade to Pro</a> for price alerts, payout predictions & charts
               </p>
