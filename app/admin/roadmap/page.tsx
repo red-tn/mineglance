@@ -39,6 +39,8 @@ const PRIORITIES = {
 
 const PLATFORMS = {
   extension: 'Extension',
+  desktop_windows: 'Windows App',
+  desktop_macos: 'macOS App',
   mobile_ios: 'iOS App',
   mobile_android: 'Android App',
   website: 'Website/Dashboard'
