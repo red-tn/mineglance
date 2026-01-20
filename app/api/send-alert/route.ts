@@ -10,11 +10,12 @@ const supabase = createClient(
 )
 
 interface AlertRequest {
-  licenseKey: string
-  alertType: 'worker_offline' | 'profit_drop' | 'better_coin'
+  licenseKey?: string
+  alertType: 'worker_offline' | 'profit_drop' | 'better_coin' | 'price_alert'
   walletName: string
   message: string
   email?: string // Optional - can be provided by extension or fetched from DB
+  internalKey?: string // For server-to-server calls (cron jobs)
 }
 
 // Rate limiting: track alerts sent per license
@@ -41,50 +42,66 @@ function isRateLimited(licenseKey: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     const body: AlertRequest = await request.json()
-    const { licenseKey, alertType, walletName, message, email: providedEmail } = body
+    const { licenseKey, alertType, walletName, message, email: providedEmail, internalKey } = body
 
-    if (!licenseKey || !alertType || !walletName || !message) {
+    if (!alertType || !walletName || !message) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Verify license is valid
-    const normalizedKey = licenseKey.toUpperCase().trim()
-    const { data: license, error } = await supabase
-      .from('users')
-      .select('email, plan, is_revoked')
-      .eq('license_key', normalizedKey)
-      .single()
+    let toEmail = providedEmail
+    let normalizedKey = ''
 
-    if (error || !license || license.is_revoked) {
-      return NextResponse.json({ error: 'Invalid or inactive license' }, { status: 403 })
+    // Check if this is an internal call (from cron jobs)
+    if (internalKey && internalKey === process.env.INTERNAL_API_SECRET) {
+      // Internal call - email must be provided
+      if (!toEmail) {
+        return NextResponse.json({ error: 'Email required for internal calls' }, { status: 400 })
+      }
+      normalizedKey = 'INTERNAL'
+    } else if (licenseKey) {
+      // External call - verify license
+      normalizedKey = licenseKey.toUpperCase().trim()
+      const { data: license, error } = await supabase
+        .from('users')
+        .select('email, plan, is_revoked')
+        .eq('license_key', normalizedKey)
+        .single()
+
+      if (error || !license || license.is_revoked) {
+        return NextResponse.json({ error: 'Invalid or inactive license' }, { status: 403 })
+      }
+
+      // Get email - prefer provided email, fall back to license email
+      toEmail = toEmail || license.email
+
+      // Check rate limit for external calls
+      if (isRateLimited(licenseKey)) {
+        return NextResponse.json({
+          error: 'Rate limit exceeded. Max 10 alerts per hour.',
+          rateLimited: true
+        }, { status: 429 })
+      }
+    } else {
+      return NextResponse.json({ error: 'License key or internal key required' }, { status: 400 })
     }
-
-    // Get email - prefer provided email, fall back to license email
-    const toEmail = providedEmail || license.email
 
     if (!toEmail) {
       return NextResponse.json({ error: 'No email address available' }, { status: 400 })
-    }
-
-    // Check rate limit
-    if (isRateLimited(licenseKey)) {
-      return NextResponse.json({
-        error: 'Rate limit exceeded. Max 10 alerts per hour.',
-        rateLimited: true
-      }, { status: 429 })
     }
 
     // Format alert type for display
     const alertTypeDisplay = {
       'worker_offline': 'Worker Offline',
       'profit_drop': 'Profit Drop',
-      'better_coin': 'Better Coin Available'
+      'better_coin': 'Better Coin Available',
+      'price_alert': 'Price Alert'
     }[alertType] || alertType
 
     const alertEmoji = {
       'worker_offline': '🔴',
       'profit_drop': '📉',
-      'better_coin': '💡'
+      'better_coin': '💡',
+      'price_alert': '💰'
     }[alertType] || '⚠️'
 
     // Build email

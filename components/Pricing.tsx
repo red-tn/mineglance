@@ -19,10 +19,13 @@ export default function Pricing() {
 
   const proFeatures = [
     'Unlimited wallets',
-    'All 12+ pools supported',
+    'All 14+ pools supported',
     'All coins supported',
     'Cloud sync across devices',
     'Desktop + Email alerts',
+    'Price alerts for coins',
+    'Payout predictions',
+    'Performance charts (7/30/90d)',
     'Real-time coin comparison',
     'User dashboard',
     'Priority support'

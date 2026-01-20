@@ -59,7 +59,16 @@ export async function GET(request: NextRequest) {
       address: w.address_encrypted ? decryptWalletAddress(w.address) : w.address,
       power: w.power,
       enabled: w.enabled,
-      order: w.display_order
+      order: w.display_order,
+      // v1.3.5 - Price alerts
+      priceAlertEnabled: w.price_alert_enabled || false,
+      priceAlertTarget: w.price_alert_target,
+      priceAlertCondition: w.price_alert_condition || 'above',
+      // v1.3.5 - Payout prediction
+      payoutPredictionEnabled: w.payout_prediction_enabled || false,
+      // v1.3.5 - Charts
+      chartEnabled: w.chart_enabled || false,
+      chartPeriod: w.chart_period || 7
     }))
 
     return NextResponse.json({ wallets: clientWallets })
@@ -125,7 +134,16 @@ export async function POST(request: NextRequest) {
         address_encrypted: true,
         power: wallet.power || 200,
         enabled: wallet.enabled !== false,
-        display_order: newOrder
+        display_order: newOrder,
+        // v1.3.5 - Price alerts
+        price_alert_enabled: wallet.priceAlertEnabled || false,
+        price_alert_target: wallet.priceAlertTarget || null,
+        price_alert_condition: wallet.priceAlertCondition || 'above',
+        // v1.3.5 - Payout prediction
+        payout_prediction_enabled: wallet.payoutPredictionEnabled || false,
+        // v1.3.5 - Charts
+        chart_enabled: wallet.chartEnabled || false,
+        chart_period: wallet.chartPeriod || 7
       })
       .select()
       .single()
@@ -145,7 +163,14 @@ export async function POST(request: NextRequest) {
         address: wallet.address, // Return original (decrypted) address
         power: newWallet.power,
         enabled: newWallet.enabled,
-        order: newWallet.display_order
+        order: newWallet.display_order,
+        // v1.3.5 fields
+        priceAlertEnabled: newWallet.price_alert_enabled,
+        priceAlertTarget: newWallet.price_alert_target,
+        priceAlertCondition: newWallet.price_alert_condition,
+        payoutPredictionEnabled: newWallet.payout_prediction_enabled,
+        chartEnabled: newWallet.chart_enabled,
+        chartPeriod: newWallet.chart_period
       }
     })
 
@@ -196,6 +221,15 @@ export async function PUT(request: NextRequest) {
     if (wallet.power !== undefined) updateData.power = wallet.power
     if (wallet.enabled !== undefined) updateData.enabled = wallet.enabled
     if (wallet.order !== undefined) updateData.display_order = wallet.order
+    // v1.3.5 - Price alerts
+    if (wallet.priceAlertEnabled !== undefined) updateData.price_alert_enabled = wallet.priceAlertEnabled
+    if (wallet.priceAlertTarget !== undefined) updateData.price_alert_target = wallet.priceAlertTarget
+    if (wallet.priceAlertCondition !== undefined) updateData.price_alert_condition = wallet.priceAlertCondition
+    // v1.3.5 - Payout prediction
+    if (wallet.payoutPredictionEnabled !== undefined) updateData.payout_prediction_enabled = wallet.payoutPredictionEnabled
+    // v1.3.5 - Charts
+    if (wallet.chartEnabled !== undefined) updateData.chart_enabled = wallet.chartEnabled
+    if (wallet.chartPeriod !== undefined) updateData.chart_period = wallet.chartPeriod
 
     const { data: updatedWallet, error } = await supabase
       .from('user_wallets')
@@ -222,7 +256,14 @@ export async function PUT(request: NextRequest) {
           : updatedWallet.address,
         power: updatedWallet.power,
         enabled: updatedWallet.enabled,
-        order: updatedWallet.display_order
+        order: updatedWallet.display_order,
+        // v1.3.5 fields
+        priceAlertEnabled: updatedWallet.price_alert_enabled,
+        priceAlertTarget: updatedWallet.price_alert_target,
+        priceAlertCondition: updatedWallet.price_alert_condition,
+        payoutPredictionEnabled: updatedWallet.payout_prediction_enabled,
+        chartEnabled: updatedWallet.chart_enabled,
+        chartPeriod: updatedWallet.chart_period
       }
     })
 
