@@ -200,9 +200,9 @@ async function handleRetentionOffer(userId: string, offer: string) {
     return NextResponse.json({ error: 'Only Pro users can use retention offers' }, { status: 400 })
   }
 
-  // Check if retention offer already used
-  if (user.retention_offer_used) {
-    return NextResponse.json({ error: 'You have already used a retention offer' }, { status: 400 })
+  // Check if free month already used (only applies to free_month offer)
+  if (offer === 'free_month' && user.retention_offer_used) {
+    return NextResponse.json({ error: 'You have already used the free month offer' }, { status: 400 })
   }
 
   switch (offer) {
@@ -244,30 +244,19 @@ async function handleRetentionOffer(userId: string, offer: string) {
     }
 
     case 'annual_discount': {
-      // Mark that user wants annual discount - they'll get a special checkout link
-      // For now, just record and redirect to checkout with coupon
-      await supabase
-        .from('users')
-        .update({ retention_offer_used: true })
-        .eq('id', userId)
-
+      // Redirect to checkout with coupon - no tracking needed, Stripe handles coupon limits
       return NextResponse.json({
         success: true,
-        message: 'One-time annual discount unlocked! Use code STAY10 at checkout for 10% off.',
+        message: 'Upgrade discount applied! Use code STAY10 at checkout for 10% off.',
         checkoutUrl: 'https://buy.stripe.com/dR617I4DP42l1LqcMN?prefilled_promo_code=STAY10'
       })
     }
 
     case 'lifetime_discount': {
-      // Mark that user wants lifetime discount
-      await supabase
-        .from('users')
-        .update({ retention_offer_used: true })
-        .eq('id', userId)
-
+      // Redirect to checkout with coupon - no tracking needed, Stripe handles coupon limits
       return NextResponse.json({
         success: true,
-        message: 'One-time lifetime discount unlocked! Use code STAY25 at checkout for 25% off.',
+        message: 'Upgrade discount applied! Use code STAY25 at checkout for 25% off.',
         checkoutUrl: 'https://buy.stripe.com/4gw4jUcglaUNc0U7st?prefilled_promo_code=STAY25'
       })
     }

@@ -88,7 +88,7 @@ export default function RetentionOfferModal({
             We&apos;d hate to see you leave. Here are some special offers just for you:
           </p>
           <p className="text-xs text-dark-text-dim mt-2">
-            These are one-time offers and can only be used once per account.
+            The free month extension can only be used once per account.
           </p>
         </div>
 
@@ -154,10 +154,7 @@ export default function RetentionOfferModal({
                     Switch to annual and save 10% - only $53.10/year
                   </p>
                 </div>
-                <div className="text-right">
-                  <div className="text-blue-400 font-bold">10% OFF</div>
-                  <div className="text-[10px] text-dark-text-dim">ONE-TIME</div>
-                </div>
+                <div className="text-blue-400 font-bold">10% OFF</div>
               </div>
               {loading === 'annual_discount' && (
                 <div className="mt-2 flex items-center justify-center">
@@ -188,10 +185,7 @@ export default function RetentionOfferModal({
                     Go lifetime and never pay again - only $74.25
                   </p>
                 </div>
-                <div className="text-right">
-                  <div className="text-purple-400 font-bold">25% OFF</div>
-                  <div className="text-[10px] text-dark-text-dim">ONE-TIME</div>
-                </div>
+                <div className="text-purple-400 font-bold">25% OFF</div>
               </div>
               {loading === 'lifetime_discount' && (
                 <div className="mt-2 flex items-center justify-center">
