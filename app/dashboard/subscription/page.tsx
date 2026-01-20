@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import UpgradeModal from '@/components/UpgradeModal'
+import RetentionOfferModal from '@/components/RetentionOfferModal'
 
 interface PaymentHistoryItem {
   id: string
@@ -39,6 +40,7 @@ export default function SubscriptionPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [showRetentionModal, setShowRetentionModal] = useState(false)
 
   const fetchSubscription = useCallback(async () => {
     try {
@@ -65,40 +67,53 @@ export default function SubscriptionPage() {
     fetchSubscription()
   }, [fetchSubscription])
 
-  const handleRequestRefund = async () => {
-    if (!confirm('Are you sure you want to request a refund? This will downgrade your account to free once processed.')) {
-      return
+  const handleRequestRefund = () => {
+    setShowRetentionModal(true)
+  }
+
+  const handleAcceptOffer = async (offer: 'free_month' | 'annual_discount' | 'lifetime_discount') => {
+    const token = localStorage.getItem('user_token')
+    const response = await fetch('/api/dashboard/subscription', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ action: 'accept_retention_offer', offer })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to apply offer')
     }
 
-    setActionLoading(true)
-    setMessage(null)
+    setMessage({ type: 'success', text: data.message })
+    fetchSubscription()
 
-    try {
-      const token = localStorage.getItem('user_token')
-      const response = await fetch('/api/dashboard/subscription', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ action: 'request_refund' })
-      })
+    // Return the response for potential checkout URL redirect
+    return data
+  }
 
-      const data = await response.json()
+  const handleProceedWithRefund = async () => {
+    const token = localStorage.getItem('user_token')
+    const response = await fetch('/api/dashboard/subscription', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ action: 'request_refund' })
+    })
 
-      if (!response.ok) {
-        setMessage({ type: 'error', text: data.error || 'Failed to submit refund request' })
-        return
-      }
+    const data = await response.json()
 
-      setMessage({ type: 'success', text: data.message })
-      fetchSubscription()
-    } catch (error) {
-      console.error('Refund request failed:', error)
-      setMessage({ type: 'error', text: 'Network error. Please try again.' })
-    } finally {
-      setActionLoading(false)
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to submit refund request')
     }
+
+    setMessage({ type: 'success', text: data.message })
+    fetchSubscription()
   }
 
   const formatDate = (dateStr: string) => {
@@ -375,6 +390,15 @@ export default function SubscriptionPage() {
       <UpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
+      />
+
+      {/* Retention Offer Modal */}
+      <RetentionOfferModal
+        isOpen={showRetentionModal}
+        onClose={() => setShowRetentionModal(false)}
+        onAcceptOffer={handleAcceptOffer}
+        onProceedWithRefund={handleProceedWithRefund}
+        billingType={subscription?.billingType}
       />
     </div>
   )

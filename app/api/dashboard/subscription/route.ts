@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST request refund
+// POST request refund or accept retention offer
 export async function POST(request: NextRequest) {
   try {
     const userId = await verifyUser(request)
@@ -106,10 +106,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { action } = await request.json()
+    const { action, offer } = await request.json()
 
-    if (action !== 'request_refund') {
+    if (action !== 'request_refund' && action !== 'accept_retention_offer') {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    }
+
+    // Handle retention offers
+    if (action === 'accept_retention_offer') {
+      return handleRetentionOffer(userId, offer)
     }
 
     // Get user data
@@ -175,5 +180,99 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Refund request error:', error)
     return NextResponse.json({ error: 'Failed to submit refund request' }, { status: 500 })
+  }
+}
+
+// Handle retention offers
+async function handleRetentionOffer(userId: string, offer: string) {
+  // Get user data
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id, email, plan, billing_type, subscription_end_date, retention_offer_used')
+    .eq('id', userId)
+    .single()
+
+  if (userError || !user) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 })
+  }
+
+  if (user.plan !== 'pro') {
+    return NextResponse.json({ error: 'Only Pro users can use retention offers' }, { status: 400 })
+  }
+
+  // Check if retention offer already used
+  if (user.retention_offer_used) {
+    return NextResponse.json({ error: 'You have already used a retention offer' }, { status: 400 })
+  }
+
+  switch (offer) {
+    case 'free_month': {
+      // Extend subscription by 30 days
+      let newEndDate: Date
+      if (user.subscription_end_date) {
+        newEndDate = new Date(user.subscription_end_date)
+        newEndDate.setDate(newEndDate.getDate() + 30)
+      } else {
+        // If no end date (shouldn't happen for non-lifetime), set to 30 days from now
+        newEndDate = new Date()
+        newEndDate.setDate(newEndDate.getDate() + 30)
+      }
+
+      await supabase
+        .from('users')
+        .update({
+          subscription_end_date: newEndDate.toISOString(),
+          retention_offer_used: true
+        })
+        .eq('id', userId)
+
+      // Log the retention offer
+      await supabase
+        .from('payment_history')
+        .insert({
+          user_id: userId,
+          amount: 0,
+          status: 'succeeded',
+          type: 'subscription',
+          description: 'Retention offer: Free month extension'
+        })
+
+      return NextResponse.json({
+        success: true,
+        message: 'Your subscription has been extended by 1 month for free!'
+      })
+    }
+
+    case 'annual_discount': {
+      // Mark that user wants annual discount - they'll get a special checkout link
+      // For now, just record and redirect to checkout with coupon
+      await supabase
+        .from('users')
+        .update({ retention_offer_used: true })
+        .eq('id', userId)
+
+      return NextResponse.json({
+        success: true,
+        message: 'Annual discount applied! Use code STAY10 at checkout for 10% off.',
+        checkoutUrl: 'https://buy.stripe.com/dR617I4DP42l1LqcMN?prefilled_promo_code=STAY10'
+      })
+    }
+
+    case 'lifetime_discount': {
+      // Mark that user wants lifetime discount
+      await supabase
+        .from('users')
+        .update({ retention_offer_used: true })
+        .eq('id', userId)
+
+      return NextResponse.json({
+        success: true,
+        message: 'Lifetime discount applied! Use code STAY25 at checkout for 25% off.',
+        checkoutUrl: 'https://buy.stripe.com/4gw4jUcglaUNc0U7st?prefilled_promo_code=STAY25'
+      })
+    }
+
+    default:
+      return NextResponse.json({ error: 'Invalid offer type' }, { status: 400 })
   }
 }
