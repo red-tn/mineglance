@@ -94,17 +94,17 @@ PENDING_RELEASES = [
         "zip_filename": "mineglance-extension-v1.3.5.zip",
         "is_latest": True
     },
-    # Mobile iOS v1.3.5
+    # Desktop Windows v1.3.5
     {
         "version": "1.3.5",
-        "platform": "mobile_ios",
+        "platform": "desktop_windows",
         "release_notes": """v1.3.5 - Pro Features Update
 
 - Price Alerts: Configure price target notifications for your coins
 - Payout Prediction: Track progress toward pool payout thresholds
 - Performance Charts: Enable chart data collection for wallets
 - Improved wallet sync with cloud backup""",
-        "zip_filename": None,  # iOS doesn't have a direct download
+        "zip_filename": "mineglance-desktop-1.3.5-windows.exe",
         "is_latest": True
     }
 ]
