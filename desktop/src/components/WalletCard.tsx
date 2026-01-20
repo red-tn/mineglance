@@ -24,8 +24,19 @@ export default function WalletCard({ wallet, index }: WalletCardProps) {
     return poolUrls[wallet.pool.toLowerCase()] || "#";
   };
 
-  const formatHashrate = (hashrate: number, unit: string) => {
-    return `${hashrate.toFixed(2)} ${unit}`;
+  const formatHashrate = (hashrate: number) => {
+    if (!hashrate || hashrate === 0) return '0 H/s';
+
+    const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s'];
+    let unitIndex = 0;
+    let value = hashrate;
+
+    while (value >= 1000 && unitIndex < units.length - 1) {
+      value /= 1000;
+      unitIndex++;
+    }
+
+    return `${value.toFixed(2)} ${units[unitIndex]}`;
   };
 
   const formatCurrency = (value: number) => {
@@ -77,7 +88,7 @@ export default function WalletCard({ wallet, index }: WalletCardProps) {
             Hashrate
           </p>
           <p className="font-semibold font-mono text-sm text-[var(--text)]">
-            {stats ? formatHashrate(stats.hashrate, stats.hashrateUnit) : "--"}
+            {stats ? formatHashrate(stats.hashrate) : "--"}
           </p>
         </div>
         <div className="text-center">
