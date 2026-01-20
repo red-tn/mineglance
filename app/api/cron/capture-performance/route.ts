@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get unique coins for price fetch
-    const uniqueCoins = [...new Set(proWallets.map(w => w.coin.toLowerCase()))]
+    const uniqueCoins = Array.from(new Set(proWallets.map(w => w.coin.toLowerCase())))
     const prices = await fetchPrices(uniqueCoins)
 
     // Process each wallet

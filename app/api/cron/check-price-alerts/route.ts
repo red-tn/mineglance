@@ -42,7 +42,7 @@ async function fetchPrices(coins: string[]): Promise<Record<string, number>> {
   try {
     const response = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${geckoIds}&vs_currencies=usd`,
-      { next: { revalidate: 60 } }
+      { cache: 'no-store' }
     )
 
     if (!response.ok) {
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get unique coins
-    const uniqueCoins = [...new Set(wallets.map(w => w.coin.toLowerCase()))]
+    const uniqueCoins = Array.from(new Set(wallets.map(w => w.coin.toLowerCase())))
 
     // Fetch current prices
     const prices = await fetchPrices(uniqueCoins)
