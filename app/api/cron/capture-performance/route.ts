@@ -131,16 +131,16 @@ export async function GET(request: NextRequest) {
 
     if (!wallets || wallets.length === 0) {
       // Still clean up old records even if no wallets
-      const { count } = await supabase
+      const { data: deleted } = await supabase
         .from('wallet_performance_history')
         .delete()
         .lt('recorded_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
-        .select('*', { count: 'exact', head: true })
+        .select('id')
 
       return NextResponse.json({
         success: true,
         message: 'No chart-enabled wallets found',
-        recordsDeleted: count || 0,
+        recordsDeleted: deleted?.length || 0,
         duration: Date.now() - startTime
       })
     }
@@ -213,13 +213,13 @@ export async function GET(request: NextRequest) {
 
     // Clean up records older than 90 days
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-    const { count: deletedCount } = await supabase
+    const { data: deletedRecords } = await supabase
       .from('wallet_performance_history')
       .delete()
       .lt('recorded_at', ninetyDaysAgo)
-      .select('*', { count: 'exact', head: true })
+      .select('id')
 
-    recordsDeleted = deletedCount || 0
+    recordsDeleted = deletedRecords?.length || 0
 
     return NextResponse.json({
       success: true,
