@@ -794,7 +794,7 @@ export default function AdminSoftwarePage() {
                   <div>
                     <span className="text-dark-text">Include Latest Blog Post</span>
                     {emailStats?.latestBlog && (
-                      <p className="text-sm text-dark-text-muted">"{emailStats.latestBlog.title}"</p>
+                      <p className="text-sm text-dark-text-muted">&quot;{emailStats.latestBlog.title}&quot;</p>
                     )}
                   </div>
                 </label>
