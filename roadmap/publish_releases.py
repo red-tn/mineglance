@@ -81,17 +81,17 @@ STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public
 # }
 
 PENDING_RELEASES = [
-    # Desktop App v1.3.7
+    # Desktop App v1.3.5
     {
-        "version": "1.3.7",
+        "version": "1.3.5",
         "platform": "desktop_windows",
-        "release_notes": """v1.3.7 - Uninstall Cleanup Fix
+        "release_notes": """v1.3.5 - Stability & Sync Update
 
-- Fixed uninstall not removing device from dashboard
-- Improved NSIS uninstall hook reliability
-- Local data properly cleaned on uninstall
-- Fresh instance ID on reinstall""",
-        "zip_filename": "mineglance-desktop-1.3.7-windows.exe",
+- Improved device heartbeat (updates every 30 seconds)
+- Version syncs to dashboard immediately on startup
+- Better update detection and download flow
+- Unified versioning with browser extension""",
+        "zip_filename": "MineGlance_1.3.5_x64-setup.exe",
         "is_latest": True
     }
 ]
