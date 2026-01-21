@@ -178,10 +178,43 @@ export async function GET(request: NextRequest) {
       start_date: startDate.toISOString(),
     });
 
-    // Get daily views for chart
-    const { data: dailyViews } = await supabaseAdmin.rpc('get_daily_views', {
-      start_date: startDate.toISOString(),
-    });
+    // Get views for chart - hourly for 24h, daily for other periods
+    let dailyViews;
+    if (period === '24h') {
+      // Get hourly views for last 24 hours
+      const { data: pageViews } = await supabaseAdmin
+        .from('page_views')
+        .select('created_at')
+        .gte('created_at', startDate.toISOString());
+
+      // Create hourly buckets for last 24 hours
+      const hourlyBuckets: { [key: string]: number } = {};
+      for (let i = 23; i >= 0; i--) {
+        const bucketTime = new Date(now.getTime() - i * 60 * 60 * 1000);
+        const bucketKey = bucketTime.toISOString().substring(0, 13) + ':00:00.000Z';
+        hourlyBuckets[bucketKey] = 0;
+      }
+
+      // Count views per hour
+      pageViews?.forEach(pv => {
+        const viewTime = new Date(pv.created_at);
+        const bucketKey = viewTime.toISOString().substring(0, 13) + ':00:00.000Z';
+        if (hourlyBuckets.hasOwnProperty(bucketKey)) {
+          hourlyBuckets[bucketKey]++;
+        }
+      });
+
+      // Convert to array format
+      dailyViews = Object.entries(hourlyBuckets)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, views]) => ({ date, views }));
+    } else {
+      // Get daily views for other periods
+      const { data } = await supabaseAdmin.rpc('get_daily_views', {
+        start_date: startDate.toISOString(),
+      });
+      dailyViews = data;
+    }
 
     // Calculate bounce rate (sessions with only 1 page view)
     const { data: sessions } = await supabaseAdmin
