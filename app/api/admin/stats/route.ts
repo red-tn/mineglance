@@ -63,14 +63,23 @@ export async function GET(request: NextRequest) {
       .select('*')
       .gte('created_at', oneDayAgo.toISOString())
 
-    // Calculate revenue (single Pro plan at $59)
-    const getRevenue = (plan: string) => {
-      if (plan === 'pro') return 5900
-      return 0
-    }
+    // Get payment history for accurate revenue
+    const { data: payments30d } = await supabase
+      .from('payment_history')
+      .select('amount, status, type')
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .eq('status', 'succeeded')
+      .in('type', ['subscription', 'renewal', 'upgrade'])
 
-    const totalRevenue = (licenses || []).reduce((sum, l) => sum + getRevenue(l.plan), 0)
-    const revenue30d = (recentLicenses || []).reduce((sum, l) => sum + getRevenue(l.plan), 0)
+    const { data: allPayments } = await supabase
+      .from('payment_history')
+      .select('amount, status, type')
+      .eq('status', 'succeeded')
+      .in('type', ['subscription', 'renewal', 'upgrade'])
+
+    // Calculate revenue from actual payments
+    const revenue30d = (payments30d || []).reduce((sum, p) => sum + (p.amount || 0), 0)
+    const totalRevenue = (allPayments || []).reduce((sum, p) => sum + (p.amount || 0), 0)
 
     // Get recent activity
     const recentActivity: Array<{ type: string; identifier: string; detail: string; created_at: string }> = []
@@ -114,6 +123,14 @@ export async function GET(request: NextRequest) {
     // Sort by date
     recentActivity.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
+    // Get all payments for chart data
+    const { data: chartPayments } = await supabase
+      .from('payment_history')
+      .select('amount, created_at, status, type')
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .eq('status', 'succeeded')
+      .in('type', ['subscription', 'renewal', 'upgrade'])
+
     // Generate chart data (last 30 days)
     const chartData: Array<{ date: string; installs: number; revenue: number }> = []
     for (let i = 29; i >= 0; i--) {
@@ -125,10 +142,10 @@ export async function GET(request: NextRequest) {
         return instDate === dateStr
       }).length
 
-      const dayRevenue = (licenses || []).filter(lic => {
-        const licDate = new Date(lic.created_at).toISOString().split('T')[0]
-        return licDate === dateStr
-      }).reduce((sum, l) => sum + getRevenue(l.plan), 0)
+      const dayRevenue = (chartPayments || []).filter(p => {
+        const pDate = new Date(p.created_at).toISOString().split('T')[0]
+        return pDate === dateStr
+      }).reduce((sum, p) => sum + (p.amount || 0), 0)
 
       chartData.push({
         date: dateStr,
