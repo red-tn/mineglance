@@ -286,9 +286,9 @@ export default function HealthPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-dark-card-hover rounded-lg">
             <div>
-              <p className="font-medium text-dark-text">Purge Stale Instances</p>
+              <p className="font-medium text-dark-text">Purge Stale Data</p>
               <p className="text-sm text-dark-text-muted">
-                Delete device instances not seen in the last 30 days. Runs automatically daily at midnight UTC.
+                Delete device instances not seen in 30 days and unverified user accounts older than 30 days. Runs daily at midnight UTC.
               </p>
             </div>
             <button
