@@ -90,6 +90,60 @@ export default function AnalyticsPage() {
     )
   }
 
+  // Generate X-axis labels based on period
+  function getXAxisLabels(dailyViews: Array<{ date: string; views: number }>, currentPeriod: string): string[] {
+    if (dailyViews.length === 0) return []
+
+    if (currentPeriod === '24h') {
+      // Show hourly labels (every 4 hours)
+      const labels: string[] = []
+      const step = Math.max(1, Math.floor(dailyViews.length / 6))
+      for (let i = 0; i < dailyViews.length; i += step) {
+        const date = new Date(dailyViews[i].date)
+        labels.push(date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }))
+      }
+      // Always include last label
+      if (labels.length > 0) {
+        const lastDate = new Date(dailyViews[dailyViews.length - 1].date)
+        const lastLabel = lastDate.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })
+        if (labels[labels.length - 1] !== lastLabel) {
+          labels.push(lastLabel)
+        }
+      }
+      return labels
+    } else if (currentPeriod === '7d') {
+      // Show daily labels (day names)
+      return dailyViews.map(d =>
+        new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' })
+      )
+    } else if (currentPeriod === '30d') {
+      // Show weekly labels (every ~5 days)
+      const labels: string[] = []
+      const step = Math.max(1, Math.floor(dailyViews.length / 6))
+      for (let i = 0; i < dailyViews.length; i += step) {
+        labels.push(new Date(dailyViews[i].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+      }
+      return labels
+    } else {
+      // 90d - Show monthly labels
+      const labels: string[] = []
+      const step = Math.max(1, Math.floor(dailyViews.length / 6))
+      for (let i = 0; i < dailyViews.length; i += step) {
+        labels.push(new Date(dailyViews[i].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+      }
+      return labels
+    }
+  }
+
+  // Format tooltip date based on period
+  function formatTooltipDate(dateStr: string, currentPeriod: string): string {
+    const date = new Date(dateStr)
+    if (currentPeriod === '24h') {
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    }
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+
   // Generate smooth line path for SVG
   function generateLinePath(dailyViews: Array<{ date: string; views: number }>, width: number, height: number): string {
     if (dailyViews.length === 0) return ''
@@ -313,7 +367,7 @@ export default function AnalyticsPage() {
                           {/* Tooltip */}
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-dark-bg text-dark-text text-xs px-2 py-1 rounded border border-dark-border shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                             <div className="font-medium">{day.views.toLocaleString()} views</div>
-                            <div className="text-dark-text-muted">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</div>
+                            <div className="text-dark-text-muted">{formatTooltipDate(day.date, period)}</div>
                           </div>
                         </div>
                       )
@@ -323,15 +377,9 @@ export default function AnalyticsPage() {
 
                 {/* X-axis labels */}
                 <div className="flex justify-between pt-2 text-xs text-dark-text-muted">
-                  {data.dailyViews.length > 0 && (
-                    <>
-                      <span>{new Date(data.dailyViews[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                      {data.dailyViews.length > 14 && (
-                        <span>{new Date(data.dailyViews[Math.floor(data.dailyViews.length / 2)].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                      )}
-                      <span>{new Date(data.dailyViews[data.dailyViews.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    </>
-                  )}
+                  {getXAxisLabels(data.dailyViews, period).map((label, i) => (
+                    <span key={i}>{label}</span>
+                  ))}
                 </div>
               </div>
             </div>
@@ -346,11 +394,11 @@ export default function AnalyticsPage() {
                 <div className="text-lg font-bold text-dark-text">
                   {data.dailyViews.length > 0 ? Math.round(data.dailyViews.reduce((sum, d) => sum + d.views, 0) / data.dailyViews.length).toLocaleString() : 0}
                 </div>
-                <div className="text-xs text-dark-text-muted">Avg/Day</div>
+                <div className="text-xs text-dark-text-muted">{period === '24h' ? 'Avg/Hour' : 'Avg/Day'}</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-primary">{Math.max(...data.dailyViews.map(d => d.views)).toLocaleString()}</div>
-                <div className="text-xs text-dark-text-muted">Peak Day</div>
+                <div className="text-xs text-dark-text-muted">{period === '24h' ? 'Peak Hour' : 'Peak Day'}</div>
               </div>
             </div>
           </div>
