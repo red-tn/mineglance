@@ -81,20 +81,7 @@ STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public
 # }
 
 PENDING_RELEASES = [
-    # Extension v1.3.5
-    {
-        "version": "1.3.5",
-        "platform": "extension",
-        "release_notes": """v1.3.5 - Pro Features Update
-
-- Price Alerts: Get email notifications when coin prices hit your target
-- Payout Prediction: See estimated time until next pool payout with progress bar
-- Performance Charts: Enable chart tracking for 7/30/90 day history
-- All new features available in wallet settings for Pro users""",
-        "zip_filename": "mineglance-extension-v1.3.5.zip",
-        "is_latest": True
-    },
-    # Desktop Windows v1.3.5
+    # Desktop Windows v1.3.5 (re-upload with bug fix)
     {
         "version": "1.3.5",
         "platform": "desktop_windows",
@@ -103,9 +90,11 @@ PENDING_RELEASES = [
 - Price Alerts: Configure price target notifications for your coins
 - Payout Prediction: Track progress toward pool payout thresholds
 - Performance Charts: Enable chart data collection for wallets
-- Improved wallet sync with cloud backup""",
+- Improved wallet sync with cloud backup
+- Fixed: Single instance - app now focuses existing window instead of creating duplicates""",
         "zip_filename": "mineglance-desktop-1.3.5-windows.exe",
-        "is_latest": True
+        "is_latest": True,
+        "allow_update": True
     }
 ]
 
@@ -501,6 +490,38 @@ def unset_latest_for_platform(platform):
     response = requests.patch(url, params=params, headers=headers, json=data)
     return response.status_code in [200, 204]
 
+def update_existing_release(release):
+    """Update an existing release in the database"""
+    platform = release["platform"]
+    version = release["version"]
+
+    url = f"{SUPABASE_URL}/rest/v1/software_releases"
+    params = {
+        "platform": f"eq.{platform}",
+        "version": f"eq.{version}"
+    }
+    headers = {
+        "apikey": SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+
+    data = {
+        "release_notes": release["release_notes"],
+        "released_at": datetime.now().isoformat()
+    }
+
+    response = requests.patch(url, params=params, headers=headers, json=data)
+
+    if response.status_code in [200, 204]:
+        print(f"  [OK] {platform} v{version} updated in database")
+        return True
+    else:
+        print(f"  [ERROR] Failed to update {platform} v{version}: {response.status_code}")
+        print(f"         {response.text}")
+        return False
+
 def publish_release(release):
     """Publish a single release to the database using Supabase REST API"""
     platform = release["platform"]
@@ -508,8 +529,12 @@ def publish_release(release):
 
     # Check if this version already exists
     if check_existing_release(platform, version):
-        print(f"  [SKIP] {platform} v{version} already exists in database")
-        return False
+        if release.get("allow_update"):
+            print(f"  [UPDATE] {platform} v{version} exists, updating...")
+            return update_existing_release(release)
+        else:
+            print(f"  [SKIP] {platform} v{version} already exists in database")
+            return False
 
     # If this is latest, unmark previous latest
     if release.get("is_latest"):
