@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
     const cutoffISO = cutoffDate.toISOString()
 
     console.log(`Purging instances not seen since: ${cutoffISO}`)
+    console.log(`Purging unverified users created before: ${cutoffISO}`)
 
     // First, get count of instances to be deleted (for logging)
     const { count: staleCount } = await supabase
@@ -102,16 +103,35 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to purge instances: ${error.message}`)
     }
 
+    // Get count of unverified users to be deleted
+    const { count: unverifiedCount } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('email_verified', false)
+      .lt('created_at', cutoffISO)
+
+    // Delete unverified users older than 30 days
+    const { error: userError, count: deletedUsers } = await supabase
+      .from('users')
+      .delete()
+      .eq('email_verified', false)
+      .lt('created_at', cutoffISO)
+
+    if (userError) {
+      throw new Error(`Failed to purge unverified users: ${userError.message}`)
+    }
+
     const duration = Date.now() - startTime
     const result = {
       success: true,
-      purged: deletedCount || staleCount || 0,
+      instancesPurged: deletedCount || staleCount || 0,
+      unverifiedUsersPurged: deletedUsers || unverifiedCount || 0,
       cutoffDate: cutoffISO,
       timestamp: new Date().toISOString(),
       duration_ms: duration
     }
 
-    console.log('Instance purge completed:', result)
+    console.log('Purge completed:', result)
 
     // Update execution record with success
     if (executionId) {
@@ -141,7 +161,7 @@ export async function GET(request: NextRequest) {
     try {
       await supabase.from('admin_audit_log').insert({
         admin_email: triggeredBy,
-        action: 'purge_stale_instances',
+        action: 'purge_stale_data',
         details: result
       })
     } catch {
