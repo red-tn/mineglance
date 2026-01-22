@@ -102,7 +102,6 @@ export async function POST(request: NextRequest) {
       ],
       mode: selectedPlan.mode,
       customer_email: email || undefined,
-      allow_promotion_codes: true, // Always allow - users can enter promo codes
       metadata: {
         plan: plan,
         planType: selectedPlan.mode,
@@ -111,6 +110,14 @@ export async function POST(request: NextRequest) {
         chargedAmount: chargeAmount.toString()
       },
       return_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+    }
+
+    // Auto-apply coupon if provided, otherwise allow manual promo code entry
+    // Note: discounts and allow_promotion_codes are mutually exclusive in Stripe
+    if (coupon) {
+      sessionParams.discounts = [{ coupon }]
+    } else {
+      sessionParams.allow_promotion_codes = true
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams)
