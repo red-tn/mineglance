@@ -412,6 +412,7 @@ export default function SubscriptionPage() {
         onAcceptOffer={handleAcceptOffer}
         onProceedWithRefund={handleProceedWithRefund}
         billingType={subscription?.billingType}
+        userEmail={subscription?.email}
       />
 
       {/* Manage Plan Modal */}

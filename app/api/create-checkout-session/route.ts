@@ -112,13 +112,8 @@ export async function POST(request: NextRequest) {
       return_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     }
 
-    // Auto-apply coupon if provided, otherwise allow manual promo code entry
-    // Note: discounts and allow_promotion_codes are mutually exclusive in Stripe
-    if (coupon) {
-      sessionParams.discounts = [{ coupon }]
-    } else {
-      sessionParams.allow_promotion_codes = true
-    }
+    // Allow users to enter promo codes at checkout (STAY10, STAY25, etc.)
+    sessionParams.allow_promotion_codes = true
 
     const session = await stripe.checkout.sessions.create(sessionParams)
 
