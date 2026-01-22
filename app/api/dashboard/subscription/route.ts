@@ -226,15 +226,13 @@ async function handleRetentionOffer(userId: string, offer: string) {
         })
         .eq('id', userId)
 
-      // Log the retention offer
+      // Log to audit log (not payment_history since it's not a payment)
       await supabase
-        .from('payment_history')
+        .from('admin_audit_log')
         .insert({
-          user_id: userId,
-          amount: 0,
-          status: 'succeeded',
-          type: 'subscription',
-          description: 'Retention offer: Free month extension'
+          admin_email: user.email,
+          action: 'retention_offer_used',
+          details: { offer: 'free_month', userId, newEndDate: newEndDate.toISOString() }
         })
 
       return NextResponse.json({
