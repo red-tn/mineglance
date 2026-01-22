@@ -23,8 +23,8 @@ export default function PrivacyPolicy() {
                 and calculate real-time profitability by showing earnings minus electricity costs.
               </p>
               <p className="font-semibold text-primary">
-                TL;DR: We collect minimal data, store it locally in your browser, and never sell your information.
-                No remote code is executed. All processing happens locally in your browser.
+                TL;DR: We collect minimal data, store it locally in your browser, and never sell or share your information
+                with third parties. No remote code is executed. All processing happens locally in your browser.
               </p>
             </section>
 
@@ -87,7 +87,8 @@ export default function PrivacyPolicy() {
                 your hashrate, balance, worker status, and earnings using the wallet address you provide</li>
                 <li><strong>CoinGecko API</strong> (api.coingecko.com) — to get current cryptocurrency prices for profit calculations</li>
                 <li><strong>WhatToMine</strong> (whattomine.com) — to compare profitability of alternative coins</li>
-                <li><strong>MineGlance API</strong> (mineglance.com) — for Pro license activation and optional email alerts</li>
+                <li><strong>MineGlance API</strong> (mineglance.com) — for Pro license activation, cloud sync, and optional email alerts</li>
+                <li><strong>QR Server API</strong> (api.qrserver.com) — to generate QR codes for wallet addresses</li>
               </ul>
               <p>
                 <strong>Important:</strong> No browsing data is collected. We only fetch mining statistics and prices
@@ -188,6 +189,24 @@ export default function PrivacyPolicy() {
               <p>
                 We only send the minimum data required to each service (e.g., your public wallet address to the pool API).
                 These services have their own privacy policies.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Data Sharing and Sales</h2>
+              <p className="font-semibold">
+                We do NOT sell, rent, or trade your personal information to third parties for marketing or advertising purposes.
+              </p>
+              <p className="mt-4">
+                Your data is only shared in these limited circumstances:
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>Mining pool APIs:</strong> Your public wallet address is sent to fetch your mining statistics</li>
+                <li><strong>Payment processing:</strong> Stripe receives payment info if you purchase Pro (we never see your card number)</li>
+                <li><strong>Legal requirements:</strong> If required by law or to protect our rights</li>
+              </ul>
+              <p className="mt-4">
+                We do not use your data for personalized advertising, behavioral tracking, or any form of user profiling.
               </p>
             </section>
 
