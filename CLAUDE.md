@@ -71,9 +71,12 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
    **Release script location:** `F:\MINEGLANCE\roadmap\publish_releases.py`
    **Storage bucket:** `https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software`
 
-5. **Subscription Model** - MineGlance uses annual subscriptions ($59/year):
+5. **Subscription Model** - MineGlance offers three Pro billing options:
    - Free tier: 1 wallet, ALL pools supported, ALL coins supported
-   - Pro tier: Unlimited wallets, email alerts, cloud sync, desktop app, price alerts, payout prediction, performance charts
+   - Pro Monthly: $6.99/month
+   - Pro Annual: $59/year (best value)
+   - Pro Lifetime: $99 one-time (never expires)
+   - All Pro tiers include: Unlimited wallets, email alerts, cloud sync, desktop app, price alerts, payout prediction, performance charts
 
 6. **Blog System** - Blog posts managed via admin dashboard at `/admin/blog`:
    - Homepage shows "Mining In the News" section with pinned posts
@@ -105,7 +108,7 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
 - **Desktop**: Tauri 2, React 18, Zustand
 - **Mobile**: React Native/Expo
 - **Database**: Supabase (PostgreSQL)
-- **Payments**: Stripe (Embedded Checkout + Payment Links)
+- **Payments**: Stripe (Embedded Checkout only, no Payment Links)
 - **Email**: SendGrid
 - **Storage**: Supabase Storage (S3 compatible)
 
@@ -113,7 +116,16 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
 
 **Only two plans exist:**
 - `free` - Free tier (1 wallet, basic features)
-- `pro` - Pro tier (paid, $59/year, unlimited wallets, all features)
+- `pro` - Pro tier (paid, unlimited wallets, all features)
+
+**Pro Billing Types** (stored in `billing_type` column):
+- `monthly` - $6.99/month
+- `annual` - $59/year (default)
+- `lifetime` - $99 one-time (never expires, `subscription_end_date` is NULL)
+
+**Retention Promo Codes** (Stripe):
+- `STAY10` - 10% off annual ($53.10)
+- `STAY25` - 25% off lifetime ($74.25)
 
 ## Database Tables
 
@@ -152,8 +164,9 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
 ## Key API Routes
 
 ### Payment & Subscription
-- `/api/webhook` - Stripe webhook handler
+- `/api/webhook` - Stripe webhook handler (checkout.session.completed, etc.)
 - `/api/check-pro` - Verify Pro status
+- `/api/create-checkout-session` - Create Stripe Embedded Checkout session (supports monthly, annual, lifetime plans with `allow_promotion_codes: true`)
 - `/api/dashboard/subscription` - GET info, POST accept retention offer or request refund
 
 ### User Dashboard (`/dashboard`)
@@ -213,13 +226,22 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
 - Hardware specs tracking
 - Per-rig profitability
 
-### Retention Offer System
-- Shows modal when user clicks "Cancel Plan"
-- Three offers:
+### Plan Management Modals
+
+**ManagePlanModal** (`components/ManagePlanModal.tsx`):
+- Accessed via "Manage Plan" button on subscription page
+- Monthly users: upgrade to Annual ($53.10 with STAY10) or Lifetime ($74.25 with STAY25)
+- Annual users: upgrade to Lifetime or switch to Monthly at renewal
+- Lifetime users: shows "best plan" message
+- Uses Stripe Embedded Checkout with `allow_promotion_codes: true`
+
+**RetentionOfferModal** (`components/RetentionOfferModal.tsx`):
+- Shows when user clicks "Cancel Plan" button
+- Three retention offers:
   - Free month extension (one-time, tracked in `retention_offer_used`)
-  - 10% off annual (Stripe coupon: STAY10)
-  - 25% off lifetime (Stripe coupon: STAY25)
-- Free month is one-time; discount offers use Stripe coupon limits
+  - 10% off annual - opens embedded checkout (user enters STAY10)
+  - 25% off lifetime - opens embedded checkout (user enters STAY25)
+- Free month is one-time per account; discount offers via Stripe promo codes
 
 ## Extension Features
 
