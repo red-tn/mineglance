@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore, ensureInstanceIdFile } from "./stores/authStore";
 import { useSettingsStore } from "./stores/settingsStore";
 import { useUpdateStore } from "./stores/updateStore";
-import { useEffect } from "react";
+import { useWalletStore } from "./stores/walletStore";
+import { useEffect, useRef, useCallback } from "react";
+import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -30,9 +32,62 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { liteMode } = useSettingsStore();
-  const { checkAuth, sendHeartbeat, refreshSubscription, isAuthenticated } = useAuthStore();
+  const { liteMode, refreshInterval, showNotifications, loadSettings } = useSettingsStore();
+  const { checkAuth, sendHeartbeat, refreshSubscription, isAuthenticated, user } = useAuthStore();
   const { checkForUpdates } = useUpdateStore();
+  const { wallets, stats, refreshStats, syncWallets } = useWalletStore();
+
+  // Track previous worker counts for offline detection
+  const previousWorkersRef = useRef<Map<string, number>>(new Map());
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check for offline workers and send notification
+  const checkOfflineWorkers = useCallback(async () => {
+    if (!showNotifications || user?.plan !== 'pro') return;
+
+    for (const wallet of wallets) {
+      if (!wallet.enabled) continue;
+
+      const currentStats = stats.get(wallet.id);
+      if (!currentStats) continue;
+
+      const prevOnline = previousWorkersRef.current.get(wallet.id) ?? currentStats.workersOnline;
+      const currentOnline = currentStats.workersOnline;
+      const currentOffline = currentStats.workersOffline;
+
+      // Check if workers went offline (had some online before, now fewer or zero)
+      if (prevOnline > 0 && currentOnline < prevOnline) {
+        const wentOffline = prevOnline - currentOnline;
+
+        try {
+          let permissionGranted = await isPermissionGranted();
+          if (!permissionGranted) {
+            const permission = await requestPermission();
+            permissionGranted = permission === 'granted';
+          }
+
+          if (permissionGranted) {
+            sendNotification({
+              title: 'Worker Offline Alert',
+              body: `${wallet.name}: ${wentOffline} worker(s) went offline. Currently ${currentOnline} online, ${currentOffline} offline.`,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to send notification:', error);
+        }
+      }
+
+      // Update previous count
+      previousWorkersRef.current.set(wallet.id, currentOnline);
+    }
+  }, [showNotifications, user?.plan, wallets, stats]);
+
+  // Auto-refresh wallet stats
+  const doAutoRefresh = useCallback(async () => {
+    console.log('Auto-refreshing wallet stats...');
+    await refreshStats();
+    await checkOfflineWorkers();
+  }, [refreshStats, checkOfflineWorkers]);
 
   useEffect(() => {
     // Apply theme class
@@ -53,11 +108,18 @@ function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    // Load settings and sync wallets on auth
+    loadSettings();
+    syncWallets();
+
     // Send heartbeat immediately on auth
     sendHeartbeat();
 
     // Check for updates on startup
     checkForUpdates();
+
+    // Initial stats refresh
+    refreshStats();
 
     // Send heartbeat every 30 seconds
     const heartbeatInterval = setInterval(() => {
@@ -86,7 +148,31 @@ function App() {
       clearInterval(updateInterval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [isAuthenticated, sendHeartbeat, refreshSubscription, checkForUpdates]);
+  }, [isAuthenticated, sendHeartbeat, refreshSubscription, checkForUpdates, loadSettings, syncWallets, refreshStats]);
+
+  // Set up auto-refresh interval based on settings
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Clear existing interval
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+    }
+
+    // Set up new interval based on refreshInterval setting
+    const intervalMs = refreshInterval * 60 * 1000; // Convert minutes to ms
+    console.log(`Setting up auto-refresh every ${refreshInterval} minutes`);
+
+    refreshIntervalRef.current = setInterval(() => {
+      doAutoRefresh();
+    }, intervalMs);
+
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
+  }, [isAuthenticated, refreshInterval, doAutoRefresh]);
 
   return (
     <BrowserRouter>

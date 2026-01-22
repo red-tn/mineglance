@@ -81,16 +81,35 @@ STORAGE_URL = "https://zbytbrcumxgfeqvhmzsf.supabase.co/storage/v1/object/public
 # }
 
 PENDING_RELEASES = [
-    # Desktop Windows v1.3.5 (re-upload with bug fix)
+    # Extension v1.3.5 (re-upload with bug fixes)
+    {
+        "version": "1.3.5",
+        "platform": "extension",
+        "release_notes": """v1.3.5 - Bug Fixes & Improvements
+
+- Added 1 minute and 5 minute refresh interval options
+- Fixed notification alerts for offline workers
+- Improved settings sync with cloud
+- Price Alerts: Configure price target notifications for your coins
+- Payout Prediction: Track progress toward pool payout thresholds
+- Performance Charts: Enable chart data collection for wallets""",
+        "zip_filename": "mineglance-extension-v1.3.5.zip",
+        "is_latest": True,
+        "allow_update": True
+    },
+    # Desktop Windows v1.3.5 (re-upload with bug fixes)
     {
         "version": "1.3.5",
         "platform": "desktop_windows",
-        "release_notes": """v1.3.5 - Pro Features Update
+        "release_notes": """v1.3.5 - Bug Fixes & Improvements
 
+- Added 1 minute and 5 minute refresh interval options
+- Fixed: Notifications now actually trigger for offline workers
+- Fixed: Auto-refresh now works based on refresh interval setting
+- Added: Settings now sync to cloud like extension
 - Price Alerts: Configure price target notifications for your coins
 - Payout Prediction: Track progress toward pool payout thresholds
 - Performance Charts: Enable chart data collection for wallets
-- Improved wallet sync with cloud backup
 - Fixed: Single instance - app now focuses existing window instead of creating duplicates""",
         "zip_filename": "mineglance-desktop-1.3.5-windows.exe",
         "is_latest": True,
