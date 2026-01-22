@@ -67,14 +67,10 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         console.error('Failed to create admin user:', error)
-        // If table doesn't exist, just check password directly
-        if (password !== DEFAULT_PASSWORD) {
-          return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
-        }
-        admin = { id: null, email: normalizedEmail, password_hash: null, role: 'super_admin' }
-      } else {
-        admin = newAdmin
+        // Database error - do not allow login without proper admin record
+        return NextResponse.json({ error: 'Database error. Contact support.' }, { status: 500 })
       }
+      admin = newAdmin
     }
 
     // Verify password with bcrypt (supports silent migration from SHA256)
@@ -86,8 +82,9 @@ export async function POST(request: NextRequest) {
       validPassword = result.valid
       needsRehash = result.needsRehash
     } else {
-      validPassword = password === DEFAULT_PASSWORD
-      needsRehash = true // Default password should be hashed
+      // No password hash - admin record is corrupt or incomplete
+      console.error('Admin record missing password_hash:', normalizedEmail)
+      return NextResponse.json({ error: 'Account setup incomplete. Contact support.' }, { status: 401 })
     }
 
     if (!validPassword) {

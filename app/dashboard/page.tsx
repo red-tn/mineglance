@@ -740,7 +740,7 @@ export default function DashboardOverview() {
           </Link>
 
           <a
-            href="mailto:control@mineglance.com"
+            href="mailto:support@mineglance.com"
             className="flex items-center gap-3 p-4 bg-dark-card-hover rounded-lg hover:bg-dark-border transition-colors"
           >
             <svg className="w-5 h-5 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">

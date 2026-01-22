@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { escapeHtml } from '@/lib/escapeHtml'
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY!
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'alerts@mineglance.com'
@@ -104,6 +105,10 @@ export async function POST(request: NextRequest) {
       'price_alert': '💰'
     }[alertType] || '⚠️'
 
+    // Escape user input to prevent XSS in email
+    const safeWalletName = escapeHtml(walletName)
+    const safeMessage = escapeHtml(message)
+
     // Build email
     const emailHtml = `
 <!DOCTYPE html>
@@ -125,10 +130,10 @@ export async function POST(request: NextRequest) {
     <!-- Alert Box -->
     <div style="background: ${alertType === 'worker_offline' ? '#fed7d7' : alertType === 'profit_drop' ? '#feebc8' : '#c6f6d5'}; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid ${alertType === 'worker_offline' ? '#fc8181' : alertType === 'profit_drop' ? '#f6ad55' : '#68d391'};">
       <p style="color: #2d3748; font-size: 16px; margin: 0 0 8px 0;">
-        <strong>Wallet:</strong> ${walletName}
+        <strong>Wallet:</strong> ${safeWalletName}
       </p>
       <p style="color: #4a5568; font-size: 15px; margin: 0; line-height: 1.6;">
-        ${message}
+        ${safeMessage}
       </p>
     </div>
 
@@ -166,7 +171,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         personalizations: [{ to: [{ email: toEmail }] }],
         from: { email: FROM_EMAIL, name: 'MineGlance Alerts' },
-        subject: `${alertEmoji} MineGlance: ${alertTypeDisplay} - ${walletName}`,
+        subject: `${alertEmoji} MineGlance: ${alertTypeDisplay} - ${safeWalletName}`,
         content: [
           { type: 'text/html', value: emailHtml }
         ],
@@ -188,7 +193,7 @@ export async function POST(request: NextRequest) {
           email: toEmail,
           alert_type: alertType,
           wallet_name: walletName,
-          subject: `${alertEmoji} MineGlance: ${alertTypeDisplay} - ${walletName}`,
+          subject: `${alertEmoji} MineGlance: ${alertTypeDisplay} - ${safeWalletName}`,
           message: message,
           sendgrid_message_id: null,
           sendgrid_status: 'failed',
@@ -208,7 +213,7 @@ export async function POST(request: NextRequest) {
         email: toEmail,
         alert_type: alertType,
         wallet_name: walletName,
-        subject: `${alertEmoji} MineGlance: ${alertTypeDisplay} - ${walletName}`,
+        subject: `${alertEmoji} MineGlance: ${alertTypeDisplay} - ${safeWalletName}`,
         message: message,
         sendgrid_message_id: messageId,
         sendgrid_status: sendgridStatus,

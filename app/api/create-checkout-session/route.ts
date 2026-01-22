@@ -63,6 +63,12 @@ export async function POST(request: NextRequest) {
     const selectedPlan = plans[plan as keyof typeof plans]
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'https://mineglance.com'
 
+    // Validate custom amount - must be at least the plan price (prevents fraud)
+    if (customAmount && customAmount < selectedPlan.amount) {
+      console.error('Invalid custom amount:', customAmount, 'expected at least:', selectedPlan.amount)
+      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
+    }
+
     // Use custom amount for upgrades, otherwise use standard plan price
     const chargeAmount = customAmount || selectedPlan.amount
     const productName = isUpgrade

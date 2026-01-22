@@ -311,7 +311,7 @@ export default function CheckoutModal({ isOpen, onClose, plan, userEmail }: Chec
             ) : !stripePromise ? (
               <div className="flex flex-col items-center justify-center h-64">
                 <p className="text-amber-400 mb-4">Payment system is being configured.</p>
-                <p className="text-dark-text-muted text-sm">Please contact control@mineglance.com to purchase.</p>
+                <p className="text-dark-text-muted text-sm">Please contact support@mineglance.com to purchase.</p>
               </div>
             ) : loading ? (
               <div className="flex flex-col items-center justify-center h-64">

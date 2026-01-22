@@ -23,7 +23,7 @@ export default function Contact() {
       `From: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`
     )
 
-    window.location.href = `mailto:control@mineglance.com?subject=${subject}&body=${body}`
+    window.location.href = `mailto:support@mineglance.com?subject=${subject}&body=${body}`
 
     setStatus('sent')
     setTimeout(() => setStatus('idle'), 3000)
@@ -127,7 +127,7 @@ export default function Contact() {
 
               {status === 'sent' && (
                 <p className="text-center text-accent text-sm">
-                  Your email client should have opened. If not, email us directly at control@mineglance.com
+                  Your email client should have opened. If not, email us directly at support@mineglance.com
                 </p>
               )}
             </form>
@@ -138,13 +138,13 @@ export default function Contact() {
             <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-4">Other Ways to Reach Us</h2>
             <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-8">
               <a
-                href="mailto:control@mineglance.com"
+                href="mailto:support@mineglance.com"
                 className="flex items-center justify-center gap-2 text-foreground/70 hover:text-accent transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span>control@mineglance.com</span>
+                <span>support@mineglance.com</span>
               </a>
             </div>
             <p className="mt-4 sm:mt-6 text-foreground/50 text-sm">

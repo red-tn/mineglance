@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     question: 'How do refunds work?',
-    answer: 'We offer a 30-day money-back guarantee on Pro purchases. If MineGlance isn\'t working for you, just email control@mineglance.com with your purchase email and we\'ll refund you. No questions asked.'
+    answer: 'We offer a 30-day money-back guarantee on Pro purchases. If MineGlance isn\'t working for you, just email support@mineglance.com with your purchase email and we\'ll refund you. No questions asked.'
   },
   {
     question: 'Do I need to install anything on my mining rig?',

@@ -598,13 +598,13 @@ export default function Support() {
                 We typically respond within 24 hours
               </p>
               <a
-                href="mailto:control@mineglance.com"
+                href="mailto:support@mineglance.com"
                 className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-light transition-colors"
               >
                 Email Us
               </a>
               <p className="mt-3 text-xs text-dark-text-dim">
-                control@mineglance.com
+                support@mineglance.com
               </p>
             </div>
           </div>

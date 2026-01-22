@@ -53,14 +53,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Session exists but no admin found
-    return NextResponse.json({
-      valid: true,
-      user: {
-        email: ADMIN_EMAILS[0],
-        isAdmin: true
-      }
-    })
+    // Session exists but no admin found - this is an error state
+    console.error('Session exists but admin not found:', session.admin_id)
+    return NextResponse.json({ error: 'Admin account not found' }, { status: 401 })
 
   } catch (error) {
     console.error('Verify error:', error)

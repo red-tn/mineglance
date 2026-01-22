@@ -236,7 +236,7 @@ export default function Login() {
         )}
 
         {/* Version */}
-        <p className="text-center text-xs text-[var(--text-dim)] mt-8">MineGlance Desktop v1.0.0</p>
+        <p className="text-center text-xs text-[var(--text-dim)] mt-8">MineGlance Desktop v1.3.5</p>
       </div>
     </div>
   );

@@ -240,7 +240,7 @@ export default function Settings() {
 
       {/* Version */}
       <div className="text-center text-sm text-[var(--text-dim)]">
-        MineGlance Desktop v1.0.0
+        MineGlance Desktop v1.3.5
       </div>
     </div>
   );
