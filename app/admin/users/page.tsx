@@ -56,6 +56,14 @@ export default function UsersPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ userId: string; email: string; plan: string } | null>(null)
   const [deleteTypedEmail, setDeleteTypedEmail] = useState('')
 
+  // Email User modal state
+  const [emailModal, setEmailModal] = useState<{ user: License } | null>(null)
+  const [emailTemplates, setEmailTemplates] = useState<Array<{ id: string; slug: string; name: string; subject: string; html_content: string; variables: string[] }>>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailBody, setEmailBody] = useState('')
+  const [emailSending, setEmailSending] = useState(false)
+
   const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
@@ -181,6 +189,91 @@ export default function UsersPage() {
   const openDeleteConfirm = (userId: string, email: string, plan: string) => {
     setDeleteConfirm({ userId, email, plan })
     setDeleteTypedEmail('')
+  }
+
+  // Fetch email templates
+  const fetchEmailTemplates = async () => {
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/email-templates', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await response.json()
+      setEmailTemplates(data.templates || [])
+    } catch (error) {
+      console.error('Failed to fetch email templates:', error)
+    }
+  }
+
+  // Open email modal for a user
+  const openEmailModal = async (user: License) => {
+    setEmailModal({ user })
+    setSelectedTemplateId('')
+    setEmailSubject('')
+    setEmailBody('')
+    if (emailTemplates.length === 0) {
+      await fetchEmailTemplates()
+    }
+  }
+
+  // Fill variables in template content
+  const fillTemplateVariables = (content: string, user: License) => {
+    return content
+      .replace(/{{email}}/g, user.email)
+      .replace(/{{licenseKey}}/g, user.key || 'N/A')
+      .replace(/{{fullName}}/g, user.full_name || 'Miner')
+      .replace(/{{daysUntilExpiry}}/g, user.subscription_end_date
+        ? Math.max(0, Math.ceil((new Date(user.subscription_end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))).toString()
+        : 'N/A')
+      .replace(/{{extVersion}}/g, user.extVersion || 'Not installed')
+      .replace(/{{couponCode}}/g, 'STAY10')
+      .replace(/{{discount}}/g, '10%')
+  }
+
+  // When template is selected, populate subject and body
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplateId(templateId)
+    const template = emailTemplates.find(t => t.id === templateId)
+    if (template && emailModal) {
+      setEmailSubject(fillTemplateVariables(template.subject, emailModal.user))
+      setEmailBody(fillTemplateVariables(template.html_content, emailModal.user))
+    }
+  }
+
+  // Send email to user
+  const handleSendEmail = async () => {
+    if (!emailModal || !emailSubject || !emailBody) return
+
+    setEmailSending(true)
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/admin/users/send-email', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: emailModal.user.id,
+          email: emailModal.user.email,
+          subject: emailSubject,
+          htmlContent: emailBody
+        })
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        alert('Email sent successfully!')
+        setEmailModal(null)
+      } else {
+        alert(data.error || 'Failed to send email')
+      }
+    } catch (error) {
+      console.error('Send email failed:', error)
+      alert('Failed to send email')
+    } finally {
+      setEmailSending(false)
+    }
   }
 
   const handleDeleteUser = async () => {
@@ -711,6 +804,13 @@ export default function UsersPage() {
                 </div>
 
                 <div className="p-6 border-t border-dark-border bg-dark-card-hover flex gap-3 flex-wrap">
+                  <button
+                    onClick={() => openEmailModal(selectedUser)}
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    Email User
+                  </button>
                   {selectedUser.plan !== 'free' && selectedUser.key && (
                     <button
                       onClick={() => handleResendLicense(selectedUser.email)}
@@ -844,6 +944,115 @@ export default function UsersPage() {
                 className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
               >
                 {actionLoading ? 'Deleting...' : 'Delete Forever'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email User Modal */}
+      {emailModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60]">
+          <div className="bg-dark-card rounded-xl border border-dark-border max-w-3xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-dark-border flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-dark-text">Email User</h3>
+                <p className="text-sm text-dark-text-muted">{emailModal.user.email}</p>
+              </div>
+              <button
+                onClick={() => setEmailModal(null)}
+                className="text-dark-text-muted hover:text-dark-text"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              {/* Template Selector */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">Select Template</label>
+                <select
+                  value={selectedTemplateId}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">-- Choose a template --</option>
+                  {emailTemplates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* User Info Badge */}
+              <div className="bg-dark-bg rounded-lg p-3 text-sm">
+                <p className="text-dark-text-muted">
+                  <strong>Ext Version:</strong> {emailModal.user.extVersion || 'Not installed'} |{' '}
+                  <strong>Plan:</strong> {emailModal.user.plan.toUpperCase()} |{' '}
+                  <strong>Expires:</strong> {emailModal.user.subscription_end_date
+                    ? new Date(emailModal.user.subscription_end_date).toLocaleDateString()
+                    : 'N/A'}
+                </p>
+              </div>
+
+              {/* Subject */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">Subject</label>
+                <input
+                  type="text"
+                  value={emailSubject}
+                  onChange={(e) => setEmailSubject(e.target.value)}
+                  placeholder="Email subject..."
+                  className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* HTML Body */}
+              <div>
+                <label className="block text-sm font-medium text-dark-text mb-2">Email Body (HTML)</label>
+                <textarea
+                  value={emailBody}
+                  onChange={(e) => setEmailBody(e.target.value)}
+                  rows={12}
+                  placeholder="Email HTML content..."
+                  className="w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg text-dark-text font-mono text-sm focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* Preview */}
+              {emailBody && (
+                <div>
+                  <label className="block text-sm font-medium text-dark-text mb-2">Preview</label>
+                  <div className="bg-white rounded-lg p-1 max-h-64 overflow-auto">
+                    <iframe
+                      srcDoc={emailBody}
+                      className="w-full h-60 border-0"
+                      title="Email Preview"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-dark-card-hover border-t border-dark-border flex gap-3 justify-end">
+              <button
+                onClick={() => setEmailModal(null)}
+                className="px-4 py-2 text-dark-text-muted hover:text-dark-text transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendEmail}
+                disabled={emailSending || !emailSubject || !emailBody}
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+              >
+                {emailSending ? 'Sending...' : 'Send Email'}
               </button>
             </div>
           </div>

@@ -1,0 +1,441 @@
+id,slug,name,subject,html_content,description,variables,is_active,created_at,updated_at
+1fbd2eb9-3d91-4879-929d-b8f44f21d382,renewal_reminder,Renewal Reminder,Your MineGlance Pro subscription is expiring,"<!DOCTYPE html>
+  <html>
+  <body style=""margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"">
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #0a0a0a; padding: 40px 20px;"">
+      <tr>
+        <td align=""center"">
+          <table width=""600"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #141414; border-radius: 16px; border: 1px solid #2d2d2d;"">
+            <tr>
+              <td style=""padding: 40px; text-align: center;"">
+                <h1 style=""margin: 0 0 20px; color: #fbbf24; font-size: 28px;"">Subscription Expiring Soon</h1>
+                <p style=""color: #e5e7eb; font-size: 16px;"">Your MineGlance Pro subscription will expire in <strong style=""color: #fbbf24;"">{{daysUntilExpiry}} days</strong>.</p>
+                <p style=""color: #9ca3af; font-size: 14px; margin-top: 16px;"">Renew now to keep your Pro features:</p>
+                <ul style=""color: #9ca3af; font-size: 14px; text-align: left; display: inline-block; margin: 16px 0;"">
+                  <li>Unlimited wallets & pools</li>
+                  <li>Email alerts for worker offline</li>
+                  <li>Cloud sync across devices</li>
+                  <li>Priority support</li>
+                </ul>
+                <div style=""margin: 30px 0;"">
+                  <a href=""https://www.mineglance.com/dashboard/subscription"" style=""display: inline-block; background: #38a169; color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: bold;"">Renew Now</a>
+                </div>
+                <p style=""color: #6b7280; font-size: 12px;"">Questions? <a href=""https://www.mineglance.com/support"" style=""color: #38a169;"">Contact support</a></p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>",Sent 7 days before subscription expires,"[""daysUntilExpiry"", ""email""]",true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
+2791e111-6a7b-4656-abd8-1be1b009efe7,2fa-disabled,2FA Disabled Notification,Two-Factor Authentication Disabled - MineGlance,"<div style=""font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #f7fafc;"">
+      <div style=""background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"">
+        <div style=""text-align: center; margin-bottom: 24px;"">
+          <div style=""width: 60px; height: 60px; background: #f59e0b; border-radius: 50%; margin: 0 auto 16px; display: inline-block; line-height: 60px;"">
+            <span style=""font-size: 28px;"">⚠️</span>
+          </div>
+          <h1 style=""color: #1a365d; font-size: 24px; margin: 0;"">Two-Factor Authentication Disabled</h1>
+        </div>
+        <p style=""color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 16px;"">Hi {{fullName}},</p>
+        <p style=""color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 16px;"">Two-factor authentication has been disabled on your MineGlance account.</p>
+        <p style=""color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px;"">Your account is now protected by password only. We recommend re-enabling 2FA for maximum security.</p>
+        <div style=""background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 16px; margin-bottom: 24px;"">
+          <p style=""color: #991b1b; font-size: 14px; margin: 0;""><strong>Warning:</strong> If you did not disable 2FA, your account may be compromised. Please change your password immediately and contact support@mineglance.com</p>
+        </div>
+        <p style=""color: #718096; font-size: 14px; margin: 0;"">Stay secure,<br>The MineGlance Team</p>
+      </div>
+    </div>",Sent when a user disables 2FA on their account,"[""email"", ""fullName""]",true,2026-01-18 21:13:49.3269+00,2026-01-18 21:13:49.3269+00
+38a6f6ce-d1fe-418e-937c-e75af49ed3ad,alert_better_coin,Alert: Better Coin Available,MineGlance: Better Coin Available - {{walletName}},"<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>MineGlance Alert</title>
+  </head>
+  <body style=""margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7fafc;"">
+    <div style=""max-width: 600px; margin: 0 auto; padding: 40px 20px;"">
+      <div style=""text-align: center; margin-bottom: 24px;"">
+        <span style=""font-size: 48px;"">💡</span>
+        <h1 style=""color: #1a365d; font-size: 24px; margin: 16px 0 0 0;"">Better Coin Available</h1>
+      </div>
+      <div style=""background: #c6f6d5; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid #68d391;"">
+        <p style=""color: #2d3748; font-size: 16px; margin: 0 0 8px 0;"">
+          <strong>Wallet:</strong> {{walletName}}
+        </p>
+        <p style=""color: #4a5568; font-size: 15px; margin: 0; line-height: 1.6;"">
+          {{message}}
+        </p>
+      </div>
+      <div style=""text-align: center; margin-bottom: 32px;"">
+        <a href=""https://mineglance.com/dashboard"" style=""display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px;"">View Dashboard</a>
+      </div>
+      <div style=""text-align: center; padding-top: 24px; border-top: 1px solid #e2e8f0;"">
+        <p style=""color: #a0aec0; font-size: 12px; margin: 0;"">
+          You received this alert because email notifications are enabled.<br>
+          <a href=""https://mineglance.com/dashboard"" style=""color: #a0aec0;"">Manage your account</a>
+        </p>
+      </div>
+    </div>
+  </body>
+  </html>",Sent when a more profitable coin is detected,"[""walletName"", ""message""]",true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
+3caf6bc5-f0a9-4533-9772-86343ce6d236,2fa-enabled,2FA Enabled Confirmation,Two-Factor Authentication Enabled - MineGlance,"<div style=""font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #f7fafc;"">
+      <div style=""background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);"">
+        <div style=""text-align: center; margin-bottom: 24px;"">
+          <div style=""width: 60px; height: 60px; background: #10b981; border-radius: 50%; margin: 0 auto 16px; display: inline-block; line-height: 60px;"">
+            <span style=""font-size: 28px;"">🔒</span>
+          </div>
+          <h1 style=""color: #1a365d; font-size: 24px; margin: 0;"">Two-Factor Authentication Enabled</h1>
+        </div>
+        <p style=""color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 16px;"">Hi {{fullName}},</p>
+        <p style=""color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 16px;"">Two-factor authentication has been successfully enabled on your MineGlance account.</p>
+        <p style=""color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px;"">From now on, you will need to enter a code from your authenticator app when signing in.</p>
+        <div style=""background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 24px;"">
+          <p style=""color: #92400e; font-size: 14px; margin: 0;""><strong>Important:</strong> If you did not enable 2FA, please contact support immediately at support@mineglance.com</p>
+        </div>
+        <p style=""color: #718096; font-size: 14px; margin: 0;"">Stay secure,<br>The MineGlance Team</p>
+      </div>
+    </div>",Sent when a user enables 2FA on their account,"[""email"", ""fullName""]",true,2026-01-18 21:13:49.3269+00,2026-01-18 21:13:49.3269+00
+8224e8b0-bf6f-48d3-ad34-e05d75cc5ec8,welcome_pro,Welcome Email (Pro Purchase),Your MineGlance Pro License Key,"<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Welcome to MineGlance Pro!</title>
+  </head>
+  <body style=""margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7fafc;"">
+    <div style=""max-width: 600px; margin: 0 auto; padding: 40px 20px;"">
+      <div style=""text-align: center; margin-bottom: 32px;"">
+        <h1 style=""color: #1a365d; font-size: 28px; margin: 0;"">Welcome to MineGlance Pro!</h1>
+        <p style=""color: #718096; font-size: 16px; margin-top: 8px;"">Your mining dashboard just got a whole lot better.</p>
+      </div>
+      <div style=""background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); border-radius: 12px; padding: 32px; text-align: center; margin-bottom: 32px;"">
+        <p style=""color: rgba(255,255,255,0.8); font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 1px;"">Your License Key</p>
+        <div style=""background: rgba(255,255,255,0.15); border-radius: 8px; padding: 16px; margin-bottom: 16px;"">
+          <code style=""color: #ffffff; font-size: 24px; font-weight: bold; letter-spacing: 2px; font-family: 'SF Mono', 'Fira Code', monospace;"">{{licenseKey}}</code>
+        </div>
+        <p style=""color: rgba(255,255,255,0.7); font-size: 13px; margin: 0;"">Keep this safe! You'll need it to activate Pro features.</p>
+      </div>
+      <div style=""background: #ffffff; border-radius: 12px; padding: 24px; margin-bottom: 32px; border: 1px solid #e2e8f0;"">
+        <h2 style=""color: #1a365d; font-size: 18px; margin: 0 0 16px 0;"">How to Activate</h2>
+        <ol style=""color: #4a5568; font-size: 15px; line-height: 1.8; padding-left: 20px; margin: 0;"">
+          <li>Open the MineGlance extension</li>
+          <li>Click the <strong>gear icon</strong> (Settings)</li>
+          <li>Find the <strong>""Pro License""</strong> section</li>
+          <li>Paste your license key above</li>
+          <li>Click <strong>""Activate""</strong></li>
+        </ol>
+      </div>
+      <div style=""background: #f0fff4; border-radius: 12px; padding: 24px; margin-bottom: 32px; border: 1px solid #9ae6b4;"">
+        <h2 style=""color: #276749; font-size: 18px; margin: 0 0 16px 0;"">What You Get</h2>
+        <ul style=""color: #2f855a; font-size: 15px; line-height: 1.8; padding-left: 20px; margin: 0;"">
+          <li>Unlimited pools & coins</li>
+          <li>Auto-refresh every 5 minutes</li>
+          <li>Desktop notifications</li>
+          <li>Coin comparison tool</li>
+          <li>Historical charts</li>
+          <li>Priority support</li>
+        </ul>
+      </div>
+      <div style=""background: #fffbeb; border-radius: 12px; padding: 20px; margin-bottom: 32px; border: 1px solid #f6e05e;"">
+        <p style=""color: #744210; font-size: 14px; margin: 0;"">
+          <strong>Note:</strong> Your license can be activated on up to 3 devices. If you need to switch devices, you can deactivate old ones from Settings.
+        </p>
+      </div>
+      <div style=""text-align: center; padding: 24px 0; border-top: 1px solid #e2e8f0;"">
+        <p style=""color: #718096; font-size: 14px; margin: 0 0 8px 0;"">Questions? We're here to help!</p>
+        <a href=""https://mineglance.com/support"" style=""color: #38a169; text-decoration: none; font-weight: 500;"">Visit Support</a>
+      </div>
+      <div style=""text-align: center; padding-top: 24px;"">
+        <p style=""color: #a0aec0; font-size: 12px; margin: 0;"">
+          MineGlance - Mining Profitability Dashboard<br>
+          <a href=""https://mineglance.com"" style=""color: #a0aec0;"">mineglance.com</a>
+        </p>
+      </div>
+    </div>
+  </body>
+  </html>",Sent to new Pro subscribers after purchase,"[""licenseKey""]",true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
+89df1093-6db3-47dc-b3ce-2203f028c0fb,email_verification,Email Verification,Verify your MineGlance account,"<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Verify your MineGlance account</title>
+  </head>
+  <body style=""margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"">
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #0a0a0a; padding: 40px 20px;"">
+      <tr>
+        <td align=""center"">
+          <table width=""600"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #141414; border-radius: 16px; border: 1px solid #2d2d2d;"">
+            <tr>
+              <td style=""padding: 40px 40px 20px; text-align: center;"">
+                <h1 style=""margin: 0; color: #38a169; font-size: 28px; font-weight: bold;"">Verify Your Email</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding: 20px 40px;"">
+                <p style=""color: #e5e7eb; font-size: 16px; line-height: 1.6; margin: 0 0 20px;"">
+                  Thanks for signing up for MineGlance! Please click the button below to verify your email address and activate your account.
+                </p>
+                <div style=""text-align: center; margin: 30px 0;"">
+                  <a href=""{{verifyLink}}"" style=""display: inline-block; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;"">Verify Email Address</a>
+                </div>
+                <p style=""color: #9ca3af; font-size: 14px; line-height: 1.6; margin: 0 0 20px;"">
+                  This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding: 20px 40px;"">
+                <div style=""background: rgba(56, 161, 105, 0.1); border: 1px solid rgba(56, 161, 105, 0.3); border-radius: 12px; padding: 20px; text-align: center;"">
+                  <p style=""color: #38a169; margin: 0 0 10px; font-size: 14px; font-weight: 600;"">New User Discount: MINE26</p>
+                  <p style=""color: #9ca3af; margin: 0; font-size: 13px;"">Use code <strong style=""color: #fbbf24;"">MINE26</strong> for 10% off Pro ($59/year)</p>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding: 30px 40px; border-top: 1px solid #2d2d2d;"">
+                <p style=""color: #6b7280; font-size: 12px; margin: 0; text-align: center;"">
+                  Questions? Visit <a href=""https://www.mineglance.com/support"" style=""color: #38a169;"">mineglance.com/support</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>",Sent when new user registers to verify email,"[""verifyLink""]",true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
+9d6b8687-b796-40fb-834a-2fcf55f700d9,resend_license,Resend License Key,Your MineGlance Pro License Key,"<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Your MineGlance License Key</title>
+  </head>
+  <body style=""margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7fafc;"">
+    <div style=""max-width: 600px; margin: 0 auto; padding: 40px 20px;"">
+      <div style=""text-align: center; margin-bottom: 32px;"">
+        <h1 style=""color: #1a365d; font-size: 28px; margin: 0;"">Your License Key</h1>
+        <p style=""color: #718096; font-size: 16px; margin-top: 8px;"">Here's your MineGlance Pro license key.</p>
+      </div>
+      <div style=""background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); border-radius: 12px; padding: 32px; text-align: center; margin-bottom: 32px;"">
+        <p style=""color: rgba(255,255,255,0.8); font-size: 14px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 1px;"">Your License Key</p>
+        <div style=""background: rgba(255,255,255,0.15); border-radius: 8px; padding: 16px; margin-bottom: 16px;"">
+          <code style=""color: #ffffff; font-size: 24px; font-weight: bold; letter-spacing: 2px; font-family: 'SF Mono', 'Fira Code', monospace;"">{{licenseKey}}</code>
+        </div>
+        <p style=""color: rgba(255,255,255,0.7); font-size: 13px; margin: 0;"">Keep this safe! You'll need it to activate Pro features.</p>
+      </div>
+      <div style=""background: #ffffff; border-radius: 12px; padding: 24px; margin-bottom: 32px; border: 1px solid #e2e8f0;"">
+        <h2 style=""color: #1a365d; font-size: 18px; margin: 0 0 16px 0;"">How to Activate</h2>
+        <ol style=""color: #4a5568; font-size: 15px; line-height: 1.8; padding-left: 20px; margin: 0;"">
+          <li>Open the MineGlance extension</li>
+          <li>Click the <strong>gear icon</strong> (Settings)</li>
+          <li>Find the <strong>""Pro License""</strong> section</li>
+          <li>Paste your license key above</li>
+          <li>Click <strong>""Activate""</strong></li>
+        </ol>
+      </div>
+      <div style=""text-align: center; padding: 24px 0; border-top: 1px solid #e2e8f0;"">
+        <p style=""color: #718096; font-size: 14px; margin: 0 0 8px 0;"">Need help? We're here for you!</p>
+        <a href=""https://mineglance.com/support"" style=""color: #38a169; text-decoration: none; font-weight: 500;"">Visit Support</a>
+      </div>
+      <div style=""text-align: center; padding-top: 24px;"">
+        <p style=""color: #a0aec0; font-size: 12px; margin: 0;"">
+          MineGlance - Mining Profitability Dashboard<br>
+          <a href=""https://mineglance.com"" style=""color: #a0aec0;"">mineglance.com</a>
+        </p>
+      </div>
+    </div>
+  </body>
+  </html>",Sent when user requests license key resend,"[""licenseKey""]",true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
+a59a0725-5f3e-4799-bb78-b49afec2ef08,password_reset,Password Reset,Reset Your MineGlance Password,"<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Reset Your Password</title>
+  </head>
+  <body style=""margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"">
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #0a0a0a; padding: 40px 20px;"">
+      <tr>
+        <td align=""center"">
+          <table width=""600"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #141414; border-radius: 16px; border: 1px solid #2d2d2d;"">
+            <tr>
+              <td style=""padding: 40px 40px 20px; text-align: center;"">
+                <h1 style=""margin: 0; color: #38a169; font-size: 28px; font-weight: bold;"">Reset Your Password</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding: 20px 40px;"">
+                <p style=""color: #e5e7eb; font-size: 16px; line-height: 1.6; margin: 0 0 20px;"">
+                  We received a request to reset your MineGlance password. Click the button below to create a new password.
+                </p>
+                <div style=""text-align: center; margin: 30px 0;"">
+                  <a href=""{{resetLink}}"" style=""display: inline-block; background-color: #38a169; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;"">Reset Password</a>
+                </div>
+                <p style=""color: #9ca3af; font-size: 14px; line-height: 1.6; margin: 20px 0 0;"">
+                  This link will expire in 1 hour. If you didn't request this reset, you can safely ignore this email.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding: 30px 40px; border-top: 1px solid #2d2d2d;"">
+                <p style=""color: #6b7280; font-size: 12px; margin: 0; text-align: center;"">
+                  Questions? Visit <a href=""https://www.mineglance.com/support"" style=""color: #38a169;"">mineglance.com/support</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>",Sent when user requests password reset,"[""resetLink""]",true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
+a9f48f3f-6b02-4047-8d39-1070147b3ad8,alert_worker_offline,Alert: Worker Offline,MineGlance: Worker Offline - {{walletName}},"<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>MineGlance Alert</title>
+  </head>
+  <body style=""margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7fafc;"">
+    <div style=""max-width: 600px; margin: 0 auto; padding: 40px 20px;"">
+      <div style=""text-align: center; margin-bottom: 24px;"">
+        <span style=""font-size: 48px;"">🔴</span>
+        <h1 style=""color: #1a365d; font-size: 24px; margin: 16px 0 0 0;"">Worker Offline</h1>
+      </div>
+      <div style=""background: #fed7d7; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid #fc8181;"">
+        <p style=""color: #2d3748; font-size: 16px; margin: 0 0 8px 0;"">
+          <strong>Wallet:</strong> {{walletName}}
+        </p>
+        <p style=""color: #4a5568; font-size: 15px; margin: 0; line-height: 1.6;"">
+          {{message}}
+        </p>
+      </div>
+      <div style=""text-align: center; margin-bottom: 32px;"">
+        <a href=""https://mineglance.com/dashboard"" style=""display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px;"">View Dashboard</a>
+      </div>
+      <div style=""text-align: center; padding-top: 24px; border-top: 1px solid #e2e8f0;"">
+        <p style=""color: #a0aec0; font-size: 12px; margin: 0;"">
+          You received this alert because email notifications are enabled.<br>
+          <a href=""https://mineglance.com/dashboard"" style=""color: #a0aec0;"">Manage your account</a>
+        </p>
+      </div>
+    </div>
+  </body>
+  </html>",Sent when a mining worker goes offline,"[""walletName"", ""message""]",true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
+b43f628e-8f64-4727-a4dd-5813044e6512,user-2fa-disabled,User 2FA Disabled Notification,Two-Factor Authentication Disabled - MineGlance,"<div style=""font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #0f172a;"">
+    <div style=""background: #1e293b; border-radius: 12px; padding: 32px; border: 1px solid #334155;"">
+      <div style=""text-align: center; margin-bottom: 24px;"">
+        <div style=""width: 60px; height: 60px; background: #f59e0b; border-radius: 50%; margin: 0 auto 16px; display: inline-flex; align-items: center; justify-content: center;"">
+          <span style=""font-size: 28px;"">⚠️</span>
+        </div>
+        <h1 style=""color: #f1f5f9; font-size: 24px; margin: 0;"">Two-Factor Authentication Disabled</h1>
+      </div>
+      <p style=""color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 16px;"">Hi {{fullName}},</p>
+      <p style=""color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 16px;"">Two-factor authentication has been disabled on your MineGlance account.</p>
+      <p style=""color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 24px;"">Your account is now protected by password only. We strongly recommend re-enabling 2FA for maximum security.</p>
+      <div style=""background: #450a0a; border: 1px solid #ef4444; border-radius: 8px; padding: 16px; margin-bottom: 24px;"">
+        <p style=""color: #fca5a5; font-size: 14px; margin: 0;""><strong>Warning:</strong> If you did not disable 2FA, your account may be compromised. Please change your password immediately and contact support@mineglance.com</p>
+      </div>
+      <p style=""color: #64748b; font-size: 14px; margin: 0;"">Stay secure,<br><span style=""color: #4ade80;"">The MineGlance Team</span></p>
+    </div>
+  </div>",Sent when a user disables 2FA on their dashboard account,"[""email"", ""fullName""]",true,2026-01-18 21:46:50.887492+00,2026-01-18 21:46:50.887492+00
+c239bcc9-910e-4597-b2c4-e9486900dec9,user-2fa-enabled,User 2FA Enabled Confirmation,Two-Factor Authentication Enabled - MineGlance,"<div style=""font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #0f172a;"">
+    <div style=""background: #1e293b; border-radius: 12px; padding: 32px; border: 1px solid #334155;"">
+      <div style=""text-align: center; margin-bottom: 24px;"">
+        <div style=""width: 60px; height: 60px; background: #10b981; border-radius: 50%; margin: 0 auto 16px; display: inline-flex; align-items: center; justify-content: center;"">
+          <span style=""font-size: 28px;"">🔒</span>
+        </div>
+        <h1 style=""color: #f1f5f9; font-size: 24px; margin: 0;"">Two-Factor Authentication Enabled</h1>
+      </div>
+      <p style=""color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 16px;"">Hi {{fullName}},</p>
+      <p style=""color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 16px;"">Two-factor authentication has been successfully enabled on your MineGlance account.</p>
+      <p style=""color: #94a3b8; font-size: 16px; line-height: 1.6; margin: 0 0 24px;"">From now on, you will need to enter a code from your authenticator app when signing in to the dashboard.</p>
+      <div style=""background: #422006; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 24px;"">
+        <p style=""color: #fcd34d; font-size: 14px; margin: 0;""><strong>Important:</strong> Make sure you have saved your backup codes in a safe place. If you lose access to your authenticator app, you will need them to sign in.</p>
+      </div>
+      <div style=""background: #1e1e2f; border: 1px solid #334155; border-radius: 8px; padding: 16px; margin-bottom: 24px;"">
+        <p style=""color: #ef4444; font-size: 14px; margin: 0;""><strong>Security Alert:</strong> If you did not enable 2FA, please contact support immediately at support@mineglance.com</p>
+      </div>
+      <p style=""color: #64748b; font-size: 14px; margin: 0;"">Stay secure,<br><span style=""color: #4ade80;"">The MineGlance Team</span></p>
+    </div>
+  </div>",Sent when a user enables 2FA on their dashboard account,"[""email"", ""fullName""]",true,2026-01-18 21:46:50.887492+00,2026-01-18 21:46:50.887492+00
+d76c51e8-f215-45b6-a2c1-8d93376ea9da,alert_profit_drop,Alert: Profit Drop,MineGlance: Profit Drop - {{walletName}},"<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>MineGlance Alert</title>
+  </head>
+  <body style=""margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7fafc;"">
+    <div style=""max-width: 600px; margin: 0 auto; padding: 40px 20px;"">
+      <div style=""text-align: center; margin-bottom: 24px;"">
+        <span style=""font-size: 48px;"">📉</span>
+        <h1 style=""color: #1a365d; font-size: 24px; margin: 16px 0 0 0;"">Profit Drop</h1>
+      </div>
+      <div style=""background: #feebc8; border-radius: 12px; padding: 24px; margin-bottom: 24px; border: 1px solid #f6ad55;"">
+        <p style=""color: #2d3748; font-size: 16px; margin: 0 0 8px 0;"">
+          <strong>Wallet:</strong> {{walletName}}
+        </p>
+        <p style=""color: #4a5568; font-size: 15px; margin: 0; line-height: 1.6;"">
+          {{message}}
+        </p>
+      </div>
+      <div style=""text-align: center; margin-bottom: 32px;"">
+        <a href=""https://mineglance.com/dashboard"" style=""display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 15px;"">View Dashboard</a>
+      </div>
+      <div style=""text-align: center; padding-top: 24px; border-top: 1px solid #e2e8f0;"">
+        <p style=""color: #a0aec0; font-size: 12px; margin: 0;"">
+          You received this alert because email notifications are enabled.<br>
+          <a href=""https://mineglance.com/dashboard"" style=""color: #a0aec0;"">Manage your account</a>
+        </p>
+      </div>
+    </div>
+  </body>
+  </html>",Sent when mining profit drops significantly,"[""walletName"", ""message""]",true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
+d848ddd0-5717-439c-a9d7-083bb17a547f,welcome_free,Welcome Email (Free User),Welcome to MineGlance!,"<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset=""utf-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Welcome to MineGlance!</title>
+  </head>
+  <body style=""margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"">
+    <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #0a0a0a; padding: 40px 20px;"">
+      <tr>
+        <td align=""center"">
+          <table width=""600"" cellpadding=""0"" cellspacing=""0"" style=""background-color: #141414; border-radius: 16px; border: 1px solid #2d2d2d;"">
+            <tr>
+              <td style=""padding: 40px 40px 20px; text-align: center;"">
+                <h1 style=""margin: 0; color: #38a169; font-size: 28px; font-weight: bold;"">Email Verified!</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding: 20px 40px;"">
+                <p style=""color: #e5e7eb; font-size: 16px; line-height: 1.6; margin: 0 0 20px;"">
+                  Your account is now active. You can start tracking your mining operations!
+                </p>
+                <div style=""text-align: center; margin: 30px 0;"">
+                  <a href=""https://www.mineglance.com/dashboard"" style=""display: inline-block; background: linear-gradient(135deg, #38a169 0%, #2f855a 100%); color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;"">Go to Dashboard</a>
+                </div>
+                <div style=""background: rgba(56, 161, 105, 0.1); border: 1px solid rgba(56, 161, 105, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin-top: 30px;"">
+                  <p style=""color: #38a169; margin: 0 0 10px; font-size: 14px; font-weight: 600;"">Upgrade to Pro - Save 10%</p>
+                  <p style=""color: #9ca3af; margin: 0; font-size: 13px;"">Use code <strong style=""color: #fbbf24;"">MINE26</strong> for $59/year</p>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style=""padding: 30px 40px; border-top: 1px solid #2d2d2d;"">
+                <p style=""color: #6b7280; font-size: 12px; margin: 0; text-align: center;"">
+                  Questions? Visit <a href=""https://www.mineglance.com/support"" style=""color: #38a169;"">mineglance.com/support</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>",Sent after free user verifies their email,[],true,2026-01-18 17:29:53.243964+00,2026-01-18 17:29:53.243964+00
