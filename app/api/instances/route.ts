@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
         version: version || null,
         last_seen: new Date().toISOString()
       }, {
-        onConflict: 'user_id,instance_id'
+        onConflict: 'instance_id'
       })
       .select()
       .single()
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT - Update last seen (heartbeat)
+// PUT - Update last seen (heartbeat) - uses UPSERT to handle missing instances
 export async function PUT(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request)
@@ -135,29 +135,34 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { instanceId, version } = await request.json()
+    const { instanceId, version, deviceType, deviceName } = await request.json()
 
     if (!instanceId) {
       return NextResponse.json({ error: 'instanceId is required' }, { status: 400 })
     }
 
-    const updateData: any = {
+    // Use UPSERT to handle cases where instance was deleted or never registered
+    const upsertData: any = {
+      user_id: user.id,
+      instance_id: instanceId,
       last_seen: new Date().toISOString()
     }
-    if (version) updateData.version = version
+    if (version) upsertData.version = version
+    if (deviceType) upsertData.device_type = deviceType
+    if (deviceName) upsertData.device_name = deviceName
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('user_instances')
-      .update(updateData)
-      .eq('user_id', user.id)
-      .eq('instance_id', instanceId)
+      .upsert(upsertData, { onConflict: 'instance_id' })
+      .select()
+      .single()
 
     if (error) {
       console.error('Error updating instance:', error)
       return NextResponse.json({ error: 'Failed to update device' }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, lastSeen: data?.last_seen })
 
   } catch (error) {
     console.error('PUT instance error:', error)

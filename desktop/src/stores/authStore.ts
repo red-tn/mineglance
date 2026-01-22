@@ -388,8 +388,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const instanceId = await getInstanceId();
+      const platform = navigator.platform.toLowerCase();
+      const deviceType = platform.includes('mac') ? 'desktop_macos' : 'desktop_windows';
 
-      await fetch(`${API_BASE}/api/instances`, {
+      const response = await fetch(`${API_BASE}/api/instances`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -398,8 +400,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         body: JSON.stringify({
           instanceId,
           version: APP_VERSION,
+          deviceType,
+          deviceName: `MineGlance Desktop (${platform.includes('mac') ? 'macOS' : 'Windows'})`,
         }),
       });
+
+      if (!response.ok) {
+        console.error('Heartbeat failed with status:', response.status);
+      }
     } catch (e) {
       console.error('Heartbeat failed:', e);
     }

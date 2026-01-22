@@ -177,7 +177,7 @@ async function sendHeartbeat() {
   if (!authToken || !installId) return;
 
   try {
-    await fetch(`${API_BASE}/instances`, {
+    const response = await fetch(`${API_BASE}/instances`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${authToken}`,
@@ -186,9 +186,15 @@ async function sendHeartbeat() {
       body: JSON.stringify({
         instanceId: installId,
         version: chrome.runtime.getManifest().version,
+        deviceType: 'extension',
+        deviceName: 'Chrome Extension',
       }),
     });
-    console.log('Heartbeat sent successfully');
+    if (response.ok) {
+      console.log('Heartbeat sent successfully');
+    } else {
+      console.error('Heartbeat failed with status:', response.status);
+    }
   } catch (e) {
     console.error('Heartbeat failed:', e);
   }
