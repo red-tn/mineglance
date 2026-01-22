@@ -42,7 +42,7 @@ export default function TermsOfService() {
               <h2 className="text-2xl font-semibold text-foreground mt-8 mb-4">Free and Pro Versions</h2>
               <h3 className="text-xl font-semibold text-foreground mt-6 mb-3">Free Version</h3>
               <p>
-                The free version of MineGlance allows you to track 1 wallet on any supported mining pool
+                The free version of MineGlance allows you to track 2 wallets on any supported mining pool
                 and any supported coin. All 12+ pools and 16+ coins are available to free users. There is no
                 time limit on the free version.
               </p>

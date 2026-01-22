@@ -13,7 +13,8 @@ async function getInstanceId(): Promise<string> {
   let instanceId = await store.get<string>('instanceId');
 
   if (!instanceId) {
-    instanceId = 'desktop-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    // Use crypto.randomUUID for cryptographically secure ID generation
+    instanceId = 'desktop-' + crypto.randomUUID();
     await store.set('instanceId', instanceId);
     await store.save();
   }

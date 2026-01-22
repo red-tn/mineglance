@@ -1089,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             newWallet.id = data.wallet.id; // Use server-assigned ID
           }
           if (data.limitReached) {
-            alert('Free accounts are limited to 1 wallet. Upgrade to Pro for unlimited wallets.');
+            alert('Free accounts are limited to 2 wallets. Upgrade to Pro for unlimited wallets.');
             return;
           }
         } catch (err) {

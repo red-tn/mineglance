@@ -822,8 +822,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (let i = 0; i < enabledWallets.length; i++) {
       const wallet = enabledWallets[i];
 
-      // Free users only get 1 wallet - others are locked
-      if (!isPaid && i > 0) {
+      // Free users only get 2 wallets - others are locked
+      if (!isPaid && i > 1) {
         walletResults.push({
           wallet,
           locked: true

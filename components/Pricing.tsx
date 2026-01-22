@@ -10,7 +10,7 @@ export default function Pricing() {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>(null)
 
   const freeFeatures = [
-    '1 wallet',
+    '2 wallets',
     'All 12+ pools supported',
     'All coins supported',
     'Net profit calculation',

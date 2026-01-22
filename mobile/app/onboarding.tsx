@@ -126,7 +126,7 @@ export default function OnboardingScreen() {
               </TouchableOpacity>
 
               <Text style={styles.note}>
-                Free account - 1 wallet.{' '}
+                Free account - 2 wallets.{' '}
                 <Text
                   style={styles.link}
                   onPress={() => Linking.openURL('https://mineglance.com/#pricing')}

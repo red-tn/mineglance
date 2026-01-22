@@ -615,7 +615,7 @@ export default function DevicesPage() {
                   You can use MineGlance on multiple devices with the free plan. Your wallets sync across all your browser extensions and desktop apps automatically.
                 </p>
                 <a
-                  href="https://mineglance.com/#pricing"
+                  href="https://www.mineglance.com/#pricing"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 mt-3 text-sm text-primary hover:underline"

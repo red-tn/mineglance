@@ -3,17 +3,17 @@
 const API_BASE = 'https://www.mineglance.com/api';
 
 // Free tier restrictions
-// Free users: 1 wallet, any pool, any coin
+// Free users: 2 wallets, any pool, any coin
 // Pro users: unlimited wallets, all pools, all coins
-const FREE_TIER_MAX_WALLETS = 1;
+const FREE_TIER_MAX_WALLETS = 2;
 
 // Check if wallet is allowed for user's plan
 function isWalletAllowed(wallet, isPaid, walletIndex) {
   if (isPaid) return { allowed: true };
 
-  // Free tier: max 1 wallet
+  // Free tier: max 2 wallets
   if (walletIndex >= FREE_TIER_MAX_WALLETS) {
-    return { allowed: false, reason: 'Free tier is limited to 1 wallet. Upgrade to Pro for unlimited wallets.' };
+    return { allowed: false, reason: 'Free tier is limited to 2 wallets. Upgrade to Pro for unlimited wallets.' };
   }
 
   return { allowed: true };
@@ -88,9 +88,14 @@ async function checkLicenseStatus(licenseKey, installId) {
   if (!licenseKey || !installId) return { isPro: false };
 
   try {
-    const response = await fetch(
-      `${API_BASE}/activate-license?key=${encodeURIComponent(licenseKey)}&installId=${encodeURIComponent(installId)}`
-    );
+    const response = await fetch(`${API_BASE}/activate-license`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${licenseKey}`
+      },
+      body: JSON.stringify({ installId })
+    });
     const data = await response.json();
     return data;
   } catch {

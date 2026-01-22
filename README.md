@@ -31,7 +31,7 @@ Mining profitability dashboard for cryptocurrency miners. Monitor your hashrate,
 
 ## Pricing
 
-- **Free** - 1 wallet, all pools, all coins, basic features
+- **Free** - 2 wallets, all pools, all coins, basic features
 - **Pro** - Unlimited wallets, email alerts, cloud sync, mobile app
   - Monthly: $6.99/month
   - Annual: $59/year (save 30%)

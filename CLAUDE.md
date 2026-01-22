@@ -72,7 +72,7 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
    **Storage bucket:** `https://supabase.com/dashboard/project/zbytbrcumxgfeqvhmzsf/storage/files/buckets/software`
 
 5. **Subscription Model** - MineGlance offers three Pro billing options:
-   - Free tier: 1 wallet, ALL pools supported, ALL coins supported
+   - Free tier: 2 wallets, ALL pools supported, ALL coins supported
    - Pro Monthly: $6.99/month
    - Pro Annual: $59/year (best value)
    - Pro Lifetime: $99 one-time (never expires)

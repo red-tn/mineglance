@@ -13,7 +13,7 @@ const faqs = [
   },
   {
     question: 'How does the free version work?',
-    answer: 'The free version lets you track 1 wallet on any supported pool and coin. You get full access to all 12+ pools and all coins—just limited to a single wallet. No credit card required, no time limit. Upgrade to Pro for unlimited wallets.'
+    answer: 'The free version lets you track 2 wallets on any supported pool and coin. You get full access to all 12+ pools and all coins. No credit card required, no time limit. Upgrade to Pro for unlimited wallets.'
   },
   {
     question: 'How does coin comparison work?',

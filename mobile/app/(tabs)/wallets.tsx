@@ -383,7 +383,7 @@ export default function WalletsScreen() {
           <View style={styles.upgradeCard}>
             <Text style={styles.upgradeTitle}>Unlock All Wallets</Text>
             <Text style={styles.upgradeText}>
-              Free users can only view one wallet. Upgrade to Pro to monitor unlimited wallets.
+              Free users can only view 2 wallets. Upgrade to Pro to monitor unlimited wallets.
             </Text>
             <TouchableOpacity
               style={styles.upgradeButton}

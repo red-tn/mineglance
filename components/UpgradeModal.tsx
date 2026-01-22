@@ -243,7 +243,7 @@ export default function UpgradeModal({ isOpen, onClose, userEmail, trigger }: Up
                 {trigger === 'wallet_limit' && (
                   <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-center">
                     <p className="text-amber-400 text-sm">
-                      Free accounts are limited to 1 wallet. Upgrade for unlimited!
+                      Free accounts are limited to 2 wallets. Upgrade for unlimited!
                     </p>
                   </div>
                 )}

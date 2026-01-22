@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, memo } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import {
   EmbeddedCheckoutProvider,
@@ -23,7 +23,7 @@ interface RetentionOfferModalProps {
   userEmail?: string
 }
 
-export default function RetentionOfferModal({
+function RetentionOfferModal({
   isOpen,
   onClose,
   onAcceptOffer,
@@ -343,3 +343,5 @@ export default function RetentionOfferModal({
     </div>
   )
 }
+
+export default memo(RetentionOfferModal)

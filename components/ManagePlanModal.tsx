@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import {
   EmbeddedCheckoutProvider,
@@ -53,7 +53,7 @@ const PLAN_INFO: Record<UpgradePlan, {
   }
 }
 
-export default function ManagePlanModal({ isOpen, onClose, billingType, userEmail }: ManagePlanModalProps) {
+function ManagePlanModal({ isOpen, onClose, billingType, userEmail }: ManagePlanModalProps) {
   const [step, setStep] = useState<'select' | 'checkout'>('select')
   const [selectedPlan, setSelectedPlan] = useState<UpgradePlan | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
@@ -371,3 +371,5 @@ export default function ManagePlanModal({ isOpen, onClose, billingType, userEmai
     </div>
   )
 }
+
+export default memo(ManagePlanModal)

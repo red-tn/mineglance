@@ -5,9 +5,9 @@ import { POOLS, PoolStats, PoolWorker } from '@/constants/pools';
 import { getCoinDivisor } from '@/constants/coins';
 
 // Free tier restrictions (must match extension)
-// Free users: 1 wallet, any pool, any coin
+// Free users: 2 wallets, any pool, any coin
 // Pro users: unlimited wallets, all pools, all coins
-export const FREE_TIER_MAX_WALLETS = 1;
+export const FREE_TIER_MAX_WALLETS = 2;
 
 export interface WalletRestriction {
   allowed: boolean;
@@ -21,9 +21,9 @@ export function isWalletAllowed(
 ): WalletRestriction {
   if (isPro) return { allowed: true };
 
-  // Free tier: max 1 wallet
+  // Free tier: max 2 wallets
   if (walletIndex >= FREE_TIER_MAX_WALLETS) {
-    return { allowed: false, reason: 'Free tier is limited to 1 wallet. Upgrade to Pro for unlimited wallets.' };
+    return { allowed: false, reason: 'Free tier is limited to 2 wallets. Upgrade to Pro for unlimited wallets.' };
   }
 
   return { allowed: true };
