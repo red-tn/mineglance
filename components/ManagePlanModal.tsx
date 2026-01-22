@@ -213,7 +213,8 @@ export default function ManagePlanModal({ isOpen, onClose, billingType, userEmai
                         <p className="text-sm text-dark-text-muted mt-1">Enter code STAY10 at checkout</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xl font-bold text-dark-text">$59</p>
+                        <p className="text-sm text-dark-text-dim line-through">$59.00</p>
+                        <p className="text-xl font-bold text-green-400">$53.10</p>
                         <p className="text-xs text-dark-text-dim">per year</p>
                       </div>
                     </div>
