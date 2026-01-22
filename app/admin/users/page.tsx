@@ -599,18 +599,16 @@ export default function UsersPage() {
       {selectedUser && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="glass-card rounded-xl border border-dark-border max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-dark-border">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-dark-text">User Details</h2>
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="text-dark-text-muted hover:text-dark-text"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+            <div className="px-4 py-3 border-b border-dark-border flex items-center justify-between">
+              <h2 className="text-lg font-bold text-dark-text">User Details</h2>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="text-dark-text-muted hover:text-dark-text p-1"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
 
             {userLoading ? (
@@ -620,148 +618,152 @@ export default function UsersPage() {
               </div>
             ) : (
               <>
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-3">
                   {/* Profile Photo & Name Section */}
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     {selectedUser.profile_photo_url ? (
                       <img
                         src={selectedUser.profile_photo_url}
                         alt="Profile"
-                        className="w-16 h-16 rounded-full object-cover border-2 border-dark-border"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-dark-border"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-full bg-dark-card-hover border-2 border-dark-border flex items-center justify-center">
-                        <svg className="w-8 h-8 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-12 h-12 rounded-full bg-dark-card-hover border-2 border-dark-border flex items-center justify-center">
+                        <svg className="w-6 h-6 text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
                     )}
-                    <div>
-                      <p className="text-lg font-semibold text-dark-text">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-dark-text truncate">
                         {selectedUser.full_name || 'No name set'}
                       </p>
-                      <p className="text-sm text-primary">@{selectedUser.blog_display_name || 'Anonymous'}</p>
+                      <p className="text-sm text-primary truncate">@{selectedUser.blog_display_name || 'Anonymous'}</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Full Name</label>
-                      <p className="text-dark-text">{selectedUser.full_name || '-'}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Full Name</label>
+                      <p className="text-sm text-dark-text">{selectedUser.full_name || '-'}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Display Name</label>
-                      <p className="text-dark-text">{selectedUser.blog_display_name || '-'}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Display Name</label>
+                      <p className="text-sm text-dark-text">{selectedUser.blog_display_name || '-'}</p>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-dark-text-muted">Email</label>
-                    <p className="text-dark-text">{selectedUser.email}</p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-dark-text-muted">Extension Version</label>
-                    <p className="font-mono text-sm bg-dark-bg text-dark-text p-2 rounded">
-                      {selectedUser.extVersion ? `v${selectedUser.extVersion}` : 'Not installed'}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Plan</label>
+                      <label className="text-xs font-medium text-dark-text-muted">Email</label>
+                      <p className="text-sm text-dark-text break-all">{selectedUser.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-dark-text-muted">Extension Version</label>
+                      <p className="font-mono text-sm bg-dark-bg text-dark-text px-2 py-1 rounded inline-block">
+                        {selectedUser.extVersion ? `v${selectedUser.extVersion}` : 'Not installed'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-dark-text-muted">Plan</label>
                       <p>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(selectedUser.plan)}`}>
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPlanBadge(selectedUser.plan)}`}>
                           {selectedUser.plan === 'free' ? 'FREE' : 'PRO'}
                         </span>
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Billing</label>
+                      <label className="text-xs font-medium text-dark-text-muted">Billing</label>
                       <p>
                         {selectedUser.plan === 'pro' ? (
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getBillingTypeBadge(selectedUser.billingType)}`}>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getBillingTypeBadge(selectedUser.billingType)}`}>
                             {getBillingTypeLabel(selectedUser.billingType)}
                           </span>
                         ) : (
-                          <span className="text-dark-text-muted">-</span>
+                          <span className="text-dark-text-muted text-sm">-</span>
                         )}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Status</label>
+                      <label className="text-xs font-medium text-dark-text-muted">Status</label>
                       <p>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(selectedUser.status)}`}>
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadge(selectedUser.status)}`}>
                           {selectedUser.status}
                         </span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Subscription Started</label>
-                      <p className="text-dark-text">{selectedUser.subscription_start_date ? formatDate(selectedUser.subscription_start_date) : '-'}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Subscription Started</label>
+                      <p className="text-sm text-dark-text">{selectedUser.subscription_start_date ? formatDate(selectedUser.subscription_start_date) : '-'}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Subscription Expires</label>
-                      <p className="text-dark-text">{selectedUser.subscription_end_date ? formatDate(selectedUser.subscription_end_date) : '-'}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Subscription Expires</label>
+                      <p className="text-sm text-dark-text">{selectedUser.subscription_end_date ? formatDate(selectedUser.subscription_end_date) : '-'}</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Installations</label>
-                      <p className="text-dark-text">{selectedUser.installCount}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Installs</label>
+                      <p className="text-sm text-dark-text">{selectedUser.installCount}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Wallets</label>
-                      <p className="text-dark-text">{selectedUser.walletCount}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Wallets</label>
+                      <p className="text-sm text-dark-text">{selectedUser.walletCount}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Mining Rigs</label>
-                      <p className="text-dark-text">{selectedUser.rigCount}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Rigs</label>
+                      <p className="text-sm text-dark-text">{selectedUser.rigCount}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Blog Emails</label>
+                      <label className="text-xs font-medium text-dark-text-muted">Blog</label>
                       <p>
                         {selectedUser.blog_email_opt_in !== false ? (
-                          <span className="text-green-400">Subscribed</span>
+                          <span className="text-green-400 text-sm">Yes</span>
                         ) : (
-                          <span className="text-dark-text-dim">Unsubscribed</span>
+                          <span className="text-dark-text-dim text-sm">No</span>
                         )}
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Created</label>
-                      <p className="text-dark-text">{formatDate(selectedUser.created_at)}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Created</label>
+                      <p className="text-sm text-dark-text">{formatDate(selectedUser.created_at)}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Amount Paid</label>
-                      <p className="text-dark-text">{selectedUser.amount_paid ? formatAmount(selectedUser.amount_paid) : '-'}</p>
+                      <label className="text-xs font-medium text-dark-text-muted">Amount Paid</label>
+                      <p className="text-sm text-dark-text">{selectedUser.amount_paid ? formatAmount(selectedUser.amount_paid) : '-'}</p>
                     </div>
                   </div>
 
-                  {selectedUser.stripe_customer_id && (
-                    <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Stripe Customer</label>
-                      <p className="font-mono text-sm text-dark-text">{selectedUser.stripe_customer_id}</p>
-                    </div>
-                  )}
-
-                  {selectedUser.stripe_payment_id && (
-                    <div>
-                      <label className="text-sm font-medium text-dark-text-muted">Stripe Payment</label>
-                      <p className="font-mono text-sm text-dark-text">{selectedUser.stripe_payment_id}</p>
+                  {(selectedUser.stripe_customer_id || selectedUser.stripe_payment_id) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {selectedUser.stripe_customer_id && (
+                        <div>
+                          <label className="text-xs font-medium text-dark-text-muted">Stripe Customer</label>
+                          <p className="font-mono text-xs text-dark-text truncate">{selectedUser.stripe_customer_id}</p>
+                        </div>
+                      )}
+                      {selectedUser.stripe_payment_id && (
+                        <div>
+                          <label className="text-xs font-medium text-dark-text-muted">Stripe Payment</label>
+                          <p className="font-mono text-xs text-dark-text truncate">{selectedUser.stripe_payment_id}</p>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Payment History Section */}
-                  <div className="pt-4 border-t border-dark-border">
-                    <h3 className="text-lg font-semibold text-dark-text mb-3">Payment History</h3>
+                  <div className="pt-3 border-t border-dark-border">
+                    <h3 className="text-sm font-semibold text-dark-text mb-2">Payment History</h3>
                     {selectedUser.paymentHistory && selectedUser.paymentHistory.length > 0 ? (
                       <div className="max-h-48 overflow-y-auto border border-dark-border rounded-lg">
                         <table className="w-full text-sm">
@@ -803,53 +805,72 @@ export default function UsersPage() {
                   </div>
                 </div>
 
-                <div className="p-6 border-t border-dark-border bg-dark-card-hover flex gap-3 flex-wrap">
-                  <button
-                    onClick={() => openEmailModal(selectedUser)}
-                    disabled={actionLoading}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
-                  >
-                    Email User
-                  </button>
-                  {selectedUser.plan !== 'free' && selectedUser.key && (
+                <div className="px-4 py-3 border-t border-dark-border bg-dark-card-hover">
+                  <div className="flex flex-wrap gap-2 justify-between items-center">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => openEmailModal(selectedUser)}
+                        disabled={actionLoading}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-600/80 text-white rounded hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Email
+                      </button>
+                      {selectedUser.plan !== 'free' && selectedUser.key && (
+                        <button
+                          onClick={() => handleResendLicense(selectedUser.email)}
+                          disabled={actionLoading}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-blue-600/80 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                          Resend Key
+                        </button>
+                      )}
+                      {selectedUser.status === 'active' ? (
+                        <button
+                          onClick={() => handleAction(selectedUser.key, 'revoke')}
+                          disabled={actionLoading}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-orange-600/80 text-white rounded hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                          </svg>
+                          Revoke
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAction(selectedUser.key, 'activate')}
+                          disabled={actionLoading}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600/80 text-white rounded hover:bg-green-600 disabled:opacity-50 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Activate
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openDeleteConfirm(selectedUser.id, selectedUser.email, selectedUser.plan)}
+                        disabled={actionLoading}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-400 rounded hover:bg-red-900/30 disabled:opacity-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
                     <button
-                      onClick={() => handleResendLicense(selectedUser.email)}
-                      disabled={actionLoading}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      onClick={() => setSelectedUser(null)}
+                      className="px-3 py-1.5 text-sm text-dark-text-muted hover:text-dark-text transition-colors"
                     >
-                      {actionLoading ? 'Sending...' : 'Resend License Email'}
+                      Close
                     </button>
-                  )}
-                  {selectedUser.status === 'active' ? (
-                    <button
-                      onClick={() => handleAction(selectedUser.key, 'revoke')}
-                      disabled={actionLoading}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                    >
-                      {actionLoading ? 'Processing...' : 'Revoke License'}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleAction(selectedUser.key, 'activate')}
-                      disabled={actionLoading}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {actionLoading ? 'Processing...' : 'Reactivate License'}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => openDeleteConfirm(selectedUser.id, selectedUser.email, selectedUser.plan)}
-                    disabled={actionLoading}
-                    className="px-4 py-2 bg-red-900 text-red-200 rounded-lg hover:bg-red-800 disabled:opacity-50 border border-red-700"
-                  >
-                    Delete & Purge All Data
-                  </button>
-                  <button
-                    onClick={() => setSelectedUser(null)}
-                    className="px-4 py-2 border border-dark-border text-dark-text rounded-lg hover:bg-dark-card-hover"
-                  >
-                    Close
-                  </button>
+                  </div>
                 </div>
               </>
             )}
