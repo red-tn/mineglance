@@ -42,11 +42,13 @@ export default function ManagePlanModal({ isOpen, onClose, billingType }: Manage
 
   const handleUpgrade = (plan: 'annual' | 'lifetime') => {
     setLoading(plan)
-    // Direct to Stripe checkout
+    // Direct to Stripe checkout with coupons
     if (plan === 'annual') {
-      window.location.href = 'https://buy.stripe.com/dR617I4DP42l1LqcMN'
+      // STAY10 = 10% off annual
+      window.location.href = 'https://buy.stripe.com/dR617I4DP42l1LqcMN?prefilled_promo_code=STAY10'
     } else {
-      window.location.href = 'https://buy.stripe.com/4gw4jUcglaUNc0U7st'
+      // STAY25 = 25% off lifetime
+      window.location.href = 'https://buy.stripe.com/4gw4jUcglaUNc0U7st?prefilled_promo_code=STAY25'
     }
   }
 
@@ -100,12 +102,13 @@ export default function ManagePlanModal({ isOpen, onClose, billingType }: Manage
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-dark-text">Annual Plan</span>
-                      <span className="px-2 py-0.5 bg-green-700 text-green-200 text-xs rounded">Save 30%</span>
+                      <span className="px-2 py-0.5 bg-green-700 text-green-200 text-xs rounded">10% OFF</span>
                     </div>
-                    <p className="text-sm text-dark-text-muted mt-1">$59/year instead of $83.88/year</p>
+                    <p className="text-sm text-dark-text-muted mt-1">STAY10 coupon auto-applied</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-dark-text">$59</p>
+                    <p className="text-sm text-dark-text-dim line-through">$59</p>
+                    <p className="text-xl font-bold text-green-400">$53.10</p>
                     <p className="text-xs text-dark-text-dim">per year</p>
                   </div>
                 </div>
@@ -127,12 +130,13 @@ export default function ManagePlanModal({ isOpen, onClose, billingType }: Manage
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-dark-text">Lifetime Plan</span>
-                      <span className="px-2 py-0.5 bg-purple-700 text-purple-200 text-xs rounded">Best Value</span>
+                      <span className="px-2 py-0.5 bg-purple-700 text-purple-200 text-xs rounded">25% OFF</span>
                     </div>
-                    <p className="text-sm text-dark-text-muted mt-1">One-time payment, never expires</p>
+                    <p className="text-sm text-dark-text-muted mt-1">STAY25 coupon auto-applied</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-dark-text">$99</p>
+                    <p className="text-sm text-dark-text-dim line-through">$99</p>
+                    <p className="text-xl font-bold text-purple-400">$74.25</p>
                     <p className="text-xs text-dark-text-dim">one-time</p>
                   </div>
                 </div>
@@ -160,12 +164,13 @@ export default function ManagePlanModal({ isOpen, onClose, billingType }: Manage
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-dark-text">Upgrade to Lifetime</span>
-                      <span className="px-2 py-0.5 bg-purple-700 text-purple-200 text-xs rounded">Best Value</span>
+                      <span className="px-2 py-0.5 bg-purple-700 text-purple-200 text-xs rounded">25% OFF</span>
                     </div>
-                    <p className="text-sm text-dark-text-muted mt-1">One-time payment, never expires</p>
+                    <p className="text-sm text-dark-text-muted mt-1">STAY25 coupon auto-applied</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-dark-text">$99</p>
+                    <p className="text-sm text-dark-text-dim line-through">$99</p>
+                    <p className="text-xl font-bold text-purple-400">$74.25</p>
                     <p className="text-xs text-dark-text-dim">one-time</p>
                   </div>
                 </div>
