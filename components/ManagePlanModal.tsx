@@ -44,7 +44,7 @@ const PLAN_INFO: Record<UpgradePlan, {
     coupon: 'STAY25',
     badge: '25% OFF',
     badgeColor: 'bg-purple-700 text-purple-200',
-    description: 'STAY25 coupon auto-applied'
+    description: 'Use code STAY25 at checkout'
   },
   monthly: {
     price: 699,
@@ -119,8 +119,7 @@ export default function ManagePlanModal({ isOpen, onClose, billingType, userEmai
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan,
-          email: userEmail,
-          coupon: planInfo.coupon // Pre-apply coupon if available
+          email: userEmail
         }),
       })
 
@@ -213,11 +212,10 @@ export default function ManagePlanModal({ isOpen, onClose, billingType, userEmai
                           <span className="font-semibold text-dark-text">Annual Plan</span>
                           <span className="px-2 py-0.5 bg-green-700 text-green-200 text-xs rounded">10% OFF</span>
                         </div>
-                        <p className="text-sm text-dark-text-muted mt-1">STAY10 coupon auto-applied</p>
+                        <p className="text-sm text-dark-text-muted mt-1">Use code STAY10 at checkout</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-dark-text-dim line-through">$59.00</p>
-                        <p className="text-xl font-bold text-green-400">$53.10</p>
+                        <p className="text-xl font-bold text-dark-text">$59</p>
                         <p className="text-xs text-dark-text-dim">per year</p>
                       </div>
                     </div>
@@ -241,7 +239,7 @@ export default function ManagePlanModal({ isOpen, onClose, billingType, userEmai
                           <span className="font-semibold text-dark-text">Lifetime Plan</span>
                           <span className="px-2 py-0.5 bg-purple-700 text-purple-200 text-xs rounded">25% OFF</span>
                         </div>
-                        <p className="text-sm text-dark-text-muted mt-1">STAY25 coupon auto-applied</p>
+                        <p className="text-sm text-dark-text-muted mt-1">Use code STAY25 at checkout</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-dark-text-dim line-through">$99.00</p>
@@ -275,7 +273,7 @@ export default function ManagePlanModal({ isOpen, onClose, billingType, userEmai
                           <span className="font-semibold text-dark-text">Upgrade to Lifetime</span>
                           <span className="px-2 py-0.5 bg-purple-700 text-purple-200 text-xs rounded">25% OFF</span>
                         </div>
-                        <p className="text-sm text-dark-text-muted mt-1">STAY25 coupon auto-applied</p>
+                        <p className="text-sm text-dark-text-muted mt-1">Use code STAY25 at checkout</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-dark-text-dim line-through">$99.00</p>
