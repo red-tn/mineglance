@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       subscription: {
+        email: user.email,
         plan: user.plan,
         billingType: user.billing_type,
         licenseKey: user.license_key,

@@ -18,6 +18,7 @@ interface PaymentHistoryItem {
 }
 
 interface SubscriptionData {
+  email: string
   plan: 'free' | 'pro'
   billingType?: 'monthly' | 'annual' | 'lifetime' | null
   licenseKey?: string
@@ -418,6 +419,7 @@ export default function SubscriptionPage() {
         isOpen={showManagePlanModal}
         onClose={() => setShowManagePlanModal(false)}
         billingType={subscription?.billingType}
+        userEmail={subscription?.email}
       />
     </div>
   )
