@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import UpgradeModal from '@/components/UpgradeModal'
 import RetentionOfferModal from '@/components/RetentionOfferModal'
+import ManagePlanModal from '@/components/ManagePlanModal'
 
 interface PaymentHistoryItem {
   id: string
@@ -41,6 +42,7 @@ export default function SubscriptionPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [showRetentionModal, setShowRetentionModal] = useState(false)
+  const [showManagePlanModal, setShowManagePlanModal] = useState(false)
 
   const fetchSubscription = useCallback(async () => {
     try {
@@ -254,7 +256,7 @@ export default function SubscriptionPage() {
         )}
 
         {/* Action Buttons */}
-        <div className="mt-6 flex flex-wrap gap-4">
+        <div className="mt-6 flex flex-wrap gap-4 items-center">
           {/* Renew Button */}
           {subscription?.shouldShowRenew && (
             <button
@@ -262,6 +264,26 @@ export default function SubscriptionPage() {
               className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-light font-medium transition-colors"
             >
               Renew Subscription
+            </button>
+          )}
+
+          {/* Upgrade Button for Free Users */}
+          {subscription?.plan === 'free' && (
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-light font-medium transition-colors"
+            >
+              Upgrade to Pro
+            </button>
+          )}
+
+          {/* Manage Plan Button for Pro Users (not lifetime) */}
+          {subscription?.plan === 'pro' && subscription?.billingType !== 'lifetime' && (
+            <button
+              onClick={() => setShowManagePlanModal(true)}
+              className="px-4 py-2 text-sm bg-dark-card-hover text-dark-text rounded-lg hover:bg-dark-border transition-colors"
+            >
+              Manage Plan
             </button>
           )}
 
@@ -273,16 +295,6 @@ export default function SubscriptionPage() {
               className="px-4 py-2 text-sm text-dark-text-muted hover:text-red-400 transition-colors"
             >
               {actionLoading ? 'Submitting...' : 'Cancel Plan'}
-            </button>
-          )}
-
-          {/* Upgrade Button for Free Users */}
-          {subscription?.plan === 'free' && (
-            <button
-              onClick={() => setShowUpgradeModal(true)}
-              className="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-light font-medium transition-colors"
-            >
-              Upgrade to Pro
             </button>
           )}
         </div>
@@ -398,6 +410,13 @@ export default function SubscriptionPage() {
         onClose={() => setShowRetentionModal(false)}
         onAcceptOffer={handleAcceptOffer}
         onProceedWithRefund={handleProceedWithRefund}
+        billingType={subscription?.billingType}
+      />
+
+      {/* Manage Plan Modal */}
+      <ManagePlanModal
+        isOpen={showManagePlanModal}
+        onClose={() => setShowManagePlanModal(false)}
         billingType={subscription?.billingType}
       />
     </div>
