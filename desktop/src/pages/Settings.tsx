@@ -111,6 +111,9 @@ export default function Settings() {
               ))}
             </select>
           </div>
+          <p className="text-xs text-[var(--text-muted)] pl-8">
+            Note: Most pools update worker status every 10-15 minutes. Shorter intervals won't detect offline workers faster.
+          </p>
 
           {/* Electricity Cost */}
           <div className="flex items-center justify-between">

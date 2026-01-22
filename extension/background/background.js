@@ -235,7 +235,7 @@ async function checkSubscriptionStatus() {
           // Notify user
           chrome.notifications.create('subscription-expired', {
             type: 'basic',
-            iconUrl: 'icons/icon128.png',
+            iconUrl: chrome.runtime.getURL('icons/icon128.png'),
             title: 'MineGlance Subscription Expired',
             message: 'Your Pro subscription has expired. Renew to continue using Pro features.'
           });
@@ -256,7 +256,7 @@ async function checkSubscriptionStatus() {
       if (isPaid && !newIsPaid) {
         chrome.notifications.create('plan-downgraded', {
           type: 'basic',
-          iconUrl: 'icons/icon128.png',
+          iconUrl: chrome.runtime.getURL('icons/icon128.png'),
           title: 'MineGlance Plan Updated',
           message: 'Your plan has changed to Free. Some features may be limited.'
         });
@@ -289,7 +289,7 @@ async function verifyLicenseOnStartup() {
       // Notify user
       chrome.notifications.create('license-revoked', {
         type: 'basic',
-        iconUrl: 'icons/icon128.png',
+        iconUrl: chrome.runtime.getURL('icons/icon128.png'),
         title: 'MineGlance License',
         message: 'Your Pro license is no longer active. Please re-activate or contact support.'
       });
@@ -1293,7 +1293,7 @@ async function refreshAllData() {
         if (shouldAlert) {
           chrome.notifications.create(`worker-offline-${wallet.id}-${Date.now()}`, {
             type: 'basic',
-            iconUrl: 'icons/icon128.png',
+            iconUrl: chrome.runtime.getURL('icons/icon128.png'),
             title: 'Worker Offline',
             message: `${wallet.name}: ${alertMessage}`
           });
@@ -1315,7 +1315,7 @@ async function refreshAllData() {
             const alertMessage = `Profit dropped ${dropPercent.toFixed(0)}% (now $${currentProfit.toFixed(2)}/day)`;
             chrome.notifications.create(`profit-drop-${wallet.id}-${Date.now()}`, {
               type: 'basic',
-              iconUrl: 'icons/icon128.png',
+              iconUrl: chrome.runtime.getURL('icons/icon128.png'),
               title: 'Profit Drop Alert',
               message: `${wallet.name}: ${alertMessage}`
             });
@@ -1349,7 +1349,7 @@ async function refreshAllData() {
               const alertMessage = `Consider switching from ${wallet.coin.toUpperCase()} to ${betterCoin.coin} for +$${betterCoin.profitDiff.toFixed(2)}/day more profit`;
               chrome.notifications.create(`better-coin-${wallet.id}-${Date.now()}`, {
                 type: 'basic',
-                iconUrl: 'icons/icon128.png',
+                iconUrl: chrome.runtime.getURL('icons/icon128.png'),
                 title: 'Better Coin Available',
                 message: `Switch ${wallet.coin.toUpperCase()} → ${betterCoin.coin} for +$${betterCoin.profitDiff.toFixed(2)}/day`
               });

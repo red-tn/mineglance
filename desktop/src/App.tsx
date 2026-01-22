@@ -35,7 +35,7 @@ function App() {
   const { liteMode, refreshInterval, showNotifications, loadSettings } = useSettingsStore();
   const { checkAuth, sendHeartbeat, refreshSubscription, isAuthenticated, user } = useAuthStore();
   const { checkForUpdates } = useUpdateStore();
-  const { wallets, stats, refreshStats, syncWallets } = useWalletStore();
+  const { refreshStats, syncWallets } = useWalletStore();
 
   // Track previous worker counts for offline detection
   const previousWorkersRef = useRef<Map<string, number>>(new Map());
@@ -45,19 +45,31 @@ function App() {
   const checkOfflineWorkers = useCallback(async () => {
     if (!showNotifications || user?.plan !== 'pro') return;
 
-    for (const wallet of wallets) {
+    // Get fresh stats from store (not from closure)
+    const freshStats = useWalletStore.getState().stats;
+    const freshWallets = useWalletStore.getState().wallets;
+
+    for (const wallet of freshWallets) {
       if (!wallet.enabled) continue;
 
-      const currentStats = stats.get(wallet.id);
+      const currentStats = freshStats.get(wallet.id);
       if (!currentStats) continue;
 
-      const prevOnline = previousWorkersRef.current.get(wallet.id) ?? currentStats.workersOnline;
+      const prevOnline = previousWorkersRef.current.get(wallet.id);
       const currentOnline = currentStats.workersOnline;
       const currentOffline = currentStats.workersOffline;
+
+      // Skip first check (no previous data) - just record baseline
+      if (prevOnline === undefined) {
+        previousWorkersRef.current.set(wallet.id, currentOnline);
+        console.log(`[Notifications] Baseline set for ${wallet.name}: ${currentOnline} online`);
+        continue;
+      }
 
       // Check if workers went offline (had some online before, now fewer or zero)
       if (prevOnline > 0 && currentOnline < prevOnline) {
         const wentOffline = prevOnline - currentOnline;
+        console.log(`[Notifications] Worker offline detected: ${wallet.name} - ${wentOffline} went offline`);
 
         try {
           let permissionGranted = await isPermissionGranted();
@@ -71,6 +83,9 @@ function App() {
               title: 'Worker Offline Alert',
               body: `${wallet.name}: ${wentOffline} worker(s) went offline. Currently ${currentOnline} online, ${currentOffline} offline.`,
             });
+            console.log(`[Notifications] Notification sent for ${wallet.name}`);
+          } else {
+            console.log(`[Notifications] Permission not granted`);
           }
         } catch (error) {
           console.error('Failed to send notification:', error);
@@ -80,13 +95,14 @@ function App() {
       // Update previous count
       previousWorkersRef.current.set(wallet.id, currentOnline);
     }
-  }, [showNotifications, user?.plan, wallets, stats]);
+  }, [showNotifications, user?.plan]);
 
   // Auto-refresh wallet stats
   const doAutoRefresh = useCallback(async () => {
     console.log('Auto-refreshing wallet stats...');
     await refreshStats();
-    await checkOfflineWorkers();
+    // Small delay to ensure store is updated before checking
+    setTimeout(() => checkOfflineWorkers(), 500);
   }, [refreshStats, checkOfflineWorkers]);
 
   useEffect(() => {
@@ -118,8 +134,22 @@ function App() {
     // Check for updates on startup
     checkForUpdates();
 
-    // Initial stats refresh
-    refreshStats();
+    // Initial stats refresh and set baseline for notifications
+    refreshStats().then(() => {
+      // Set baseline after initial refresh (don't alert, just record current state)
+      setTimeout(() => {
+        const freshStats = useWalletStore.getState().stats;
+        const freshWallets = useWalletStore.getState().wallets;
+        for (const wallet of freshWallets) {
+          if (!wallet.enabled) continue;
+          const stats = freshStats.get(wallet.id);
+          if (stats) {
+            previousWorkersRef.current.set(wallet.id, stats.workersOnline);
+            console.log(`[Notifications] Initial baseline for ${wallet.name}: ${stats.workersOnline} online`);
+          }
+        }
+      }, 1000);
+    });
 
     // Send heartbeat every 30 seconds
     const heartbeatInterval = setInterval(() => {
