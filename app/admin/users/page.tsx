@@ -452,7 +452,7 @@ export default function UsersPage() {
         Showing {users.length} of {total} licenses
       </div>
 
-      {/* Table */}
+      {/* Table (Desktop) / Cards (Mobile) */}
       <div className="glass-card rounded-xl border border-dark-border overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
@@ -464,111 +464,169 @@ export default function UsersPage() {
             No licenses found
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-dark-card-hover border-b border-dark-border">
-              <tr>
-                <th
-                  className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
-                  onClick={() => handleSort('email')}
-                >
-                  Email<SortIcon column="email" />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Ext Version</th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
-                  onClick={() => handleSort('plan')}
-                >
-                  Plan<SortIcon column="plan" />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Billing</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Installs</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Wallets</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Rigs</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Blog</th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
-                  onClick={() => handleSort('subscription_start_date')}
-                >
-                  Subscribed<SortIcon column="subscription_start_date" />
-                </th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
-                  onClick={() => handleSort('created_at')}
-                >
-                  Created<SortIcon column="created_at" />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dark-border">
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-dark-border">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-dark-card-hover">
-                  <td className="px-4 py-3">
-                    <span className="font-medium text-dark-text">{user.email}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.extVersion ? (
-                      <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded">
-                        v{user.extVersion}
-                      </code>
-                    ) : (
-                      <span className="text-dark-text-muted">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(user.plan)}`}>
-                      {user.plan === 'free' ? 'FREE' : 'PRO'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {user.plan === 'pro' ? (
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getBillingTypeBadge(user.billingType)}`}>
-                        {getBillingTypeLabel(user.billingType)}
-                      </span>
-                    ) : (
-                      <span className="text-dark-text-muted">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(user.status)}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-dark-text">
-                    {user.installCount}
-                  </td>
-                  <td className="px-4 py-3 text-dark-text">
-                    {user.walletCount}
-                  </td>
-                  <td className="px-4 py-3 text-dark-text">
-                    {user.rigCount}
-                  </td>
-                  <td className="px-4 py-3 text-dark-text">
-                    {user.blog_email_opt_in !== false ? (
-                      <span className="text-green-400" title="Subscribed to blog emails">✓</span>
-                    ) : (
-                      <span className="text-dark-text-dim" title="Unsubscribed from blog emails">✗</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-dark-text">
-                    {user.subscription_start_date ? formatDate(user.subscription_start_date) : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-dark-text">
-                    {formatDate(user.created_at)}
-                  </td>
-                  <td className="px-4 py-3">
+                <div key={user.id} className="p-4 hover:bg-dark-card-hover">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-dark-text text-sm truncate">{user.email}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPlanBadge(user.plan)}`}>
+                          {user.plan === 'free' ? 'FREE' : 'PRO'}
+                        </span>
+                        {user.plan === 'pro' && (
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getBillingTypeBadge(user.billingType)}`}>
+                            {getBillingTypeLabel(user.billingType)}
+                          </span>
+                        )}
+                        <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getStatusBadge(user.status)}`}>
+                          {user.status}
+                        </span>
+                      </div>
+                    </div>
                     <button
                       onClick={() => fetchUserDetails(user.id)}
-                      className="text-primary hover:text-primary-light text-sm font-medium"
+                      className="px-3 py-1.5 bg-primary/20 text-primary text-sm font-medium rounded-lg hover:bg-primary/30 flex-shrink-0"
                     >
                       View
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 text-xs">
+                    <div>
+                      <span className="text-dark-text-muted block">Installs</span>
+                      <span className="text-dark-text font-medium">{user.installCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-dark-text-muted block">Wallets</span>
+                      <span className="text-dark-text font-medium">{user.walletCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-dark-text-muted block">Rigs</span>
+                      <span className="text-dark-text font-medium">{user.rigCount}</span>
+                    </div>
+                    <div>
+                      <span className="text-dark-text-muted block">Version</span>
+                      <span className="text-dark-text font-medium">{user.extVersion ? `v${user.extVersion}` : '-'}</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-dark-text-muted">
+                    Created {formatDate(user.created_at)}
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-dark-card-hover border-b border-dark-border">
+                  <tr>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                      onClick={() => handleSort('email')}
+                    >
+                      Email<SortIcon column="email" />
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Ext Version</th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                      onClick={() => handleSort('plan')}
+                    >
+                      Plan<SortIcon column="plan" />
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Billing</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Installs</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Wallets</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Rigs</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Blog</th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                      onClick={() => handleSort('subscription_start_date')}
+                    >
+                      Subscribed<SortIcon column="subscription_start_date" />
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase cursor-pointer hover:text-dark-text"
+                      onClick={() => handleSort('created_at')}
+                    >
+                      Created<SortIcon column="created_at" />
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-dark-text-muted uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dark-border">
+                  {users.map((user) => (
+                    <tr key={user.id} className="hover:bg-dark-card-hover">
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-dark-text">{user.email}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {user.extVersion ? (
+                          <code className="text-sm bg-dark-bg text-dark-text px-2 py-1 rounded">
+                            v{user.extVersion}
+                          </code>
+                        ) : (
+                          <span className="text-dark-text-muted">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPlanBadge(user.plan)}`}>
+                          {user.plan === 'free' ? 'FREE' : 'PRO'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {user.plan === 'pro' ? (
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getBillingTypeBadge(user.billingType)}`}>
+                            {getBillingTypeLabel(user.billingType)}
+                          </span>
+                        ) : (
+                          <span className="text-dark-text-muted">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(user.status)}`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-dark-text">
+                        {user.installCount}
+                      </td>
+                      <td className="px-4 py-3 text-dark-text">
+                        {user.walletCount}
+                      </td>
+                      <td className="px-4 py-3 text-dark-text">
+                        {user.rigCount}
+                      </td>
+                      <td className="px-4 py-3 text-dark-text">
+                        {user.blog_email_opt_in !== false ? (
+                          <span className="text-green-400" title="Subscribed to blog emails">✓</span>
+                        ) : (
+                          <span className="text-dark-text-dim" title="Unsubscribed from blog emails">✗</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-dark-text">
+                        {user.subscription_start_date ? formatDate(user.subscription_start_date) : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-dark-text">
+                        {formatDate(user.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => fetchUserDetails(user.id)}
+                          className="text-primary hover:text-primary-light text-sm font-medium"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Pagination */}
