@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useWalletStore } from "../stores/walletStore";
 import { useSettingsStore } from "../stores/settingsStore";
 import { useAuthStore } from "../stores/authStore";
-import { RefreshCw, TrendingUp, TrendingDown, Zap, ExternalLink, Newspaper, Coins, Flame } from "lucide-react";
+import { RefreshCw, TrendingUp, TrendingDown, Zap, ExternalLink, Newspaper, Coins, Flame, Users } from "lucide-react";
 import WalletCard from "../components/WalletCard";
 
 interface BlogPost {
@@ -159,30 +159,115 @@ export default function Dashboard() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  // Helper to convert hashrate to base H/s
+  const normalizeHashrate = (value: number, unit: string): number => {
+    const multipliers: Record<string, number> = {
+      'H/s': 1,
+      'KH/s': 1e3,
+      'MH/s': 1e6,
+      'GH/s': 1e9,
+      'TH/s': 1e12,
+      'PH/s': 1e15,
+    };
+    return value * (multipliers[unit] || 1);
+  };
+
+  // Helper to format hashrate with appropriate unit
+  const formatHashrate = (hashesPerSec: number): string => {
+    if (hashesPerSec === 0) return '0 H/s';
+    const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s'];
+    let unitIndex = 0;
+    let value = hashesPerSec;
+    while (value >= 1000 && unitIndex < units.length - 1) {
+      value /= 1000;
+      unitIndex++;
+    }
+    return `${value.toFixed(2)} ${units[unitIndex]}`;
+  };
+
+  // Calculate aggregate stats from all enabled wallets
+  const aggregateStats = useMemo(() => {
+    const { stats } = useWalletStore.getState();
+    let totalHashrateNormalized = 0;
+    let workersOnline = 0;
+    let workersTotal = 0;
+
+    enabledWallets.forEach((wallet) => {
+      const walletStats = stats.get(wallet.id);
+      if (walletStats) {
+        totalHashrateNormalized += normalizeHashrate(walletStats.hashrate || 0, walletStats.hashrateUnit || 'H/s');
+        workersOnline += walletStats.workersOnline || 0;
+        workersTotal += (walletStats.workersOnline || 0) + (walletStats.workersOffline || 0);
+      }
+    });
+
+    return {
+      totalHashrate: formatHashrate(totalHashrateNormalized),
+      workersOnline,
+      workersTotal,
+      workersAllOnline: workersTotal > 0 && workersOnline === workersTotal,
+    };
+  }, [enabledWallets, lastRefresh]);
+
   return (
     <div className="space-y-6">
-      {/* Summary Card */}
-      <div className="bg-[var(--card-bg)] rounded-xl p-6 border border-[var(--border)]">
-        <div className="text-center">
-          <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
-            Daily Net Profit
-          </p>
-          <p
-            className={`text-4xl font-extrabold font-mono tracking-tight ${
-              totalProfit >= 0 ? "profit-positive" : "profit-negative"
-            }`}
-          >
-            {formatCurrency(totalProfit)}
-          </p>
-          <div className="flex justify-center gap-4 mt-3 text-sm">
-            <span className="flex items-center gap-1 text-primary">
-              <TrendingUp size={14} />
-              ${totalRevenue.toFixed(2)} revenue
-            </span>
-            <span className="flex items-center gap-1 text-danger">
-              <TrendingDown size={14} />
-              ${dailyElectricityCost.toFixed(2)} electricity
-            </span>
+      {/* Summary Stats Grid */}
+      <div className="bg-[var(--card-bg)] rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="grid grid-cols-3 divide-x divide-[var(--border)]">
+          {/* Net Profit */}
+          <div className="p-4 text-center">
+            <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+              Net Profit
+            </p>
+            <p
+              className={`text-2xl font-extrabold font-mono tracking-tight ${
+                totalProfit >= 0 ? "profit-positive" : "profit-negative"
+              }`}
+            >
+              {formatCurrency(totalProfit)}
+            </p>
+            <div className="flex justify-center gap-3 mt-2 text-xs">
+              <span className="flex items-center gap-1 text-primary">
+                <TrendingUp size={10} />
+                ${totalRevenue.toFixed(2)}
+              </span>
+              <span className="flex items-center gap-1 text-danger">
+                <TrendingDown size={10} />
+                ${dailyElectricityCost.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* Hashrate */}
+          <div className="p-4 text-center">
+            <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+              Hashrate
+            </p>
+            <p className="text-2xl font-extrabold font-mono tracking-tight text-[var(--text)]">
+              {aggregateStats.totalHashrate}
+            </p>
+            <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center justify-center gap-1">
+              <Zap size={10} className="text-yellow-500" />
+              {totalPower.toLocaleString()} W
+            </p>
+          </div>
+
+          {/* Workers */}
+          <div className="p-4 text-center">
+            <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold mb-1">
+              Workers
+            </p>
+            <p className="text-2xl font-extrabold font-mono tracking-tight text-[var(--text)]">
+              {aggregateStats.workersOnline}/{aggregateStats.workersTotal}
+            </p>
+            <p className={`text-xs mt-2 flex items-center justify-center gap-1 ${
+              aggregateStats.workersAllOnline ? 'text-primary' : 'text-yellow-500'
+            }`}>
+              <Users size={10} />
+              {aggregateStats.workersAllOnline
+                ? 'All online'
+                : `${aggregateStats.workersTotal - aggregateStats.workersOnline} offline`}
+            </p>
           </div>
         </div>
       </div>

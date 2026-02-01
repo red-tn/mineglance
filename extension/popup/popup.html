@@ -77,13 +77,25 @@
 
     <!-- Main Dashboard -->
     <div id="dashboard" class="dashboard hidden">
-      <!-- Summary Card -->
-      <div class="summary-card">
-        <div class="summary-label">Daily Net Profit</div>
-        <div id="totalProfit" class="summary-value profit-positive">+$0.00</div>
-        <div id="profitBreakdown" class="summary-breakdown">
-          <span class="revenue">↑ $0.00 revenue</span>
-          <span class="electricity">↓ $0.00 electricity</span>
+      <!-- Summary Stats Grid -->
+      <div class="summary-grid">
+        <div class="summary-stat">
+          <div class="stat-label">Net Profit</div>
+          <div id="totalProfit" class="stat-value profit-positive">+$0.00</div>
+          <div id="profitBreakdown" class="stat-detail">
+            <span class="revenue">↑$0.00</span>
+            <span class="electricity">↓$0.00</span>
+          </div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-label">Hashrate</div>
+          <div id="totalHashrate" class="stat-value">0 H/s</div>
+          <div id="totalPower" class="stat-detail">⚡ 0 W</div>
+        </div>
+        <div class="summary-stat">
+          <div class="stat-label">Workers</div>
+          <div id="totalWorkers" class="stat-value">0/0</div>
+          <div id="workersStatus" class="stat-detail workers-ok">All online</div>
         </div>
       </div>
 

@@ -199,6 +199,71 @@ body.lite-mode .icon-btn:hover {
   gap: 4px;
 }
 
+/* Summary Stats Grid */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-stat {
+  background: var(--card-bg);
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.summary-stat .stat-label {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.summary-stat .stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  line-height: 1.2;
+}
+
+.summary-stat .stat-value.profit-positive {
+  color: var(--accent);
+}
+
+.summary-stat .stat-value.profit-negative {
+  color: var(--danger);
+}
+
+.summary-stat .stat-detail {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.summary-stat .stat-detail .revenue {
+  color: var(--accent);
+}
+
+.summary-stat .stat-detail .electricity {
+  color: var(--danger);
+}
+
+.summary-stat .stat-detail.workers-ok {
+  color: var(--accent);
+}
+
+.summary-stat .stat-detail.workers-warning {
+  color: var(--warning);
+}
+
 /* Wallet List */
 .wallet-list {
   padding: 10px 14px;

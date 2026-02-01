@@ -815,6 +815,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let totalRevenue = 0;
     let totalElectricityCost = 0;
+    let totalHashrate = 0;
+    let totalWorkersOnline = 0;
+    let totalWorkersTotal = 0;
+    let totalPower = 0;
     const walletResults = [];
 
     const enabledWallets = wallets.filter(w => w.enabled);
@@ -856,6 +860,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         totalRevenue += revenue;
         totalElectricityCost += electricityCost;
+        totalHashrate += poolData.hashrate || 0;
+        totalWorkersOnline += poolData.workersOnline ?? poolData.workers?.filter(w => !w.offline).length ?? 0;
+        totalWorkersTotal += poolData.workersTotal ?? poolData.workers?.length ?? 0;
+        totalPower += powerWatts;
 
         walletResults.push({
           wallet,
@@ -912,7 +920,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render dashboard
     showDashboard();
     renderWallets(walletResults);
-    updateSummary(totalRevenue - totalElectricityCost, totalRevenue, totalElectricityCost);
+    updateSummary({
+      netProfit: totalRevenue - totalElectricityCost,
+      revenue: totalRevenue,
+      electricityCost: totalElectricityCost,
+      totalHashrate,
+      workersOnline: totalWorkersOnline,
+      workersTotal: totalWorkersTotal,
+      totalPower
+    });
     lastUpdated.textContent = `Last updated: just now`;
 
   }
@@ -1130,17 +1146,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function updateSummary(netProfit, revenue, electricityCost) {
+  function updateSummary(stats) {
+    const { netProfit, revenue, electricityCost, totalHashrate, hashrateUnit, workersOnline, workersTotal, totalPower } = stats;
+
+    // Profit
     const profitClass = netProfit >= 0 ? 'profit-positive' : 'profit-negative';
     const sign = netProfit >= 0 ? '+' : '-';
-
-    totalProfit.className = `summary-value ${profitClass}`;
+    totalProfit.className = `stat-value ${profitClass}`;
     totalProfit.textContent = `${sign}$${Math.abs(netProfit).toFixed(2)}`;
-
     profitBreakdown.innerHTML = `
-      <span class="revenue">↑ $${revenue.toFixed(2)} revenue</span>
-      <span class="electricity">↓ $${electricityCost.toFixed(2)} electricity</span>
+      <span class="revenue">↑$${revenue.toFixed(2)}</span>
+      <span class="electricity">↓$${electricityCost.toFixed(2)}</span>
     `;
+
+    // Hashrate
+    const totalHashrateEl = document.getElementById('totalHashrate');
+    const totalPowerEl = document.getElementById('totalPower');
+    if (totalHashrateEl) {
+      totalHashrateEl.textContent = formatHashrate(totalHashrate);
+    }
+    if (totalPowerEl) {
+      const powerDisplay = totalPower >= 1000 ? `${(totalPower / 1000).toFixed(1)} kW` : `${totalPower} W`;
+      totalPowerEl.textContent = `⚡ ${powerDisplay}`;
+    }
+
+    // Workers
+    const totalWorkersEl = document.getElementById('totalWorkers');
+    const workersStatusEl = document.getElementById('workersStatus');
+    if (totalWorkersEl) {
+      totalWorkersEl.textContent = `${workersOnline}/${workersTotal}`;
+    }
+    if (workersStatusEl) {
+      const offlineCount = workersTotal - workersOnline;
+      if (offlineCount > 0) {
+        workersStatusEl.textContent = `⚠️ ${offlineCount} offline`;
+        workersStatusEl.className = 'stat-detail workers-warning';
+      } else if (workersTotal > 0) {
+        workersStatusEl.textContent = '✓ All online';
+        workersStatusEl.className = 'stat-detail workers-ok';
+      } else {
+        workersStatusEl.textContent = 'No workers';
+        workersStatusEl.className = 'stat-detail';
+      }
+    }
   }
 
   async function fetchPoolData(pool, coin, address) {
