@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { fetch } from '@tauri-apps/plugin-http';
 import { Store } from '@tauri-apps/plugin-store';
 import { open } from '@tauri-apps/plugin-shell';
+import { platform } from '@tauri-apps/plugin-os';
 
 const API_BASE = 'https://www.mineglance.com/api';
 const APP_VERSION = '1.3.6';
@@ -43,7 +44,10 @@ export const useUpdateStore = create<UpdateState>((set, get) => ({
       const store = await Store.load('settings.json');
       const dismissedVersion = await store.get<string>('dismissedUpdateVersion');
 
-      const response = await fetch(`${API_BASE}/software/latest?platform=desktop_windows`);
+      // Detect OS to download correct platform version
+      const os = await platform();
+      const platformParam = os === 'macos' ? 'desktop_macos' : 'desktop_windows';
+      const response = await fetch(`${API_BASE}/software/latest?platform=${platformParam}`);
       if (!response.ok) return;
 
       const data = await response.json();
