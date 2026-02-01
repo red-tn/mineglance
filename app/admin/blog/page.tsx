@@ -281,7 +281,7 @@ export default function AdminBlogPage() {
 
         if (shouldSendEmail) {
           try {
-            const postId = savedPost.id || editingPost?.id
+            const postId = savedPost.post?.id || editingPost?.id
             const emailRes = await fetch('/api/admin/blog/send-email', {
               method: 'POST',
               headers: {
