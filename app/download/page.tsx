@@ -17,6 +17,18 @@ export default function DownloadPage() {
   const [macRelease, setMacRelease] = useState<ReleaseInfo>({ version: null, downloadUrl: null, releaseNotes: null })
   const [loading, setLoading] = useState(true)
   const [showExtensionModal, setShowExtensionModal] = useState(false)
+  const [userOS, setUserOS] = useState<'windows' | 'macos' | 'other'>('other')
+
+  // Detect user's OS
+  useEffect(() => {
+    const platform = navigator.platform.toLowerCase()
+    const userAgent = navigator.userAgent.toLowerCase()
+    if (platform.includes('mac') || userAgent.includes('mac')) {
+      setUserOS('macos')
+    } else if (platform.includes('win') || userAgent.includes('win')) {
+      setUserOS('windows')
+    }
+  }, [])
 
   useEffect(() => {
     async function fetchReleases() {
@@ -169,16 +181,19 @@ export default function DownloadPage() {
             </p>
           </div>
 
-          {/* Download Buttons */}
-          <div className="flex flex-col md:flex-row gap-6 justify-center mb-8">
+          {/* Download Buttons - Show user's OS first */}
+          <div className={`flex flex-col md:flex-row gap-6 justify-center mb-8 ${userOS === 'macos' ? 'md:flex-row-reverse' : ''}`}>
             {/* Windows Download */}
-            <div className="glass-card border border-dark-border rounded-2xl p-6 min-w-[280px]">
+            <div className={`glass-card rounded-2xl p-6 min-w-[280px] ${userOS === 'windows' ? 'border-2 border-primary ring-2 ring-primary/20' : 'border border-dark-border'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
                   <Monitor className="text-blue-400" size={24} />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-bold text-dark-text">Windows</h3>
+                  <h3 className="font-bold text-dark-text flex items-center gap-2">
+                    Windows
+                    {userOS === 'windows' && <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">Recommended</span>}
+                  </h3>
                   <p className="text-sm text-dark-text-muted">
                     {windowsRelease.version ? `v${windowsRelease.version}` : 'Coming Soon'}
                   </p>
@@ -187,7 +202,7 @@ export default function DownloadPage() {
               {windowsRelease.downloadUrl ? (
                 <a
                   href={windowsRelease.downloadUrl}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold transition text-white"
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition text-white ${userOS === 'windows' ? 'bg-primary hover:bg-primary-light shadow-glow' : 'bg-blue-600 hover:bg-blue-500'}`}
                 >
                   <Download size={18} />
                   Download for Windows
@@ -203,13 +218,16 @@ export default function DownloadPage() {
             </div>
 
             {/* macOS Download */}
-            <div className="glass-card border border-dark-border rounded-2xl p-6 min-w-[280px]">
+            <div className={`glass-card rounded-2xl p-6 min-w-[280px] ${userOS === 'macos' ? 'border-2 border-primary ring-2 ring-primary/20' : 'border border-dark-border'}`}>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-gray-500/20 rounded-xl flex items-center justify-center">
                   <Apple className="text-gray-400" size={24} />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-bold text-dark-text">macOS</h3>
+                  <h3 className="font-bold text-dark-text flex items-center gap-2">
+                    macOS
+                    {userOS === 'macos' && <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">Recommended</span>}
+                  </h3>
                   <p className="text-sm text-dark-text-muted">
                     {macRelease.version ? `v${macRelease.version}` : 'Coming Soon'}
                   </p>
@@ -218,7 +236,7 @@ export default function DownloadPage() {
               {macRelease.downloadUrl ? (
                 <a
                   href={macRelease.downloadUrl}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-gray-600 hover:bg-gray-500 rounded-lg font-semibold transition text-white"
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition text-white ${userOS === 'macos' ? 'bg-primary hover:bg-primary-light shadow-glow' : 'bg-gray-600 hover:bg-gray-500'}`}
                 >
                   <Download size={18} />
                   Download for macOS
