@@ -2,9 +2,9 @@
 
 ## Current Versions
 - **Website**: 0.1.0
-- **Chrome Extension**: 1.3.5
-- **Desktop App (Windows)**: 1.3.5
-- **Desktop App (macOS)**: Not yet released
+- **Chrome Extension**: 1.3.6
+- **Desktop App (Windows)**: 1.3.6
+- **Desktop App (macOS)**: 1.3.6
 
 ## CRITICAL: Backward Compatibility Requirements
 
@@ -92,8 +92,8 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
 │   ├── admin/             # Admin dashboard (17 pages)
 │   ├── dashboard/         # User dashboard (9 pages)
 │   └── [public pages]/    # Landing, blog, download, etc.
-├── extension/             # Chrome Extension (Manifest V3) v1.3.5
-├── desktop/               # Tauri Desktop App v1.3.5
+├── extension/             # Chrome Extension (Manifest V3) v1.3.6
+├── desktop/               # Tauri Desktop App v1.3.6
 ├── mobile/                # React Native/Expo app
 ├── components/            # Shared React components
 ├── lib/                   # Shared utilities
@@ -202,7 +202,13 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
 - `/api/cron/cleanup-sessions` - Remove expired sessions
 - `/api/cron/renewal-reminders` - Send renewal emails (7 days before expiry)
 
-## v1.3.5 Features (Latest Release)
+## v1.3.6 Features (Latest Release)
+
+### Aggregate Dashboard Stats
+- Total hashrate across all wallets (normalized units)
+- Combined worker counts (online/total)
+- Aggregated net profit, revenue, and electricity
+- Works with mixed mining setups (BTC + GPU miners)
 
 ### Price Alerts (Pro)
 - Set target price for coins
