@@ -860,10 +860,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         totalRevenue += revenue;
         totalElectricityCost += electricityCost;
-        totalHashrate += poolData.hashrate || 0;
-        totalWorkersOnline += poolData.workersOnline ?? poolData.workers?.filter(w => !w.offline).length ?? 0;
-        totalWorkersTotal += poolData.workersTotal ?? poolData.workers?.length ?? 0;
+
+        // Accumulate hashrate (all pools return in H/s)
+        const walletHashrate = poolData.hashrate || 0;
+        totalHashrate += walletHashrate;
+
+        // Calculate worker counts - handle different pool formats
+        const walletWorkersOnline = poolData.workersOnline ?? poolData.workers?.filter(w => !w.offline).length ?? 0;
+        const walletWorkersOffline = poolData.workersOffline ?? poolData.workers?.filter(w => w.offline).length ?? 0;
+        const walletWorkersTotal = poolData.workersTotal ?? (walletWorkersOnline + walletWorkersOffline) ?? poolData.workers?.length ?? 0;
+
+        totalWorkersOnline += walletWorkersOnline;
+        totalWorkersTotal += walletWorkersTotal;
         totalPower += powerWatts;
+
+        console.log(`[Aggregate] ${wallet.name}: hashrate=${walletHashrate}, workers=${walletWorkersOnline}/${walletWorkersTotal}, revenue=${revenue.toFixed(2)}, power=${powerWatts}W`);
 
         walletResults.push({
           wallet,
@@ -916,6 +927,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Update last refresh time
     await chrome.storage.local.set({ lastRefresh: new Date().toISOString() });
+
+    // Log final aggregates for debugging
+    console.log(`[Aggregate TOTAL] hashrate=${totalHashrate} (${formatHashrate(totalHashrate)}), workers=${totalWorkersOnline}/${totalWorkersTotal}, revenue=$${totalRevenue.toFixed(2)}, electricity=$${totalElectricityCost.toFixed(2)}, power=${totalPower}W`);
 
     // Render dashboard
     showDashboard();
@@ -1241,9 +1255,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   function formatHashrate(hashrate) {
     if (!hashrate || hashrate === 0) return '0 H/s';
 
-    const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s'];
+    // Handle both number and string inputs
+    const numHashrate = typeof hashrate === 'string' ? parseFloat(hashrate) : hashrate;
+    if (isNaN(numHashrate) || numHashrate <= 0) return '0 H/s';
+
+    const units = ['H/s', 'KH/s', 'MH/s', 'GH/s', 'TH/s', 'PH/s'];
     let unitIndex = 0;
-    let value = hashrate;
+    let value = numHashrate;
 
     while (value >= 1000 && unitIndex < units.length - 1) {
       value /= 1000;

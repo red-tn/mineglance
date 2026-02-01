@@ -354,11 +354,13 @@ async function fetchOceanStats(address: string) {
   const data = await response.json()
   const stats = data.result || data
 
-  const hashrate = parseFloat(stats.hashrate_300s) || parseFloat(stats.hashrate_60s) || 0
-  const hasActivity = hashrate > 0
+  // OCEAN returns hashrate in H/s, convert to TH/s for BTC consistency
+  const hashrateHs = parseFloat(stats.hashrate_300s) || parseFloat(stats.hashrate_60s) || 0
+  const hashrateTHs = hashrateHs / 1e12
+  const hasActivity = hashrateHs > 0
 
   return {
-    hashrate: hashrate,
+    hashrate: hashrateTHs,
     workersOnline: hasActivity ? 1 : 0,
     workersOffline: 0,
     balance: parseFloat(stats.unpaid) || 0,

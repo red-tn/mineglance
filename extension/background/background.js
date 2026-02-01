@@ -410,41 +410,53 @@ const POOLS = {
     name: 'Nanopool',
     coins: ['etc', 'zec', 'xmr', 'ergo', 'rvn', 'cfx'],
     getStatsUrl: (coin, address) => `https://api.nanopool.org/v1/${coin}/user/${address}`,
-    parseResponse: (data, coin) => ({
+    parseResponse: (data, coin) => {
       // Nanopool returns balance already in coin units (not smallest unit)
-      hashrate: data.data?.hashrate || 0,
-      hashrate24h: data.data?.avgHashrate?.h24 || 0,
-      workers: (data.data?.workers || []).map(w => ({
+      const workers = (data.data?.workers || []).map(w => ({
         name: w.id || 'Worker',
         hashrate: w.hashrate || 0,
         lastSeen: w.lastshare,
         offline: (Date.now() / 1000 - (w.lastshare || 0)) > 600
-      })),
-      balance: data.data?.balance || 0,
-      paid: 0,
-      earnings24h: data.data?.estimatedRoundEarnings || 0,
-      lastShare: data.data?.workers?.[0]?.lastshare
-    })
+      }));
+      const workersOnline = workers.filter(w => !w.offline).length;
+      return {
+        hashrate: data.data?.hashrate || 0,
+        hashrate24h: data.data?.avgHashrate?.h24 || 0,
+        workers: workers,
+        workersOnline: workersOnline,
+        workersTotal: workers.length,
+        balance: data.data?.balance || 0,
+        paid: 0,
+        earnings24h: data.data?.estimatedRoundEarnings || 0,
+        lastShare: data.data?.workers?.[0]?.lastshare
+      };
+    }
   },
   'f2pool': {
     name: 'F2Pool',
     coins: ['btc', 'etc', 'ltc', 'dash', 'zec', 'xmr', 'rvn', 'ckb'],
     getStatsUrl: (coin, address) => `https://api.f2pool.com/${coin}/${address}`,
-    parseResponse: (data, coin) => ({
+    parseResponse: (data, coin) => {
       // F2Pool returns values already in coin units
-      hashrate: data.hashrate || 0,
-      hashrate24h: data.hashrate_24h || 0,
-      workers: (data.workers || []).map(w => ({
+      const workers = (data.workers || []).map(w => ({
         name: w.worker_name || 'Worker',
         hashrate: w.hashrate || 0,
         lastSeen: w.last_share_time,
         offline: (Date.now() / 1000 - (w.last_share_time || 0)) > 600
-      })),
-      balance: data.balance || 0,
-      paid: data.paid || 0,
-      earnings24h: data.value_last_day || 0,
-      lastShare: data.last_share_time
-    })
+      }));
+      const workersOnline = workers.filter(w => !w.offline).length;
+      return {
+        hashrate: data.hashrate || 0,
+        hashrate24h: data.hashrate_24h || 0,
+        workers: workers,
+        workersOnline: workersOnline,
+        workersTotal: workers.length,
+        balance: data.balance || 0,
+        paid: data.paid || 0,
+        earnings24h: data.value_last_day || 0,
+        lastShare: data.last_share_time
+      };
+    }
   },
   // Flexpool removed - shut down November 2023
   'ethermine': {
@@ -453,10 +465,15 @@ const POOLS = {
     getStatsUrl: (coin, address) => `https://api.ethermine.org/miner/${address}/currentStats`,
     parseResponse: (data, coin) => {
       const divisor = getCoinDivisor(coin);
+      const hashrate = data.data?.currentHashrate || 0;
+      // Ethermine doesn't return worker details, estimate from hashrate
+      const workersOnline = hashrate > 0 ? 1 : 0;
       return {
-        hashrate: data.data?.currentHashrate || 0,
+        hashrate: hashrate,
         hashrate24h: data.data?.averageHashrate || 0,
         workers: [],
+        workersOnline: workersOnline,
+        workersTotal: workersOnline,
         balance: (data.data?.unpaid || 0) / divisor,
         paid: 0,
         earnings24h: (data.data?.coinsPerMin || 0) * 60 * 24,
@@ -496,15 +513,19 @@ const POOLS = {
     getStatsUrl: (coin, address) => `https://${coin}.herominers.com/api/stats_address?address=${address}`,
     parseResponse: (data, coin) => {
       const divisor = getCoinDivisor(coin);
+      const workers = (data.workers || []).map(w => ({
+        name: w.name || 'Worker',
+        hashrate: w.hashrate || 0,
+        lastSeen: w.lastShare,
+        offline: (Date.now() / 1000 - (w.lastShare || 0)) > 600
+      }));
+      const workersOnline = workers.filter(w => !w.offline).length;
       return {
         hashrate: data.stats?.hashrate || 0,
         hashrate24h: data.stats?.hashrate || 0,
-        workers: (data.workers || []).map(w => ({
-          name: w.name || 'Worker',
-          hashrate: w.hashrate || 0,
-          lastSeen: w.lastShare,
-          offline: (Date.now() / 1000 - (w.lastShare || 0)) > 600
-        })),
+        workers: workers,
+        workersOnline: workersOnline,
+        workersTotal: workers.length,
         balance: (data.stats?.balance || 0) / divisor,
         paid: (data.stats?.paid || 0) / divisor,
         earnings24h: (data.stats?.hashes || 0) / divisor, // Approximate from shares
