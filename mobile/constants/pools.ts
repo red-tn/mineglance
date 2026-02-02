@@ -75,13 +75,20 @@ export const POOLS: Record<string, PoolConfig> = {
   },
   'herominers': {
     name: 'HeroMiners',
-    coins: ['rvn', 'ergo', 'flux', 'kas', 'nexa', 'alph', 'xmr', 'rtm'],
-    getStatsUrl: (coin, address) => `https://${coin}.herominers.com/api/stats_address?address=${address}`,
-    getPoolUrl: (coin, address) => `https://${coin}.herominers.com/#/dashboard?addr=${address}`,
+    coins: ['rvn', 'ergo', 'flux', 'kas', 'nexa', 'alph', 'xmr', 'rtm', 'xna'],
+    getStatsUrl: (coin, address) => {
+      // HeroMiners uses 'neurai' subdomain for XNA
+      const subdomain = coin === 'xna' ? 'neurai' : coin;
+      return `https://${subdomain}.herominers.com/api/stats_address?address=${address}`;
+    },
+    getPoolUrl: (coin, address) => {
+      const subdomain = coin === 'xna' ? 'neurai' : coin;
+      return `https://${subdomain}.herominers.com/#/dashboard?addr=${address}`;
+    },
   },
   'woolypooly': {
     name: 'WoolyPooly',
-    coins: ['rvn', 'ergo', 'flux', 'kas', 'etc', 'cfx', 'nexa', 'alph'],
+    coins: ['rvn', 'ergo', 'flux', 'kas', 'etc', 'cfx', 'nexa', 'alph', 'xna'],
     getStatsUrl: (coin, address) => `https://api.woolypooly.com/api/${coin}-1/accounts/${address}`,
     getPoolUrl: (coin, address) => `https://woolypooly.com/en/coin/${coin}/wallet/${address}`,
   },

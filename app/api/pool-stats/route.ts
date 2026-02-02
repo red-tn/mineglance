@@ -49,6 +49,7 @@ const POOL_APIS: Record<string, Record<string, string>> = {
     'alph': 'https://alph.herominers.com/api/stats_address?address={address}',
     'xmr': 'https://xmr.herominers.com/api/stats_address?address={address}',
     'rtm': 'https://rtm.herominers.com/api/stats_address?address={address}',
+    'xna': 'https://neurai.herominers.com/api/stats_address?address={address}',
   },
   'woolypooly': {
     'etc': 'https://api.woolypooly.com/api/etc-1/accounts/{address}',
@@ -59,6 +60,7 @@ const POOL_APIS: Record<string, Record<string, string>> = {
     'kas': 'https://api.woolypooly.com/api/kas-1/accounts/{address}',
     'nexa': 'https://api.woolypooly.com/api/nexa-1/accounts/{address}',
     'alph': 'https://api.woolypooly.com/api/alph-1/accounts/{address}',
+    'xna': 'https://api.woolypooly.com/api/xna-1/accounts/{address}',
   },
   'hiveon': {
     'etc': 'https://hiveon.net/api/v1/stats/miner/{address}/ETC',

@@ -509,8 +509,12 @@ const POOLS = {
   },
   'herominers': {
     name: 'HeroMiners',
-    coins: ['rvn', 'ergo', 'flux', 'kas', 'nexa', 'alph', 'xmr', 'rtm'],
-    getStatsUrl: (coin, address) => `https://${coin}.herominers.com/api/stats_address?address=${address}`,
+    coins: ['rvn', 'ergo', 'flux', 'kas', 'nexa', 'alph', 'xmr', 'rtm', 'xna'],
+    getStatsUrl: (coin, address) => {
+      // HeroMiners uses 'neurai' subdomain for XNA
+      const subdomain = coin === 'xna' ? 'neurai' : coin;
+      return `https://${subdomain}.herominers.com/api/stats_address?address=${address}`;
+    },
     parseResponse: (data, coin) => {
       const divisor = getCoinDivisor(coin);
       const workers = (data.workers || []).map(w => ({
@@ -535,7 +539,7 @@ const POOLS = {
   },
   'woolypooly': {
     name: 'WoolyPooly',
-    coins: ['rvn', 'ergo', 'flux', 'kas', 'etc', 'cfx', 'nexa', 'alph'],
+    coins: ['rvn', 'ergo', 'flux', 'kas', 'etc', 'cfx', 'nexa', 'alph', 'xna'],
     getStatsUrl: (coin, address) => `https://api.woolypooly.com/api/${coin}-1/accounts/${address}`,
     parseResponse: (data, coin) => {
       // WoolyPooly returns perfomance as arrays for pplns/solo modes

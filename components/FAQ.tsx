@@ -9,7 +9,7 @@ const faqs = [
   },
   {
     question: 'What coins are supported?',
-    answer: 'We support 16+ coins including BTC, ETC, RVN, ERG, FLUX, KAS, ALPH, NEXA, XMR, ZEC, LTC, FIRO, CFX, BEAM, and more. The coin comparison feature uses WhatToMine data to show real-time profitability.'
+    answer: 'We support 17+ coins including BTC, ETC, RVN, ERG, FLUX, KAS, ALPH, NEXA, XNA, XMR, ZEC, LTC, FIRO, CFX, BEAM, and more. The coin comparison feature uses WhatToMine data to show real-time profitability.'
   },
   {
     question: 'How does the free version work?',

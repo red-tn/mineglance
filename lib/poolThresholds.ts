@@ -53,6 +53,7 @@ export const POOL_THRESHOLDS: Record<string, Record<string, number>> = {
     xmr: 0.1,
     rtm: 10,
     neox: 1,
+    xna: 1000,
   },
   woolypooly: {
     etc: 0.1,
@@ -63,6 +64,7 @@ export const POOL_THRESHOLDS: Record<string, Record<string, number>> = {
     alph: 0.1,
     cfx: 1,
     ctxc: 1,
+    xna: 1000,
   },
   'cedric-crispin': {
     firo: 0.1,

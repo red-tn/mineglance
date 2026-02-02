@@ -83,6 +83,7 @@ export const POOLS: Pool[] = [
       { id: "ALPH", name: "Alephium", algorithm: "Blake3" },
       { id: "XMR", name: "Monero", algorithm: "RandomX" },
       { id: "RTM", name: "Raptoreum", algorithm: "GhostRider" },
+      { id: "XNA", name: "Neurai", algorithm: "KawPoW" },
     ],
   },
   {
@@ -97,6 +98,7 @@ export const POOLS: Pool[] = [
       { id: "KAS", name: "Kaspa", algorithm: "kHeavyHash" },
       { id: "NEXA", name: "Nexa", algorithm: "NexaPow" },
       { id: "ALPH", name: "Alephium", algorithm: "Blake3" },
+      { id: "XNA", name: "Neurai", algorithm: "KawPoW" },
     ],
   },
   {
