@@ -2,9 +2,9 @@
 
 ## Current Versions
 - **Website**: 0.1.0
-- **Chrome Extension**: 1.3.6
-- **Desktop App (Windows)**: 1.3.6
-- **Desktop App (macOS)**: 1.3.6
+- **Chrome Extension**: 1.3.7
+- **Desktop App (Windows)**: 1.3.7
+- **Desktop App (macOS)**: 1.3.7
 
 ## CRITICAL: Backward Compatibility Requirements
 
@@ -92,8 +92,8 @@ const showPayout = wallet.payoutPredictionEnabled; // Breaks on old data
 │   ├── admin/             # Admin dashboard (17 pages)
 │   ├── dashboard/         # User dashboard (9 pages)
 │   └── [public pages]/    # Landing, blog, download, etc.
-├── extension/             # Chrome Extension (Manifest V3) v1.3.6
-├── desktop/               # Tauri Desktop App v1.3.6
+├── extension/             # Chrome Extension (Manifest V3) v1.3.7
+├── desktop/               # Tauri Desktop App v1.3.7
 ├── mobile/                # React Native/Expo app
 ├── components/            # Shared React components
 ├── lib/                   # Shared utilities
