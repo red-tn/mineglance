@@ -14,6 +14,7 @@ export interface Wallet {
   enabled: boolean;
   power?: number; // watts
   order?: number;
+  apiToken?: string; // For pools requiring auth (e.g., Braiins)
   // Pro features
   priceAlertEnabled?: boolean;
   priceAlertTarget?: number | null;
@@ -324,6 +325,7 @@ async function fetchWalletStats(wallet: Wallet): Promise<WalletStats> {
         coin: wallet.coin,
         address: wallet.address,
         power: wallet.power || 0,
+        apiToken: wallet.apiToken || undefined,
       }),
     });
 

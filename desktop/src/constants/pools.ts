@@ -136,6 +136,13 @@ export const POOLS: Pool[] = [
       { id: "BTC", name: "Bitcoin", algorithm: "SHA-256" },
     ],
   },
+  {
+    id: "braiins",
+    name: "Braiins Pool (BTC)",
+    coins: [
+      { id: "BTC", name: "Bitcoin", algorithm: "SHA-256" },
+    ],
+  },
 ];
 
 export function getCoinsForPool(poolId: string): Coin[] {

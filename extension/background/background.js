@@ -805,6 +805,59 @@ const POOLS = {
       };
     }
   },
+  'braiins': {
+    name: 'Braiins Pool',
+    coins: ['btc'],
+    requiresApiToken: true,
+    getStatsUrl: (coin, address) => `https://pool.braiins.com/accounts/profile/json/btc/`,
+    getWorkersUrl: (coin, address) => `https://pool.braiins.com/accounts/workers/json/btc/`,
+    parseResponse: (data, coin, workersData) => {
+      // Braiins profile endpoint returns account stats
+      // hash_rate_5m is in GH/s, convert to H/s for normalization
+      const hashrateGHs = parseFloat(data.btc?.hash_rate_5m) || 0;
+      const hashrate = hashrateGHs * 1e9; // GH/s to H/s
+
+      const confirmedReward = parseFloat(data.btc?.confirmed_reward) || 0;
+      const estimatedReward = parseFloat(data.btc?.estimated_reward) || 0;
+
+      // Parse workers from workers endpoint
+      const workers = [];
+      let workersOnline = 0;
+      let workersTotal = 0;
+
+      if (workersData?.btc?.workers) {
+        for (const [name, w] of Object.entries(workersData.btc.workers)) {
+          const workerHr = parseFloat(w.hash_rate_5m) || 0;
+          const isOffline = workerHr === 0;
+          workers.push({
+            name: name,
+            hashrate: workerHr * 1e9, // GH/s to H/s
+            lastSeen: w.last_share ? new Date(w.last_share).getTime() / 1000 : null,
+            offline: isOffline
+          });
+          workersTotal++;
+          if (!isOffline) workersOnline++;
+        }
+      } else {
+        // Fallback: use ok_workers/off_workers from profile
+        workersOnline = parseInt(data.btc?.ok_workers) || 0;
+        workersTotal = workersOnline + (parseInt(data.btc?.off_workers) || 0);
+      }
+
+      return {
+        hashrate: hashrate,
+        hashrate5m: hashrate,
+        hashrate24h: hashrate,
+        workers: workers,
+        workersOnline: workersOnline,
+        workersTotal: workersTotal,
+        balance: confirmedReward,
+        paid: 0,
+        earnings24h: estimatedReward,
+        lastShare: null // Workers endpoint has per-worker last_share
+      };
+    }
+  },
   'ocean': {
     name: 'OCEAN',
     coins: ['btc'],
@@ -840,7 +893,7 @@ const POOLS = {
 };
 
 // Fetch pool data for a wallet
-async function fetchPoolData(pool, coin, address) {
+async function fetchPoolData(pool, coin, address, apiToken) {
   const poolConfig = POOLS[pool];
   if (!poolConfig) {
     throw new Error(`Unsupported pool: ${pool}`);
@@ -855,17 +908,27 @@ async function fetchPoolData(pool, coin, address) {
     throw new Error(`${coin.toUpperCase()} is not supported by ${poolConfig.name}. Supported: ${poolConfig.coins.join(', ')}`);
   }
 
+  // Validate API token for pools that require it
+  if (poolConfig.requiresApiToken && !apiToken) {
+    throw new Error(`${poolConfig.name} requires an API token. Add it in your wallet settings.`);
+  }
+
   const url = poolConfig.getStatsUrl(coinLower, address);
   console.log(`Fetching pool data: ${url}`);
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
+    // Build headers
+    const headers = { 'Accept': 'application/json' };
+    if (poolLower === 'braiins' && apiToken) {
+      headers['SlushPool-Auth-Token'] = apiToken;
+    }
+
+    const response = await fetch(url, { headers });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error(`Authentication failed for ${poolConfig.name}. Check your API token.`);
+      }
       if (response.status === 404) {
         throw new Error(`Wallet not found on ${poolConfig.name}. Make sure this address is mining on this pool.`);
       }
@@ -885,7 +948,21 @@ async function fetchPoolData(pool, coin, address) {
       throw new Error(data.error);
     }
 
-    const parsed = poolConfig.parseResponse(data, coinLower);
+    // For Braiins, also fetch workers endpoint
+    let workersData = null;
+    if (poolLower === 'braiins' && poolConfig.getWorkersUrl) {
+      try {
+        const workersUrl = poolConfig.getWorkersUrl(coinLower, address);
+        const workersResponse = await fetch(workersUrl, { headers });
+        if (workersResponse.ok) {
+          workersData = await workersResponse.json();
+        }
+      } catch (e) {
+        console.warn('Failed to fetch Braiins workers:', e);
+      }
+    }
+
+    const parsed = poolConfig.parseResponse(data, coinLower, workersData);
     console.log(`Parsed pool data:`, parsed);
 
     // Apply stale data detection for ALL pools
@@ -1237,7 +1314,7 @@ async function refreshAllData() {
         continue;
       }
 
-      const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address);
+      const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address, wallet.apiToken);
       const price = await fetchCoinPrice(wallet.coin);
       const previousData = await chrome.storage.local.get([
         `poolData_${wallet.id}`,
@@ -1426,7 +1503,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === 'fetchPoolData') {
-    fetchPoolData(message.pool, message.coin, message.address)
+    fetchPoolData(message.pool, message.coin, message.address, message.apiToken)
       .then(data => {
         sendResponse({ success: true, data });
       })

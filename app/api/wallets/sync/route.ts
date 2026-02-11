@@ -68,7 +68,9 @@ export async function GET(request: NextRequest) {
       payoutPredictionEnabled: w.payout_prediction_enabled || false,
       // v1.3.5 - Charts
       chartEnabled: w.chart_enabled || false,
-      chartPeriod: w.chart_period || 7
+      chartPeriod: w.chart_period || 7,
+      // v1.3.7 - API token (for pools like Braiins)
+      apiToken: w.api_token ? decryptWalletAddress(w.api_token) : null,
     }))
 
     return NextResponse.json({ wallets: clientWallets })
@@ -123,6 +125,9 @@ export async function POST(request: NextRequest) {
     // Encrypt wallet address before storing
     const encryptedAddress = encryptWalletAddress(wallet.address)
 
+    // Encrypt API token if provided
+    const encryptedApiToken = wallet.apiToken ? encryptWalletAddress(wallet.apiToken) : null
+
     const { data: newWallet, error } = await supabase
       .from('user_wallets')
       .insert({
@@ -143,7 +148,9 @@ export async function POST(request: NextRequest) {
         payout_prediction_enabled: wallet.payoutPredictionEnabled || false,
         // v1.3.5 - Charts
         chart_enabled: wallet.chartEnabled || false,
-        chart_period: wallet.chartPeriod || 7
+        chart_period: wallet.chartPeriod || 7,
+        // v1.3.7 - API token
+        api_token: encryptedApiToken,
       })
       .select()
       .single()
@@ -170,7 +177,9 @@ export async function POST(request: NextRequest) {
         priceAlertCondition: newWallet.price_alert_condition,
         payoutPredictionEnabled: newWallet.payout_prediction_enabled,
         chartEnabled: newWallet.chart_enabled,
-        chartPeriod: newWallet.chart_period
+        chartPeriod: newWallet.chart_period,
+        // v1.3.7
+        apiToken: wallet.apiToken || null,
       }
     })
 
@@ -230,6 +239,10 @@ export async function PUT(request: NextRequest) {
     // v1.3.5 - Charts
     if (wallet.chartEnabled !== undefined) updateData.chart_enabled = wallet.chartEnabled
     if (wallet.chartPeriod !== undefined) updateData.chart_period = wallet.chartPeriod
+    // v1.3.7 - API token
+    if (wallet.apiToken !== undefined) {
+      updateData.api_token = wallet.apiToken ? encryptWalletAddress(wallet.apiToken) : null
+    }
 
     const { data: updatedWallet, error } = await supabase
       .from('user_wallets')
@@ -263,7 +276,9 @@ export async function PUT(request: NextRequest) {
         priceAlertCondition: updatedWallet.price_alert_condition,
         payoutPredictionEnabled: updatedWallet.payout_prediction_enabled,
         chartEnabled: updatedWallet.chart_enabled,
-        chartPeriod: updatedWallet.chart_period
+        chartPeriod: updatedWallet.chart_period,
+        // v1.3.7
+        apiToken: updatedWallet.api_token ? decryptWalletAddress(updatedWallet.api_token) : null,
       }
     })
 

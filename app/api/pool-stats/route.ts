@@ -81,6 +81,9 @@ const POOL_APIS: Record<string, Record<string, string>> = {
   'ocean': {
     'btc': 'https://api.ocean.xyz/v1/statsnap/{address}',
   },
+  'braiins': {
+    'btc': 'https://pool.braiins.com/accounts/profile/json/btc/',
+  },
   'public-pool': {
     'btc': 'https://public-pool.io:40557/api/client/{address}',
   },
@@ -433,7 +436,63 @@ async function fetchCkPoolStats(address: string, isEU: boolean = false) {
   }
 }
 
-async function fetchPoolStats(pool: string, coin: string, address: string) {
+async function fetchBraiinsStats(address: string, apiToken: string) {
+  if (!apiToken) throw new Error('Braiins Pool requires an API token')
+
+  const headers = {
+    'Accept': 'application/json',
+    'SlushPool-Auth-Token': apiToken,
+  }
+
+  // Fetch profile stats
+  const profileUrl = POOL_APIS['braiins']['btc']
+  const profileResponse = await fetch(profileUrl, { headers })
+  if (!profileResponse.ok) {
+    if (profileResponse.status === 401) throw new Error('Invalid Braiins API token')
+    throw new Error(`Failed to fetch from Braiins Pool (${profileResponse.status})`)
+  }
+  const profileData = await profileResponse.json()
+
+  // Fetch workers
+  let workersOnline = 0
+  let workersOffline = 0
+  try {
+    const workersResponse = await fetch('https://pool.braiins.com/accounts/workers/json/btc/', { headers })
+    if (workersResponse.ok) {
+      const workersData = await workersResponse.json()
+      if (workersData?.btc?.workers) {
+        for (const [, w] of Object.entries(workersData.btc.workers) as [string, any][]) {
+          const hr = parseFloat(w.hash_rate_5m) || 0
+          if (hr > 0) workersOnline++
+          else workersOffline++
+        }
+      }
+    }
+  } catch {
+    // Fallback to profile counts
+    workersOnline = parseInt(profileData.btc?.ok_workers) || 0
+    workersOffline = parseInt(profileData.btc?.off_workers) || 0
+  }
+
+  if (workersOnline === 0 && workersOffline === 0) {
+    workersOnline = parseInt(profileData.btc?.ok_workers) || 0
+    workersOffline = parseInt(profileData.btc?.off_workers) || 0
+  }
+
+  // hash_rate_5m is in GH/s, convert to TH/s for BTC consistency
+  const hashrateGHs = parseFloat(profileData.btc?.hash_rate_5m) || 0
+  const hashrateTHs = hashrateGHs / 1000
+
+  return {
+    hashrate: hashrateTHs,
+    workersOnline,
+    workersOffline,
+    balance: parseFloat(profileData.btc?.confirmed_reward) || 0,
+    pendingBalance: parseFloat(profileData.btc?.unconfirmed_reward) || 0,
+  }
+}
+
+async function fetchPoolStats(pool: string, coin: string, address: string, apiToken?: string) {
   const poolLower = pool.toLowerCase()
 
   switch (poolLower) {
@@ -463,6 +522,8 @@ async function fetchPoolStats(pool: string, coin: string, address: string) {
       return await fetchCkPoolStats(address, false)
     case 'ckpool-eu':
       return await fetchCkPoolStats(address, true)
+    case 'braiins':
+      return await fetchBraiinsStats(address, apiToken || '')
     default:
       throw new Error(`Pool ${pool} not yet supported`)
   }
@@ -470,7 +531,7 @@ async function fetchPoolStats(pool: string, coin: string, address: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { pool, coin, address, electricityRate, power } = await request.json()
+    const { pool, coin, address, electricityRate, power, apiToken } = await request.json()
 
     if (!pool || !coin || !address) {
       return NextResponse.json(
@@ -480,7 +541,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch pool stats
-    const stats = await fetchPoolStats(pool, coin, address)
+    const stats = await fetchPoolStats(pool, coin, address, apiToken)
 
     // Get coin price
     const coinPrice = await getCoinPrice(coin)

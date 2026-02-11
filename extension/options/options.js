@@ -344,6 +344,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Wallet pool change - toggle Braiins-specific fields
+  document.getElementById('walletPool').addEventListener('change', (e) => {
+    const isBraiins = e.target.value === 'braiins';
+    document.getElementById('apiTokenGroup').style.display = isBraiins ? 'block' : 'none';
+    const addressLabel = document.getElementById('walletAddressLabel');
+    const addressInput = document.getElementById('walletAddress');
+    if (isBraiins) {
+      addressLabel.textContent = 'Braiins Username';
+      addressInput.placeholder = 'e.g., edwarzio';
+    } else {
+      addressLabel.textContent = 'Wallet Address';
+      addressInput.placeholder = 'Your mining wallet address';
+    }
+  });
+
   // Wallet modal
   document.getElementById('closeWalletModal').addEventListener('click', () => closeModal(walletModal));
   document.getElementById('cancelWalletBtn').addEventListener('click', () => closeModal(walletModal));
@@ -951,6 +966,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('walletCoin').value = wallet?.coin || 'rvn';
     document.getElementById('walletAddress').value = wallet?.address || '';
     document.getElementById('walletPower').value = wallet?.power || '';
+    document.getElementById('walletApiToken').value = wallet?.apiToken || '';
+
+    // Toggle Braiins-specific fields
+    const isBraiins = (wallet?.pool || '2miners') === 'braiins';
+    document.getElementById('apiTokenGroup').style.display = isBraiins ? 'block' : 'none';
+    const addressLabel = document.getElementById('walletAddressLabel');
+    const addressInput = document.getElementById('walletAddress');
+    if (isBraiins) {
+      addressLabel.textContent = 'Braiins Username';
+      addressInput.placeholder = 'e.g., edwarzio';
+    } else {
+      addressLabel.textContent = 'Wallet Address';
+      addressInput.placeholder = 'Your mining wallet address';
+    }
 
     // Pro features
     const priceAlertEnabled = document.getElementById('walletPriceAlertEnabled');
@@ -1010,6 +1039,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const coin = document.getElementById('walletCoin').value;
     const address = document.getElementById('walletAddress').value.trim();
     const power = parseInt(document.getElementById('walletPower').value) || 200;
+    const apiToken = document.getElementById('walletApiToken').value.trim() || null;
 
     // Pro features
     const priceAlertEnabled = document.getElementById('walletPriceAlertEnabled').checked;
@@ -1024,6 +1054,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    if (pool === 'braiins' && !apiToken) {
+      alert('Braiins Pool requires an API auth token. Find it in your Braiins account settings.');
+      return;
+    }
+
     // Check for auth token for cloud sync
     const { authToken } = await chrome.storage.local.get('authToken');
 
@@ -1033,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (index !== -1) {
         wallets[index] = {
           ...wallets[index],
-          name, pool, coin, address, power,
+          name, pool, coin, address, power, apiToken,
           priceAlertEnabled, priceAlertCondition, priceAlertTarget,
           payoutPredictionEnabled, chartEnabled, chartPeriod
         };
@@ -1049,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               },
               body: JSON.stringify({
                 id: editingWalletId,
-                name, pool, coin, address, power,
+                name, pool, coin, address, power, apiToken,
                 priceAlertEnabled, priceAlertCondition, priceAlertTarget,
                 payoutPredictionEnabled, chartEnabled, chartPeriod
               })
@@ -1068,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         coin,
         address,
         power,
+        apiToken,
         enabled: true,
         priceAlertEnabled, priceAlertCondition, priceAlertTarget,
         payoutPredictionEnabled, chartEnabled, chartPeriod

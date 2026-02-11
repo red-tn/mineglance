@@ -21,6 +21,7 @@ export default function Wallets() {
     address: "",
     power: 0,
     enabled: true,
+    apiToken: "",
     // Pro features
     priceAlertEnabled: false,
     priceAlertTarget: null as number | null,
@@ -44,6 +45,7 @@ export default function Wallets() {
       address: "",
       power: 0,
       enabled: true,
+      apiToken: "",
       priceAlertEnabled: false,
       priceAlertTarget: null,
       priceAlertCondition: "above",
@@ -74,6 +76,7 @@ export default function Wallets() {
       address: wallet.address,
       power: wallet.power || 0,
       enabled: wallet.enabled,
+      apiToken: wallet.apiToken || "",
       priceAlertEnabled: wallet.priceAlertEnabled || false,
       priceAlertTarget: wallet.priceAlertTarget ?? null,
       priceAlertCondition: wallet.priceAlertCondition || "above",
@@ -89,6 +92,11 @@ export default function Wallets() {
 
     if (!formData.name || !formData.pool || !formData.coin || !formData.address) {
       setError("Please fill in all required fields");
+      return;
+    }
+
+    if (formData.pool === "braiins" && !formData.apiToken) {
+      setError("Braiins Pool requires an API auth token from your account settings.");
       return;
     }
 
@@ -317,16 +325,35 @@ export default function Wallets() {
               {/* Address */}
               <div>
                 <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
-                  Wallet Address
+                  {formData.pool === "braiins" ? "Braiins Username" : "Wallet Address"}
                 </label>
                 <input
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="0x..."
+                  placeholder={formData.pool === "braiins" ? "e.g., edwarzio" : "0x..."}
                   className="w-full px-4 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] font-mono text-sm placeholder:text-[var(--text-dim)] focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
+
+              {/* API Token (Braiins) */}
+              {formData.pool === "braiins" && (
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-1">
+                    API Auth Token
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.apiToken}
+                    onChange={(e) => setFormData({ ...formData, apiToken: e.target.value })}
+                    placeholder="Your Braiins API token"
+                    className="w-full px-4 py-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] font-mono text-sm placeholder:text-[var(--text-dim)] focus:outline-none focus:border-primary transition-colors"
+                  />
+                  <p className="text-xs text-[var(--text-dim)] mt-1">
+                    Find this in your Braiins account under Settings &gt; Access Profiles.
+                  </p>
+                </div>
+              )}
 
               {/* Power */}
               <div>

@@ -26,6 +26,7 @@
     "https://public-pool.io/*",
     "https://api.ocean.xyz/*",
     "https://ocean.xyz/*",
+    "https://pool.braiins.com/*",
     "https://api.qrserver.com/*"
   ],
   "content_security_policy": {

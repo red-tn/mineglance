@@ -81,6 +81,9 @@ export const POOL_THRESHOLDS: Record<string, Record<string, number>> = {
   ocean: {
     btc: 0.0001,
   },
+  braiins: {
+    btc: 0.0001,
+  },
 }
 
 // Get threshold for a specific pool and coin

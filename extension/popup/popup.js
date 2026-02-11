@@ -20,7 +20,8 @@ const POOL_URLS = {
   'ckpool': (coin, address) => `https://solostats.ckpool.org/users/${address}`,
   'ckpool-eu': (coin, address) => `https://eusolostats.ckpool.org/users/${address}`,
   'publicpool': (coin, address) => `https://web.public-pool.io/#/app;address=${address}`,
-  'ocean': (coin, address) => `https://ocean.xyz/stats/${address}`
+  'ocean': (coin, address) => `https://ocean.xyz/stats/${address}`,
+  'braiins': (coin, address) => `https://pool.braiins.com/`
 };
 
 function getPoolUrl(pool, coin, address) {
@@ -49,7 +50,8 @@ const POOL_THRESHOLDS = {
   ckpool: { btc: 0.001 },
   'ckpool-eu': { btc: 0.001 },
   publicpool: { btc: 0.001 },
-  ocean: { btc: 0.0001 }
+  ocean: { btc: 0.0001 },
+  braiins: { btc: 0.0001 }
 };
 
 function getPoolThreshold(pool, coin) {

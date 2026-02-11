@@ -303,6 +303,7 @@
             <label for="walletPool">Mining Pool</label>
             <select id="walletPool">
               <option value="2miners">2Miners</option>
+              <option value="braiins">Braiins Pool (BTC)</option>
               <option value="cedriccrispin">Cedric Crispin (FIRO)</option>
               <option value="ckpool">CKPool Solo (BTC)</option>
               <option value="ckpool-eu">CKPool Solo EU (BTC)</option>
@@ -348,8 +349,13 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="walletAddress">Wallet Address</label>
+            <label for="walletAddress" id="walletAddressLabel">Wallet Address</label>
             <input type="text" id="walletAddress" placeholder="Your mining wallet address">
+          </div>
+          <div class="form-group" id="apiTokenGroup" style="display: none;">
+            <label for="walletApiToken">API Auth Token</label>
+            <input type="text" id="walletApiToken" placeholder="Your Braiins API token from account settings">
+            <p class="help-text">Find this in your Braiins account under Settings &gt; Access Profiles.</p>
           </div>
           <div class="form-group">
             <label for="walletPower">Total Power Consumption (Watts)</label>
