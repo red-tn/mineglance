@@ -839,7 +839,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       try {
         // Fetch pool data via background script
-        const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address);
+        const poolData = await fetchPoolData(wallet.pool, wallet.coin, wallet.address, wallet.apiToken);
 
         // Fetch coin price and 24h change
         const priceData = await fetchCoinPriceWithChange(wallet.coin);
@@ -1207,10 +1207,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  async function fetchPoolData(pool, coin, address) {
+  async function fetchPoolData(pool, coin, address, apiToken) {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(
-        { action: 'fetchPoolData', pool, coin, address },
+        { action: 'fetchPoolData', pool, coin, address, apiToken },
         (response) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
